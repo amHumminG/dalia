@@ -1,0 +1,10 @@
+<Solution>
+  <Configurations>
+    <Platform Name="x64" />
+    <Platform Name="x86" />
+  </Configurations>
+  <Project Path="Audio Engine/Audio Engine.vcxproj" />
+  <Project Path="Demo Application/Demo Application.vcxproj">
+    <BuildDependency Project="Audio Engine/Audio Engine.vcxproj" />
+  </Project>
+</Solution>
