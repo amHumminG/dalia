@@ -1,20 +1,32 @@
 #pragma once
+#include <cassert>
 #include <atomic>
 #include <array>
+#include <memory>
 
 namespace placeholder_name {
 
-	template<typename T, size_t Capacity>
+	template<typename T>
 	class SPSCRingBuffer {
-		// Ensure capacity is power of 2 so that we can use bitwise modulo (faster)
-		static_assert((Capacity& (Capacity - 1)) == 0, "Capacity must be power of 2");
-
 	public:
-		static constexpr size_t Capacity() const { return Capacity };
+		SPSCRingBuffer(size_t capacity) 
+			: m_capacity(capacity), m_mask(capacity - 1) {
+			// Ensure capacity is power of 2 so that we can use bitwise modulo (faster)
+			assert((Capacity & (Capacity - 1)) == 0, "Capacity must be power of 2");
+			m_buffer = std::make_unique<T[]>(m_capacity);
+		}
+
+		SPSCRingBuffer(const SPSCRingBuffer&) = delete;
+		SPSCRingBuffer& operator=(const SPSCRingBuffer) = delete;
+
+		SPSCRingBuffer(SPSCRingBuffer&&) noexcept = delete;
+		SPSCRingBuffer& operator=(SPSCRingBuffer&&) noexcept = delete;
+
+		static constexpr size_t Capacity() const { return m_capacity };
 
 		bool Push(const T& item) {
 			const size_t currentPush = m_pushCursor.load(std::memory_order_relaxed);
-			const size_t nextPush = (currentPush + 1) & (Capacity - 1);
+			const size_t nextPush = (currentPush + 1) & (m_mask);
 
 			if (nextPush == m_popCursor.load(std::memory_order_acquire)) {
 				// Buffer is full
@@ -35,13 +47,15 @@ namespace placeholder_name {
 			}
 
 			item = m_buffer[currentPop];
-			const size_t nextPop = (currentPop + 1) & (Capacity - 1);
+			const size_t nextPop = (currentPop + 1) & (m_mask);
 			m_popCursor.store(nextPop, std::memory_order_release);
 			return true;
 		}
 
 	private:
-		std::array<T, Capacity> m_buffer;
+		std::unique_ptr<T[]> m_buffer;
+		const size_t m_capacity;
+		const size_t m_mask;
 
 		// Alignas is used here to prevent false sharing (avoiding cache misses)
 		alignas(64) std::atomic<size_t> m_pushCursor{ 0 };
