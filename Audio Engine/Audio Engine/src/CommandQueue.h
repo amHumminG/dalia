@@ -7,13 +7,14 @@ namespace placeholder_name {
 
 	struct AudioCommand {
 		enum class Type {
+			None,
 			Play,
 			Pause,
 			Stop,
 			SetVolume,
 			// ...
 		};
-		Type type;
+		Type type = Type::None;
 		AudioHandle handle;
 		union {
 			uint32_t assetID; // Unique identifier for a sound in a soundbank (could be string?)
