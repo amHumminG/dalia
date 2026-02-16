@@ -27,6 +27,11 @@
     <ClCompile Include="..\dependencies\rlimgui\rlImGui.cpp" />
     <ClCompile Include="src\main.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Audio Engine\Audio Engine.vcxproj">
+      <Project>{f0df1898-d7d5-4a40-abab-4af880d19602}</Project>
+    </ProjectReference>
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>18.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
