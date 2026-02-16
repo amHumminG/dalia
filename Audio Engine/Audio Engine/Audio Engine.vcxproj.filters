@@ -24,6 +24,9 @@
     <ClInclude Include="include\Result.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\SPSCRingBuffer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\AudioEngine.cpp">

@@ -134,6 +134,7 @@
     <ClInclude Include="lib\miniaudio\miniaudio.h" />
     <ClInclude Include="include\AudioEngine.h" />
     <ClInclude Include="include\Result.h" />
+    <ClInclude Include="src\SPSCRingBuffer.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\AudioEngine.cpp" />
