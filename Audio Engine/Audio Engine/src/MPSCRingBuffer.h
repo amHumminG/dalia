@@ -54,10 +54,10 @@ namespace placeholder_name {
 
 			if (!m_buffer[currentPop].ready.load(std::memory_order_acquire)) {
 				// A producer is currently writing to this slot
-				return false
+				return false;
 			}
 
-			outItem = m_buffer[currentPop].data;
+			item = m_buffer[currentPop].data;
 
 			m_buffer[currentPop].ready.store(false, std::memory_order_relaxed);
 			m_popCursor.store((currentPop + 1) & m_mask, std::memory_order_release);
