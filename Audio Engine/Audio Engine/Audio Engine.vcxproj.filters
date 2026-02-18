@@ -30,7 +30,7 @@
     <ClInclude Include="src\CommandQueue.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\AudioHandle.h">
+    <ClInclude Include="include\AudioHandle.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\EventQueue.h">

@@ -1,10 +1,10 @@
 #pragma once
+#include <cstdint>
 
 namespace placeholder_name {
 
 	struct AudioHandle {
-		uint64_t uuid = 0;
-
+	public:
 		bool IsValid() const { return uuid != 0; }
 
 		// Could add a hash function for this too
@@ -12,7 +12,7 @@ namespace placeholder_name {
 		bool operator==(const AudioHandle& other) const { return uuid == other.uuid; }
 		bool operator!=(const AudioHandle& other) const { return uuid != other.uuid; }
 
-		friend class AudioContext;
+		friend class AudioEngine;
 
 	private:
 		static AudioHandle Create(uint32_t index, uint32_t generation) {
@@ -28,5 +28,7 @@ namespace placeholder_name {
 		uint32_t GetGeneration() const {
 			return static_cast<uint32_t>(uuid >> 32);
 		}
+
+		uint64_t uuid = 0;
 	};
 }
