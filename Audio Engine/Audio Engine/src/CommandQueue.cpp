@@ -1,4 +1,5 @@
 #include "CommandQueue.h"
+#include "Logger.h"
 
 namespace placeholder_name {
 
@@ -15,7 +16,7 @@ namespace placeholder_name {
 		size_t commandsPushed = 0;
 		for (const auto& command : m_stagingArea) {
 			if (!m_buffer.Push(command)) {
-				// Log buffer overflow
+				Logger::Log(LogLevel::Warning, "CommandQueue", "Unable to push all commands this frame. Internal buffer is Full.");
 				break;
 			}
 			else {

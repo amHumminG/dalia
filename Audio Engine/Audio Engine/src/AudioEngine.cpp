@@ -29,12 +29,12 @@ namespace placeholder_name {
 		deviceConfig.pUserData = this;
 
 		if (ma_device_init(NULL, &deviceConfig, m_device.get()) != MA_SUCCESS) {
-			// Log error here
+			Logger::Log(LogLevel::Critical, "Device", "Failed to initialize playback device");
 			return Result::DeviceFailed;
 		}
 
 		if (ma_device_start(m_device.get()) != MA_SUCCESS) {
-			// Log error here
+			Logger::Log(LogLevel::Critical, "Device", "Failed to start playback device");
 			return Result::DeviceFailed;
 		}
 
@@ -42,7 +42,7 @@ namespace placeholder_name {
 		m_commandQueue = std::make_unique<CommandQueue>(config.commandBufferCapacity);
 		m_eventQueue = std::make_unique<EventQueue>(config.eventBufferCapacity);
 
-		// Could log initialization here
+		Logger::Log(LogLevel::Info, "Engine", "Initialized Audio Engine");
 		m_initialized = true;
 		return Result::Ok;
 	}
@@ -52,13 +52,13 @@ namespace placeholder_name {
 
 		// Miniaudio teardown
 		if (ma_device_stop(m_device.get()) != MA_SUCCESS) {
-			// Log error here
+			Logger::Log(LogLevel::Critical, "Device", "Failed to stop playback device");
 			return Result::DeviceFailed;
 		}
 		ma_device_uninit(m_device.get());
 
 		m_initialized = false;
-		// Could log deinitialization here
+		Logger::Log(LogLevel::Info, "Engine", "Deinitialized Audio Engine");
 		Logger::ProcessLogs(); // Drain the log buffer before deinit
 
 		return Result::Ok;
