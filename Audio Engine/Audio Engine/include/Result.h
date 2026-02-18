@@ -30,6 +30,4 @@ namespace placeholder_name {
 			default: return "Unknown error.";
 		}
 	}
-		}
-	}
 }

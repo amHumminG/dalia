@@ -1,5 +1,5 @@
 #include "AudioEngine.h"
-
+#include "Logger.h"
 #include "CommandQueue.h"
 #include "EventQueue.h"
 
@@ -8,12 +8,16 @@
 
 namespace placeholder_name {
 
+	AudioEngine::AudioEngine() = default;
+
 	AudioEngine::~AudioEngine() {
 		// Any manual deallocations here
 	}
 
 	Result AudioEngine::Init(const EngineConfig& config) {
 		if (m_initialized) return Result::AlreadyInitialized;
+
+		Logger::Init(config.logLevel, 256);
 
 		// Miniaudio setup
 		m_device = std::make_unique<ma_device>();
@@ -35,8 +39,8 @@ namespace placeholder_name {
 		}
 
 		// Queue setup
-		m_commandQueue = std::make_unique<CommandQueue>();
-		m_eventQueue = std::make_unique<EventQueue>();
+		m_commandQueue = std::make_unique<CommandQueue>(config.commandBufferCapacity);
+		m_eventQueue = std::make_unique<EventQueue>(config.eventBufferCapacity);
 
 		// Could log initialization here
 		m_initialized = true;
@@ -55,6 +59,8 @@ namespace placeholder_name {
 
 		m_initialized = false;
 		// Could log deinitialization here
+		Logger::ProcessLogs(); // Drain the log buffer before deinit
+
 		return Result::Ok;
 	}
 
@@ -74,6 +80,8 @@ namespace placeholder_name {
 
 		// Send all commands accumulated from this frame to the audio thread
 		m_commandQueue->Flush();
+
+		Logger::ProcessLogs();
 	}
 
 	void AudioEngine::data_callback(ma_device* pDevice, void* pOutput, const void* pInput, uint32_t frameCount) {

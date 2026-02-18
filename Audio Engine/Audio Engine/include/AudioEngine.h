@@ -1,24 +1,28 @@
 #pragma once
 #include "Result.h"
+#include "LogLevel.h"
 #include <memory>
 
-struct EngineConfig {
-	uint32_t voiceCapacity = 128;
-	uint32_t maxVoices = 64;
-
-	uint32_t commandBufferCapacity = 1024;
-	uint32_t eventBufferCapacity = 1024;
-};
-
 struct ma_device;
-class CommandQueue;
-class EventQueue;
 
 namespace placeholder_name {
 
+	struct EngineConfig {
+		LogLevel logLevel = LogLevel::Warning;
+
+		uint32_t voiceCapacity = 128;
+		uint32_t maxVoices = 64;
+
+		uint32_t commandBufferCapacity = 1024;
+		uint32_t eventBufferCapacity = 1024;
+	};
+
+	class CommandQueue;
+	class EventQueue;
+
 	class AudioEngine {
 	public:
-		AudioEngine() = default;
+		AudioEngine();
 		~AudioEngine();
 
 		Result Init(const EngineConfig& config);
@@ -31,9 +35,6 @@ namespace placeholder_name {
 
 		void ProcessCommands();
 		void Render(float* outputBuffer, uint32_t frameCount);
-
-		static constexpr size_t MAX_VOICES = 128;
-		//std::unique_ptr<Voice[]> m_voices;
 
 		std::unique_ptr<CommandQueue> m_commandQueue;
 		std::unique_ptr<EventQueue> m_eventQueue;

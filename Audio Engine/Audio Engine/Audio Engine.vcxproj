@@ -136,13 +136,17 @@
     <ClInclude Include="include\Result.h" />
     <ClInclude Include="include\AudioHandle.h" />
     <ClInclude Include="src\CommandQueue.h" />
+    <ClInclude Include="include\LogLevel.h" />
     <ClInclude Include="src\EventQueue.h" />
+    <ClInclude Include="src\Logger.h" />
+    <ClInclude Include="src\MPSCRingBuffer.h" />
     <ClInclude Include="src\SPSCRingBuffer.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\AudioEngine.cpp" />
     <ClCompile Include="src\CommandQueue.cpp" />
     <ClCompile Include="src\EventQueue.cpp" />
+    <ClCompile Include="src\Logger.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
