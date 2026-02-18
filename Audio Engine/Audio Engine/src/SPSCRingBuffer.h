@@ -3,6 +3,7 @@
 #include <atomic>
 #include <array>
 #include <memory>
+#include <bit>
 
 namespace placeholder_name {
 
@@ -10,9 +11,8 @@ namespace placeholder_name {
 	class SPSCRingBuffer {
 	public:
 		SPSCRingBuffer(size_t capacity) 
-			: m_capacity(capacity), m_mask(capacity - 1) {
+			: m_capacity(std::bit_ceil(capacity)), m_mask(m_capacity - 1) {
 			// Ensure capacity is power of 2 so that we can use bitwise modulo (faster)
-			assert((Capacity & (Capacity - 1)) == 0, "Capacity must be power of 2");
 			m_buffer = std::make_unique<T[]>(m_capacity);
 		}
 
@@ -22,7 +22,7 @@ namespace placeholder_name {
 		SPSCRingBuffer(SPSCRingBuffer&&) noexcept = delete;
 		SPSCRingBuffer& operator=(SPSCRingBuffer&&) noexcept = delete;
 
-		static constexpr size_t Capacity() const { return m_capacity };
+		size_t Capacity() const { return m_capacity; }
 
 		bool Push(const T& item) {
 			const size_t currentPush = m_pushCursor.load(std::memory_order_relaxed);
