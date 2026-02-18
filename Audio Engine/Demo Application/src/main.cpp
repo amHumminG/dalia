@@ -17,12 +17,12 @@ int main() {
 	// Testing AudioEngine
 	{
 		AudioEngine engine;
-
-		Result result = engine.init();
+		EngineConfig config;
+		Result result = engine.Init(config);
 		if (result == Result::Ok) std::cout << "Initialized Engine" << std::endl;
 		else std::cout << GetErrorString(result) << std::endl;
 
-		result = engine.deinit();
+		result = engine.Deinit();
 		if (result == Result::Ok) std::cout << "Deinitialized Engine" << std::endl;
 		else std::cout << GetErrorString(result) << std::endl;
 	}
