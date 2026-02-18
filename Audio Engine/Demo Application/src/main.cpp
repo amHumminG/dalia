@@ -16,15 +16,13 @@ int main() {
 
 	// Testing AudioEngine
 	{
+		std::cout << "Testing Engine Init/Deinit" << std::endl;
+
 		AudioEngine engine;
 		EngineConfig config;
+		config.logLevel = LogLevel::Debug;
 		Result result = engine.Init(config);
-		if (result == Result::Ok) std::cout << "Initialized Engine" << std::endl;
-		else std::cout << GetErrorString(result) << std::endl;
-
 		result = engine.Deinit();
-		if (result == Result::Ok) std::cout << "Deinitialized Engine" << std::endl;
-		else std::cout << GetErrorString(result) << std::endl;
 	}
 
 	// Testing Command/Event Queues (Temporary)
