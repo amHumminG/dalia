@@ -9,7 +9,7 @@ namespace placeholder_name {
 		return m_buffer.Push(event);
 	}
 
-	bool EventQueue::Poll(AudioEvent& event) {
+	bool EventQueue::Pop(AudioEvent& event) {
 		return m_buffer.Pop(event);
 	}
 }

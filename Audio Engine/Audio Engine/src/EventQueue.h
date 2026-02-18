@@ -26,7 +26,7 @@ namespace placeholder_name {
 		bool Push(const AudioEvent& event);
 
 		// Game thread API
-		bool Poll(AudioEvent& event);
+		bool Pop(AudioEvent& event);
 
 	private:
 		SPSCRingBuffer<AudioEvent> m_buffer;
