@@ -15,9 +15,16 @@ namespace placeholder_name {
 	}
 
 	Result AudioEngine::Init(const EngineConfig& config) {
-		if (m_initialized) return Result::AlreadyInitialized;
-
 		Logger::Init(config.logLevel, 256);
+
+		if (m_initialized) {
+			Logger::Log(LogLevel::Warning, "Engine", "Attempting to initialize engine that is already initialized");
+			return Result::AlreadyInitialized;
+		}
+
+		// Queue setup
+		m_commandQueue = std::make_unique<CommandQueue>(config.commandBufferCapacity);
+		m_eventQueue = std::make_unique<EventQueue>(config.eventBufferCapacity);
 
 		// Miniaudio setup
 		m_device = std::make_unique<ma_device>();
@@ -38,17 +45,16 @@ namespace placeholder_name {
 			return Result::DeviceFailed;
 		}
 
-		// Queue setup
-		m_commandQueue = std::make_unique<CommandQueue>(config.commandBufferCapacity);
-		m_eventQueue = std::make_unique<EventQueue>(config.eventBufferCapacity);
-
-		Logger::Log(LogLevel::Info, "Engine", "Initialized Audio Engine");
 		m_initialized = true;
+		Logger::Log(LogLevel::Info, "Engine", "Initialized Audio Engine");
 		return Result::Ok;
 	}
 
 	Result AudioEngine::Deinit() {
-		if (!m_initialized) return Result::NotInitialized;
+		if (!m_initialized) {
+			Logger::Log(LogLevel::Warning, "Engine", "Attempting to deinitialize engine that is not initialized");
+			return Result::NotInitialized;
+		}
 
 		// Miniaudio teardown
 		if (ma_device_stop(m_device.get()) != MA_SUCCESS) {
@@ -60,11 +66,12 @@ namespace placeholder_name {
 		m_initialized = false;
 		Logger::Log(LogLevel::Info, "Engine", "Deinitialized Audio Engine");
 		Logger::ProcessLogs(); // Drain the log buffer before deinit
-
 		return Result::Ok;
 	}
 
 	void AudioEngine::Update() {
+		if (!m_initialized) return;
+
 		// Process AudioEvents
 		AudioEvent ev;
 		while (m_eventQueue->Pop(ev)) {
