@@ -56,7 +56,7 @@ int main() {
 		assert(eventQueue.Push(eventSend) == true && "Event push should succeed");
 
 		AudioEvent eventRecieve;
-		assert(eventQueue.Poll(eventRecieve) == true && "Poll should find the event");
+		assert(eventQueue.Pop(eventRecieve) == true && "Pop should find the event");
 		assert(eventRecieve.type == AudioEvent::Type::SoundFinished);
 
 		for (int i = 0; i < queueSize; ++i) eventQueue.Push(eventRecieve);
