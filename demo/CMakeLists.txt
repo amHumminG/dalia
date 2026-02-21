@@ -1,6 +1,8 @@
 include(FetchContent)
 
-set(BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+if(NOT DEFINED BUILD_EXAMPLES)
+    set(BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+endif()
 
 # Fetch external dependencies
 FetchContent_Declare(

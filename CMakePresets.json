@@ -12,7 +12,9 @@
                 }
             },
             "cacheVariables": {
-                "CMAKE_EXPORT_COMPILE_COMMANDS": "YES"
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "YES",
+                "BUILD_EXAMPLES": "OFF",
+                "CMAKE_POLICY_DEFAULT_CMP0135": "NEW"
             }
         },
         {
@@ -32,6 +34,18 @@
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Release"
             } 
+        },
+        {
+            "name": "vs-win-x64",
+            "displayName": "Visual Studio 2026 (MSVC)",
+            "description": "Generates a full VS Solution in out/build/vs-win-x64",
+            "generator": "Visual Studio 18 2026",
+            "binaryDir": "${sourceDir}/build/${presetName}",
+            "architecture": "x64",
+            "cacheVariables": {
+                "BUILD_EXAMPLES": "OFF",
+                "CMAKE_POLICY_DEFAULT_CMP0135": "NEW"
+            }
         }
     ]
 }
