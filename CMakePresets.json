@@ -1,5 +1,5 @@
 {
-    "version": 3,
+    "version": 6,
     "configurePresets": [
         {
             "name": "ninja base",
@@ -38,7 +38,7 @@
         {
             "name": "vs-win-x64",
             "displayName": "Visual Studio 2026 (MSVC)",
-            "description": "Generates a full VS Solution in out/build/vs-win-x64",
+            "description": "Generates a full VS Solution in build/vs-win-x64",
             "generator": "Visual Studio 18 2026",
             "binaryDir": "${sourceDir}/build/${presetName}",
             "architecture": "x64",
@@ -47,5 +47,45 @@
                 "CMAKE_POLICY_DEFAULT_CMP0135": "NEW"
             }
         }
-    ]
+    ],
+    "buildPresets": [
+        {
+            "name": "debug",
+            "configurePreset": "debug"
+        },
+        {
+            "name": "release",
+            "configurePreset": "release"
+        }
+    ],
+    "workflowPresets": [
+    {
+        "name": "config-build-debug",
+        "displayName": "Configure & Build (Debug)",
+        "steps": [
+            {
+                "type": "configure",
+                "name": "debug"
+            },
+            {
+                "type": "build",
+                "name": "debug"
+            }
+        ]
+    },
+    {
+                "name": "config-build-release",
+        "displayName": "Configure & Build (Relase)",
+        "steps": [
+            {
+                "type": "configure",
+                "name": "release"
+            },
+            {
+                "type": "build",
+                "name": "release"
+            }
+        ]
+    }
+]
 }
