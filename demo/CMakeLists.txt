@@ -44,3 +44,15 @@ target_link_libraries(dalia_demo
     PRIVATE rlimgui_lib
     PRIVATE raylib
 )
+
+# Copy existing assets directory to .exe directory (maybe not great if the directory is big)
+if(EXISTS "${CMAKE_SOURCE_DIR}/assets")
+    add_custom_command(TARGET dalia_demo POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
+        "${CMAKE_SOURCE_DIR}/assets"
+        "$<TARGET_FILE_DIR:dalia_demo>/assets"
+        COMMENT "Copying assets to build directory..."
+    )
+else()
+    message(STATUS "No assets directory found. Skipping copy.")
+endif()
