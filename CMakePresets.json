@@ -1,0 +1,37 @@
+{
+    "version": 3,
+    "configurePresets": [
+        {
+            "name": "ninja base",
+            "hidden": true,
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/build/${presetName}",
+            "vendor": {
+                "jetbrains.com/clion": {
+                    "toolchain": "Visual Studio"
+                }
+            },
+            "cacheVariables": {
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "YES"
+            }
+        },
+        {
+            "name": "debug",
+            "displayName": "Windows x64 Debug (Ninja)",
+            "description": "Standard debug build",
+            "inherits": "ninja base",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug"
+            }
+        },
+        {
+            "name": "release",
+            "displayName": "Windows x64 Release (Ninja)",
+            "description": "Standard release build",
+            "inherits": "ninja base",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release"
+            } 
+        }
+    ]
+}

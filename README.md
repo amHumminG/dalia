@@ -1,3 +1,5 @@
-# Audio Engine
+# DALIA
+**Dedicated Abstraction Layer for Interactive Audio**
 
-Work In Progress
+### Status:
+Architecture, Engine and Studio Tool are currently under development.
