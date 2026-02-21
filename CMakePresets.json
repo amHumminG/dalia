@@ -74,8 +74,8 @@
         ]
     },
     {
-                "name": "config-build-release",
-        "displayName": "Configure & Build (Relase)",
+        "name": "config-build-release",
+        "displayName": "Configure & Build (Release)",
         "steps": [
             {
                 "type": "configure",
