@@ -5,6 +5,10 @@
 
 struct ma_device;
 
+struct Voice;
+struct VoiceSlot;
+struct StreamingContext;
+
 namespace dalia {
 
 	struct EngineConfig {
