@@ -1,0 +1,91 @@
+{
+    "version": 6,
+    "configurePresets": [
+        {
+            "name": "ninja base",
+            "hidden": true,
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/build/${presetName}",
+            "vendor": {
+                "jetbrains.com/clion": {
+                    "toolchain": "Visual Studio"
+                }
+            },
+            "cacheVariables": {
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "YES",
+                "BUILD_EXAMPLES": "OFF",
+                "CMAKE_POLICY_DEFAULT_CMP0135": "NEW"
+            }
+        },
+        {
+            "name": "debug",
+            "displayName": "Windows x64 Debug (Ninja)",
+            "description": "Standard debug build",
+            "inherits": "ninja base",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug"
+            }
+        },
+        {
+            "name": "release",
+            "displayName": "Windows x64 Release (Ninja)",
+            "description": "Standard release build",
+            "inherits": "ninja base",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release"
+            } 
+        },
+        {
+            "name": "vs-win-x64",
+            "displayName": "Visual Studio 2026 (MSVC)",
+            "description": "Generates a full VS Solution in build/vs-win-x64",
+            "generator": "Visual Studio 18 2026",
+            "binaryDir": "${sourceDir}/build/${presetName}",
+            "architecture": "x64",
+            "cacheVariables": {
+                "BUILD_EXAMPLES": "OFF",
+                "CMAKE_POLICY_DEFAULT_CMP0135": "NEW"
+            }
+        }
+    ],
+    "buildPresets": [
+        {
+            "name": "debug",
+            "configurePreset": "debug"
+        },
+        {
+            "name": "release",
+            "configurePreset": "release"
+        }
+    ],
+    "workflowPresets": [
+    {
+        "name": "config-build-debug",
+        "displayName": "Configure & Build (Debug)",
+        "steps": [
+            {
+                "type": "configure",
+                "name": "debug"
+            },
+            {
+                "type": "build",
+                "name": "debug"
+            }
+        ]
+    },
+    {
+        "name": "config-build-release",
+        "displayName": "Configure & Build (Release)",
+        "steps": [
+            {
+                "type": "configure",
+                "name": "release"
+            },
+            {
+                "type": "build",
+                "name": "release"
+            }
+        ]
+    }
+]
+}
