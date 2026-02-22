@@ -20,6 +20,8 @@ set(ENGINE_FILES
     src/MPSCRingBuffer.h
     src/Voice.h
     src/StreamingContext.h
+    src/Bus.cpp
+    src/Bus.h
 )
 
 add_library(dalia_engine STATIC ${ENGINE_FILES})
