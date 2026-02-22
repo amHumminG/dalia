@@ -19,10 +19,12 @@ namespace dalia {
         bool isLooping = false;
         float volume = 1.0f;
         float pitch = 1.0f;
+        float pan = 0.0f;
+        uint32_t channels = 2; // This is probably read from the soundbank
         float cursor = 0.0f; // Frame or sample position
 
         VoiceSourceType sourceType; // Default to resident?
-        std::span<const float> buffer;
+        std::span<float> buffer;
         StreamingContext* streamingContext; // This could also be an index to the StreamingContext pool
         // The StreamingContext should be assigned by the game thread and sent to the audio thread via the play command
 

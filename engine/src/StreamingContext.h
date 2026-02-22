@@ -21,6 +21,12 @@ namespace dalia {
         void* fileHandle = nullptr; // Subject to change
         size_t readOffset = 0;
 
-        void Reset(); // Use after the StreamingContext is released by a Voice
+        // Use after the StreamingContext is released by a Voice
+        void Reset() {
+            frontBufferIndex = 0;
+            isBufferReady = {false, false};
+            isWaitingForIO = false;
+
+        }
     };
 }
