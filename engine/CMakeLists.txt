@@ -1,4 +1,7 @@
 set(ENGINE_FILES
+    # Libraries
+    lib/miniaudio/miniaudio.h
+
     # Public headers
     include/dalia/AudioEngine.h
     include/dalia/AudioHandle.h
@@ -6,6 +9,7 @@ set(ENGINE_FILES
     include/dalia/Result.h
 
     # Internal headers and cpp-files
+    src/miniaudio_impl.cpp
     src/AudioEngine.cpp
     src/CommandQueue.h
     src/CommandQueue.cpp
@@ -15,9 +19,10 @@ set(ENGINE_FILES
     src/Logger.cpp
     src/SPSCRingBuffer.h
     src/MPSCRingBuffer.h
-
-    # Libraries
-    lib/miniaudio/miniaudio.h
+    src/Voice.h
+    src/StreamingContext.h
+    src/Bus.cpp
+    src/Bus.h
 )
 
 add_library(dalia_engine STATIC ${ENGINE_FILES})
