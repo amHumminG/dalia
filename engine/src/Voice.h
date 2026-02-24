@@ -5,6 +5,8 @@
 
 namespace dalia {
 
+    class Bus;
+
     enum class VoiceSourceType {
         Resident,   // Played from RAM
         Stream      // Streamed from soundbank (double buffered)
@@ -13,6 +15,9 @@ namespace dalia {
     struct Voice {
         uint32_t assetID = 0; // Subject to change depending on how sounds are identified in banks
         uint64_t uuid; // AudioHandle uuid
+
+        // Bus routing
+        Bus* parentBus;
 
         // Playback
         bool isPlaying = false;

@@ -12,7 +12,7 @@ namespace dalia {
 		m_stagingArea.push_back(command);
 	}
 
-	void CommandQueue::Flush() {
+	void CommandQueue::Dispatch() {
 		size_t commandsPushed = 0;
 		for (const auto& command : m_stagingArea) {
 			if (!m_buffer.Push(command)) {

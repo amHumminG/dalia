@@ -6,6 +6,7 @@
 #include "StreamingContext.h"
 #include "Bus.h"
 
+#include <algorithm>
 #include <span>
 #include <cmath>
 
@@ -45,30 +46,34 @@ namespace dalia {
 			Logger::Log(LogLevel::Critical, "Device", "Failed to initialize playback device");
 			return Result::DeviceFailed;
 		}
-		m_periodSize = m_device->playback.internalPeriodSizeInFrames;
+		const uint32_t m_periodSize = m_device->playback.internalPeriodSizeInFrames;
 		Logger::Log(LogLevel::Info, "Engine", "Internal Period Size: %d", m_periodSize);
 
 		// --- Setup Queues ---
 		m_commandQueue = std::make_unique<CommandQueue>(config.commandBufferCapacity);
 		m_eventQueue = std::make_unique<EventQueue>(config.eventBufferCapacity);
 
-		// --- Setup Buses ---
+		// --- Setup Voices & Buses ---
 		m_voiceCapacity = config.voiceCapacity;
+		m_streamCapacity = config.streamCapacity;
 		m_busCapacity = config.busCapacity;
-		m_voices = std::make_unique<Voice[]>(m_voiceCapacity);
-		m_buses = std::make_unique<Bus[]>(m_busCapacity);
+
+		m_voicePool = std::make_unique<Voice[]>(m_voiceCapacity);
+		m_streamPool = std::make_unique<StreamingContext[]>(m_streamCapacity);
+		m_busPool = std::make_unique<Bus[]>(m_busCapacity);
 
 		// Setup bus memory pool (Room for 1024 frames) maybe we should check this against m_periodSize?
 		const uint32_t samplesPerBus = 1024 * m_device->playback.channels;
 		m_busMemoryPool = std::make_unique<float[]>(m_busCapacity * samplesPerBus);
+
 		// Master bus initialization
-		m_masterBus = &m_buses[0];
+		m_masterBus = &m_busPool[0];
 		m_masterBus->SetName("Master");
 		// Bus initialization
 		for (uint32_t i = 1; i < m_busCapacity; i++) {
 			float* busStart = &m_busMemoryPool[i * samplesPerBus];
-			m_buses[i].SetBuffer(std::span<float>(busStart, samplesPerBus));
-			m_buses[i].SetName("Bus_" + std::to_string(i));
+			m_busPool[i].SetBuffer(std::span<float>(busStart, samplesPerBus));
+			m_busPool[i].SetName("Bus_" + std::to_string(i));
 		}
 
 		// --- Device Start --- (Audio thread starts here)
@@ -118,7 +123,7 @@ namespace dalia {
 		}
 
 		// Send all commands accumulated from this frame to the audio thread
-		m_commandQueue->Flush();
+		m_commandQueue->Dispatch();
 
 		Logger::ProcessLogs();
 	}
@@ -154,50 +159,101 @@ namespace dalia {
 	}
 
 	void AudioEngine::Render(float* output, uint32_t frameCount) {
-		std::span<float> outputBuffer = std::span<float>(output, frameCount * m_device->playback.channels);
-		std::fill(outputBuffer.begin(), outputBuffer.end(), 0.0f);
-
 		// Clear all bus buffers
-		for (auto& bus : m_buses) {
-			bus.clear();
+		for (uint32_t i = 0; i < m_busCapacity; i++) {
+			Bus& bus = m_busPool[i];
+			bus.Clear();
 		}
 
 		// Mix all voices into their parent bus
-		for (auto& voice : m_voices) {
+		for (uint32_t i = 0; i < m_voiceCapacity; i++) {
+			Voice& voice = m_voicePool[i];
 			if (!voice.isPlaying) {
 				// If voice has finished playing, handle that here
 				continue;
 			}
 
-			MixVoiceToBus(voice, voice.parentBus, frameCount);
+			bool busy = MixVoiceToBus(voice, voice.parentBus, frameCount);
+			// set busy value in game thread voice slot array
 		}
+
+		// Create a std::span from output buffer and clear it
+		std::span<float> outputBuffer = std::span<float>(output, frameCount * m_device->playback.channels);
+		std::fill(outputBuffer.begin(), outputBuffer.end(), 0.0f);
 
 		// Recursive audio graph pull
-		m_masterBus.Pull(outputBuffer, sampleCount);
+		const uint32_t sampleCount = frameCount * m_device->playback.channels;
+		m_masterBus->Pull(outputBuffer, sampleCount);
 	}
 
-	void AudioEngine::MixVoiceToBus(Voice& voice, Bus* bus, uint32_t frameCount) {
+	bool AudioEngine::MixVoiceToBus(Voice& voice, Bus* bus, uint32_t frameCount) {
 		float* busBufferData = bus->getBuffer().data();
-		float* voiceBufferData = voice.buffer.data();
+		uint32_t framesMixed = 0;
 
-		// Mixing happens here
-		for (uint32_t f = 0; f < frameCount; f++) {
-			float sample = voiceBufferData[static_cast<size_t>(voice.cursor)];
+		while (framesMixed < frameCount) {
+			uint32_t framesInSource = 0;
+			float* sourceData = nullptr;
+
+			if (voice.sourceType == VoiceSourceType::Resident) {
+				sourceData = voice.buffer.data();
+				framesInSource = static_cast<uint32_t>(voice.buffer.size() / voice.channels);
+			}
+			else {
+				// Stream
+				StreamingContext* stream = voice.streamingContext;
+				sourceData = stream->buffers[stream->frontBufferIndex];
+				framesInSource = DOUBLE_BUFFER_CHUNK_SIZE;
+			}
+
+			uint32_t remainingInSource = framesInSource - static_cast<uint32_t>(voice.cursor);
+			uint32_t framesToProcessNow = std::min(frameCount - framesMixed, remainingInSource);
 
 			// Apply pan and volume
-			float panNormalized = (voice.pan + 1.0f) * 0.5f;
-			float angle = panNormalized * static_cast<float>(M_PI_2); // Angle between 0 and PI/2 radians
+			const float panNormalized = (voice.pan + 1.0f) * 0.5f;
+			const float angle = panNormalized * static_cast<float>(M_PI_2); // Angle between 0 and PI/2 radians
+			const float gainL = std::cos(angle) * voice.volume;
+			const float gainR = std::sin(angle) * voice.volume;
 
-			float gainL = std::cos(angle) * voice.volume;
-			float gainR = std::sin(angle) * voice.volume;
+			for (uint32_t i = 0; i < framesToProcessNow; i++) {
+				float sample = sourceData[static_cast<size_t>(voice.cursor) * voice.channels];
+				uint32_t busIndex = (framesMixed + i) * 2; // 2 Channels
+				busBufferData[busIndex + 0] += sample * gainL;
+				busBufferData[busIndex + 1] += sample * gainR;
 
-			busBufferData[f * voice.channels + 0] += sample * gainL;
-			busBufferData[f * voice.channels + 1] += sample * gainR;
+				voice.cursor += 1.0f;
+			}
+			framesMixed += framesToProcessNow;
 
-			voice.cursor += 1; // Cursor moves one frame forward
+			// Handle end of buffer
+			if (static_cast<uint32_t>(voice.cursor) >= framesInSource) {
+				if (voice.sourceType == VoiceSourceType::Resident) {
+					if (voice.isLooping) {
+						voice.cursor = 0.0f;
+					}
+					else {
+						// Voice is no longer used -> slot should be free now (return false?)
+						voice.isPlaying = false;
+						return false;
+					}
+				}
+				else {
+					// Stream -> Swap buffer
+					StreamingContext* stream = voice.streamingContext;
+					stream->bufferReady[stream->frontBufferIndex] = false;
+
+					stream->frontBufferIndex = 1 - stream->frontBufferIndex;
+					voice.cursor = 0.0f;
+
+					if (!stream->bufferReady[stream->frontBufferIndex]) {
+						// We probably return false here
+						voice.isPlaying = false;
+						return false;
+					}
+				}
+			}
 		}
 
-		// This is where we check if a stream buffer needs to be refilled
+		return true;
 	}
 }
 

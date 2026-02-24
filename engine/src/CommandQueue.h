@@ -30,7 +30,7 @@ namespace dalia {
 
 		// Game thread API
 		void Enqueue(const AudioCommand& command);
-		void Flush();
+		void Dispatch();
 
 		// Audio thread API
 		bool Pop(AudioCommand& command);
