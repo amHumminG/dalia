@@ -40,3 +40,7 @@ target_include_directories(dalia_engine
     PRIVATE ${MINIAUDIO_INCLUDE_DIR}
 )
 
+target_link_libraries(dalia_engine
+    PRIVATE dalia_common
+)
+
