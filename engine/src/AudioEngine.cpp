@@ -9,12 +9,11 @@
 #include <span>
 #include <cmath>
 
+#include "miniaudio.h"
+
 #ifndef M_PI_2
 #define M_PI_2 1.57079632679489661923
 #endif
-
-#define MINIAUDIO_IMPLEMENTATION
-#include "miniaudio.h"
 
 namespace dalia {
 

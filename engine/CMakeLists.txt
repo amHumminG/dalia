@@ -9,6 +9,7 @@ set(ENGINE_FILES
     include/dalia/Result.h
 
     # Internal headers and cpp-files
+    src/miniaudio_impl.cpp
     src/AudioEngine.cpp
     src/CommandQueue.h
     src/CommandQueue.cpp
