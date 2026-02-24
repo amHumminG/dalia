@@ -1,7 +1,14 @@
-set(ENGINE_FILES
-    # Libraries
-    lib/miniaudio/miniaudio.h
+include(FetchContent)
 
+FetchContent_Declare(
+    miniaudio
+    URL "https://raw.githubusercontent.com/mackron/miniaudio/master/miniaudio.h"
+    DOWNLOAD_NO_EXTRACT TRUE
+)
+FetchContent_MakeAvailable(miniaudio)
+set(MINIAUDIO_INCLUDE_DIR ${miniaudio_SOURCE_DIR})
+
+set(ENGINE_FILES
     # Public headers
     include/dalia/AudioEngine.h
     include/dalia/AudioHandle.h
@@ -30,5 +37,6 @@ add_library(dalia_engine STATIC ${ENGINE_FILES})
 target_include_directories(dalia_engine 
     PUBLIC include
     PRIVATE src
-    PRIVATE lib/miniaudio
+    PRIVATE ${MINIAUDIO_INCLUDE_DIR}
 )
+
