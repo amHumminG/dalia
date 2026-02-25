@@ -6,8 +6,6 @@
 
 // Audio Engine
 #include "dalia/AudioEngine.h"
-#include "../src/CommandQueue.h"
-#include "../src/EventQueue.h"
 
 #include <iostream>
 
