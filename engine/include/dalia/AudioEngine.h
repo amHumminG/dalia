@@ -7,6 +7,8 @@ struct ma_device;
 
 namespace dalia {
 
+	class AudioCommandQueue;
+	class AudioEventQueue;
 	struct Voice;
 	struct VoiceSlot;
 	struct StreamingContext;
@@ -23,10 +25,9 @@ namespace dalia {
 
 		uint32_t commandBufferCapacity = 1024;
 		uint32_t eventBufferCapacity = 1024;
+		size_t commandQueueCapacity = 1024;
+		size_t eventQueueCapacity = 1024;
 	};
-
-	class CommandQueue;
-	class EventQueue;
 
 	class AudioEngine {
 	public:
@@ -49,8 +50,8 @@ namespace dalia {
 		std::unique_ptr<ma_device> m_device; // Miniaudio playback device
 
 		// Thread communication queues
-		std::unique_ptr<CommandQueue>	m_commandQueue;
-		std::unique_ptr<EventQueue>		m_eventQueue;
+		std::unique_ptr<AudioCommandQueue>	m_audioCommandQueue;
+		std::unique_ptr<AudioEventQueue>	m_audioEventQueue;
 
 		// Resource Capacities
 		uint32_t m_voiceCapacity	= 0;

@@ -14,19 +14,39 @@ namespace dalia {
 			// ...
 		};
 		Type type = Type::None;
-		uint64_t uuid; // AudioHandle uuid
+		uint64_t uuid; // AudioHandle uuid (Hmmmmm)
 		union {
 			uint32_t assetID; // Unique identifier for a sound in a soundbank (could be string?)
 			float fvalue;
 			bool bvalue;
 			struct { float x, y, z; } vector3;
-		} data;	// Command data (will likely be expanded later)
+		} data = {};
+
+		static AudioCommand Play() {
+			AudioCommand cmd;
+			return cmd;
+		}
+
+		static AudioCommand Pause() {
+			AudioCommand cmd;
+			return cmd;
+		}
+
+		static AudioCommand Stop() {
+			AudioCommand cmd;
+			return cmd;
+		}
+
+		static AudioCommand SetVolume() {
+			AudioCommand cmd;
+			return cmd;
+		}
 	};
 
-	class CommandQueue {
+	class AudioCommandQueue {
 	public:
-		CommandQueue(size_t commandCapacity);
-		~CommandQueue() = default;
+		AudioCommandQueue(size_t commandCapacity);
+		~AudioCommandQueue() = default;
 
 		// Game thread API
 		void Enqueue(const AudioCommand& command);

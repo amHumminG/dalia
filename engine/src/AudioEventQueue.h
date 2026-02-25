@@ -7,7 +7,7 @@ namespace dalia {
 	struct AudioEvent {
 		enum class Type {
 			None,
-			SoundFinished,
+			VoiceFinished,
 			PlaybackError,
 			BeatMarker, // Could be useful for rythm games maybe
 			// ...
@@ -15,12 +15,22 @@ namespace dalia {
 		Type type = Type::None;
 		AudioHandle handle;
 		// Maybe this should have data as well?
+
+		static AudioEvent VoiceFinished() {
+			AudioEvent ev;
+			return ev;
+		}
+
+		static AudioEvent PlaybackError() {
+			AudioEvent ev;
+			return ev;
+		}
 	};
 
-	class EventQueue {
+	class AudioEventQueue {
 	public:
-		EventQueue(size_t eventCapacity);
-		~EventQueue() = default;
+		AudioEventQueue(size_t eventCapacity);
+		~AudioEventQueue() = default;
 
 		// Audio thread API
 		bool Push(const AudioEvent& event);

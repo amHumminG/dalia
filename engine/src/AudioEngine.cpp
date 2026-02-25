@@ -1,7 +1,7 @@
 #include "dalia/AudioEngine.h"
 #include "Logger.h"
-#include "CommandQueue.h"
-#include "EventQueue.h"
+#include "AudioCommandQueue.h"
+#include "AudioEventQueue.h"
 #include "Voice.h"
 #include "StreamingContext.h"
 #include "Bus.h"
@@ -50,8 +50,8 @@ namespace dalia {
 		Logger::Log(LogLevel::Info, "Engine", "Internal Period Size: %d", m_periodSize);
 
 		// --- Setup Queues ---
-		m_commandQueue = std::make_unique<CommandQueue>(config.commandBufferCapacity);
-		m_eventQueue = std::make_unique<EventQueue>(config.eventBufferCapacity);
+		m_audioCommandQueue = std::make_unique<AudioCommandQueue>(config.commandQueueCapacity);
+		m_audioEventQueue = std::make_unique<AudioEventQueue>(config.eventQueueCapacity);
 
 		// --- Setup Voices & Buses ---
 		m_voiceCapacity = config.voiceCapacity;
@@ -111,9 +111,9 @@ namespace dalia {
 
 		// Process AudioEvents
 		AudioEvent ev;
-		while (m_eventQueue->Pop(ev)) {
+		while (m_audioEventQueue->Pop(ev)) {
 			switch (ev.type) {
-				case AudioEvent::Type::SoundFinished: {
+				case AudioEvent::Type::VoiceFinished: {
 					// TODO: Implement
 				}
 				case AudioEvent::Type::PlaybackError: {
@@ -123,7 +123,7 @@ namespace dalia {
 		}
 
 		// Send all commands accumulated from this frame to the audio thread
-		m_commandQueue->Dispatch();
+		m_audioCommandQueue->Dispatch();
 
 		Logger::ProcessLogs();
 	}
@@ -140,7 +140,7 @@ namespace dalia {
 		// We should probably set a limit on the amount of commands we process in one audio frame
 		// Process AudioCommands
 		AudioCommand cmd;
-		while (m_commandQueue->Pop(cmd)) {
+		while (m_audioCommandQueue->Pop(cmd)) {
 			switch (cmd.type) {
 				case AudioCommand::Type::Play: {
 					// TODO: Implement

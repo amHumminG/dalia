@@ -1,22 +1,22 @@
-#include "CommandQueue.h"
+#include "AudioCommandQueue.h"
 #include "Logger.h"
 
 namespace dalia {
 
-	CommandQueue::CommandQueue(size_t commandCapacity) 
+	AudioCommandQueue::AudioCommandQueue(size_t commandCapacity)
 		: m_buffer(commandCapacity) {
 		m_stagingArea.reserve(commandCapacity);
 	}
 
-	void CommandQueue::Enqueue(const AudioCommand& command) {
+	void AudioCommandQueue::Enqueue(const AudioCommand& command) {
 		m_stagingArea.push_back(command);
 	}
 
-	void CommandQueue::Dispatch() {
+	void AudioCommandQueue::Dispatch() {
 		size_t commandsPushed = 0;
 		for (const auto& command : m_stagingArea) {
 			if (!m_buffer.Push(command)) {
-				Logger::Log(LogLevel::Warning, "CommandQueue", "Unable to push all commands this frame. Internal buffer is Full.");
+				Logger::Log(LogLevel::Warning, "AudioCommandQueue", "Unable to push all commands this frame. Internal buffer is Full.");
 				break;
 			}
 			else {
@@ -29,7 +29,7 @@ namespace dalia {
 		}
 	}
 
-	bool CommandQueue::Pop(AudioCommand& command) {
+	bool AudioCommandQueue::Pop(AudioCommand& command) {
 		if (!m_buffer.Pop(command)) {
 			return false;
 		}
