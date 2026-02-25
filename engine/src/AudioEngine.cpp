@@ -7,9 +7,11 @@
 #include "StreamingContext.h"
 #include "Bus.h"
 
+#include <thread>
 #include <algorithm>
 #include <span>
 #include <cmath>
+#include <chrono>
 
 #include "miniaudio.h"
 
@@ -79,13 +81,15 @@ namespace dalia {
 			m_busPool[i].SetName("Bus_" + std::to_string(i));
 		}
 
-		// --- Device Start --- (Audio thread starts here)
+		// --- I/O Thread Start ---
+		m_ioThreadRunning.store(true, std::memory_order_relaxed);
+		m_ioThread = std::thread(&AudioEngine::IoThreadMain, this);
+
+		// --- Audio Thread Start ---
 		if (ma_device_start(m_device.get()) != MA_SUCCESS) {
 			Logger::Log(LogLevel::Critical, "Device", "Failed to start playback device");
 			return Result::DeviceFailed;
 		}
-
-		// TODO: Start I/O thread here
 
 		m_initialized = true;
 		Logger::Log(LogLevel::Info, "Engine", "Initialized Audio Engine");
@@ -98,7 +102,11 @@ namespace dalia {
 			return Result::NotInitialized;
 		}
 
-		// --- Device Stop & Teardown ---
+		// --- I/O Thread Stop ---
+		m_ioThreadRunning.store(false, std::memory_order_release);
+		if (m_ioThread.joinable()) m_ioThread.join();
+
+		// --- Audio Thread Stop ---
 		if (ma_device_stop(m_device.get()) != MA_SUCCESS) {
 			Logger::Log(LogLevel::Critical, "Device", "Failed to stop playback device");
 			return Result::DeviceFailed;
@@ -107,7 +115,7 @@ namespace dalia {
 
 		m_initialized = false;
 		Logger::Log(LogLevel::Info, "Engine", "Deinitialized Audio Engine");
-		Logger::ProcessLogs(); // Drain the log buffer before deinit
+		Logger::ProcessLogs(); // Drain the log buffer before shutdown
 		return Result::Ok;
 	}
 
@@ -139,6 +147,49 @@ namespace dalia {
 		engine->ProcessCommands();
 
 		engine->Render(static_cast<float*>(pOutput), frameCount);
+	}
+
+	void AudioEngine::IoThreadMain() {
+		while (m_ioThreadRunning.load(std::memory_order_relaxed)) {
+			bool didWork = false;
+			IoRequest request;
+
+			while (m_ioRequestQueue->Pop(request)) {
+				didWork = true;
+
+				// Handle requests
+				switch (request.type) {
+					case IoRequest::Type::RefillStreamBuffer: {
+						StreamingContext& stream = m_streamPool[request.data.stream.poolIndex];
+
+						// Is the stream still valid?
+						if (stream.generation.load(std::memory_order_relaxed) != request.data.stream.generation) {
+							break;
+						}
+
+						// TODO: Read data into buffer from soundbank
+						// Remember that if read reaches EOF, it should mark it in the buffer and keep reading
+						// from the start of the file to fill the entire buffer.
+					}
+					case IoRequest::Type::ReleaseStream: {
+						StreamingContext& stream = m_streamPool[request.data.stream.poolIndex];
+						// TODO: Release decoder here (if StreamingContext has one)
+						m_freeStreamQueue->Push(request.data.stream.poolIndex);
+						break;
+					}
+					case IoRequest::Type::LoadSoundbank: {
+						// TODO: Logic for soundbank loading
+						break;
+					}
+					default:
+						break;
+				}
+			}
+
+			if (!didWork) {
+				std::this_thread::sleep_for(std::chrono::milliseconds(1));
+			}
+		}
 	}
 
 	void AudioEngine::ProcessCommands() {

@@ -2,6 +2,7 @@
 #include "Result.h"
 #include "LogLevel.h"
 #include <memory>
+#include <thread> // [Release Note] Remove this
 
 struct ma_device;
 
@@ -43,6 +44,7 @@ namespace dalia {
 
 	private:
 		static void data_callback(ma_device* pDevice, void* pOutput, const void* pInput, uint32_t frameCount);
+		void IoThreadMain();
 
 		void ProcessCommands();
 		void Render(float* outputBuffer, uint32_t frameCount);
@@ -50,6 +52,8 @@ namespace dalia {
 
 		bool m_initialized = false;
 		std::unique_ptr<ma_device> m_device; // Miniaudio playback device
+		std::thread m_ioThread;
+		std::atomic<bool> m_ioThreadRunning = false;
 
 		// Thread communication queues
 		std::unique_ptr<AudioCommandQueue>	m_audioCommandQueue;
