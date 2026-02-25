@@ -1,6 +1,6 @@
 set(COMMON_FILES
-    # Internal headers and cpp-files
-
+    src/Temp.h
+    src/Temp.cpp
 )
 
 add_library(dalia_common STATIC ${COMMON_FILES})
