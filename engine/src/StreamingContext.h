@@ -2,6 +2,7 @@
 #include <cstdint>
 #include <array>
 #include <atomic>
+#include <algorithm>
 
 namespace dalia {
 
@@ -12,6 +13,7 @@ namespace dalia {
         std::atomic<uint32_t> generation{0};
 
         uint8_t frontBufferIndex = 0;
+        // Should chunk size be multiplied with number of output channels?
         alignas(64) float buffers[2][DOUBLE_BUFFER_CHUNK_SIZE];
         std::array<std::atomic<bool>, 2> bufferReady{false, false};
         std::array<uint32_t, 2> eofIndex = {NO_EOF, NO_EOF};
@@ -25,7 +27,7 @@ namespace dalia {
         // Use after the StreamingContext is released by a Voice
         void Reset() {
             frontBufferIndex = 0;
-            std::memset(buffers, 0, sizeof(buffers));
+            std::fill_n(&buffers[0][0], (2 * DOUBLE_BUFFER_CHUNK_SIZE), 0.0f);
             bufferReady[0].store(false);
             bufferReady[1].store(false);
             eofIndex = {NO_EOF, NO_EOF};
