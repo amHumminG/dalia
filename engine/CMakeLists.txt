@@ -18,10 +18,12 @@ set(ENGINE_FILES
     # Internal headers and cpp-files
     src/miniaudio_impl.cpp
     src/AudioEngine.cpp
-    src/CommandQueue.h
-    src/CommandQueue.cpp
-    src/EventQueue.h
-    src/EventQueue.cpp
+    src/AudioCommandQueue.h
+    src/AudioCommandQueue.cpp
+    src/AudioEventQueue.h
+    src/AudioEventQueue.cpp
+    src/IoRequestQueue.cpp
+    src/IoRequestQueue.h
     src/Logger.h
     src/Logger.cpp
     src/SPSCRingBuffer.h

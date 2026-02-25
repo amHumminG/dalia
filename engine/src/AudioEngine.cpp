@@ -2,6 +2,7 @@
 #include "Logger.h"
 #include "AudioCommandQueue.h"
 #include "AudioEventQueue.h"
+#include "IoRequestQueue.h"
 #include "Voice.h"
 #include "StreamingContext.h"
 #include "Bus.h"
@@ -52,6 +53,7 @@ namespace dalia {
 		// --- Setup Queues ---
 		m_audioCommandQueue = std::make_unique<AudioCommandQueue>(config.commandQueueCapacity);
 		m_audioEventQueue = std::make_unique<AudioEventQueue>(config.eventQueueCapacity);
+		m_ioRequestQueue = std::make_unique<IoRequestQueue>(config.ioQueueCapacity);
 
 		// --- Setup Voices & Buses ---
 		m_voiceCapacity = config.voiceCapacity;

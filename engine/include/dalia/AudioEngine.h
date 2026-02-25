@@ -9,6 +9,7 @@ namespace dalia {
 
 	class AudioCommandQueue;
 	class AudioEventQueue;
+	class IoRequestQueue;
 	struct Voice;
 	struct VoiceSlot;
 	struct StreamingContext;
@@ -23,10 +24,9 @@ namespace dalia {
 
 		uint32_t busCapacity = 64;
 
-		uint32_t commandBufferCapacity = 1024;
-		uint32_t eventBufferCapacity = 1024;
 		size_t commandQueueCapacity = 1024;
 		size_t eventQueueCapacity = 1024;
+		size_t ioQueueCapacity = 256;
 	};
 
 	class AudioEngine {
@@ -52,6 +52,7 @@ namespace dalia {
 		// Thread communication queues
 		std::unique_ptr<AudioCommandQueue>	m_audioCommandQueue;
 		std::unique_ptr<AudioEventQueue>	m_audioEventQueue;
+		std::unique_ptr<IoRequestQueue>		m_ioRequestQueue;
 
 		// Resource Capacities
 		uint32_t m_voiceCapacity	= 0;
