@@ -15,7 +15,9 @@ set_target_properties(FFmpeg::FFmpeg PROPERTIES
 )
 
 #output
-add_executable(dalia_studio src/main.cpp)
+add_executable(dalia_studio src/main.cpp
+    src/Transcoder.cpp
+    src/Transcoder.h)
 
 target_link_libraries(dalia_studio
     PRIVATE dalia_engine
