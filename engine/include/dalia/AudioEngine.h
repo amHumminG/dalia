@@ -10,6 +10,8 @@ namespace dalia {
 	class AudioCommandQueue;
 	class AudioEventQueue;
 	class IoRequestQueue;
+	template<typename T>
+	class SPSCRingBuffer;
 	struct Voice;
 	struct VoiceSlot;
 	struct StreamingContext;
@@ -60,10 +62,11 @@ namespace dalia {
 		uint32_t m_busCapacity		= 0;
 
 		// Pools
-		std::unique_ptr<Voice[]>			m_voicePool;
-		std::unique_ptr<StreamingContext[]> m_streamPool;
-		std::unique_ptr<Bus[]>				m_busPool;
-		std::unique_ptr<float[]>			m_busMemoryPool;
+		std::unique_ptr<Voice[]>					m_voicePool;
+		std::unique_ptr<StreamingContext[]>			m_streamPool;
+		std::unique_ptr<SPSCRingBuffer<uint16_t>>	m_freeStreamQueue;
+		std::unique_ptr<Bus[]>						m_busPool;
+		std::unique_ptr<float[]>					m_busMemoryPool;
 
 		// References
 		Bus* m_masterBus = nullptr;

@@ -10,31 +10,41 @@ namespace dalia {
         enum class Type {
             None,
             RefillStreamBuffer,
+            ReleaseStream,
             LoadSoundbank
         };
         Type type = Type::None;
 
         union {
             struct {
-                StreamingContext* context;
+                uint16_t poolIndex;
+                uint32_t  generation;
                 uint8_t bufferIndex;
             } stream;
 
             struct {
-                Soundbank* targetBank;
+                Soundbank* targetBank; // TODO: This should not be pointer (Change to an index in a soundbank table)
                 uint32_t assetID; // Maybe this should be a filepath? (if not we need a lookup table)
             } bank;
         } data = {};
 
-        static IoRequest RefillStreamBuffer(StreamingContext* stream, uint8_t bufferIndex) {
+        static IoRequest RefillStreamBuffer(uint16_t poolIndex, uint32_t generation, uint8_t bufferIndex) {
             IoRequest req;
             req.type = Type::RefillStreamBuffer;
-            req.data.stream.context = stream;
+            req.data.stream.poolIndex = poolIndex;
+            req.data.stream.generation = generation;
             req.data.stream.bufferIndex = bufferIndex;
             return req;
         }
 
-        static IoRequest LoadBank(Soundbank* targetBank, uint32_t assetID) {
+        static IoRequest ReleaseStream(uint16_t poolIndex) {
+            IoRequest req;
+            req.type = Type::ReleaseStream;
+            req.data.stream.poolIndex = poolIndex;
+            return req;
+        }
+
+        static IoRequest LoadBank(Soundbank* targetBank, const uint32_t assetID) {
             IoRequest req;
             req.type = Type::LoadSoundbank;
             req.data.bank.targetBank = targetBank;

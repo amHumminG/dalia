@@ -30,7 +30,7 @@ namespace dalia {
 
         VoiceSourceType sourceType; // Default to resident?
         std::span<float> buffer;
-        StreamingContext* streamingContext; // This could also be an index to the StreamingContext pool
+        uint16_t streamingContextIndex;
         // The StreamingContext should be assigned by the game thread and sent to the audio thread via the play command
 
         // To be used before a new sound is played by voice

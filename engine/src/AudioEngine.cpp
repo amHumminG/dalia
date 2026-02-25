@@ -62,6 +62,7 @@ namespace dalia {
 
 		m_voicePool = std::make_unique<Voice[]>(m_voiceCapacity);
 		m_streamPool = std::make_unique<StreamingContext[]>(m_streamCapacity);
+		for (uint16_t i = 0; i < m_streamCapacity; i++) m_freeStreamQueue->Push(i);
 		m_busPool = std::make_unique<Bus[]>(m_busCapacity);
 
 		// Setup bus memory pool (Room for 1024 frames) maybe we should check this against m_periodSize?
@@ -83,6 +84,8 @@ namespace dalia {
 			Logger::Log(LogLevel::Critical, "Device", "Failed to start playback device");
 			return Result::DeviceFailed;
 		}
+
+		// TODO: Start I/O thread here
 
 		m_initialized = true;
 		Logger::Log(LogLevel::Info, "Engine", "Initialized Audio Engine");
@@ -180,8 +183,8 @@ namespace dalia {
 		}
 
 		// Create a std::span from output buffer and clear it
-		std::span<float> outputBuffer = std::span<float>(output, frameCount * m_device->playback.channels);
-		std::fill(outputBuffer.begin(), outputBuffer.end(), 0.0f);
+		auto outputBuffer = std::span<float>(output, frameCount * m_device->playback.channels);
+		std::ranges::fill(outputBuffer, 0.0f);
 
 		// Recursive audio graph pull
 		const uint32_t sampleCount = frameCount * m_device->playback.channels;
@@ -200,12 +203,20 @@ namespace dalia {
 				sourceData = voice.buffer.data();
 				framesInSource = static_cast<uint32_t>(voice.buffer.size() / voice.channels);
 			}
-			else {
-				// Stream
-				StreamingContext* stream = voice.streamingContext;
-				sourceData = stream->buffers[stream->frontBufferIndex];
-				framesInSource = DOUBLE_BUFFER_CHUNK_SIZE;
+			else if (voice.sourceType == VoiceSourceType::Stream) {
+				StreamingContext& stream = m_streamPool[voice.streamingContextIndex];
+				sourceData = stream.buffers[stream.frontBufferIndex];
+
+				// Check if we hit EOF this buffer and on what index
+				const uint32_t eofIndex = stream.eofIndex[stream.frontBufferIndex];
+				if (!voice.isLooping && eofIndex != NO_EOF) {
+					framesInSource = eofIndex;
+				}
+				else {
+					framesInSource = DOUBLE_BUFFER_CHUNK_SIZE;
+				}
 			}
+			else return false;
 
 			uint32_t remainingInSource = framesInSource - static_cast<uint32_t>(voice.cursor);
 			uint32_t framesToProcessNow = std::min(frameCount - framesMixed, remainingInSource);
@@ -238,20 +249,37 @@ namespace dalia {
 						return false;
 					}
 				}
-				else {
-					// Stream -> Swap buffer
-					StreamingContext* stream = voice.streamingContext;
-					stream->bufferReady[stream->frontBufferIndex] = false;
+				else if (voice.sourceType == VoiceSourceType::Stream) {
+					StreamingContext& stream = m_streamPool[voice.streamingContextIndex];
 
-					stream->frontBufferIndex = 1 - stream->frontBufferIndex;
+					if (framesInSource < DOUBLE_BUFFER_CHUNK_SIZE) {
+						// Natural end of file -> Kill voice
+						// TODO: The two rows below should probably be part of some kind of releaseVoice function later on
+						stream.generation.fetch_add(1, std::memory_order_relaxed);
+						m_ioRequestQueue->Push(IoRequest::ReleaseStream(voice.streamingContextIndex));
+
+						return false;
+					}
+
+					stream.bufferReady[stream.frontBufferIndex].store(false, std::memory_order_relaxed);
+					const uint32_t gen = stream.generation.load(std::memory_order_relaxed);
+					m_ioRequestQueue->Push(IoRequest::RefillStreamBuffer(voice.streamingContextIndex, gen, stream.frontBufferIndex));
+
+					// Swap buffers
+					stream.frontBufferIndex = 1 - stream.frontBufferIndex;
 					voice.cursor = 0.0f;
 
-					if (!stream->bufferReady[stream->frontBufferIndex]) {
-						// We probably return false here
-						voice.isPlaying = false;
+					if (!stream.bufferReady[stream.frontBufferIndex].load(std::memory_order_acquire)) {
+						Logger::Log(LogLevel::Critical, "Voice (Streaming) Mixer", "Buffer underflow. Killing Voice...");
+
+						// TODO: The two rows below should probably be part of some kind of releaseVoice function later on
+						stream.generation.fetch_add(1, std::memory_order_relaxed);
+						m_ioRequestQueue->Push(IoRequest::ReleaseStream(voice.streamingContextIndex));
+
 						return false;
 					}
 				}
+				else return false;
 			}
 		}
 
