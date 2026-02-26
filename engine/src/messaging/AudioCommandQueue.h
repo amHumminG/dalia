@@ -1,5 +1,5 @@
 #pragma once
-#include "SPSCRingBuffer.h"
+#include "core/SPSCRingBuffer.h"
 #include <vector>
 
 namespace dalia {
@@ -14,7 +14,8 @@ namespace dalia {
 			// ...
 		};
 		Type type = Type::None;
-		uint64_t uuid; // AudioHandle uuid (Hmmmmm)
+		uint32_t voicePoolIndex;
+		uint32_t generation;
 		union {
 			uint32_t assetID; // Unique identifier for a sound in a soundbank (could be string?)
 			float fvalue;

@@ -7,7 +7,7 @@ namespace dalia {
 	public:
 		bool IsValid() const { return uuid != 0; }
 
-		// Could add a hash function for this too
+		// Could add a hash function for this too?
 
 		bool operator==(const AudioHandle& other) const { return uuid == other.uuid; }
 		bool operator!=(const AudioHandle& other) const { return uuid != other.uuid; }
@@ -31,4 +31,8 @@ namespace dalia {
 
 		uint64_t uuid = 0;
 	};
+
+	// TODO: Have AudioEventCallback contain an enum communicating the reason for the sound finish
+	// E.g. Finished naturally, stop was called on it, or engine killed it and so on...
+	using AudioEventCallback = void(*)(AudioHandle handle, void* userData);
 }

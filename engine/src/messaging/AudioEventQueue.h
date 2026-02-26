@@ -1,6 +1,6 @@
 #pragma once
-#include "dalia/AudioHandle.h"
-#include "SPSCRingBuffer.h"
+#include "dalia/audio/AudioControl.h"
+#include "../core/SPSCRingBuffer.h"
  
 namespace dalia {
 
@@ -13,7 +13,8 @@ namespace dalia {
 			// ...
 		};
 		Type type = Type::None;
-		AudioHandle handle;
+		uint32_t voicePoolIndex;
+		uint32_t generation; // Might be useless here?
 		// Maybe this should have data as well?
 
 		static AudioEvent VoiceFinished() {
@@ -25,6 +26,8 @@ namespace dalia {
 			AudioEvent ev;
 			return ev;
 		}
+
+		// TODO: Add factory functions for all event types
 	};
 
 	class AudioEventQueue {

@@ -10,28 +10,29 @@ set(MINIAUDIO_INCLUDE_DIR ${miniaudio_SOURCE_DIR})
 
 set(ENGINE_FILES
     # Public headers
-    include/dalia/AudioEngine.h
-    include/dalia/AudioHandle.h
-    include/dalia/LogLevel.h
-    include/dalia/Result.h
+    include/dalia.h
+    include/dalia/audio/AudioEngine.h
+    include/dalia/audio/AudioControl.h
+    include/dalia/Core/LogLevel.h
+    include/dalia/Core/Result.h
 
     # Internal headers and cpp-files
-    src/miniaudio_impl.cpp
+    src/backend/miniaudio_impl.cpp
     src/AudioEngine.cpp
-    src/AudioCommandQueue.h
-    src/AudioCommandQueue.cpp
-    src/AudioEventQueue.h
-    src/AudioEventQueue.cpp
-    src/IoRequestQueue.cpp
-    src/IoRequestQueue.h
-    src/Logger.h
-    src/Logger.cpp
-    src/SPSCRingBuffer.h
-    src/MPSCRingBuffer.h
-    src/Voice.h
-    src/StreamingContext.h
-    src/Bus.cpp
-    src/Bus.h
+    src/messaging/AudioCommandQueue.h
+    src/messaging/AudioCommandQueue.cpp
+    src/messaging/AudioEventQueue.h
+    src/messaging/AudioEventQueue.cpp
+    src/messaging/IoRequestQueue.cpp
+    src/messaging/IoRequestQueue.h
+    src/core/Logger.h
+    src/core/Logger.cpp
+    src/core/SPSCRingBuffer.h
+    src/core/MPSCRingBuffer.h
+    src/mixer/Voice.h
+    src/mixer/StreamingContext.h
+    src/mixer/Bus.cpp
+    src/mixer/Bus.h
 )
 
 add_library(dalia_engine STATIC ${ENGINE_FILES})

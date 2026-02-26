@@ -1,11 +1,12 @@
-#include "dalia/AudioEngine.h"
-#include "Logger.h"
-#include "AudioCommandQueue.h"
-#include "AudioEventQueue.h"
-#include "IoRequestQueue.h"
-#include "Voice.h"
-#include "StreamingContext.h"
-#include "Bus.h"
+#include "dalia/audio/AudioEngine.h"
+#include "dalia/audio/AudioControl.h"
+#include "core/Logger.h"
+#include "messaging/AudioCommandQueue.h"
+#include "messaging/AudioEventQueue.h"
+#include "messaging/IoRequestQueue.h"
+#include "mixer/Voice.h"
+#include "mixer/StreamingContext.h"
+#include "mixer/Bus.h"
 
 #include <thread>
 #include <algorithm>
@@ -20,6 +21,13 @@
 #endif
 
 namespace dalia {
+
+	struct VoiceMirror {
+		bool isBusy = false;
+		uint32_t generation = 0;
+		void* callbackOnFinished = nullptr;
+		void* userData = nullptr;
+	};
 
 	AudioEngine::AudioEngine() = default;
 
@@ -64,7 +72,7 @@ namespace dalia {
 
 		m_voicePool = std::make_unique<Voice[]>(m_voiceCapacity);
 		m_streamPool = std::make_unique<StreamingContext[]>(m_streamCapacity);
-		for (uint16_t i = 0; i < m_streamCapacity; i++) m_freeStreamQueue->Push(i);
+		for (uint32_t i = 0; i < m_streamCapacity; i++) m_freeStreamQueue->Push(i);
 		m_busPool = std::make_unique<Bus[]>(m_busCapacity);
 
 		// Setup bus memory pool (Room for 1024 frames) maybe we should check this against m_periodSize?
@@ -152,18 +160,18 @@ namespace dalia {
 	void AudioEngine::IoThreadMain() {
 		while (m_ioThreadRunning.load(std::memory_order_relaxed)) {
 			bool didWork = false;
-			IoRequest request;
+			IoRequest req;
 
-			while (m_ioRequestQueue->Pop(request)) {
+			while (m_ioRequestQueue->Pop(req)) {
 				didWork = true;
 
 				// Handle requests
-				switch (request.type) {
+				switch (req.type) {
 					case IoRequest::Type::RefillStreamBuffer: {
-						StreamingContext& stream = m_streamPool[request.data.stream.poolIndex];
+						StreamingContext& stream = m_streamPool[req.data.stream.poolIndex];
 
 						// Is the stream still valid?
-						if (stream.generation.load(std::memory_order_relaxed) != request.data.stream.generation) {
+						if (stream.generation.load(std::memory_order_relaxed) != req.data.stream.generation) {
 							break;
 						}
 
@@ -172,9 +180,9 @@ namespace dalia {
 						// from the start of the file to fill the entire buffer.
 					}
 					case IoRequest::Type::ReleaseStream: {
-						StreamingContext& stream = m_streamPool[request.data.stream.poolIndex];
+						StreamingContext& stream = m_streamPool[req.data.stream.poolIndex];
 						// TODO: Release decoder here (if StreamingContext has one)
-						m_freeStreamQueue->Push(request.data.stream.poolIndex);
+						m_freeStreamQueue->Push(req.data.stream.poolIndex);
 						break;
 					}
 					case IoRequest::Type::LoadSoundbank: {

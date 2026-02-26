@@ -1,5 +1,5 @@
 #pragma once
-#include "MPSCRingBuffer.h"
+#include "core/MPSCRingBuffer.h"
 
 namespace dalia {
 
@@ -17,9 +17,9 @@ namespace dalia {
 
         union {
             struct {
-                uint16_t poolIndex;
+                uint32_t poolIndex;
                 uint32_t  generation;
-                uint8_t bufferIndex;
+                uint32_t bufferIndex;
             } stream;
 
             struct {
@@ -28,7 +28,7 @@ namespace dalia {
             } bank;
         } data = {};
 
-        static IoRequest RefillStreamBuffer(uint16_t poolIndex, uint32_t generation, uint8_t bufferIndex) {
+        static IoRequest RefillStreamBuffer(uint32_t poolIndex, uint32_t generation, uint32_t bufferIndex) {
             IoRequest req;
             req.type = Type::RefillStreamBuffer;
             req.data.stream.poolIndex = poolIndex;
@@ -37,7 +37,7 @@ namespace dalia {
             return req;
         }
 
-        static IoRequest ReleaseStream(uint16_t poolIndex) {
+        static IoRequest ReleaseStream(uint32_t poolIndex) {
             IoRequest req;
             req.type = Type::ReleaseStream;
             req.data.stream.poolIndex = poolIndex;

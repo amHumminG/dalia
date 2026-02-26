@@ -1,7 +1,8 @@
 #pragma once
-#include "Result.h"
-#include "LogLevel.h"
+#include "dalia/core/Result.h"
+#include "dalia/core/LogLevel.h"
 #include <memory>
+#include <vector>
 #include <thread> // [Release Note] Remove this
 
 struct ma_device;
@@ -14,7 +15,7 @@ namespace dalia {
 	template<typename T>
 	class SPSCRingBuffer;
 	struct Voice;
-	struct VoiceSlot;
+	struct VoiceMirror;
 	struct StreamingContext;
 	class Bus;
 
@@ -68,9 +69,15 @@ namespace dalia {
 		// Pools
 		std::unique_ptr<Voice[]>					m_voicePool;
 		std::unique_ptr<StreamingContext[]>			m_streamPool;
-		std::unique_ptr<SPSCRingBuffer<uint16_t>>	m_freeStreamQueue;
 		std::unique_ptr<Bus[]>						m_busPool;
 		std::unique_ptr<float[]>					m_busMemoryPool;
+
+		// Availability Containers
+		std::unique_ptr<SPSCRingBuffer<uint32_t>>	m_freeStreamQueue;
+		std::vector<uint32_t>						m_freeVoices;
+
+		// Mirrors
+		std::unique_ptr<VoiceMirror[]>				m_voicePoolMirror;
 
 		// References
 		Bus* m_masterBus = nullptr;
