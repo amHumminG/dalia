@@ -12,8 +12,8 @@ namespace dalia {
 	class AudioCommandQueue;
 	class AudioEventQueue;
 	class IoRequestQueue;
-	template<typename T>
-	class SPSCRingBuffer;
+	template<typename T> class FixedStack;
+	template<typename T> class SPSCRingBuffer;
 	struct Voice;
 	struct VoiceMirror;
 	struct StreamingContext;
@@ -35,8 +35,8 @@ namespace dalia {
 
 	class AudioEngine {
 	public:
-		AudioEngine();
-		~AudioEngine();
+		AudioEngine() = default;
+		~AudioEngine() = default;
 
 		Result Init(const EngineConfig& config);
 		Result Deinit();
@@ -56,30 +56,30 @@ namespace dalia {
 		std::thread m_ioThread;
 		std::atomic<bool> m_ioThreadRunning = false;
 
-		// Thread communication queues
+		// --- Messaging Queues ---
 		std::unique_ptr<AudioCommandQueue>	m_audioCommandQueue;
 		std::unique_ptr<AudioEventQueue>	m_audioEventQueue;
 		std::unique_ptr<IoRequestQueue>		m_ioRequestQueue;
 
-		// Resource Capacities
+		// --- Resource Capacities ---
 		uint32_t m_voiceCapacity	= 0;
 		uint32_t m_streamCapacity	= 0;
 		uint32_t m_busCapacity		= 0;
 
-		// Pools
+		// --- Pools ---
 		std::unique_ptr<Voice[]>					m_voicePool;
+		std::unique_ptr<VoiceMirror[]>				m_voicePoolMirror;
 		std::unique_ptr<StreamingContext[]>			m_streamPool;
 		std::unique_ptr<Bus[]>						m_busPool;
+		// We probably need a bus mirror too
 		std::unique_ptr<float[]>					m_busMemoryPool;
 
-		// Availability Containers
-		std::unique_ptr<SPSCRingBuffer<uint32_t>>	m_freeStreamQueue;
-		std::vector<uint32_t>						m_freeVoices;
-
-		// Mirrors
-		std::unique_ptr<VoiceMirror[]>				m_voicePoolMirror;
-
-		// References
+		// --- References ---
 		Bus* m_masterBus = nullptr;
+
+		// --- Availability Containers ---
+		std::unique_ptr<FixedStack<uint32_t>>		m_freeVoices;
+		std::unique_ptr<SPSCRingBuffer<uint32_t>>	m_freeStreams;
+		// We probably need a m_freeBuses too
 	};
 }
