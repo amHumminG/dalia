@@ -17,8 +17,8 @@ set(ENGINE_FILES
     include/dalia/Core/Result.h
 
     # Internal headers and cpp-files
-    src/backend/miniaudio_impl.cpp
     src/AudioEngine.cpp
+    src/backend/miniaudio_impl.cpp
     src/messaging/AudioCommandQueue.h
     src/messaging/AudioCommandQueue.cpp
     src/messaging/AudioEventQueue.h
@@ -27,6 +27,7 @@ set(ENGINE_FILES
     src/messaging/IoRequestQueue.h
     src/core/Logger.h
     src/core/Logger.cpp
+    src/core/FixedStack.h
     src/core/SPSCRingBuffer.h
     src/core/MPSCRingBuffer.h
     src/mixer/Voice.h
