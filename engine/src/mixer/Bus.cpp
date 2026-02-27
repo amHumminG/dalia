@@ -1,5 +1,5 @@
 #pragma once
-#include "../Bus.h"
+#include "Bus.h"
 
 #include <algorithm>
 
