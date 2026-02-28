@@ -25,10 +25,10 @@ namespace dalia {
 		size_t ioQueueCapacity = 256;
 	};
 
-	class AudioEngine {
+	class Engine {
 	public:
-		AudioEngine();
-		~AudioEngine();
+		Engine();
+		~Engine();
 
 		Result Init(const EngineConfig& config);
 		Result Deinit();

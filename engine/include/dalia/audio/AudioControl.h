@@ -12,7 +12,7 @@ namespace dalia {
 		bool operator==(const AudioHandle& other) const { return uuid == other.uuid; }
 		bool operator!=(const AudioHandle& other) const { return uuid != other.uuid; }
 
-		friend class AudioEngine;
+		friend class Engine;
 
 	private:
 		static AudioHandle Create(uint32_t index, uint32_t generation) {

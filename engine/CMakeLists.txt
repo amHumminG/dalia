@@ -11,13 +11,13 @@ set(MINIAUDIO_INCLUDE_DIR ${miniaudio_SOURCE_DIR})
 set(ENGINE_FILES
     # Public headers
     include/dalia.h
-    include/dalia/audio/AudioEngine.h
+    include/dalia/audio/Engine.h
     include/dalia/audio/AudioControl.h
     include/dalia/Core/LogLevel.h
     include/dalia/Core/Result.h
 
     # Internal headers and cpp-files
-    src/AudioEngine.cpp
+    src/Engine.cpp
     src/backend/miniaudio_impl.cpp
     src/messaging/AudioCommandQueue.h
     src/messaging/AudioCommandQueue.cpp

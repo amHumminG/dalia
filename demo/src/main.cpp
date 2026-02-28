@@ -11,11 +11,11 @@
 int main() {
 	using namespace dalia;
 
-	// Testing AudioEngine
+	// Testing Engine
 	{
 		std::cout << "Testing Engine Init/Deinit" << std::endl;
 
-		AudioEngine engine;
+		Engine engine;
 		EngineConfig config;
 		config.logLevel = LogLevel::Debug;
 		Result result = engine.Init(config);

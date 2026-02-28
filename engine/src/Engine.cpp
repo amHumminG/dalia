@@ -1,4 +1,4 @@
-#include "dalia/audio/AudioEngine.h"
+#include "dalia/audio/Engine.h"
 #include "dalia/audio/AudioControl.h"
 #include "core/Logger.h"
 #include "core/FixedStack.h"
@@ -122,10 +122,10 @@ namespace dalia {
 	};
 
 
-	AudioEngine::AudioEngine() = default;
-	AudioEngine::~AudioEngine() = default;
+	Engine::Engine() = default;
+	Engine::~Engine() = default;
 
-	Result AudioEngine::Init(const EngineConfig& config) {
+	Result Engine::Init(const EngineConfig& config) {
 		Logger::Init(config.logLevel, 256);
 
 		if (m_state) {
@@ -173,14 +173,14 @@ namespace dalia {
 
 		// --- I/O Thread Start ---
 		m_state->ioThreadRunning.store(true, std::memory_order_relaxed);
-		m_state->ioThread = std::thread(&AudioEngine::IoThreadMain, this);
+		m_state->ioThread = std::thread(&Engine::IoThreadMain, this);
 
 		m_state->initialized = true;
-		Logger::Log(LogLevel::Info, "Engine", "Initialized Audio Engine");
+		Logger::Log(LogLevel::Info, "Engine", "Initialized engine");
 		return Result::Ok;
 	}
 
-	Result AudioEngine::Deinit() {
+	Result Engine::Deinit() {
 		if (!m_state) {
 			Logger::Log(LogLevel::Warning, "Engine", "Attempting to deinitialize engine that is not initialized");
 			return Result::NotInitialized;
@@ -198,12 +198,12 @@ namespace dalia {
 		ma_device_uninit(m_state->device.get());
 
 		m_state->initialized = false;
-		Logger::Log(LogLevel::Info, "Engine", "Deinitialized Audio Engine");
+		Logger::Log(LogLevel::Info, "Engine", "Deinitialized engine");
 		Logger::ProcessLogs(); // Drain the log buffer before shutdown
 		return Result::Ok;
 	}
 
-	void AudioEngine::Update() {
+	void Engine::Update() {
 		if (!m_state->initialized) return;
 
 		// Process AudioEvents
@@ -212,6 +212,7 @@ namespace dalia {
 			switch (ev.type) {
 				case AudioEvent::Type::VoiceFinished: {
 					// TODO: Implement
+					// Trigger callback
 				}
 				case AudioEvent::Type::PlaybackError: {
 					// TODO: Implement
@@ -233,15 +234,15 @@ namespace dalia {
 		Logger::ProcessLogs(); // Print all logs accumulated from this frame
 	}
 
-	void AudioEngine::data_callback(ma_device* pDevice, void* pOutput, const void* pInput, uint32_t frameCount) {
-		AudioEngine* engine = static_cast<AudioEngine*>(pDevice->pUserData);
+	void Engine::data_callback(ma_device* pDevice, void* pOutput, const void* pInput, uint32_t frameCount) {
+		Engine* engine = static_cast<Engine*>(pDevice->pUserData);
 
 		engine->ProcessCommands();
 
 		engine->Render(static_cast<float*>(pOutput), frameCount);
 	}
 
-	void AudioEngine::IoThreadMain() {
+	void Engine::IoThreadMain() {
 		while (m_state->ioThreadRunning.load(std::memory_order_relaxed)) {
 			bool didWork = false;
 			IoRequest req;
@@ -284,7 +285,7 @@ namespace dalia {
 		}
 	}
 
-	void AudioEngine::ProcessCommands() {
+	void Engine::ProcessCommands() {
 		// We should probably set a limit on the amount of commands we process in one audio frame
 		// Process AudioCommands
 		AudioCommand cmd;
@@ -323,7 +324,7 @@ namespace dalia {
 		}
 	}
 
-	void AudioEngine::Render(float* output, uint32_t frameCount) {
+	void Engine::Render(float* output, uint32_t frameCount) {
 		const uint32_t sampleCount = frameCount * m_state->device->playback.channels;
 
 		// Clear all buses in the graph
@@ -365,7 +366,7 @@ namespace dalia {
 		std::copy_n(masterBuffer.data(), sampleCount, output);
 	}
 
-	bool AudioEngine::MixVoiceToBus(Voice& voice, uint32_t busIndex, uint32_t frameCount) {
+	bool Engine::MixVoiceToBus(Voice& voice, uint32_t busIndex, uint32_t frameCount) {
 		std::span<float> busBuffer = m_state->busPool[busIndex].GetBuffer();
 		uint32_t framesMixed = 0;
 
@@ -460,7 +461,7 @@ namespace dalia {
 		return true;
 	}
 
-	void AudioEngine::BuildBusGraph() {
+	void Engine::BuildBusGraph() {
 		bool writingToListA = !m_state->isAudioUsingGraphA;
 		auto& targetList = writingToListA ? m_state->busExecutionGraph->listA : m_state->busExecutionGraph->listB;
 		uint32_t sortedCount = 0;
@@ -520,4 +521,3 @@ namespace dalia {
 		m_state->isGraphSwapPending = true;
 	}
 }
-
