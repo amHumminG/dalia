@@ -7,6 +7,7 @@
 namespace dalia {
 
     static constexpr size_t MAX_FRAMES_PER_RENDER = 1024;
+    static constexpr uint32_t NO_PARENT = INT32_MAX;
 
     class Bus {
     public:
@@ -14,20 +15,17 @@ namespace dalia {
         ~Bus() = default;
         void SetName(const std::string& name);
         void SetBuffer(std::span<float> buffer);
-        std::span<float> getBuffer() const;
+        std::span<float> GetBuffer() const;
         void Clear();
-        void Pull(std::span<float> outputBuffer, uint32_t sampleCount);
-        void AddChild(Bus* child);
+        void ApplyDSP(uint32_t sampleCount);
+        void MixInBuffer(std::span<float> inBuffer, uint32_t sampleCount);
+
+        uint32_t parentIndex;
 
     private:
-        void ApplyGain();
-
         std::string m_name; // Do we just use this for debug?
         float m_volume = 1.0f;
 
         std::span<float> m_buffer;
-
-        Bus* m_children[8];
-        size_t m_childCount = 0;
     };
 }

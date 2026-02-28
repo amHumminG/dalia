@@ -11,6 +11,7 @@ namespace dalia {
 			Pause,
 			Stop,
 			SetVolume,
+			SwapGraph,
 			// ...
 		};
 		Type type = Type::None;
@@ -21,6 +22,7 @@ namespace dalia {
 			float fvalue;
 			bool bvalue;
 			struct { float x, y, z; } vector3;
+			struct { bool useListA; uint32_t nodeCount; } graph;
 		} data = {};
 
 		static AudioCommand Play() {
@@ -40,6 +42,14 @@ namespace dalia {
 
 		static AudioCommand SetVolume() {
 			AudioCommand cmd;
+			return cmd;
+		}
+
+		 static AudioCommand SwapGraph(bool useListA, uint32_t nodeCount) {
+			AudioCommand cmd;
+			cmd.type = AudioCommand::Type::SwapGraph;
+			cmd.data.graph.useListA = useListA;
+			cmd.data.graph.nodeCount = nodeCount;
 			return cmd;
 		}
 	};

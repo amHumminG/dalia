@@ -34,7 +34,26 @@ namespace dalia {
 		// We probably keep other voice data here too (volume etc.)
 	};
 
+	struct BusMirror {
+		bool isBusy = false;
+		uint32_t generation = 0;
+		uint32_t parentBusIndex = NO_PARENT;
 
+		// We probably keep other bus data here too (volume etc.)
+	};
+
+	struct ExecutionGraph {
+		std::unique_ptr<uint32_t[]> listA;
+		std::unique_ptr<uint32_t[]> listB;
+	};
+
+	struct EngineInternalState {
+		bool initialized = false;
+
+		// Miniaudio & Threads
+		std::unique_ptr<ma_device> device;
+		std::thread ioThread;
+		std::atomic<bool> ioThreadRunning{false};
 
 		// --- Messaging Queues ---
 		std::unique_ptr<AudioCommandQueue>	audioCommandQueue;
@@ -57,6 +76,14 @@ namespace dalia {
 		std::unique_ptr<VoiceMirror[]>		voicePoolMirror;
 		std::unique_ptr<BusMirror[]>		busPoolMirror;
 
+		// -- Bus Execution Graph ---
+		std::unique_ptr<ExecutionGraph>			busExecutionGraph;
+		std::span<const uint32_t>				activeBusGraph;
+		std::unique_ptr<uint32_t[]>				topologyScratchCount;
+		std::unique_ptr<FixedStack<uint32_t>>	topologyLeavesStack;
+		bool isAudioUsingGraphA = true;
+		bool isBusGraphDirty = false;
+		bool isGraphSwapPending = false;
 
 		// --- Availability Containers ---
 		std::unique_ptr<FixedStack<uint32_t>>		freeVoices;
@@ -76,6 +103,11 @@ namespace dalia {
 			streamPool		= std::make_unique<StreamingContext[]>(streamCapacity);
 			busPool			= std::make_unique<Bus[]>(busCapacity);
 			busPoolMirror	= std::make_unique<BusMirror[]>(busCapacity);
+
+			// Bus graph
+			busExecutionGraph		= std::make_unique<ExecutionGraph>();
+			topologyScratchCount	= std::make_unique<uint32_t[]>(busCapacity);
+			topologyLeavesStack		= std::make_unique<FixedStack<uint32_t>>(busCapacity);
 
 			// Availability Containers
 			freeVoices	= std::make_unique<FixedStack<uint32_t>>(voiceCapacity);
@@ -184,13 +216,21 @@ namespace dalia {
 				case AudioEvent::Type::PlaybackError: {
 					// TODO: Implement
 				}
+				case AudioEvent::Type::GraphSwapped: {
+					m_state->isAudioUsingGraphA = !m_state->isAudioUsingGraphA;
+					m_state->isGraphSwapPending = false;
+				}
 			}
 		}
 
-		// Send all commands accumulated from this frame to the audio thread
-		m_state->audioCommandQueue->Dispatch();
+		// Handle bus graph topology changes
+		if (m_state->isBusGraphDirty && !m_state->isGraphSwapPending) {
+			BuildBusGraph();
+			m_state->isBusGraphDirty = false;
+		}
 
-		Logger::ProcessLogs();
+		m_state->audioCommandQueue->Dispatch(); // Send all commands accumulated from this frame to the audio thread
+		Logger::ProcessLogs(); // Print all logs accumulated from this frame
 	}
 
 	void AudioEngine::data_callback(ma_device* pDevice, void* pOutput, const void* pInput, uint32_t frameCount) {
@@ -259,6 +299,23 @@ namespace dalia {
 				case AudioCommand::Type::Stop: {
 					// TODO: Implement
 				}
+				case AudioCommand::Type::SwapGraph: {
+					if (cmd.data.graph.useListA) {
+						m_state->activeBusGraph = std::span<const uint32_t>(
+							m_state->busExecutionGraph->listA.get(),
+							cmd.data.graph.nodeCount
+						);
+					}
+					else {
+						m_state->activeBusGraph = std::span<const uint32_t>(
+						m_state->busExecutionGraph->listB.get(),
+						cmd.data.graph.nodeCount
+						);
+					}
+
+					// Send event to acknowledge the swap
+					m_state->audioEventQueue->Push(AudioEvent::GraphSwapped());
+				}
 				default: {
 					break;
 				}
@@ -267,35 +324,49 @@ namespace dalia {
 	}
 
 	void AudioEngine::Render(float* output, uint32_t frameCount) {
-		// Clear all bus buffers
-		for (uint32_t i = 0; i < m_state->busCapacity; i++) {
-			Bus& bus = m_state->busPool[i];
-			bus.Clear();
+		const uint32_t sampleCount = frameCount * m_state->device->playback.channels;
+
+		// Clear all buses in the graph
+		for (uint32_t busIndex : m_state->activeBusGraph) {
+			m_state->busPool[busIndex].Clear();
 		}
 
-		// Mix all voices into their parent bus
+		// --- Voice Pass --- (Parallel ready when the time comes)
 		for (uint32_t i = 0; i < m_state->voiceCapacity; i++) {
 			Voice& voice = m_state->voicePool[i];
-			if (!voice.isPlaying) {
-				// If voice has finished playing, handle that here
-				continue;
-			}
+			if (!voice.isPlaying) continue;
 
-			bool busy = MixVoiceToBus(voice, voice.parentBus, frameCount);
-			// set busy value in game thread voice slot array
+			bool isStillPlaying = MixVoiceToBus(voice, voice.parentBusIndex, frameCount);
+			if (!isStillPlaying) {
+				// Voice finished
+				m_state->audioEventQueue->Push(AudioEvent::VoiceFinished(i));
+				voice.Reset();
+			}
 		}
 
-		// Create a std::span from output buffer and clear it
-		auto outputBuffer = std::span<float>(output, frameCount * m_state->device->playback.channels);
-		std::ranges::fill(outputBuffer, 0.0f);
+		// --- Bus Pass --- (Not yet parallel ready)
+		for (uint32_t busIndex : m_state->activeBusGraph) {
+			Bus& bus = m_state->busPool[busIndex];
+			bus.ApplyDSP(sampleCount);
 
-		// Recursive audio graph pull
-		const uint32_t sampleCount = frameCount * m_state->device->playback.channels;
-		m_state->masterBus->Pull(outputBuffer, sampleCount);
+			// Maybe we just replace this with a bus->MixToParent(uint32_t sampleCount)?
+			uint32_t parentIndex = bus.parentIndex;
+			if (parentIndex != NO_PARENT) {
+				Bus& parentBus = m_state->busPool[parentIndex];
+				parentBus.MixInBuffer(bus.GetBuffer(), sampleCount);
+			}
+		}
+
+		// Final Output (clamped between -1.0f and 1.0f
+		auto masterBuffer = m_state->masterBus->GetBuffer();
+		for (uint32_t i = 0; i < sampleCount; i++) {
+			masterBuffer[i] = std::clamp(masterBuffer[i], -1.0f, 1.0f);
+		}
+		std::copy_n(masterBuffer.data(), sampleCount, output);
 	}
 
-	bool AudioEngine::MixVoiceToBus(Voice& voice, Bus* bus, uint32_t frameCount) {
-		float* busBufferData = bus->getBuffer().data();
+	bool AudioEngine::MixVoiceToBus(Voice& voice, uint32_t busIndex, uint32_t frameCount) {
+		std::span<float> busBuffer = m_state->busPool[busIndex].GetBuffer();
 		uint32_t framesMixed = 0;
 
 		while (framesMixed < frameCount) {
@@ -324,7 +395,7 @@ namespace dalia {
 			uint32_t remainingInSource = framesInSource - static_cast<uint32_t>(voice.cursor);
 			uint32_t framesToProcessNow = std::min(frameCount - framesMixed, remainingInSource);
 
-			// Apply pan and volume
+			// --- Panning & DSP ---
 			const float panNormalized = (voice.pan + 1.0f) * 0.5f;
 			const float angle = panNormalized * static_cast<float>(M_PI_2); // Angle between 0 and PI/2 radians
 			const float gainL = std::cos(angle) * voice.volume;
@@ -332,9 +403,9 @@ namespace dalia {
 
 			for (uint32_t i = 0; i < framesToProcessNow; i++) {
 				float sample = sourceData[static_cast<size_t>(voice.cursor) * voice.channels];
-				uint32_t busIndex = (framesMixed + i) * 2; // 2 Channels
-				busBufferData[busIndex + 0] += sample * gainL;
-				busBufferData[busIndex + 1] += sample * gainR;
+				uint32_t targetIndex = (framesMixed + i) * 2; // 2 Channels
+				busBuffer[targetIndex + 0] += sample * gainL;
+				busBuffer[targetIndex + 1] += sample * gainR;
 
 				voice.cursor += 1.0f;
 			}
@@ -387,6 +458,66 @@ namespace dalia {
 		}
 
 		return true;
+	}
+
+	void AudioEngine::BuildBusGraph() {
+		bool writingToListA = !m_state->isAudioUsingGraphA;
+		auto& targetList = writingToListA ? m_state->busExecutionGraph->listA : m_state->busExecutionGraph->listB;
+		uint32_t sortedCount = 0;
+		uint32_t activeBusCount = 0; // For cycle detection
+
+		// Clear pre-allocated containers
+		std::fill_n(m_state->topologyScratchCount.get(), m_state->busCapacity, 0);
+		m_state->topologyLeavesStack->Clear();
+
+		// Calculate the amount of children each bus has
+		for (uint32_t i = 0; i < m_state->busCapacity; i++) {
+			if (m_state->busPoolMirror[i].isBusy) {
+				activeBusCount++;
+				uint32_t parent = m_state->busPoolMirror[i].parentBusIndex;
+				if (parent != NO_PARENT) {
+					m_state->topologyScratchCount[parent]++;
+				}
+			}
+		}
+
+		// Find the buses with no children (leaves)
+		for (uint32_t i = 0; i < m_state->busCapacity; i++) {
+			if (m_state->busPoolMirror[i].isBusy && m_state->topologyScratchCount[i] == 0) {
+				m_state->topologyLeavesStack->Push(i);
+			}
+		}
+
+		// Kahn's algorithm (process from leaves to root)
+		while (!m_state->topologyLeavesStack->IsEmpty()) {
+			uint32_t currentBus;
+			m_state->topologyLeavesStack->Pop(currentBus);
+
+			// Add it to execution list
+			targetList[sortedCount] = currentBus;
+			sortedCount++;
+
+			// Tell the parent that one of its children is sorted
+			uint32_t parent = m_state->busPoolMirror[currentBus].parentBusIndex;
+			if (parent != NO_PARENT) {
+				m_state->topologyScratchCount[parent]--;
+
+				// If the parent has no more pending children, it is ready to be processed
+				if (m_state->topologyScratchCount[parent] == 0) {
+					m_state->topologyLeavesStack->Push(parent);
+				}
+			}
+		}
+
+		// This should never happen!
+		if (sortedCount != activeBusCount) {
+			Logger::Log(LogLevel::Critical, "Bus Graph", "Cycle detected in bus graph. Graph update aborted.");
+			return;
+		}
+
+		// Send command to swap list
+		m_state->audioCommandQueue->Enqueue(AudioCommand::SwapGraph(writingToListA, sortedCount));
+		m_state->isGraphSwapPending = true;
 	}
 }
 

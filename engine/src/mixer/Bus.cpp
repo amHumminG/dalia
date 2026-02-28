@@ -12,7 +12,7 @@ namespace dalia {
         m_buffer = buffer;
     }
 
-    std::span<float> Bus::getBuffer() const {
+    std::span<float> Bus::GetBuffer() const {
         return m_buffer;
     }
 
@@ -20,15 +20,24 @@ namespace dalia {
         std::ranges::fill(m_buffer, 0.0f);
     }
 
-    void Bus::Pull(std::span<float> outputBuffer, uint32_t sampleCount) {
-        for (size_t i = 0; i < m_childCount; i++) {
-            m_children[i]->Pull(m_buffer, sampleCount);
+    void Bus::ApplyDSP(uint32_t sampleCount) {
+        if (m_volume == 1.0f) return;
+
+        if (m_volume <= 0.0f) {
+            std::ranges::fill(m_buffer.subspan(0, sampleCount), 0.0f);
+            return;
         }
 
-        // Apply effects here
+        for (uint32_t i = 0; i < sampleCount; i++) {
+            m_buffer[i] *= m_volume;
+        }
 
-        for (size_t i = 0; i < sampleCount; i++) {
-            outputBuffer[i] += m_buffer[i];
+        // This is where we apply effects and filters in the future!
+    }
+
+    void Bus::MixInBuffer(std::span<float> inBuffer, uint32_t sampleCount) {
+        for (uint32_t i = 0; i < sampleCount; i++) {
+            m_buffer[i] += inBuffer[i];
         }
     }
 }

@@ -41,7 +41,7 @@ namespace dalia {
 
 		void ProcessCommands();
 		void Render(float* outputBuffer, uint32_t frameCount);
-		bool MixVoiceToBus(Voice& voice, Bus* bus, uint32_t frameCount);
+		bool MixVoiceToBus(Voice& voice, uint32_t busIndex, uint32_t frameCount);
 		void BuildBusGraph();
 
 		std::unique_ptr<EngineInternalState> m_state;

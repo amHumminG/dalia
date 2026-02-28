@@ -19,7 +19,7 @@ namespace dalia {
         uint32_t assetID = 0;
 
         // Bus routing
-        Bus* parentBus;
+        uint32_t parentBusIndex;
 
         // Playback
         bool isPlaying = false;
@@ -37,7 +37,7 @@ namespace dalia {
 
         // To be used before a new sound is played by voice
         void Reset() {
-            parentBus = nullptr;
+            parentBusIndex = 0;
             isPlaying = false;
             isLooping = false;
             volume = 1.0f;

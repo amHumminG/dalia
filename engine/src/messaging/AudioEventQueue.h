@@ -9,7 +9,7 @@ namespace dalia {
 			None,
 			VoiceFinished,
 			PlaybackError,
-			BeatMarker, // Could be useful for rythm games maybe
+			GraphSwapped
 			// ...
 		};
 		Type type = Type::None;
@@ -17,13 +17,19 @@ namespace dalia {
 		uint32_t generation; // Might be useless here?
 		// Maybe this should have data as well?
 
-		static AudioEvent VoiceFinished() {
+		static AudioEvent VoiceFinished(uint32_t voicePoolIndex) {
 			AudioEvent ev;
 			return ev;
 		}
 
 		static AudioEvent PlaybackError() {
 			AudioEvent ev;
+			return ev;
+		}
+
+		static AudioEvent GraphSwapped() {
+			AudioEvent ev;
+			ev.type = AudioEvent::Type::GraphSwapped;
 			return ev;
 		}
 

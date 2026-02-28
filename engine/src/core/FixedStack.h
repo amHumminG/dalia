@@ -30,6 +30,7 @@ namespace dalia {
             return true;
         }
 
+        void Clear() { m_size = 0; };
         bool IsEmpty() const { return m_size == 0; }
         bool IsFull() const { return m_size >= m_capacity; }
         size_t Size() const { return m_size; }
