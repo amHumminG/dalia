@@ -1,5 +1,5 @@
 #pragma once
-#include "dalia/audio/AudioControl.h"
+#include "dalia/audio/SoundControl.h"
 #include "../core/SPSCRingBuffer.h"
  
 namespace dalia {
