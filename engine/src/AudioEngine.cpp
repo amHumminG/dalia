@@ -30,55 +30,81 @@ namespace dalia {
 		void* callbackOnFinished = nullptr;
 		AudioEventCallback callback = nullptr;
 		void* userData = nullptr;
+
+		// We probably keep other voice data here too (volume etc.)
 	};
+
+
+
+		// --- Messaging Queues ---
+		std::unique_ptr<AudioCommandQueue>	audioCommandQueue;
+		std::unique_ptr<AudioEventQueue>	audioEventQueue;
+		std::unique_ptr<IoRequestQueue>		ioRequestQueue;
+
+		// --- Resource Capacities ---
+		uint32_t voiceCapacity	= 0;
+		uint32_t streamCapacity	= 0;
+		uint32_t busCapacity	= 0;
+
+		// --- Pools (Audio Thread) ---
+		std::unique_ptr<Voice[]>				voicePool;
+		std::unique_ptr<StreamingContext[]>		streamPool;
+		std::unique_ptr<Bus[]>					busPool;
+		std::unique_ptr<float[]>				busMemoryPool;
+		Bus* masterBus = nullptr;
+
+		// --- Mirrors (Game Thread) ---
+		std::unique_ptr<VoiceMirror[]>		voicePoolMirror;
+		std::unique_ptr<BusMirror[]>		busPoolMirror;
+
+
+		// --- Availability Containers ---
+		std::unique_ptr<FixedStack<uint32_t>>		freeVoices;
+		std::unique_ptr<SPSCRingBuffer<uint32_t>>	freeStreams;
+		std::unique_ptr<FixedStack<uint32_t>>		freeBuses;
+
+		EngineInternalState(const EngineConfig& config)
+			: voiceCapacity(config.voiceCapacity), streamCapacity(config.streamCapacity), busCapacity(config.busCapacity) {
+			// Message Queues
+			audioCommandQueue	= std::make_unique<AudioCommandQueue>(config.commandQueueCapacity);
+			audioEventQueue		= std::make_unique<AudioEventQueue>(config.eventQueueCapacity);
+			ioRequestQueue		= std::make_unique<IoRequestQueue>(config.ioQueueCapacity);
+
+			// Pools
+			voicePool		= std::make_unique<Voice[]>(voiceCapacity);
+			voicePoolMirror	= std::make_unique<VoiceMirror[]>(voiceCapacity);
+			streamPool		= std::make_unique<StreamingContext[]>(streamCapacity);
+			busPool			= std::make_unique<Bus[]>(busCapacity);
+			busPoolMirror	= std::make_unique<BusMirror[]>(busCapacity);
+
+			// Availability Containers
+			freeVoices	= std::make_unique<FixedStack<uint32_t>>(voiceCapacity);
+			freeStreams = std::make_unique<SPSCRingBuffer<uint32_t>>(streamCapacity);
+			freeBuses	= std::make_unique<FixedStack<uint32_t>>(busCapacity);
+			for (uint32_t i = 0; i < voiceCapacity; i++)	freeVoices->Push(i);
+			for (uint32_t i = 0; i < streamCapacity; i++)	freeStreams->Push(i);
+			for (uint32_t i = 1; i < busCapacity; i++)		freeBuses->Push(i); // Skip Master (index 0)
+		}
+
+
+	};
+
+
+	AudioEngine::AudioEngine() = default;
+	AudioEngine::~AudioEngine() = default;
 
 	Result AudioEngine::Init(const EngineConfig& config) {
 		Logger::Init(config.logLevel, 256);
 
-		if (m_initialized) {
+		if (m_state) {
 			Logger::Log(LogLevel::Warning, "Engine", "Attempting to initialize engine that is already initialized");
 			return Result::AlreadyInitialized;
 		}
 
-		// --- Messaging Queues ---
-		m_audioCommandQueue = std::make_unique<AudioCommandQueue>(config.commandQueueCapacity);
-		m_audioEventQueue = std::make_unique<AudioEventQueue>(config.eventQueueCapacity);
-		m_ioRequestQueue = std::make_unique<IoRequestQueue>(config.ioQueueCapacity);
-
-		// --- Resource Capacities ---
-		m_voiceCapacity = config.voiceCapacity;
-		m_streamCapacity = config.streamCapacity;
-		m_busCapacity = config.busCapacity;
-
-		// --- Pools ---
-		m_voicePool = std::make_unique<Voice[]>(m_voiceCapacity);
-		m_voicePoolMirror = std::make_unique<VoiceMirror[]>(m_voiceCapacity);
-		m_streamPool = std::make_unique<StreamingContext[]>(m_streamCapacity);
-		m_busPool = std::make_unique<Bus[]>(m_busCapacity);
-		// Setup bus memory pool (Room for 1024 frames) maybe we should check this against m_periodSize?
-		const uint32_t samplesPerBus = 1024 * m_device->playback.channels;
-		m_busMemoryPool = std::make_unique<float[]>(m_busCapacity * samplesPerBus);
-
-		// --- Availability Containers ---
-		m_freeVoices = std::make_unique<FixedStack<uint32_t>>(m_voiceCapacity);
-		for (uint32_t i = 0; i < m_voiceCapacity; i++) m_freeVoices->Push(i);
-		m_freeStreams = std::make_unique<SPSCRingBuffer<uint32_t>>(m_streamCapacity);
-		for (uint32_t i = 0; i < m_streamCapacity; i++) m_freeStreams->Push(i);
-
-
-		// FIXME: This makes no sense!
-		// Master bus initialization
-		m_masterBus = &m_busPool[0];
-		m_masterBus->SetName("Master");
-		// Bus initialization
-		for (uint32_t i = 1; i < m_busCapacity; i++) {
-			float* busStart = &m_busMemoryPool[i * samplesPerBus];
-			m_busPool[i].SetBuffer(std::span<float>(busStart, samplesPerBus));
-			m_busPool[i].SetName("Bus_" + std::to_string(i));
-		}
+		m_state = std::make_unique<EngineInternalState>(config);
 
 		// --- Device Setup ---
-		m_device = std::make_unique<ma_device>();
+		m_state->device = std::make_unique<ma_device>();
 		ma_device_config deviceConfig = ma_device_config_init(ma_device_type_playback);
 		deviceConfig.playback.format = ma_format_f32;
 		deviceConfig.playback.channels = 2; // Stereo playback only
@@ -87,57 +113,70 @@ namespace dalia {
 		deviceConfig.periodSizeInFrames = 480;
 		deviceConfig.pUserData = this;
 
-		if (ma_device_init(NULL, &deviceConfig, m_device.get()) != MA_SUCCESS) {
+		if (ma_device_init(NULL, &deviceConfig, m_state->device.get()) != MA_SUCCESS) {
 			Logger::Log(LogLevel::Critical, "Device", "Failed to initialize playback device");
 			return Result::DeviceFailed;
 		}
-		const uint32_t m_periodSize = m_device->playback.internalPeriodSizeInFrames;
+		const uint32_t m_periodSize = m_state->device->playback.internalPeriodSizeInFrames;
 		Logger::Log(LogLevel::Info, "Engine", "Internal Period Size: %d", m_periodSize);
 
+		// Bus buffer allocation and assignment
+		// Setup bus memory pool (Room for 1024 frames) maybe we should check this against m_periodSize?
+		const uint32_t samplesPerBus = 1024 * m_state->device->playback.channels;
+		m_state->busMemoryPool		= std::make_unique<float[]>(m_state->busCapacity * samplesPerBus);
+
+		// Bus buffer assigment
+		for (uint32_t i = 0; i < m_state->busCapacity; i++) {
+			float* busStart = &m_state->busMemoryPool[i * samplesPerBus];
+			m_state->busPool[i].SetBuffer(std::span<float>(busStart, samplesPerBus));
+		}
+		m_state->masterBus = &m_state->busPool[0];
+		m_state->masterBus->SetName("Master");
+
 		// --- Audio Thread Start ---
-		if (ma_device_start(m_device.get()) != MA_SUCCESS) {
+		if (ma_device_start(m_state->device.get()) != MA_SUCCESS) {
 			Logger::Log(LogLevel::Critical, "Device", "Failed to start playback device");
 			return Result::DeviceFailed;
 		}
 
 		// --- I/O Thread Start ---
-		m_ioThreadRunning.store(true, std::memory_order_relaxed);
-		m_ioThread = std::thread(&AudioEngine::IoThreadMain, this);
+		m_state->ioThreadRunning.store(true, std::memory_order_relaxed);
+		m_state->ioThread = std::thread(&AudioEngine::IoThreadMain, this);
 
-		m_initialized = true;
+		m_state->initialized = true;
 		Logger::Log(LogLevel::Info, "Engine", "Initialized Audio Engine");
 		return Result::Ok;
 	}
 
 	Result AudioEngine::Deinit() {
-		if (!m_initialized) {
+		if (!m_state) {
 			Logger::Log(LogLevel::Warning, "Engine", "Attempting to deinitialize engine that is not initialized");
 			return Result::NotInitialized;
 		}
 
 		// --- I/O Thread Stop ---
-		m_ioThreadRunning.store(false, std::memory_order_release);
-		if (m_ioThread.joinable()) m_ioThread.join();
+		m_state->ioThreadRunning.store(false, std::memory_order_release);
+		if (m_state->ioThread.joinable()) m_state->ioThread.join();
 
 		// --- Audio Thread Stop ---
-		if (ma_device_stop(m_device.get()) != MA_SUCCESS) {
+		if (ma_device_stop(m_state->device.get()) != MA_SUCCESS) {
 			Logger::Log(LogLevel::Critical, "Device", "Failed to stop playback device");
 			return Result::DeviceFailed;
 		}
-		ma_device_uninit(m_device.get());
+		ma_device_uninit(m_state->device.get());
 
-		m_initialized = false;
+		m_state->initialized = false;
 		Logger::Log(LogLevel::Info, "Engine", "Deinitialized Audio Engine");
 		Logger::ProcessLogs(); // Drain the log buffer before shutdown
 		return Result::Ok;
 	}
 
 	void AudioEngine::Update() {
-		if (!m_initialized) return;
+		if (!m_state->initialized) return;
 
 		// Process AudioEvents
 		AudioEvent ev;
-		while (m_audioEventQueue->Pop(ev)) {
+		while (m_state->audioEventQueue->Pop(ev)) {
 			switch (ev.type) {
 				case AudioEvent::Type::VoiceFinished: {
 					// TODO: Implement
@@ -149,7 +188,7 @@ namespace dalia {
 		}
 
 		// Send all commands accumulated from this frame to the audio thread
-		m_audioCommandQueue->Dispatch();
+		m_state->audioCommandQueue->Dispatch();
 
 		Logger::ProcessLogs();
 	}
@@ -163,17 +202,17 @@ namespace dalia {
 	}
 
 	void AudioEngine::IoThreadMain() {
-		while (m_ioThreadRunning.load(std::memory_order_relaxed)) {
+		while (m_state->ioThreadRunning.load(std::memory_order_relaxed)) {
 			bool didWork = false;
 			IoRequest req;
 
-			while (m_ioRequestQueue->Pop(req)) {
+			while (m_state->ioRequestQueue->Pop(req)) {
 				didWork = true;
 
 				// Handle requests
 				switch (req.type) {
 					case IoRequest::Type::RefillStreamBuffer: {
-						StreamingContext& stream = m_streamPool[req.data.stream.poolIndex];
+						StreamingContext& stream = m_state->streamPool[req.data.stream.poolIndex];
 
 						// Is the stream still valid?
 						if (stream.generation.load(std::memory_order_relaxed) != req.data.stream.generation) {
@@ -185,9 +224,9 @@ namespace dalia {
 						// from the start of the file to fill the entire buffer.
 					}
 					case IoRequest::Type::ReleaseStream: {
-						StreamingContext& stream = m_streamPool[req.data.stream.poolIndex];
+						StreamingContext& stream = m_state->streamPool[req.data.stream.poolIndex];
 						// TODO: Release decoder here (if StreamingContext has one)
-						m_freeStreams->Push(req.data.stream.poolIndex);
+						m_state->freeStreams->Push(req.data.stream.poolIndex);
 						break;
 					}
 					case IoRequest::Type::LoadSoundbank: {
@@ -209,7 +248,7 @@ namespace dalia {
 		// We should probably set a limit on the amount of commands we process in one audio frame
 		// Process AudioCommands
 		AudioCommand cmd;
-		while (m_audioCommandQueue->Pop(cmd)) {
+		while (m_state->audioCommandQueue->Pop(cmd)) {
 			switch (cmd.type) {
 				case AudioCommand::Type::Play: {
 					// TODO: Implement
@@ -229,14 +268,14 @@ namespace dalia {
 
 	void AudioEngine::Render(float* output, uint32_t frameCount) {
 		// Clear all bus buffers
-		for (uint32_t i = 0; i < m_busCapacity; i++) {
-			Bus& bus = m_busPool[i];
+		for (uint32_t i = 0; i < m_state->busCapacity; i++) {
+			Bus& bus = m_state->busPool[i];
 			bus.Clear();
 		}
 
 		// Mix all voices into their parent bus
-		for (uint32_t i = 0; i < m_voiceCapacity; i++) {
-			Voice& voice = m_voicePool[i];
+		for (uint32_t i = 0; i < m_state->voiceCapacity; i++) {
+			Voice& voice = m_state->voicePool[i];
 			if (!voice.isPlaying) {
 				// If voice has finished playing, handle that here
 				continue;
@@ -247,12 +286,12 @@ namespace dalia {
 		}
 
 		// Create a std::span from output buffer and clear it
-		auto outputBuffer = std::span<float>(output, frameCount * m_device->playback.channels);
+		auto outputBuffer = std::span<float>(output, frameCount * m_state->device->playback.channels);
 		std::ranges::fill(outputBuffer, 0.0f);
 
 		// Recursive audio graph pull
-		const uint32_t sampleCount = frameCount * m_device->playback.channels;
-		m_masterBus->Pull(outputBuffer, sampleCount);
+		const uint32_t sampleCount = frameCount * m_state->device->playback.channels;
+		m_state->masterBus->Pull(outputBuffer, sampleCount);
 	}
 
 	bool AudioEngine::MixVoiceToBus(Voice& voice, Bus* bus, uint32_t frameCount) {
@@ -268,7 +307,7 @@ namespace dalia {
 				framesInSource = static_cast<uint32_t>(voice.buffer.size() / voice.channels);
 			}
 			else if (voice.sourceType == VoiceSourceType::Stream) {
-				StreamingContext& stream = m_streamPool[voice.streamingContextIndex];
+				StreamingContext& stream = m_state->streamPool[voice.streamingContextIndex];
 				sourceData = stream.buffers[stream.frontBufferIndex];
 
 				// Check if we hit EOF this buffer and on what index
@@ -314,20 +353,20 @@ namespace dalia {
 					}
 				}
 				else if (voice.sourceType == VoiceSourceType::Stream) {
-					StreamingContext& stream = m_streamPool[voice.streamingContextIndex];
+					StreamingContext& stream = m_state->streamPool[voice.streamingContextIndex];
 
 					if (framesInSource < DOUBLE_BUFFER_CHUNK_SIZE) {
 						// Natural end of file -> Kill voice
 						// TODO: The two rows below should probably be part of some kind of releaseVoice function later on
 						stream.generation.fetch_add(1, std::memory_order_relaxed);
-						m_ioRequestQueue->Push(IoRequest::ReleaseStream(voice.streamingContextIndex));
+						m_state->ioRequestQueue->Push(IoRequest::ReleaseStream(voice.streamingContextIndex));
 
 						return false;
 					}
 
 					stream.bufferReady[stream.frontBufferIndex].store(false, std::memory_order_relaxed);
 					const uint32_t gen = stream.generation.load(std::memory_order_relaxed);
-					m_ioRequestQueue->Push(IoRequest::RefillStreamBuffer(voice.streamingContextIndex, gen, stream.frontBufferIndex));
+					m_state->ioRequestQueue->Push(IoRequest::RefillStreamBuffer(voice.streamingContextIndex, gen, stream.frontBufferIndex));
 
 					// Swap buffers
 					stream.frontBufferIndex = 1 - stream.frontBufferIndex;
@@ -338,7 +377,7 @@ namespace dalia {
 
 						// TODO: The two rows below should probably be part of some kind of releaseVoice function later on
 						stream.generation.fetch_add(1, std::memory_order_relaxed);
-						m_ioRequestQueue->Push(IoRequest::ReleaseStream(voice.streamingContextIndex));
+						m_state->ioRequestQueue->Push(IoRequest::ReleaseStream(voice.streamingContextIndex));
 
 						return false;
 					}
