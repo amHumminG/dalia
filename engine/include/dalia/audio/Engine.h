@@ -36,7 +36,6 @@ namespace dalia {
 
 	private:
 		static void data_callback(ma_device* pDevice, void* pOutput, const void* pInput, uint32_t frameCount);
-		void BuildBusGraph();
 
 		std::unique_ptr<EngineInternalState> m_state;
 	};

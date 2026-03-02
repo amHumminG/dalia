@@ -11,7 +11,7 @@ namespace dalia {
 			Pause,
 			Stop,
 			SetVolume,
-			SwapGraph,
+			SwapMixOrder,
 			// ...
 		};
 		Type type = Type::None;
@@ -45,9 +45,9 @@ namespace dalia {
 			return cmd;
 		}
 
-		 static RtCommand SwapGraph(uint32_t* ptr, uint32_t nodeCount) {
+		 static RtCommand SwapMixOrder(uint32_t* ptr, uint32_t nodeCount) {
 			RtCommand cmd;
-			cmd.type = RtCommand::Type::SwapGraph;
+			cmd.type = RtCommand::Type::SwapMixOrder;
 			cmd.data.graph.ptr = ptr;
 			cmd.data.graph.nodeCount = nodeCount;
 			return cmd;

@@ -38,6 +38,8 @@ set(ENGINE_FILES
     src/systems/RealTimeSystem.h
     src/systems/IoSystem.cpp
     src/systems/IoSystem.h
+    src/mixer/BusGraphCompiler.cpp
+    src/mixer/BusGraphCompiler.h
 )
 
 add_library(dalia_engine STATIC ${ENGINE_FILES})

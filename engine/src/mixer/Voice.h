@@ -1,4 +1,5 @@
 #pragma once
+#include "dalia/audio/SoundControl.h"
 #include <cstdint>
 #include <span>
 
@@ -45,5 +46,15 @@ namespace dalia {
             pan = 0.0f;
             cursor = 0.0f;
         }
+    };
+
+    struct VoiceMirror {
+        bool isBusy = false;
+        uint32_t generation = 0;
+        void* callbackOnFinished = nullptr;
+        AudioEventCallback callback = nullptr;
+        void* userData = nullptr;
+
+        // We probably keep other voice data here too (volume etc.)
     };
 }
