@@ -28,4 +28,12 @@ namespace dalia {
 
         std::span<float> m_buffer;
     };
+
+    struct BusMirror {
+        bool isBusy = false;
+        uint32_t generation = 0;
+        uint32_t parentBusIndex = NO_PARENT;
+
+        // We probably keep other bus data here too (volume etc.)
+    };
 }

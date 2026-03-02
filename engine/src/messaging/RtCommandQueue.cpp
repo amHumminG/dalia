@@ -1,18 +1,18 @@
-#include "AudioCommandQueue.h"
+#include "RtCommandQueue.h"
 #include "core/Logger.h"
 
 namespace dalia {
 
-	AudioCommandQueue::AudioCommandQueue(size_t commandCapacity)
+	RtCommandQueue::RtCommandQueue(size_t commandCapacity)
 		: m_buffer(commandCapacity) {
 		m_stagingArea.reserve(commandCapacity);
 	}
 
-	void AudioCommandQueue::Enqueue(const AudioCommand& command) {
+	void RtCommandQueue::Enqueue(const RtCommand& command) {
 		m_stagingArea.push_back(command);
 	}
 
-	void AudioCommandQueue::Dispatch() {
+	void RtCommandQueue::Dispatch() {
 		size_t commandsPushed = 0;
 		for (const auto& command : m_stagingArea) {
 			if (!m_buffer.Push(command)) {
@@ -29,7 +29,7 @@ namespace dalia {
 		}
 	}
 
-	bool AudioCommandQueue::Pop(AudioCommand& command) {
+	bool RtCommandQueue::Pop(RtCommand& command) {
 		if (!m_buffer.Pop(command)) {
 			return false;
 		}

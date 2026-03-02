@@ -19,10 +19,10 @@ set(ENGINE_FILES
     # Internal headers and cpp-files
     src/Engine.cpp
     src/backend/miniaudio_impl.cpp
-    src/messaging/AudioCommandQueue.h
-    src/messaging/AudioCommandQueue.cpp
-    src/messaging/AudioEventQueue.h
-    src/messaging/AudioEventQueue.cpp
+    src/messaging/RtCommandQueue.h
+    src/messaging/RtCommandQueue.cpp
+    src/messaging/RtEventQueue.h
+    src/messaging/RtEventQueue.cpp
     src/messaging/IoRequestQueue.cpp
     src/messaging/IoRequestQueue.h
     src/core/Logger.h
@@ -34,6 +34,12 @@ set(ENGINE_FILES
     src/mixer/StreamingContext.h
     src/mixer/Bus.cpp
     src/mixer/Bus.h
+    src/systems/RealTimeSystem.cpp
+    src/systems/RealTimeSystem.h
+    src/systems/IoSystem.cpp
+    src/systems/IoSystem.h
+    src/mixer/BusGraphCompiler.cpp
+    src/mixer/BusGraphCompiler.h
 )
 
 add_library(dalia_engine STATIC ${ENGINE_FILES})
