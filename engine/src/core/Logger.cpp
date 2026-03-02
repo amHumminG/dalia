@@ -20,6 +20,11 @@ namespace dalia {
 		m_buffer = std::make_unique<MPSCRingBuffer<LogEntry>>(capacity);
 	}
 
+	void Logger::Deinit() {
+		ProcessLogs();
+		m_buffer.reset();
+	}
+
 	void Logger::Log(LogLevel level, const char* category, const char* format, ...) {
 		if (!m_buffer) return;
 

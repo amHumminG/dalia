@@ -201,7 +201,8 @@ namespace dalia {
 		m_state.reset();
 
 		Logger::Log(LogLevel::Info, "Engine", "Deinitialized engine");
-		Logger::ProcessLogs(); // Drain the log buffer before shutdown
+		Logger::Deinit();
+
 		return Result::Ok;
 	}
 
