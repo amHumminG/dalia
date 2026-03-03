@@ -6,33 +6,56 @@ namespace dalia {
 	struct RtEvent {
 		enum class Type {
 			None,
-			VoiceFinished,
-			PlaybackError,
-			GraphSwapped
-			// ...
+
+			// General
+			MixOrderSwapped,
+
+			// Voice Lifecycle
+			VoiceFinished,	// Finished by reaching EOF
+			VoiceStopped,	// Manually stopped by user command
+			VoiceKilled		// Killed by the engine
 		};
+
 		Type type = Type::None;
-		uint32_t voicePoolIndex;
-		uint32_t generation; // Might be useless here?
-		// Maybe this should have data as well?
 
-		static RtEvent VoiceFinished(uint32_t voicePoolIndex) {
+		// Payload
+		union Data {
+			struct {
+				uint32_t index;
+				uint32_t generation;
+			} voiceState;
+
+		} data = {};
+
+		static RtEvent MixOrderSwapped() {
 			RtEvent ev;
+			ev.type = RtEvent::Type::MixOrderSwapped;
 			return ev;
 		}
 
-		static RtEvent PlaybackError() {
+		static RtEvent VoiceFinished(uint32_t index, uint32_t generation) {
 			RtEvent ev;
+			ev.type = Type::MixOrderSwapped;
+			ev.data.voiceState.index = index;
+			ev.data.voiceState.generation = generation;
 			return ev;
 		}
 
-		static RtEvent GraphSwapped() {
+		static RtEvent VoiceStopped(uint32_t index, uint32_t generation) {
 			RtEvent ev;
-			ev.type = RtEvent::Type::GraphSwapped;
+			ev.type = Type::VoiceStopped;
+			ev.data.voiceState.index = index;
+			ev.data.voiceState.generation = generation;
 			return ev;
 		}
 
-		// TODO: Add factory functions for all event types
+		static RtEvent VoiceKilled(uint32_t index, uint32_t generation) {
+			RtEvent ev;
+			ev.type = Type::VoiceKilled;
+			ev.data.voiceState.index = index;
+			ev.data.voiceState.generation = generation;
+			return ev;
+		}
 	};
 
 	class RtEventQueue {

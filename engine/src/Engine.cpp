@@ -213,19 +213,19 @@ namespace dalia {
 		RtEvent ev;
 		while (m_state->rtEventQueue->Pop(ev)) {
 			switch (ev.type) {
-				case RtEvent::Type::VoiceFinished: {
-					// TODO: Implement
-					// Trigger callback
-					// Return voice to pool
-					break;
-				}
-				case RtEvent::Type::PlaybackError: {
-					// TODO: Implement
-					break;
-				}
-				case RtEvent::Type::GraphSwapped: {
+				case RtEvent::Type::MixOrderSwapped: {
 					m_state->isUsingMixOrderA = !m_state->isUsingMixOrderA;
 					m_state->isMixOrderSwapPending = false;
+					break;
+				}
+				case RtEvent::Type::VoiceFinished: {
+					uint32_t index = ev.data.voiceState.index;
+					uint32_t generation = ev.data.voiceState.generation;
+					if (m_state->voicePoolMirror[index].generation == generation) {
+						// Voice is still valid -> Return it to the pool
+						m_state->voicePoolMirror[index].Reset();
+						m_state->freeVoices->Push(index);
+					}
 					break;
 				}
 			}
