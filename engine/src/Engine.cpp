@@ -1,5 +1,5 @@
 #include "dalia/audio/Engine.h"
-#include "dalia/audio/SoundControl.h"
+#include "dalia/audio/PlaybackControl.h"
 #include "core/Logger.h"
 #include "core/FixedStack.h"
 #include "core/SPSCRingBuffer.h"

@@ -1,5 +1,5 @@
 #pragma once
-#include "dalia/audio/SoundControl.h"
+#include "dalia/audio/PlaybackControl.h"
 #include <cstdint>
 #include <span>
 

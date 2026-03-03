@@ -12,7 +12,7 @@ set(ENGINE_FILES
     # Public headers
     include/dalia.h
     include/dalia/audio/Engine.h
-    include/dalia/audio/SoundControl.h
+    include/dalia/audio/PlaybackControl.h
     include/dalia/Core/LogLevel.h
     include/dalia/Core/Result.h
 

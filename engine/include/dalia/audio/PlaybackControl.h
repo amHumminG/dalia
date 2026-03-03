@@ -3,20 +3,20 @@
 
 namespace dalia {
 
-	struct SoundHandle {
+	struct PlaybackHandle {
 	public:
 		bool IsValid() const { return uuid != 0; }
 
 		// Could add a hash function for this too?
 
-		bool operator==(const SoundHandle& other) const { return uuid == other.uuid; }
-		bool operator!=(const SoundHandle& other) const { return uuid != other.uuid; }
+		bool operator==(const PlaybackHandle& other) const { return uuid == other.uuid; }
+		bool operator!=(const PlaybackHandle& other) const { return uuid != other.uuid; }
 
 		friend class Engine;
 
 	private:
-		static SoundHandle Create(uint32_t index, uint32_t generation) {
-			SoundHandle handle;
+		static PlaybackHandle Create(uint32_t index, uint32_t generation) {
+			PlaybackHandle handle;
 			handle.uuid = (static_cast<uint64_t>(generation) << 32) | index;
 			return handle;
 		}
@@ -34,5 +34,5 @@ namespace dalia {
 
 	// TODO: Have AudioEventCallback contain an enum communicating the reason for the sound finish
 	// E.g. Finished naturally, stop was called on it, or engine killed it and so on...
-	using AudioEventCallback = void(*)(SoundHandle handle, void* userData);
+	using AudioEventCallback = void(*)(PlaybackHandle handle, void* userData);
 }
