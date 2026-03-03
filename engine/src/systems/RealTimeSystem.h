@@ -40,6 +40,6 @@ namespace dalia {
         RtEventQueue*   m_rtEventQueue;
         IoRequestQueue* m_ioRequestQueue;
 
-        std::span<const uint32_t> m_activeBusGraph;
+        std::span<const uint32_t> m_activeMixOrder;
     };
 }

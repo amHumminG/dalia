@@ -27,7 +27,7 @@ namespace dalia {
         m_rtEventQueue(config.rtEventQueue),
         m_ioRequestQueue(config.ioRequestQueue) {
         // Empty bus graph
-        m_activeBusGraph = std::span<const uint32_t>();
+        m_activeMixOrder = std::span<const uint32_t>();
     }
 
     void RealTimeSystem::OnAudioCallback(float* output, uint32_t frameCount, uint32_t channels) {
@@ -53,9 +53,9 @@ namespace dalia {
                     // TODO: Implement
                 }
                 case RtCommand::Type::SwapMixOrder: {
-                    m_activeBusGraph = std::span<const uint32_t>(
-                        cmd.data.graph.ptr, // FIXME: This command should supply a pointer to the graph
-                        cmd.data.graph.nodeCount
+                    m_activeMixOrder = std::span<const uint32_t>(
+                        cmd.data.mixOrder.ptr, // FIXME: This command should supply a pointer to the graph
+                        cmd.data.mixOrder.nodeCount
                     );
 
                     // Send event to acknowledge the swap
@@ -69,7 +69,7 @@ namespace dalia {
     void RealTimeSystem::Render(float* output, uint32_t frameCount, uint32_t channels) {
         const uint32_t sampleCount = frameCount * channels;
 
-        for (uint32_t busIndex : m_activeBusGraph) {
+        for (uint32_t busIndex : m_activeMixOrder) {
             m_busPool[busIndex].Clear();
         }
 
@@ -87,7 +87,7 @@ namespace dalia {
         }
 
         // --- Bus Pass --- (Not yet parallel ready)
-        for (uint32_t busIndex : m_activeBusGraph) {
+        for (uint32_t busIndex : m_activeMixOrder) {
             Bus& bus = m_busPool[busIndex];
             bus.ApplyDSP(sampleCount);
 
