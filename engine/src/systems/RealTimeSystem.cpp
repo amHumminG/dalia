@@ -52,7 +52,7 @@ namespace dalia {
                 case RtCommand::Type::Stop: {
                     // TODO: Implement
                 }
-                case RtCommand::Type::SwapGraph: {
+                case RtCommand::Type::SwapMixOrder: {
                     m_activeBusGraph = std::span<const uint32_t>(
                         cmd.data.graph.ptr, // FIXME: This command should supply a pointer to the graph
                         cmd.data.graph.nodeCount
