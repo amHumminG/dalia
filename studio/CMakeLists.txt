@@ -11,7 +11,7 @@ FetchContent_Declare(
 FetchContent_Declare(
     imgui
     GIT_REPOSITORY https://github.com/ocornut/imgui.git
-    GIT_TAG v1.92.6
+    GIT_TAG docking
 )
 FetchContent_Declare(
     rlimgui
@@ -51,9 +51,15 @@ set(STUDIO_FILES
     src/main.cpp
     src/Transcoder.h
     src/Transcoder.cpp
+    src/app/Application.cpp
+    src/app/Application.h
+    src/editor/Panel.h
 )
 
 add_executable(dalia_studio ${STUDIO_FILES})
+target_include_directories(dalia_studio
+    PRIVATE src
+)
 target_link_libraries(dalia_studio
     PRIVATE dalia_engine
     PRIVATE dalia_common
