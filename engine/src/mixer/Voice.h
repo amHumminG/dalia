@@ -61,6 +61,7 @@ namespace dalia {
     struct VoiceMirror {
         uint32_t generation = 0;
         bool isBusy = false;
+        uint32_t parentBusIndex;
         VoiceState state = VoiceState::None;
         void* callbackOnFinished = nullptr;
         AudioEventCallback callback = nullptr;

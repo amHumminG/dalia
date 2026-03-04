@@ -70,7 +70,7 @@ namespace dalia {
             }
 
             if (!didWork) {
-                std::this_thread::sleep_for(std::chrono::milliseconds(1));
+                std::this_thread::sleep_for(std::chrono::milliseconds(1)); // Time based on windows interrupt
             }
         }
     }
