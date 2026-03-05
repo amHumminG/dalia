@@ -54,6 +54,9 @@ set(STUDIO_FILES
     src/app/Application.cpp
     src/app/Application.h
     src/editor/Panel.h
+    src/commands/Command.h
+    src/commands/CommandStack.cpp
+    src/commands/CommandStack.h
 )
 
 add_executable(dalia_studio ${STUDIO_FILES})
