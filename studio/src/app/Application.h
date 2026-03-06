@@ -17,6 +17,7 @@ namespace dalia::studio {
         void Run();
 
     private:
+        void SetupTheme();
         void Update();
         void Render();
         void RenderUI();
