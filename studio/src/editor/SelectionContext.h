@@ -1,13 +1,15 @@
 #pragma once
-#include <vector>
 
 namespace dalia::studio {
 
-    struct SelectionContext {
-        uint32_t selectedId = 0;
+    static constexpr uint32_t NULL_ID = 0;
 
-        bool IsSelected(uint32_t id) const { return selectedId == id; }
+    struct SelectionContext {
+        uint32_t selectedId = NULL_ID;
+
         void Select(uint32_t id) { selectedId = id; }
-        void Clear() { selectedId = 0; }
+        bool IsSelected(uint32_t id) const { return id != NULL_ID && selectedId == id; }
+        bool HasSelection() { return selectedId != NULL_ID; }
+        void Clear() { selectedId = NULL_ID; }
     };
 }
