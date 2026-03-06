@@ -49,13 +49,12 @@ namespace dalia::studio {
         std::function<void(float)> callback) {
         static float startValue = 0.0f;
 
-        if (ImGui::IsItemActivated()) {
-            startValue = *valuePtr;
-        }
+        float valueBeforeDrag = *valuePtr;
 
         if (ImGui::SliderFloat(label, valuePtr, min, max)) {
             // Probably do nothing here (we probably don't want to send a command for each update here?)
         }
+        if (ImGui::IsItemActivated()) startValue = valueBeforeDrag;
 
         if (ImGui::IsItemDeactivatedAfterEdit()) {
             float newValue = *valuePtr;

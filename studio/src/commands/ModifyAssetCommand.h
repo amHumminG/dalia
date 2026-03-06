@@ -18,7 +18,7 @@ namespace dalia::studio {
         }
 
         void Unexecute() override {
-            *m_target = m_newValue;
+            *m_target = m_oldValue;
             if (m_callback) m_callback(m_oldValue);
         }
 

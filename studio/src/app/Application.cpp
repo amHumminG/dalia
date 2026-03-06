@@ -120,9 +120,11 @@ namespace dalia::studio {
     void Application::Update() {
         if (IsKeyDown(KEY_LEFT_CONTROL) && IsKeyPressed(KEY_Z)) {
             m_commands->Undo();
+            std::cout << "Undo" << std::endl;
         }
         if (IsKeyDown(KEY_LEFT_CONTROL) && IsKeyPressed(KEY_Y)) {
             m_commands->Redo();
+            std::cout << "Redo" << std::endl;
         }
     }
 
