@@ -63,6 +63,8 @@ set(STUDIO_FILES
     src/editor/BrowserPanel.cpp
     src/editor/BrowserPanel.h
     src/commands/ModifyAssetCommand.h
+    src/editor/InspectorPanel.cpp
+    src/editor/InspectorPanel.h
 )
 
 add_executable(dalia_studio ${STUDIO_FILES})
