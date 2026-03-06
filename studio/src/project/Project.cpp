@@ -32,7 +32,7 @@ namespace dalia::studio {
     }
 
     uint32_t Project::GenerateId() {
-        static uint32_t id = 0;
+        static uint32_t id = 1;
         return id++;
     }
 }
