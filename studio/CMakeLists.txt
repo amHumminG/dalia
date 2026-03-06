@@ -59,6 +59,7 @@ set(STUDIO_FILES
     src/commands/CommandStack.h
     src/project/Project.cpp
     src/project/Project.h
+    src/editor/SelectionContext.h
 )
 
 add_executable(dalia_studio ${STUDIO_FILES})
