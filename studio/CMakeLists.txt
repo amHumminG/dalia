@@ -60,6 +60,8 @@ set(STUDIO_FILES
     src/project/Project.cpp
     src/project/Project.h
     src/editor/SelectionContext.h
+    src/editor/BrowserPanel.cpp
+    src/editor/BrowserPanel.h
 )
 
 add_executable(dalia_studio ${STUDIO_FILES})
