@@ -1,5 +1,7 @@
 #pragma once
+#include "project/Project.h"
 #include "editor/Panel.h"
+#include "editor/SelectionContext.h"
 
 #include <string>
 #include <vector>
@@ -19,6 +21,8 @@ namespace dalia::studio {
         void Render();
         void RenderUI();
 
+        SelectionContext m_selectionContext;
+        std::unique_ptr<Project> m_project;
         std::vector<std::unique_ptr<Panel>> m_panels;
     };
 }

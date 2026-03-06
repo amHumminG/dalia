@@ -2,6 +2,7 @@
 #include "raylib.h"
 #include "rlImGui.h"
 #include "imgui_internal.h"
+#include "editor/BrowserPanel.h"
 
 namespace dalia::studio {
 
@@ -16,6 +17,11 @@ namespace dalia::studio {
         ImGuiIO& io = ImGui::GetIO();
         io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
         io.IniFilename = "dalia_studio_layout.ini";
+        // Setup project (this should be done in CreateProject or LoadProject later on)
+        m_project = std::make_unique<Project>();
+
+        // Setup panels
+        m_panels.push_back(std::make_unique<BrowserPanel>(*m_project, m_selectionContext));
     }
 
     Application::~Application() {
