@@ -2,7 +2,10 @@
 #include "raylib.h"
 #include "rlImGui.h"
 #include "imgui_internal.h"
+
+// Panels
 #include "editor/BrowserPanel.h"
+#include "editor/InspectorPanel.h"
 
 #include <iostream>
 
@@ -32,9 +35,11 @@ namespace dalia::studio {
 
         // Setup project (this should be done in CreateProject or LoadProject later on)
         m_project = std::make_unique<Project>();
+        m_commands = std::make_unique<CommandStack>();
 
         // Setup panels
         m_panels.push_back(std::make_unique<BrowserPanel>(*m_project, m_selectionContext));
+        m_panels.push_back(std::make_unique<InspectorPanel>(*m_project, m_selectionContext, *m_commands));
     }
 
     Application::~Application() {
@@ -113,6 +118,12 @@ namespace dalia::studio {
     }
 
     void Application::Update() {
+        if (IsKeyDown(KEY_LEFT_CONTROL) && IsKeyPressed(KEY_Z)) {
+            m_commands->Undo();
+        }
+        if (IsKeyDown(KEY_LEFT_CONTROL) && IsKeyPressed(KEY_Y)) {
+            m_commands->Redo();
+        }
     }
 
     void Application::Render() {
@@ -141,16 +152,6 @@ namespace dalia::studio {
             }
             ImGui::EndMainMenuBar();
         }
-
-        // Example: A dummy tool panel
-        ImGui::Begin("Asset Browser");
-        ImGui::Text("Vi support players are gay");
-        ImGui::End();
-
-        // Example: Another panel to test docking
-        ImGui::Begin("Inspector");
-        ImGui::Text("Selection properties");
-        ImGui::End();
 
         // Panels
         for (auto& panel : m_panels) {

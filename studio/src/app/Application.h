@@ -2,6 +2,7 @@
 #include "project/Project.h"
 #include "editor/Panel.h"
 #include "editor/SelectionContext.h"
+#include "commands/CommandStack.h"
 
 #include <string>
 #include <vector>
@@ -23,7 +24,8 @@ namespace dalia::studio {
         void RenderUI();
 
         SelectionContext m_selectionContext;
-        std::unique_ptr<Project> m_project;
-        std::vector<std::unique_ptr<Panel>> m_panels;
+        std::unique_ptr<Project> m_project;             // Model
+        std::vector<std::unique_ptr<Panel>> m_panels;   // View
+        std::unique_ptr<CommandStack> m_commands;       // Controller
     };
 }
