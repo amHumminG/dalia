@@ -15,6 +15,7 @@ namespace dalia::studio {
             if (ImGui::Begin(m_title.c_str(), &m_isOpen)) {
                 Render();
             }
+            ImGui::End();
         };
 
         void Open() { m_isOpen = true; }
@@ -22,7 +23,7 @@ namespace dalia::studio {
         bool IsOpen() const { return m_isOpen; }
 
     private:
-        virtual void Render();
+        virtual void Render() = 0;
 
         std::string m_title;
         bool m_isOpen;
