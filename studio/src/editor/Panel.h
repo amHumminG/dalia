@@ -7,7 +7,7 @@ namespace dalia::studio {
     class Panel {
     public:
         Panel(const std::string& title) : m_title(title) {}
-        virtual ~Panel();
+        virtual ~Panel() = default;
 
         virtual void OnRender() {
             if (!m_isOpen) return;
