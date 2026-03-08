@@ -67,6 +67,8 @@ set(STUDIO_FILES
     src/editor/InspectorPanel.h
     src/core/Logger.cpp
     src/core/Logger.h
+    src/editor/ConsolePanel.cpp
+    src/editor/ConsolePanel.h
 )
 
 add_executable(dalia_studio ${STUDIO_FILES})
