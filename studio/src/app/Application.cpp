@@ -123,7 +123,7 @@ namespace dalia::studio {
     }
 
     void Application::InitEngine() {
-        m_engine = std::make_unique<AudioEngine>();
+        m_engine = std::make_unique<Engine>();
         dalia::EngineConfig config;
         config.logLevel = dalia::LogLevel::Debug;
         config.logCallback = &Logger::LogEngine;

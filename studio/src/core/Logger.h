@@ -1,5 +1,5 @@
 #pragma once
-#include "dalia/LogLevel.h"
+#include "dalia/core/LogLevel.h"
 #include <string>
 #include <vector>
 #include <format>

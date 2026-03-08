@@ -4,7 +4,7 @@
 #include "editor/SelectionContext.h"
 #include "commands/CommandStack.h"
 
-#include "dalia/AudioEngine.h"
+#include "dalia.h"
 
 #include <string>
 #include <vector>
@@ -26,7 +26,7 @@ namespace dalia::studio {
         void Render();
         void RenderUI();
 
-        std::unique_ptr<AudioEngine> m_engine;
+        std::unique_ptr<Engine> m_engine;
         SelectionContext m_selectionContext;
         std::unique_ptr<Project> m_project;             // Model
         std::vector<std::unique_ptr<Panel>> m_panels;   // View
