@@ -3,9 +3,13 @@
 #include "rlImGui.h"
 #include "imgui_internal.h"
 
+// Core
+#include "core/Logger.h"
+
 // Panels
 #include "editor/BrowserPanel.h"
 #include "editor/InspectorPanel.h"
+#include "editor/ConsolePanel.h"
 
 #include <iostream>
 
@@ -40,6 +44,7 @@ namespace dalia::studio {
         // Setup panels
         m_panels.push_back(std::make_unique<BrowserPanel>(*m_project, m_selectionContext));
         m_panels.push_back(std::make_unique<InspectorPanel>(*m_project, m_selectionContext, *m_commands));
+        m_panels.push_back(std::make_unique<ConsolePanel>());
     }
 
     Application::~Application() {
@@ -115,6 +120,19 @@ namespace dalia::studio {
         colors[ImGuiCol_FrameBg]        = ImVec4(0.08f, 0.08f, 0.08f, 1.00f);
         colors[ImGuiCol_FrameBgHovered] = ImVec4(0.12f, 0.12f, 0.12f, 1.00f);
         colors[ImGuiCol_FrameBgActive]  = ImVec4(0.15f, 0.15f, 0.15f, 1.00f);
+    }
+
+    void Application::InitEngine() {
+        m_engine = std::make_unique<AudioEngine>();
+        dalia::EngineConfig config;
+        config.logLevel = dalia::LogLevel::Debug;
+        config.logCallback = &Logger::LogEngine;
+        // m_engine->Init(config);
+        Logger::Log(LogLevel::Debug, "Constructor", "Initialized internal engine.");
+        Logger::Log(LogLevel::Info, "Constructor", "Initialized internal engine.");
+        Logger::Log(LogLevel::Warning, "Constructor", "Initialized internal engine.");
+        Logger::Log(LogLevel::Error, "Constructor", "Initialized internal engine.");
+        Logger::Log(LogLevel::Critical, "Constructor", "Initialized internal engine.");
     }
 
     void Application::Update() {
