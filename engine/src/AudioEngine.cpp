@@ -26,6 +26,7 @@ namespace dalia {
 
 	Result AudioEngine::Init(const EngineConfig& config) {
 		Logger::Init(config.logLevel, 256);
+		Logger::SetSink(config.logCallback);
 
 		if (m_initialized) {
 			Logger::Log(LogLevel::Warning, "Engine", "Attempting to initialize engine that is already initialized");
