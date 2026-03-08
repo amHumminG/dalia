@@ -1,5 +1,6 @@
 #include "editor/BrowserPanel.h"
 #include "imgui_internal.h"
+#include "core/Logger.h"
 
 namespace dalia::studio {
 
@@ -13,6 +14,7 @@ namespace dalia::studio {
         if (ImGui::Button("Import Sound")) {
             // TODO: Open file explorer window here
             m_project.ImportSound("assets/Zeri.ogg");
+            Logger::Log(LogLevel::Info, "Browser", "Imported asset");
         }
 
         ImGui::SameLine();
