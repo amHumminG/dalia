@@ -22,26 +22,26 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(raylib imgui rlimgui)
 
 # Define ImGui and rlImGui as libraries
-add_library(imgui_lib STATIC
+add_library(imgui_lib_demo STATIC
     ${imgui_SOURCE_DIR}/imgui.cpp
     ${imgui_SOURCE_DIR}/imgui_draw.cpp
     ${imgui_SOURCE_DIR}/imgui_widgets.cpp
     ${imgui_SOURCE_DIR}/imgui_tables.cpp
     ${imgui_SOURCE_DIR}/imgui_demo.cpp
 )
-target_include_directories(imgui_lib SYSTEM PUBLIC ${imgui_SOURCE_DIR})
+target_include_directories(imgui_lib_demo SYSTEM PUBLIC ${imgui_SOURCE_DIR})
 
-add_library(rlimgui_lib STATIC
+add_library(rlimgui_lib_demo STATIC
     ${rlimgui_SOURCE_DIR}/rlImGui.cpp
 )
-target_include_directories(rlimgui_lib SYSTEM PUBLIC ${rlimgui_SOURCE_DIR})
-target_link_libraries(rlimgui_lib PUBLIC raylib imgui_lib)
+target_include_directories(rlimgui_lib_demo SYSTEM PUBLIC ${rlimgui_SOURCE_DIR})
+target_link_libraries(rlimgui_lib_demo PUBLIC raylib imgui_lib)
 
 # Output
 add_executable(dalia_demo src/main.cpp)
 target_link_libraries(dalia_demo
     PRIVATE dalia_engine
-    PRIVATE rlimgui_lib
+    PRIVATE rlimgui_lib_demo
     PRIVATE raylib
 )
 

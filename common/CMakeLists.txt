@@ -1,6 +1,8 @@
 set(COMMON_FILES
-    src/Temp.h
-    src/Temp.cpp
+    src/Soundbank.h
+    src/StringID.h
+    src/SoundbankWriter.cpp
+    src/SoundbankWriter.h
 )
 
 add_library(dalia_common STATIC ${COMMON_FILES})

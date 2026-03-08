@@ -14,6 +14,7 @@ namespace dalia {
 
 	static LogLevel m_logLevel = LogLevel::Warning;
 	static std::unique_ptr<MPSCRingBuffer<LogEntry>> m_buffer = nullptr;
+	static LogCallback m_sink = nullptr;
 
 	void Logger::Init(LogLevel level, size_t capacity) {
 		m_logLevel = static_cast<LogLevel>(level);
@@ -23,6 +24,10 @@ namespace dalia {
 	void Logger::Deinit() {
 		ProcessLogs();
 		m_buffer.reset();
+	}
+
+	void Logger::SetSink(LogCallback sink) {
+		m_sink = std::move(sink);
 	}
 
 	void Logger::Log(LogLevel level, const char* category, const char* format, ...) {
@@ -48,6 +53,9 @@ namespace dalia {
 
 		LogEntry entry;
 		while (m_buffer->Pop(entry)) {
+			if (m_sink) {
+				m_sink(entry.level, entry.category, entry.message);
+			}
 			std::printf("[DALIA %s] %s: %s\n", GetLevelString(entry.level), entry.category, entry.message);
 		}
 	}
