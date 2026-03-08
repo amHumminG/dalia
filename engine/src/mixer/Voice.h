@@ -1,5 +1,5 @@
 #pragma once
-#include "dalia/audio/SoundControl.h"
+#include "dalia/audio/PlaybackControl.h"
 #include <cstdint>
 #include <span>
 
@@ -13,8 +13,18 @@ namespace dalia {
         Stream      // Streamed from soundbank (double buffered)
     };
 
+    enum class VoiceState : uint8_t {
+        None,
+        Inactive,
+        Playing,
+        Paused,
+        Stopping
+    };
+
     struct Voice {
         uint32_t generation = 0;
+
+        VoiceState state = VoiceState::None;
 
         // FIXME: Reference to sound in soundbank (probably unnecessary here)
         uint32_t assetID = 0;
@@ -49,12 +59,21 @@ namespace dalia {
     };
 
     struct VoiceMirror {
-        bool isBusy = false;
         uint32_t generation = 0;
+        bool isBusy = false;
+        uint32_t parentBusIndex;
+        VoiceState state = VoiceState::None;
         void* callbackOnFinished = nullptr;
         AudioEventCallback callback = nullptr;
         void* userData = nullptr;
-
         // We probably keep other voice data here too (volume etc.)
+
+        void Reset() {
+            isBusy = false;
+            state = VoiceState::None;
+            callbackOnFinished = nullptr;
+            callback = nullptr;
+            userData = nullptr;
+        }
     };
 }

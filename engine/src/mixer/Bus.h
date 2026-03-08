@@ -33,7 +33,11 @@ namespace dalia {
         bool isBusy = false;
         uint32_t generation = 0;
         uint32_t parentBusIndex = NO_PARENT;
-
         // We probably keep other bus data here too (volume etc.)
+
+        void Reset() {
+            isBusy = false;
+            parentBusIndex = NO_PARENT;
+        }
     };
 }

@@ -8,8 +8,6 @@ struct ma_device;
 namespace dalia {
 
 	struct EngineInternalState;
-	struct Voice;
-	class Bus;
 
 	struct EngineConfig {
 		LogLevel logLevel = LogLevel::Warning;
