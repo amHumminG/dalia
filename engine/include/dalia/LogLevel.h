@@ -1,4 +1,5 @@
 #pragma once
+#include <functional>
 
 namespace dalia {
 
@@ -10,4 +11,6 @@ namespace dalia {
 		Critical	= 4,
 		None		= 5,
 	};
+
+	using LogCallback = std::function<void(LogLevel level, const char* category, const char* message)>;
 }

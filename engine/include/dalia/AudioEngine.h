@@ -14,6 +14,7 @@ namespace dalia {
 
 	struct EngineConfig {
 		LogLevel logLevel = LogLevel::Warning;
+		LogCallback logCallback = nullptr;
 
 		uint32_t voiceCapacity = 128;
 		uint32_t maxActiveVoices = 64;
