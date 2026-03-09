@@ -33,7 +33,6 @@ namespace dalia {
         uint32_t parentBusIndex;
 
         // Playback
-        bool isPlaying = false;
         bool isLooping = false;
         float volume = 1.0f;
         float pitch = 1.0f;
@@ -49,7 +48,7 @@ namespace dalia {
         // To be used before a new sound is played by voice
         void Reset() {
             parentBusIndex = 0;
-            isPlaying = false;
+            state = VoiceState::None;
             isLooping = false;
             volume = 1.0f;
             pitch = 1.0f;
