@@ -111,9 +111,16 @@ namespace dalia {
         std::span<float> busBuffer = m_busPool[busIndex].GetBuffer();
         uint32_t framesMixed = 0;
 
+    	// --- Panning & DSP ---
+    	const float panNormalized = (voice.pan + 1.0f) * 0.5f;
+    	const float angle = panNormalized * static_cast<float>(M_PI_2); // Angle between 0 and PI/2 radians
+    	const float gainL = std::cos(angle) * voice.volume;
+    	const float gainR = std::sin(angle) * voice.volume;
+
         while (framesMixed < frameCount) {
-			uint32_t framesInSource = 0;
 			float* sourceData = nullptr;
+        	uint32_t framesInSource = 0;
+        	uint32_t cursorInt = static_cast<uint32_t>(voice.cursor);
 
 			if (voice.sourceType == VoiceSourceType::Resident) {
 				sourceData = voice.buffer.data();
@@ -121,79 +128,102 @@ namespace dalia {
 			}
 			else if (voice.sourceType == VoiceSourceType::Stream) {
 				StreamingContext& stream = m_streamPool[voice.streamingContextIndex];
+				if (stream.state.load(std::memory_order_acquire) != StreamState::Streaming) {
+					// Voice is not ready to stream yet
+					return true;
+				}
+				if (!stream.bufferReady[stream.frontBufferIndex].load(std::memory_order_acquire)) {
+					// Buffer is not ready yet (it should be)
+					Logger::Log(LogLevel::Error, "RtSystem", "Stream buffer underrun");
+					return true;
+				}
+
 				sourceData = stream.buffers[stream.frontBufferIndex];
 
-				// Check if we hit EOF this buffer and on what index
+				// Determine the number of valid frames in the buffer
 				const uint32_t eofIndex = stream.eofIndex[stream.frontBufferIndex];
 				if (!voice.isLooping && eofIndex != NO_EOF) {
-					framesInSource = eofIndex;
+					uint32_t samplesInSource = eofIndex;
+					framesInSource = samplesInSource / stream.channels;
 				}
 				else {
-					framesInSource = DOUBLE_BUFFER_CHUNK_SIZE;
+					framesInSource = DOUBLE_BUFFER_FRAMES;
 				}
 			}
 			else return false;
 
-			uint32_t remainingInSource = framesInSource - static_cast<uint32_t>(voice.cursor);
-			uint32_t framesToProcessNow = std::min(frameCount - framesMixed, remainingInSource);
+			uint32_t remainingFramesInSource = framesInSource - cursorInt;
+        	if (cursorInt >= framesInSource) remainingFramesInSource = 0; // Safety clamp
 
-			// --- Panning & DSP ---
-			const float panNormalized = (voice.pan + 1.0f) * 0.5f;
-			const float angle = panNormalized * static_cast<float>(M_PI_2); // Angle between 0 and PI/2 radians
-			const float gainL = std::cos(angle) * voice.volume;
-			const float gainR = std::sin(angle) * voice.volume;
+			uint32_t framesToMixNow = std::min(frameCount - framesMixed, remainingFramesInSource);
 
-			for (uint32_t i = 0; i < framesToProcessNow; i++) {
-				float sample = sourceData[static_cast<size_t>(voice.cursor) * voice.channels];
-				uint32_t targetIndex = (framesMixed + i) * 2; // 2 Channels
-				busBuffer[targetIndex + 0] += sample * gainL;
-				busBuffer[targetIndex + 1] += sample * gainR;
+        	if (framesToMixNow > 0) {
+        		float* outPtr = &busBuffer[framesMixed * 2]; // 2 for stereo bus
+        		uint32_t sourceStride = voice.channels; // TODO: This is where we have to resample in the future
+        		if (voice.channels == 1) {
+        			for (uint32_t i = 0; i < framesToMixNow; i++) {
+        				float sample = sourceData[(cursorInt + i) * sourceStride];
 
-				voice.cursor += 1.0f;
-			}
-			framesMixed += framesToProcessNow;
+        				// Stereo mix
+        				outPtr[0] += sample * gainL;
+        				outPtr[1] += sample * gainR;
+
+        				outPtr += 2; // 2 for stereo bus
+        			}
+        		}
+        		else if (voice.channels == 2) {
+        			for (uint32_t i = 0; i < framesToMixNow; i++) {
+        				float sampleL = sourceData[(cursorInt + i) * 2 + 0];
+        				float sampleR = sourceData[(cursorInt + i) * 2 + 1];
+
+        				// Stereo mix
+        				outPtr[0] += sampleL * gainL;
+        				outPtr[1] += sampleR * gainR;
+
+        				outPtr += 2; // 2 for stereo bus
+        			}
+        		}
+        		else {
+        			Logger::Log(LogLevel::Warning, "RtSystem",
+						"Failed to mix voice with invalid channel count: %d", voice.channels);
+        		}
+        	}
+
+        	voice.cursor += static_cast<float>(framesToMixNow);
+			framesMixed += framesToMixNow;
 
 			// Handle end of buffer
 			if (static_cast<uint32_t>(voice.cursor) >= framesInSource) {
 				if (voice.sourceType == VoiceSourceType::Resident) {
 					if (voice.isLooping) {
-						voice.cursor = 0.0f;
+						voice.cursor = 0.0f; // Loop back to start
 					}
 					else {
-						// Voice is no longer used -> slot should be free now (return false?)
-						voice.isPlaying = false;
+						voice.state = VoiceState::Stopping;
 						return false;
 					}
 				}
 				else if (voice.sourceType == VoiceSourceType::Stream) {
 					StreamingContext& stream = m_streamPool[voice.streamingContextIndex];
 
-					if (framesInSource < DOUBLE_BUFFER_CHUNK_SIZE) {
-						// Natural end of file -> Kill voice
-						// TODO: The two rows below should probably be part of some kind of releaseVoice function later on
-						stream.generation.fetch_add(1, std::memory_order_relaxed);
-						m_ioRequestQueue->Push(IoRequest::ReleaseStream(voice.streamingContextIndex));
-
-						return false;
+					// Did we hit EOF?
+					if (stream.eofIndex[stream.frontBufferIndex] != NO_EOF) {
+						if (!voice.isLooping) {
+							voice.state = VoiceState::Stopping;
+							// Request stream release
+							stream.generation.fetch_add(1, std::memory_order_relaxed);
+							m_ioRequestQueue->Push(IoRequest::ReleaseStream(voice.streamingContextIndex));
+							return false;
+						}
 					}
 
-					stream.bufferReady[stream.frontBufferIndex].store(false, std::memory_order_relaxed);
+					stream.bufferReady[stream.frontBufferIndex].store(false, std::memory_order_release);
 					const uint32_t gen = stream.generation.load(std::memory_order_relaxed);
 					m_ioRequestQueue->Push(IoRequest::RefillStreamBuffer(voice.streamingContextIndex, gen, stream.frontBufferIndex));
 
 					// Swap buffers
 					stream.frontBufferIndex = 1 - stream.frontBufferIndex;
 					voice.cursor = 0.0f;
-
-					if (!stream.bufferReady[stream.frontBufferIndex].load(std::memory_order_acquire)) {
-						Logger::Log(LogLevel::Critical, "Voice (Streaming) Mixer", "Buffer underflow. Killing Voice...");
-
-						// TODO: The two rows below should probably be part of some kind of releaseVoice function later on
-						stream.generation.fetch_add(1, std::memory_order_relaxed);
-						m_ioRequestQueue->Push(IoRequest::ReleaseStream(voice.streamingContextIndex));
-
-						return false;
-					}
 				}
 				else return false;
 			}
