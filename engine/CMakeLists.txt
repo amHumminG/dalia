@@ -1,5 +1,6 @@
 include(FetchContent)
 
+# miniaudio
 FetchContent_Declare(
     miniaudio
     URL "https://raw.githubusercontent.com/mackron/miniaudio/master/miniaudio.h"
@@ -7,6 +8,15 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(miniaudio)
 set(MINIAUDIO_INCLUDE_DIR ${miniaudio_SOURCE_DIR})
+
+# stb_vorbis
+FetchContent_Declare(
+    stb_vorbis
+    URL "https://raw.githubusercontent.com/nothings/stb/master/stb_vorbis.c"
+    DOWNLOAD_NO_EXTRACT TRUE
+)
+FetchContent_MakeAvailable(stb_vorbis)
+set(STB_VORBIS_INCLUDE_DIR ${stb_vorbis_SOURCE_DIR})
 
 set(ENGINE_FILES
     # Public headers
@@ -47,7 +57,8 @@ add_library(dalia_engine STATIC ${ENGINE_FILES})
 target_include_directories(dalia_engine 
     PUBLIC include
     PRIVATE src
-    PRIVATE ${MINIAUDIO_INCLUDE_DIR}
+    SYSTEM PRIVATE ${MINIAUDIO_INCLUDE_DIR}
+    SYSTEM PRIVATE ${STB_VORBIS_INCLUDE_DIR}
 )
 
 target_link_libraries(dalia_engine
