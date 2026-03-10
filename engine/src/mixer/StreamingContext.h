@@ -18,7 +18,8 @@ namespace dalia {
         Free,           // Not used by any voice
         Preparing,      // I/O thread is preparing the stream
         Streaming,      // Streaming from double buffer
-        Finished        // Waiting to be freed by I/O thread
+        Finished,       // Waiting to be freed by I/O thread
+        Error           // Stream state is corrupted (something failed, probably on the I/O thread)
     };
 
     // Is this really thread safe?
