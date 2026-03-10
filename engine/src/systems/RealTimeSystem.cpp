@@ -76,7 +76,7 @@ namespace dalia {
         // --- Voice Pass --- (Parallel ready when the time comes)
         for (uint32_t i = 0; i < m_voicePool.size(); i++) {
             Voice& voice = m_voicePool[i];
-            if (!voice.isPlaying) continue;
+            if (voice.state != VoiceState::Playing) continue;
 
             bool isStillPlaying = MixVoiceToBus(voice, voice.parentBusIndex, frameCount);
             if (!isStillPlaying) {
@@ -132,16 +132,16 @@ namespace dalia {
 					// Voice is not ready to stream yet
 					return true;
 				}
-				if (!stream.bufferReady[stream.frontBufferIndex].load(std::memory_order_acquire)) {
+				if (!stream.bufferReady[voice.frontBufferIndex].load(std::memory_order_acquire)) {
 					// Buffer is not ready yet (it should be)
 					Logger::Log(LogLevel::Error, "RtSystem", "Stream buffer underrun");
 					return true;
 				}
 
-				sourceData = stream.buffers[stream.frontBufferIndex];
+				sourceData = stream.buffers[voice.frontBufferIndex];
 
 				// Determine the number of valid frames in the buffer
-				const uint32_t eofIndex = stream.eofIndex[stream.frontBufferIndex];
+				const uint32_t eofIndex = stream.eofIndex[voice.frontBufferIndex];
 				if (!voice.isLooping && eofIndex != NO_EOF) {
 					uint32_t samplesInSource = eofIndex;
 					framesInSource = samplesInSource / stream.channels;
@@ -207,7 +207,7 @@ namespace dalia {
 					StreamingContext& stream = m_streamPool[voice.streamingContextIndex];
 
 					// Did we hit EOF?
-					if (stream.eofIndex[stream.frontBufferIndex] != NO_EOF) {
+					if (stream.eofIndex[voice.frontBufferIndex] != NO_EOF) {
 						if (!voice.isLooping) {
 							voice.state = VoiceState::Stopping;
 							// Request stream release
@@ -217,12 +217,12 @@ namespace dalia {
 						}
 					}
 
-					stream.bufferReady[stream.frontBufferIndex].store(false, std::memory_order_release);
+					stream.bufferReady[voice.frontBufferIndex].store(false, std::memory_order_release);
 					const uint32_t gen = stream.generation.load(std::memory_order_relaxed);
-					m_ioRequestQueue->Push(IoRequest::RefillStreamBuffer(voice.streamingContextIndex, gen, stream.frontBufferIndex));
+					m_ioRequestQueue->Push(IoRequest::RefillStreamBuffer(voice.streamingContextIndex, gen, voice.frontBufferIndex));
 
 					// Swap buffers
-					stream.frontBufferIndex = 1 - stream.frontBufferIndex;
+					voice.frontBufferIndex = 1 - voice.frontBufferIndex;
 					voice.cursor = 0.0f;
 				}
 				else return false;

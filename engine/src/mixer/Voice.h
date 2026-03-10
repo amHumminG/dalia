@@ -17,6 +17,7 @@ namespace dalia {
         None,
         Inactive,
         Playing,
+        Virtual,
         Paused,
         Stopping
     };
@@ -41,11 +42,16 @@ namespace dalia {
         float cursor = 0.0f;    // Frame or sample position?
 
         VoiceSourceType sourceType = VoiceSourceType::None;
+
+        // Resident
         std::span<float> buffer;
+
+        // Streaming
+        uint8_t frontBufferIndex = 0;
         uint16_t streamingContextIndex;
         // The StreamingContext should be assigned by the game thread and sent to the audio thread via the play command
 
-        // To be used before a new sound is played by voice
+        // Use this when releasing a voice
         void Reset() {
             parentBusIndex = 0;
             state = VoiceState::None;
@@ -53,7 +59,9 @@ namespace dalia {
             volume = 1.0f;
             pitch = 1.0f;
             pan = 0.0f;
+            frontBufferIndex = 0;
             cursor = 0.0f;
+            // TODO: Keep updating this
         }
     };
 

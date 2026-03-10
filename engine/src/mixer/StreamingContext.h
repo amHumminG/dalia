@@ -27,7 +27,6 @@ namespace dalia {
         std::atomic<uint32_t> generation{0};
 
         alignas(64) float buffers[2][DOUBLE_BUFFER_SIZE];
-        uint8_t frontBufferIndex = 0;
         int readCursor = 0;
 
         std::array<std::atomic<bool>, 2> bufferReady{false, false};
@@ -39,7 +38,6 @@ namespace dalia {
 
         // Called by the io-thread on request by the audio thread upon voice finish
         void Reset() {
-            frontBufferIndex = 0;
             std::fill_n(&buffers[0][0], (2 * DOUBLE_BUFFER_SIZE), 0.0f);
             bufferReady[0].store(false);
             bufferReady[1].store(false);

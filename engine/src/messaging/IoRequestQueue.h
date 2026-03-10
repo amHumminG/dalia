@@ -32,11 +32,11 @@ namespace dalia {
             } bank;
         } data = {};
 
-        static IoRequest PrepareStream(uint32_t poolIndex, char* path) {
+        static IoRequest PrepareStream(uint32_t poolIndex, const char* path) {
             IoRequest req;
             req.type = Type::PrepareStream;
             req.data.stream.poolIndex = poolIndex;
-            req.data.stream.path = path;
+            strncpy_s(req.data.stream.path, MAX_IO_PATH_SIZE, path, _TRUNCATE);
             return req;
         }
 
@@ -59,8 +59,8 @@ namespace dalia {
         static IoRequest LoadBank(uint32_t bankId, const uint32_t assetID) {
             IoRequest req;
             req.type = Type::LoadSoundbank;
-            req.data.bank.targetBank = bankId;
-            req.data.bank.assetID = assetID;
+            req.data.bank.bankId = bankId;
+            req.data.bank.assetId = assetID;
             return req;
         }
     };
