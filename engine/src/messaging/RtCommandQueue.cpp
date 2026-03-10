@@ -9,7 +9,7 @@ namespace dalia {
 	}
 
 	void RtCommandQueue::Enqueue(const RtCommand& command) {
-		m_stagingArea.push_back(command);
+		m_stagingArea.push_back(command); // TODO: Check if we should use emplace_back here instead
 	}
 
 	void RtCommandQueue::Dispatch() {

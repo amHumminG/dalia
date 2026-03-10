@@ -12,7 +12,8 @@ namespace dalia {
 			SwapMixOrder,
 
 			// Voice Lifecycle
-			PrepareVoice,
+			PrepareVoiceStreaming,
+			PrepareVoiceResident,
 			PlayVoice,
 			PauseVoice,
 			StopVoice,
@@ -35,25 +36,31 @@ namespace dalia {
 			} mixOrder;
 
 			struct {
-				uint32_t index;
-				uint32_t generation;
-				uint32_t assetId; // Assuming this is how we store assets in loaded soundbanks
-			} voicePrep;
+				uint32_t voiceIndex;
+				uint32_t voiceGeneration;
+				uint32_t streamIndex;
+			} voicePrepStreaming;
 
 			struct {
-				uint32_t index;
-				uint32_t generation;
+				uint32_t voiceIndex;
+				uint32_t voiceGeneration;
+				uint32_t assetId; // Assuming this is how we store assets in loaded soundbanks
+			} voicePrepResident;
+
+			struct {
+				uint32_t voiceIndex;
+				uint32_t voiceGeneration;
 			} voiceState;
 
 			struct {
-				uint32_t index;
-				uint32_t generation;
+				uint32_t voiceIndex;
+				uint32_t voiceGeneration;
 				float value;
 			} voiceFloat;
 
 			struct {
-				uint32_t index;
-				uint32_t generation;
+				uint32_t voiceIndex;
+				uint32_t voiceGeneration;
 				float x, y, z;
 			} voiceVector3;
 
@@ -67,40 +74,53 @@ namespace dalia {
 			return cmd;
 		}
 
-		static RtCommand PrepareVoice(uint32_t index, uint32_t generation, uint32_t assetId) {
+		static RtCommand PrepareVoiceStreaming(uint32_t index, uint32_t generation, uint32_t streamIndex) {
 			RtCommand cmd;
-			cmd.type = Type::PrepareVoice;
-			cmd.data.voicePrep.index = index;
-			cmd.data.voicePrep.generation = generation;
-			cmd.data.voicePrep.assetId = assetId;
+			cmd.type = Type::PrepareVoiceStreaming;
+			cmd.data.voicePrepStreaming.voiceIndex = index;
+			cmd.data.voicePrepStreaming.voiceGeneration = generation;
+			cmd.data.voicePrepStreaming.streamIndex = streamIndex;
+			return cmd;
+		}
+
+		static RtCommand PrepareVoiceResident(uint32_t index, uint32_t generation, uint32_t assetId) {
+			RtCommand cmd;
+			cmd.type = Type::PrepareVoiceResident;
+			cmd.data.voicePrepResident.voiceIndex = index;
+			cmd.data.voicePrepResident.voiceGeneration = generation;
+			cmd.data.voicePrepResident.assetId = assetId;
 			return cmd;
 		}
 
 		static RtCommand PlayVoice(uint32_t index, uint32_t generation) {
 			RtCommand cmd;
-			cmd.data.voiceState.index = index;
-			cmd.data.voiceState.generation = generation;
+			cmd.type = Type::PlayVoice;
+			cmd.data.voiceState.voiceIndex = index;
+			cmd.data.voiceState.voiceGeneration = generation;
 			return cmd;
 		}
 
 		static RtCommand PauseVoice(uint32_t index, uint32_t generation) {
 			RtCommand cmd;
-			cmd.data.voiceState.index = index;
-			cmd.data.voiceState.generation = generation;
+			cmd.type = Type::PauseVoice;
+			cmd.data.voiceState.voiceIndex = index;
+			cmd.data.voiceState.voiceGeneration = generation;
 			return cmd;
 		}
 
 		static RtCommand StopVoice(uint32_t index, uint32_t generation) {
 			RtCommand cmd;
-			cmd.data.voiceState.index = index;
-			cmd.data.voiceState.generation = generation;
+			cmd.type = Type::StopVoice;
+			cmd.data.voiceState.voiceIndex = index;
+			cmd.data.voiceState.voiceGeneration = generation;
 			return cmd;
 		}
 
 		static RtCommand SetVolume(uint32_t index, uint32_t generation, float value) {
 			RtCommand cmd;
-			cmd.data.voiceFloat.index = index;
-			cmd.data.voiceFloat.generation = generation;
+			cmd.type = Type::SetVoiceVolume;
+			cmd.data.voiceFloat.voiceIndex = index;
+			cmd.data.voiceFloat.voiceGeneration = generation;
 			cmd.data.voiceFloat.value = value;
 			return cmd;
 		}

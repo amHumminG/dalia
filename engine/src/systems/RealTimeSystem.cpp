@@ -51,9 +51,31 @@ namespace dalia {
 
             		// Send event to acknowledge the swap
             		m_rtEventQueue->Push(RtEvent::MixOrderSwapped());
+	            	break;
+	            }
+				case RtCommand::Type::PrepareVoiceStreaming: {
+	            	uint32_t voiceIndex = cmd.data.voicePrepStreaming.voiceIndex;
+	            	Voice& voice = m_voicePool[voiceIndex];
+
+	            	// Voice setup
+	            	voice.sourceType = VoiceSourceType::Stream;
+	            	voice.state = VoiceState::Inactive;
+	            	voice.generation = cmd.data.voicePrepStreaming.voiceGeneration;
+	            	voice.streamingContextIndex = cmd.data.voicePrepStreaming.streamIndex;
+	            	break;
 	            }
                 case RtCommand::Type::PlayVoice: {
-                    // TODO: Implement
+                    uint32_t voiceIndex = cmd.data.voiceState.voiceIndex;
+	            	uint32_t expectedVoiceGen = cmd.data.voiceState.voiceGeneration;
+	            	Voice& voice = m_voicePool[voiceIndex];
+
+	            	// Check for outdated command
+	            	if (voice.generation != expectedVoiceGen) break;
+
+	            	if (voice.state == VoiceState::Inactive || voice.state == VoiceState::Paused) {
+	            		Logger::Log(LogLevel::Debug, "RtSystem", "Voice %d set to playing", voiceIndex);
+	            		voice.state = VoiceState::Playing;
+	            	}
                 }
                 case RtCommand::Type::PauseVoice: {
                     // TODO: Implement
