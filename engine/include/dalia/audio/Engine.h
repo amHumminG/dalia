@@ -34,6 +34,7 @@ namespace dalia {
 		void Update();
 
 	private:
+		void TryUpdateMixOrder();
 		static void data_callback(ma_device* pDevice, void* pOutput, const void* pInput, uint32_t frameCount);
 
 		std::unique_ptr<EngineInternalState> m_state;

@@ -21,6 +21,7 @@
 namespace dalia {
 
 	static constexpr uint8_t CHANNELS_STEREO = 2;
+	static constexpr uint32_t MASTER_BUS_INDEX = 0;
 
 	struct MixOrderBuffer {
 		std::unique_ptr<uint32_t[]> listA;
@@ -129,8 +130,13 @@ namespace dalia {
 			m_state->busPool[i].SetBuffer(std::span<float>(busStart, samplesPerBus));
 		}
 
-		m_state->masterBus = &m_state->busPool[0];
+		m_state->masterBus = &m_state->busPool[MASTER_BUS_INDEX];
 		m_state->masterBus->SetName("Master");
+		m_state->busPoolMirror[MASTER_BUS_INDEX].isBusy = true;
+
+		m_state->isMixOrderDirty = true;
+		m_state->isMixOrderSwapPending = false;
+		TryUpdateMixOrder();
 
 		// --- SYSTEMS SETUP ---
 		RealTimeSystemConfig rtConfig;
@@ -255,6 +261,29 @@ namespace dalia {
 
 		m_state->rtCommandQueue->Dispatch(); // Send all commands accumulated from this frame to the audio thread
 		Logger::ProcessLogs(); // Print all logs accumulated from this frame
+	}
+
+	void Engine::TryUpdateMixOrder() {
+		if (!m_state->isMixOrderDirty || m_state->isMixOrderSwapPending) return;
+
+		uint32_t* backBufferPtr = m_state->isUsingMixOrderA
+		? m_state->mixOrderBuffer->listB.get()
+		: m_state->mixOrderBuffer->listA.get();
+
+		std::span<uint32_t> backBufferSpan(backBufferPtr, m_state->busCapacity);
+		std::span<const BusMirror> busMirror(m_state->busPoolMirror.get(), m_state->busCapacity);
+
+		uint32_t sortedCount = m_state->busGraphCompiler->Compile(busMirror, backBufferSpan);
+		if (sortedCount > 0) {
+			m_state->rtCommandQueue->Enqueue(RtCommand::SwapMixOrder(backBufferPtr, sortedCount));
+
+			m_state->isMixOrderSwapPending = true;
+			m_state->isMixOrderDirty = false;
+		}
+		else {
+			Logger::Log(LogLevel::Critical, "Bus Routing", "Failed to compile mix graph: Cycle detected.");
+			m_state->isMixOrderDirty = false;
+		}
 	}
 
 	void Engine::data_callback(ma_device* pDevice, void* pOutput, const void* pInput, uint32_t frameCount) {
