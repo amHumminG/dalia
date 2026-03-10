@@ -14,7 +14,7 @@ namespace dalia {
     };
 
     enum class VoiceState : uint8_t {
-        None,
+        Free,
         Inactive,
         Playing,
         Virtual,
@@ -25,7 +25,7 @@ namespace dalia {
     struct Voice {
         uint32_t generation = 0;
 
-        VoiceState state = VoiceState::None;
+        VoiceState state = VoiceState::Free;
 
         // FIXME: Reference to sound in soundbank (probably unnecessary here)
         uint32_t assetID = 0;
@@ -54,7 +54,6 @@ namespace dalia {
         // Use this when releasing a voice
         void Reset() {
             parentBusIndex = 0;
-            state = VoiceState::None;
             isLooping = false;
             volume = 1.0f;
             pitch = 1.0f;
@@ -69,7 +68,7 @@ namespace dalia {
         uint32_t generation = 0;
         bool isBusy = false;
         uint32_t parentBusIndex;
-        VoiceState state = VoiceState::None;
+        VoiceState state = VoiceState::Free;
         void* callbackOnFinished = nullptr;
         AudioEventCallback callback = nullptr;
         void* userData = nullptr;
@@ -77,7 +76,7 @@ namespace dalia {
 
         void Reset() {
             isBusy = false;
-            state = VoiceState::None;
+            state = VoiceState::Free;
             callbackOnFinished = nullptr;
             callback = nullptr;
             userData = nullptr;
