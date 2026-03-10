@@ -160,7 +160,7 @@ namespace dalia {
 		ma_device_config deviceConfig	= ma_device_config_init(ma_device_type_playback);
 		deviceConfig.playback.format	= ma_format_f32;
 		deviceConfig.playback.channels	= CHANNELS_STEREO; // Stereo playback only
-		deviceConfig.sampleRate			= 44100; // Hz
+		deviceConfig.sampleRate			= 48000; // Hz
 		deviceConfig.dataCallback		= data_callback;
 		deviceConfig.periodSizeInFrames = 480;
 		deviceConfig.pUserData			= m_state->realTimeSystem.get();
@@ -170,7 +170,7 @@ namespace dalia {
 			return Result::DeviceFailed;
 		}
 		// const uint32_t m_periodSize = m_state->device->playback.internalPeriodSizeInFrames;
-		// Logger::Log(LogLevel::Info, "Engine", "Internal Period Size: %d", m_periodSize);
+		// Logger::Log(LogLevel::Debug, "Engine", "Internal Period Size: %d", m_periodSize);
 
 
 		// --- SYSTEMS START ---
@@ -231,36 +231,77 @@ namespace dalia {
 						// Voice is still valid -> Return it to the pool
 						m_state->voicePoolMirror[index].Reset();
 						m_state->freeVoices->Push(index);
+						Logger::Log(LogLevel::Debug, "Engine", "Freed voice %d.", index);
 					}
 					break;
 				}
 			}
 		}
 
-		// --- Process Command Outbox ---
-		// Mix Order
-		if (m_state->isMixOrderDirty && !m_state->isMixOrderSwapPending) {
-			uint32_t* backBufferPtr = m_state->isUsingMixOrderA
-			? m_state->mixOrderBuffer->listB.get()
-			: m_state->mixOrderBuffer->listA.get();
-
-			std::span<uint32_t> backBufferSpan(backBufferPtr, m_state->busCapacity);
-			std::span<const BusMirror> busMirror(m_state->busPoolMirror.get(), m_state->busCapacity);
-
-			uint32_t sortedCount = m_state->busGraphCompiler->Compile(busMirror, backBufferSpan);
-			if (sortedCount > 0) {
-				m_state->rtCommandQueue->Enqueue(RtCommand::SwapMixOrder(backBufferPtr, sortedCount));
-				m_state->isMixOrderSwapPending = true;
-				m_state->isMixOrderDirty = false;
-			}
-			else {
-				Logger::Log(LogLevel::Critical, "Bus Routing", "Failed to compile mix graph: Cycle detected.");
-				m_state->isMixOrderDirty = false;
-			}
-		}
+		TryUpdateMixOrder();
 
 		m_state->rtCommandQueue->Dispatch(); // Send all commands accumulated from this frame to the audio thread
 		Logger::ProcessLogs(); // Print all logs accumulated from this frame
+	}
+
+	Result Engine::CreateStreamPlayback(PlaybackHandle& handle, const char* filepath) {
+		if (!m_state || !m_state->initialized) {
+			return Result::NotInitialized;
+		}
+
+		uint32_t voiceIndex;
+		if (!m_state->freeVoices->Pop(voiceIndex)) {
+			Logger::Log(LogLevel::Error, "Engine", "Voice pool exhausted. Failed to create playback instance.");
+			return Result::VoicePoolExhausted;
+		}
+
+		uint32_t streamIndex;
+		if (!m_state->freeStreams->Pop(streamIndex)) {
+			m_state->freeVoices->Push(voiceIndex);
+
+			Logger::Log(LogLevel::Error, "Engine", "Stream pool exhausted. Failed to create playback instance.");
+			return Result::StreamPoolExhausted;
+		}
+
+		VoiceMirror& vMirror = m_state->voicePoolMirror[voiceIndex];
+		vMirror.generation++;
+		vMirror.state = VoiceState::Inactive;
+
+		// Send I/O request to prepare stream
+		m_state->streamPool[streamIndex].state.store(StreamState::Preparing, std::memory_order_release);
+		IoRequest req = IoRequest::PrepareStream(streamIndex, filepath);
+		if (!m_state->ioRequestQueue->Push(req)) {
+			m_state->freeVoices->Push(voiceIndex);
+
+			m_state->streamPool[streamIndex].state.store(StreamState::Free, std::memory_order_release);
+			m_state->freeStreams->Push(streamIndex);
+
+			Logger::Log(LogLevel::Error, "Engine", "IO Request queue full. Failed to create playback instance");
+			return Result::IoRequestQueueFull;
+		}
+
+		// Send command to audio thread (can't fail as it is pushed into a vector)
+		RtCommand cmd = RtCommand::PrepareVoiceStreaming(voiceIndex, vMirror.generation, streamIndex);
+		m_state->rtCommandQueue->Enqueue(cmd);
+
+		handle = PlaybackHandle::Create(voiceIndex, vMirror.generation);
+
+		return Result::Ok;
+	}
+
+	Result Engine::Play(PlaybackHandle handle) {
+		if (!m_state || !m_state->initialized) return Result::NotInitialized;
+
+		if (!handle.IsValid()) return Result::InvalidHandle;
+
+		uint32_t voiceIndex = handle.GetIndex();
+		uint32_t generation = handle.GetGeneration();
+		if (m_state->voicePoolMirror[voiceIndex].generation != generation) {
+			return Result::ExpiredHandle;
+		}
+
+		RtCommand cmd = RtCommand::PlayVoice(voiceIndex, generation);
+		m_state->rtCommandQueue->Enqueue(cmd);
 	}
 
 	void Engine::TryUpdateMixOrder() {

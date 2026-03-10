@@ -8,6 +8,7 @@ struct ma_device;
 namespace dalia {
 
 	struct EngineInternalState;
+	struct PlaybackHandle;
 
 	struct EngineConfig {
 		LogLevel logLevel = LogLevel::Warning;
@@ -32,6 +33,9 @@ namespace dalia {
 		Result Deinit();
 
 		void Update();
+
+		Result CreateStreamPlayback(PlaybackHandle& handle, const char* filepath);
+		Result Play(PlaybackHandle handle);
 
 	private:
 		void TryUpdateMixOrder();

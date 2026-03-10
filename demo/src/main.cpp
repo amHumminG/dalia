@@ -18,8 +18,17 @@ int main() {
 		Engine engine;
 		EngineConfig config;
 		config.logLevel = LogLevel::Debug;
-		Result result = engine.Init(config);
-		result = engine.Deinit();
+		engine.Init(config);
+
+		PlaybackHandle handle;
+		engine.CreateStreamPlayback(handle, "assets/Faouzia - UNETHICAL.ogg");
+		engine.Play(handle);
+
+		while (true) {
+			engine.Update();
+		}
+
+		engine.Deinit();
 	}
 
 	return 0;
