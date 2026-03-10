@@ -29,6 +29,8 @@ namespace dalia {
     private:
         void IoThreadMain();
 
+        void FillBuffer(StreamingContext& stream, uint32_t bufferIndex);
+
         IoRequestQueue* m_ioRequestQueue;
         std::span<StreamingContext> m_streamPool;
         SPSCRingBuffer<uint32_t>* m_freeStreams;
