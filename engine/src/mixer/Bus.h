@@ -20,7 +20,7 @@ namespace dalia {
         void ApplyDSP(uint32_t sampleCount);
         void MixInBuffer(std::span<float> inBuffer, uint32_t sampleCount);
 
-        uint32_t parentIndex;
+        uint32_t parentIndex = NO_PARENT;
 
     private:
         std::string m_name; // Do we just use this for debug?

@@ -98,13 +98,13 @@ namespace dalia {
         // --- Voice Pass --- (Parallel ready when the time comes)
         for (uint32_t i = 0; i < m_voicePool.size(); i++) {
             Voice& voice = m_voicePool[i];
-            if (voice.state != VoiceState::Playing) continue;
+            if (voice.state != VoiceState::Playing) continue; // TODO: We should handle error state or stopped state here too!
 
+        	// Logger::Log(LogLevel::Debug, "RtSystem", "Mixing voice %d...", i);
             bool isStillPlaying = MixVoiceToBus(voice, voice.parentBusIndex, frameCount);
             if (!isStillPlaying) {
-                // TODO: We need to determine why the voice finished here or inside MixVoiceToBus and send the approperiate event!
+            	FreeVoice(i);
                 m_rtEventQueue->Push(RtEvent::VoiceFinished(i, voice.generation));
-                voice.Reset();
             }
         }
 
@@ -142,11 +142,13 @@ namespace dalia {
         while (framesMixed < frameCount) {
 			float* sourceData = nullptr;
         	uint32_t framesInSource = 0;
+        	uint32_t sourceChannels = 0;
         	uint32_t cursorInt = static_cast<uint32_t>(voice.cursor);
 
 			if (voice.sourceType == VoiceSourceType::Resident) {
 				sourceData = voice.buffer.data();
 				framesInSource = static_cast<uint32_t>(voice.buffer.size() / voice.channels);
+				sourceChannels = voice.channels;
 			}
 			else if (voice.sourceType == VoiceSourceType::Stream) {
 				StreamingContext& stream = m_streamPool[voice.streamingContextIndex];
@@ -155,12 +157,12 @@ namespace dalia {
 					return true;
 				}
 				if (!stream.bufferReady[voice.frontBufferIndex].load(std::memory_order_acquire)) {
-					// Buffer is not ready yet (it should be)
 					Logger::Log(LogLevel::Error, "RtSystem", "Stream buffer underrun");
 					return true;
 				}
 
 				sourceData = stream.buffers[voice.frontBufferIndex];
+				sourceChannels = stream.channels;
 
 				// Determine the number of valid frames in the buffer
 				const uint32_t eofIndex = stream.eofIndex[voice.frontBufferIndex];
@@ -181,8 +183,8 @@ namespace dalia {
 
         	if (framesToMixNow > 0) {
         		float* outPtr = &busBuffer[framesMixed * 2]; // 2 for stereo bus
-        		uint32_t sourceStride = voice.channels; // TODO: This is where we have to resample in the future
-        		if (voice.channels == 1) {
+        		uint32_t sourceStride = sourceChannels; // TODO: This is where we have to resample in the future
+        		if (sourceChannels == 1) {
         			for (uint32_t i = 0; i < framesToMixNow; i++) {
         				float sample = sourceData[(cursorInt + i) * sourceStride];
 
@@ -193,7 +195,7 @@ namespace dalia {
         				outPtr += 2; // 2 for stereo bus
         			}
         		}
-        		else if (voice.channels == 2) {
+        		else if (sourceChannels == 2) {
         			for (uint32_t i = 0; i < framesToMixNow; i++) {
         				float sampleL = sourceData[(cursorInt + i) * 2 + 0];
         				float sampleR = sourceData[(cursorInt + i) * 2 + 1];
@@ -207,7 +209,7 @@ namespace dalia {
         		}
         		else {
         			Logger::Log(LogLevel::Warning, "RtSystem",
-						"Failed to mix voice with invalid channel count: %d", voice.channels);
+						"Failed to mix voice with invalid channel count: %d", sourceChannels);
         		}
         	}
 
@@ -232,9 +234,6 @@ namespace dalia {
 					if (stream.eofIndex[voice.frontBufferIndex] != NO_EOF) {
 						if (!voice.isLooping) {
 							voice.state = VoiceState::Stopping;
-							// Request stream release
-							stream.generation.fetch_add(1, std::memory_order_relaxed);
-							m_ioRequestQueue->Push(IoRequest::ReleaseStream(voice.streamingContextIndex));
 							return false;
 						}
 					}
@@ -252,5 +251,22 @@ namespace dalia {
 		}
 
 		return true;
+    }
+
+    void RealTimeSystem::FreeVoice(uint32_t voiceIndex) {
+    	Voice& voice = m_voicePool[voiceIndex];
+
+    	if (voice.sourceType == VoiceSourceType::Stream) {
+    		StreamingContext& stream = m_streamPool[voice.streamingContextIndex];
+    		stream.generation.fetch_add(1, std::memory_order_relaxed);
+    		IoRequest req = IoRequest::ReleaseStream(voice.streamingContextIndex);
+    	}
+
+    	voice.state = VoiceState::Free;
+    	voice.Reset();
+
+    	// TODO: We need to determine why the voice finished here or inside MixVoiceToBus and send the approperiate event!
+    	RtEvent ev = RtEvent::VoiceFinished(voiceIndex, voice.generation);
+    	m_rtEventQueue->Push(ev);
     }
 }

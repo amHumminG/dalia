@@ -6,15 +6,27 @@
 namespace dalia {
 
 	enum class Result : int {
-		Ok = 0,
+		Ok					= 0,
 
 		// Generic Errors [-1, -99]
-		Error = -1,
-		NotInitialized = -2,
-		AlreadyInitialized = -3,
+		Error				= -1,
+		NotInitialized		= -2,
+		AlreadyInitialized	= -3,
+		InvalidHandle		= -4,
+		ExpiredHandle		= -5,
 
-		// Backed Errors [-100, -199]
-		DeviceFailed = -100,
+		// Messaging Errors
+		RtCommandQueueFull	= -100,
+		RtEventQueueFull	= -101,
+		IoRequestQueueFull	= -102,
+
+		// Playback Errors
+		VoicePoolExhausted	= -200,
+		StreamPoolExhausted = -201,
+		BusPoolExhausted	= -202,
+
+		// Backed Errors
+		DeviceFailed		= -300,
 	};
 
 	constexpr const char* GetErrorString(const Result result) {
