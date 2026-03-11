@@ -152,13 +152,11 @@ namespace dalia {
         }
 
         float* bufferPtr = stream.buffers[bufferIndex];
-        // int samplesNeeded = DOUBLE_BUFFER_FRAMES * stream.channels;
-        // int samplesWritten = 0;
-        // bool justLooped = false;
 
         int framesNeeded = dalia::DOUBLE_BUFFER_FRAMES;
         int framesWritten = 0;
         bool justLooped = false;
+        bool foundEOF = false;
 
 
         while (framesWritten < framesNeeded) {
@@ -184,12 +182,13 @@ namespace dalia {
                 Logger::Log(LogLevel::Debug, "IoSystem", "Stream buffer found EOF at index %d", framesWritten);
                 stb_vorbis_seek_start(stream.decoder);
                 justLooped = true;
+                foundEOF = true;
                 // We continue to fill buffer from the start of the file
             }
             else {
-                justLooped = false;
+                if (!foundEOF) stream.eofIndex[bufferIndex] = NO_EOF;
                 framesWritten += framesRead;
-                stream.eofIndex[bufferIndex] = NO_EOF;
+                justLooped = false;
             }
         }
 
