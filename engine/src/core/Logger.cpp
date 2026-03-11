@@ -52,12 +52,16 @@ namespace dalia {
 		if (!m_buffer) return;
 
 		LogEntry entry;
+		bool didPrint = false;
 		while (m_buffer->Pop(entry)) {
 			if (m_sink) {
 				m_sink(entry.level, entry.category, entry.message);
 			}
 			std::printf("[DALIA %s] %s: %s\n", GetLevelString(entry.level), entry.category, entry.message);
+			didPrint = true;
 		}
+
+		if (didPrint) std::fflush(stdout);
 	}
 	const char* Logger::GetLevelString(LogLevel level) {
 		switch (level) {
