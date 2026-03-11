@@ -35,7 +35,7 @@ namespace dalia {
 
 		static RtEvent VoiceFinished(uint32_t index, uint32_t generation) {
 			RtEvent ev;
-			ev.type = Type::MixOrderSwapped;
+			ev.type = Type::VoiceFinished;
 			ev.data.voiceState.index = index;
 			ev.data.voiceState.generation = generation;
 			return ev;
