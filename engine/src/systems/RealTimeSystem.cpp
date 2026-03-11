@@ -254,9 +254,10 @@ namespace dalia {
     	Voice& voice = m_voicePool[voiceIndex];
 
     	if (voice.sourceType == VoiceSourceType::Stream) {
+    		// Release StreamingContext
     		StreamingContext& stream = m_streamPool[voice.streamingContextIndex];
     		stream.generation.fetch_add(1, std::memory_order_relaxed);
-    		IoRequest req = IoRequest::ReleaseStream(voice.streamingContextIndex);
+    		m_ioRequestQueue->Push(IoRequest::ReleaseStream(voice.streamingContextIndex));
     	}
 
     	if (voice.state == VoiceState::Finished) {
