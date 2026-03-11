@@ -180,7 +180,8 @@ namespace dalia {
                     return;
                 }
 
-                stream.eofIndex[bufferIndex] = framesWritten * stream.channels;
+                stream.eofIndex[bufferIndex] = framesWritten;
+                Logger::Log(LogLevel::Debug, "IoSystem", "Stream buffer found EOF at index %d", framesWritten);
                 stb_vorbis_seek_start(stream.decoder);
                 justLooped = true;
                 // We continue to fill buffer from the start of the file
@@ -188,6 +189,7 @@ namespace dalia {
             else {
                 justLooped = false;
                 framesWritten += framesRead;
+                stream.eofIndex[bufferIndex] = NO_EOF;
             }
         }
 
