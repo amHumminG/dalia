@@ -100,11 +100,10 @@ namespace dalia {
             Voice& voice = m_voicePool[i];
             if (voice.state != VoiceState::Playing) continue; // TODO: We should handle error state or stopped state here too!
 
-        	// Logger::Log(LogLevel::Debug, "RtSystem", "Mixing voice %d...", i);
+        	Logger::Log(LogLevel::Debug, "RtSystem", "Mixing voice %d...", i);
             bool isStillPlaying = MixVoiceToBus(voice, voice.parentBusIndex, frameCount);
             if (!isStillPlaying) {
             	FreeVoice(i);
-                m_rtEventQueue->Push(RtEvent::VoiceFinished(i, voice.generation));
             }
         }
 
@@ -223,7 +222,7 @@ namespace dalia {
 						voice.cursor = 0.0f; // Loop back to start
 					}
 					else {
-						voice.state = VoiceState::Stopping;
+						voice.state = VoiceState::Finished;
 						return false;
 					}
 				}
@@ -231,11 +230,9 @@ namespace dalia {
 					StreamingContext& stream = m_streamPool[voice.streamingContextIndex];
 
 					// Did we hit EOF?
-					if (stream.eofIndex[voice.frontBufferIndex] != NO_EOF) {
-						if (!voice.isLooping) {
-							voice.state = VoiceState::Stopping;
-							return false;
-						}
+					if (stream.eofIndex[voice.frontBufferIndex] != NO_EOF && !voice.isLooping) {
+						voice.state = VoiceState::Finished;
+						return false;
 					}
 
 					stream.bufferReady[voice.frontBufferIndex].store(false, std::memory_order_release);
@@ -262,11 +259,16 @@ namespace dalia {
     		IoRequest req = IoRequest::ReleaseStream(voice.streamingContextIndex);
     	}
 
+    	if (voice.state == VoiceState::Finished) {
+    		Logger::Log(LogLevel::Debug, "RtSystem", "Voice %d finished.", voiceIndex);
+    	}
+    	else if (voice.state == VoiceState::Killed) {
+    		Logger::Log(LogLevel::Debug, "RtSystem", "Voice %d killed.", voiceIndex);
+    	}
+
     	voice.state = VoiceState::Free;
     	voice.Reset();
 
-    	// TODO: We need to determine why the voice finished here or inside MixVoiceToBus and send the approperiate event!
-    	RtEvent ev = RtEvent::VoiceFinished(voiceIndex, voice.generation);
-    	m_rtEventQueue->Push(ev);
+    	m_rtEventQueue->Push(RtEvent::VoiceFinished(voiceIndex, voice.generation));
     }
 }

@@ -19,7 +19,9 @@ namespace dalia {
         Playing,
         Virtual,
         Paused,
-        Stopping
+
+        Finished,
+        Killed
     };
 
     struct Voice {
