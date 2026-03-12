@@ -24,7 +24,7 @@ namespace dalia {
         void Stop();
 
     private:
-        void IoThreadMain();
+        void ThreadMain();
 
         void FillBuffer(StreamContext& stream, uint32_t bufferIndex);
 
@@ -32,7 +32,7 @@ namespace dalia {
         std::span<StreamContext> m_streamPool;
         SPSCRingBuffer<uint32_t>* m_freeStreams;
 
-        std::thread m_ioThread;
+        std::thread m_thread;
         std::atomic<bool> m_isRunning{false};
     };
 }

@@ -26,17 +26,17 @@ namespace dalia {
         if (m_isRunning.load(std::memory_order_relaxed)) return;
 
         m_isRunning.store(true, std::memory_order_release);
-        m_ioThread = std::thread(&IoStreamSystem::IoThreadMain, this);
+        m_thread = std::thread(&IoStreamSystem::ThreadMain, this);
     }
 
     void IoStreamSystem::Stop() {
         if (!m_isRunning.load(std::memory_order_relaxed)) return;
 
         m_isRunning.store(false, std::memory_order_release);
-        if (m_ioThread.joinable()) m_ioThread.join();
+        if (m_thread.joinable()) m_thread.join();
     }
 
-    void IoStreamSystem::IoThreadMain() {
+    void IoStreamSystem::ThreadMain() {
         while (m_isRunning.load(std::memory_order_relaxed)) {
             bool didWork = false;
             IoStreamRequest req;

@@ -55,6 +55,8 @@ set(ENGINE_FILES
     src/messaging/IoLoadEventQueue.cpp
     src/messaging/IoLoadEventQueue.h
     src/core/Constants.h
+    src/systems/IoLoadSystem.cpp
+    src/systems/IoLoadSystem.h
 )
 
 add_library(dalia_engine STATIC ${ENGINE_FILES})
