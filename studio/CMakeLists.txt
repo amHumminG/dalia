@@ -51,6 +51,7 @@ set(STUDIO_FILES
     src/main.cpp
     src/Transcoder.h
     src/Transcoder.cpp
+    src/FileExplorer.cpp
     src/app/Application.cpp
     src/app/Application.h
     src/editor/Panel.h
