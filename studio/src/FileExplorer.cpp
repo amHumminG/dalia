@@ -10,8 +10,7 @@ namespace dalia::studio {
      * Usage example:
      * std::string filePath = OpenFileExplorer("Image files", "*.png;*.jpg;*.gif;");
      */
-    inline std::string OpenFileExplorer(const std::string& filterLabel = "", const std::string& filterFileTypes = "")
-    {
+    inline std::string OpenFileExplorer(const std::string& filterLabel = "", const std::string& filterFileTypes = "") {
         OPENFILENAME ofn;
         char fileName[MAX_PATH] = "";
 
@@ -27,57 +26,10 @@ namespace dalia::studio {
         ofn.nMaxFile = MAX_PATH;
         ofn.Flags = OFN_EXPLORER | OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST;
 
-        if (GetOpenFileName(&ofn))
-        {
+        if (GetOpenFileName(&ofn)) {
             return std::string(fileName);
         }
 
-        return "";
-    }
-
-    inline std::string GetOpenFileName()
-    {
-        HRESULT hr = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
-        if (FAILED(hr)) return "";
-
-        IFileOpenDialog *pFileOpen;
-
-        hr = CoCreateInstance(CLSID_FileOpenDialog, nullptr, CLSCTX_ALL,
-            IID_IFileOpenDialog, reinterpret_cast<void **>(&pFileOpen));
-
-        if (SUCCEEDED(hr))
-        {
-            hr = pFileOpen->Show(nullptr);
-
-            if (SUCCEEDED(hr))
-            {
-                IShellItem *pItem;
-                hr = pFileOpen->GetResult(&pItem);
-
-                if (SUCCEEDED(hr))
-                {
-                    PWSTR filePath;
-
-                    hr = pItem->GetDisplayName(SIGDN_FILESYSPATH, &filePath);
-
-                    if (SUCCEEDED(hr))
-                    {
-                        std::wstring ws(filePath);
-                        std::string result(ws.begin(), ws.end());
-
-                        CoTaskMemFree(filePath);
-                        pItem->Release();
-                        pFileOpen->Release();
-                        CoUninitialize();
-
-                        return result;
-                    }
-                }
-            }
-            pFileOpen->Release();
-        }
-
-        CoUninitialize();
         return "";
     }
 }
