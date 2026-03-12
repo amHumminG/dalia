@@ -13,7 +13,7 @@ namespace dalia::studio {
 
     void BrowserPanel::Render() {
         if (ImGui::Button("Import Sound")) {
-            const std::string filePath = dalia::studio::GetOpenFileName();
+            const std::string filePath = dalia::studio::OpenFileExplorer();
             if (!filePath.empty()) {
                 m_project.ImportSound(filePath);
                 Logger::Log(LogLevel::Info, "Browser", "Imported asset");
