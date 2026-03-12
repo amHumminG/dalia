@@ -52,6 +52,9 @@ set(ENGINE_FILES
     src/mixer/BusGraphCompiler.h
     src/messaging/IoLoadRequestQueue.cpp
     src/messaging/IoLoadRequestQueue.h
+    src/messaging/IoLoadEventQueue.cpp
+    src/messaging/IoLoadEventQueue.h
+    src/core/Constants.h
 )
 
 add_library(dalia_engine STATIC ${ENGINE_FILES})

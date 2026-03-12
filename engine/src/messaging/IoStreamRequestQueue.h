@@ -1,9 +1,8 @@
 #pragma once
+#include "core/Constants.h"
 #include "core/MPSCRingBuffer.h"
 
 namespace dalia {
-
-    static constexpr size_t MAX_IO_PATH_SIZE = 256;
 
     struct IoStreamRequest {
         enum class Type {

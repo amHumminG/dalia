@@ -1,5 +1,7 @@
 #pragma once
+#include "core/Constants.h"
 #include "core/SPSCRingBuffer.h"
+#include <cstdint>
 
 namespace dalia {
 
@@ -11,13 +13,15 @@ namespace dalia {
 
         } type = Type::None;
 
+        uint32_t requestId;
+
         union {
             struct {
                 // ResidentSound* sound;
-                char filepath[256];
+                char filepath[MAX_IO_PATH_SIZE];
             } LoadSoundFromFile;
 
-        } data;
+        } data = {};
 
         static IoLoadRequest LoadSoundFromFile(const char* filepath) {
 
