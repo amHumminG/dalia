@@ -50,8 +50,7 @@ namespace dalia {
 
         // Streaming
         uint8_t frontBufferIndex = 0;
-        uint16_t streamingContextIndex;
-        // The StreamingContext should be assigned by the game thread and sent to the audio thread via the play command
+        uint16_t streamContextIndex;
 
         // Use this when releasing a voice
         void Reset() {

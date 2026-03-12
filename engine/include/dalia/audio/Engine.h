@@ -19,9 +19,9 @@ namespace dalia {
 		uint32_t streamCapacity		= 32;
 		uint32_t busCapacity		= 64;
 
-		size_t rtCommandQueueCapacity	= 1024;
-		size_t rtEventQueueCapacity		= 1024;
-		size_t ioRequestQueueCapacity	= 256;
+		size_t rtCommandQueueCapacity		= 1024;
+		size_t rtEventQueueCapacity			= 1024;
+		size_t ioStreamRequestQueueCapacity	= 256;
 	};
 
 	class Engine {

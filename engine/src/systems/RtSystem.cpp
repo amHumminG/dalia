@@ -1,14 +1,14 @@
-#include "systems/RealTimeSystem.h"
+#include "systems/RtSystem.h"
 
 #include "core/Logger.h"
 
 #include "mixer/Voice.h"
-#include "mixer/StreamingContext.h"
+#include "mixer/StreamContext.h"
 #include "mixer/Bus.h"
 
 #include "messaging/RtCommandQueue.h"
 #include "messaging/RtEventQueue.h"
-#include "messaging/IoRequestQueue.h"
+#include "messaging/IoStreamRequestQueue.h"
 
 #include <cmath>
 
@@ -18,19 +18,19 @@
 
 namespace dalia {
 
-    RealTimeSystem::RealTimeSystem(const RealTimeSystemConfig& config)
+    RtSystem::RtSystem(const RtSystemConfig& config)
         : m_voicePool(config.voicePool),
         m_streamPool(config.streamPool),
         m_busPool(config.busPool),
         m_masterBus(config.masterBus),
-        m_rtCommandQueue(config.rtCommandQueue),
-        m_rtEventQueue(config.rtEventQueue),
-        m_ioRequestQueue(config.ioRequestQueue) {
+        m_rtCommands(config.rtCommands),
+        m_rtEvents(config.rtEvents),
+        m_ioStreamRequests(config.ioStreamRequests) {
         // Empty bus graph
         m_activeMixOrder = std::span<const uint32_t>();
     }
 
-    void RealTimeSystem::OnAudioCallback(float* output, uint32_t frameCount, uint32_t channels) {
+    void RtSystem::OnAudioCallback(float* output, uint32_t frameCount, uint32_t channels) {
         // Process incoming commands from the game thread
         ProcessCommands();
 
@@ -38,10 +38,10 @@ namespace dalia {
         Render(output, frameCount, channels);
     }
 
-    void RealTimeSystem::ProcessCommands() {
+    void RtSystem::ProcessCommands() {
         RtCommand cmd;
         // TODO: We should probably set a limit on the amount of commands we process in one audio frame
-        while (m_rtCommandQueue->Pop(cmd)) {
+        while (m_rtCommands->Pop(cmd)) {
             switch (cmd.type) {
 	            case RtCommand::Type::SwapMixOrder: {
             		m_activeMixOrder = std::span<const uint32_t>(
@@ -50,7 +50,7 @@ namespace dalia {
 					);
 
             		// Send event to acknowledge the swap
-            		m_rtEventQueue->Push(RtEvent::MixOrderSwapped());
+            		m_rtEvents->Push(RtEvent::MixOrderSwapped());
 	            	break;
 	            }
 				case RtCommand::Type::PrepareVoiceStreaming: {
@@ -61,7 +61,7 @@ namespace dalia {
 	            	voice.sourceType = VoiceSourceType::Stream;
 	            	voice.state = VoiceState::Inactive;
 	            	voice.generation = cmd.data.voicePrepStreaming.voiceGeneration;
-	            	voice.streamingContextIndex = cmd.data.voicePrepStreaming.streamIndex;
+	            	voice.streamContextIndex = cmd.data.voicePrepStreaming.streamIndex;
 	            	break;
 	            }
                 case RtCommand::Type::PlayVoice: {
@@ -88,7 +88,7 @@ namespace dalia {
         }
     }
 
-    void RealTimeSystem::Render(float* output, uint32_t frameCount, uint32_t channels) {
+    void RtSystem::Render(float* output, uint32_t frameCount, uint32_t channels) {
         const uint32_t sampleCount = frameCount * channels;
 
         for (uint32_t busIndex : m_activeMixOrder) {
@@ -128,7 +128,7 @@ namespace dalia {
         std::copy_n(masterBuffer.data(), sampleCount, output);
     }
 
-    bool RealTimeSystem::MixVoiceToBus(Voice& voice, uint32_t busIndex, uint32_t frameCount) {
+    bool RtSystem::MixVoiceToBus(Voice& voice, uint32_t busIndex, uint32_t frameCount) {
         std::span<float> busBuffer = m_busPool[busIndex].GetBuffer();
         uint32_t framesMixed = 0;
 
@@ -150,7 +150,7 @@ namespace dalia {
 				sourceChannels = voice.channels;
 			}
 			else if (voice.sourceType == VoiceSourceType::Stream) {
-				StreamingContext& stream = m_streamPool[voice.streamingContextIndex];
+				StreamContext& stream = m_streamPool[voice.streamContextIndex];
 				if (stream.state.load(std::memory_order_acquire) != StreamState::Streaming) {
 					// Voice is not ready to stream yet
 					return true;
@@ -227,7 +227,7 @@ namespace dalia {
 					}
 				}
 				else if (voice.sourceType == VoiceSourceType::Stream) {
-					StreamingContext& stream = m_streamPool[voice.streamingContextIndex];
+					StreamContext& stream = m_streamPool[voice.streamContextIndex];
 
 					// Did we hit EOF?
 					if (stream.eofIndex[voice.frontBufferIndex] != NO_EOF && !voice.isLooping) {
@@ -237,7 +237,7 @@ namespace dalia {
 
 					stream.bufferReady[voice.frontBufferIndex].store(false, std::memory_order_release);
 					const uint32_t gen = stream.generation.load(std::memory_order_relaxed);
-					m_ioRequestQueue->Push(IoRequest::RefillStreamBuffer(voice.streamingContextIndex, gen, voice.frontBufferIndex));
+					m_ioStreamRequests->Push(IoStreamRequest::RefillStreamBuffer(voice.streamContextIndex, gen, voice.frontBufferIndex));
 
 					// Swap buffers
 					voice.frontBufferIndex = 1 - voice.frontBufferIndex;
@@ -250,14 +250,13 @@ namespace dalia {
 		return true;
     }
 
-    void RealTimeSystem::FreeVoice(uint32_t voiceIndex) {
+    void RtSystem::FreeVoice(uint32_t voiceIndex) {
     	Voice& voice = m_voicePool[voiceIndex];
 
     	if (voice.sourceType == VoiceSourceType::Stream) {
-    		// Release StreamingContext
-    		StreamingContext& stream = m_streamPool[voice.streamingContextIndex];
+    		StreamContext& stream = m_streamPool[voice.streamContextIndex];
     		stream.generation.fetch_add(1, std::memory_order_relaxed);
-    		m_ioRequestQueue->Push(IoRequest::ReleaseStream(voice.streamingContextIndex));
+    		m_ioStreamRequests->Push(IoStreamRequest::ReleaseStream(voice.streamContextIndex));
     	}
 
     	if (voice.state == VoiceState::Finished) {
@@ -270,6 +269,6 @@ namespace dalia {
     	voice.state = VoiceState::Free;
     	voice.Reset();
 
-    	m_rtEventQueue->Push(RtEvent::VoiceFinished(voiceIndex, voice.generation));
+    	m_rtEvents->Push(RtEvent::VoiceFinished(voiceIndex, voice.generation));
     }
 }

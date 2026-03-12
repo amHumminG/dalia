@@ -1,10 +1,10 @@
-#include "systems/IoSystem.h"
+#include "systems/IoStreamSystem.h"
 
 #include "core/Logger.h"
 
 #include "core/SPSCRingBuffer.h"
-#include "messaging/IoRequestQueue.h"
-#include "mixer/StreamingContext.h"
+#include "messaging/IoStreamRequestQueue.h"
+#include "mixer/StreamContext.h"
 
 #include "stb_vorbis.c"
 
@@ -12,42 +12,42 @@
 
 namespace dalia {
 
-    IoSystem::IoSystem(const IoSystemConfig& config)
-        : m_ioRequestQueue(config.ioRequestQueue),
+    IoStreamSystem::IoStreamSystem(const IoStreamSystemConfig& config)
+        : m_ioStreamRequests(config.ioStreamRequests),
         m_streamPool(config.streamPool),
         m_freeStreams(config.freeStreams) {
     }
 
-    IoSystem::~IoSystem() {
+    IoStreamSystem::~IoStreamSystem() {
         Stop();
     }
 
-    void IoSystem::Start() {
+    void IoStreamSystem::Start() {
         if (m_isRunning.load(std::memory_order_relaxed)) return;
 
         m_isRunning.store(true, std::memory_order_release);
-        m_ioThread = std::thread(&IoSystem::IoThreadMain, this);
+        m_ioThread = std::thread(&IoStreamSystem::IoThreadMain, this);
     }
 
-    void IoSystem::Stop() {
+    void IoStreamSystem::Stop() {
         if (!m_isRunning.load(std::memory_order_relaxed)) return;
 
         m_isRunning.store(false, std::memory_order_release);
         if (m_ioThread.joinable()) m_ioThread.join();
     }
 
-    void IoSystem::IoThreadMain() {
+    void IoStreamSystem::IoThreadMain() {
         while (m_isRunning.load(std::memory_order_relaxed)) {
             bool didWork = false;
-            IoRequest req;
+            IoStreamRequest req;
 
-            while (m_ioRequestQueue->Pop(req)) {
+            while (m_ioStreamRequests->Pop(req)) {
                 didWork = true;
 
                 // Handle requests
                 switch (req.type) {
-                    case IoRequest::Type::PrepareStream: {
-                        StreamingContext& stream = m_streamPool[req.data.stream.poolIndex];
+                    case IoStreamRequest::Type::PrepareStream: {
+                        StreamContext& stream = m_streamPool[req.data.stream.poolIndex];
                         if (stream.state.load(std::memory_order_acquire) != StreamState::Preparing) break;
 
                         if (stream.decoder) {
@@ -105,8 +105,8 @@ namespace dalia {
 
                         break;
                     }
-                    case IoRequest::Type::ReleaseStream: {
-                        StreamingContext& stream = m_streamPool[req.data.stream.poolIndex];
+                    case IoStreamRequest::Type::ReleaseStream: {
+                        StreamContext& stream = m_streamPool[req.data.stream.poolIndex];
                         if (stream.decoder) {
                             stb_vorbis_close(stream.decoder);
                             stream.decoder = nullptr;
@@ -118,8 +118,8 @@ namespace dalia {
                         Logger::Log(LogLevel::Debug, "IoSystem", "Freed stream %d", req.data.stream.poolIndex);
                         break;
                     }
-                    case IoRequest::Type::RefillStreamBuffer: {
-                        StreamingContext& stream = m_streamPool[req.data.stream.poolIndex];
+                    case IoStreamRequest::Type::RefillStreamBuffer: {
+                        StreamContext& stream = m_streamPool[req.data.stream.poolIndex];
 
                         if (stream.state.load(std::memory_order_acquire) != StreamState::Streaming) break;
                         if (stream.generation.load(std::memory_order_relaxed) != req.data.stream.generation) break;
@@ -127,10 +127,6 @@ namespace dalia {
                         FillBuffer(stream, req.data.stream.bufferIndex);
                         Logger::Log(LogLevel::Debug, "IoSystem", "Refilled buffer %d for stream %d",
                             req.data.stream.bufferIndex, req.data.stream.poolIndex);
-                        break;
-                    }
-                    case IoRequest::Type::LoadSoundbank: {
-                        // TODO: Logic for soundbank loading
                         break;
                     }
                     default:
@@ -144,7 +140,7 @@ namespace dalia {
         }
     }
 
-    void IoSystem::FillBuffer(StreamingContext& stream, uint32_t bufferIndex) {
+    void IoStreamSystem::FillBuffer(StreamContext& stream, uint32_t bufferIndex) {
         if (!stream.decoder) {
             Logger::Log(LogLevel::Error, "Stream buffer refill", "Invalid decoder");
             stream.state.store(StreamState::Error, std::memory_order_release);

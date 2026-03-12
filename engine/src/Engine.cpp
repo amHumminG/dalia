@@ -5,14 +5,14 @@
 #include "core/SPSCRingBuffer.h"
 #include "messaging/RtCommandQueue.h"
 #include "messaging/RtEventQueue.h"
-#include "messaging/IoRequestQueue.h"
+#include "messaging/IoStreamRequestQueue.h"
 #include "mixer/Voice.h"
-#include "mixer/StreamingContext.h"
+#include "mixer/StreamContext.h"
 #include "mixer/Bus.h"
 #include "mixer/BusGraphCompiler.h"
 
-#include "systems/RealTimeSystem.h"
-#include "systems/IoSystem.h"
+#include "systems/RtSystem.h"
+#include "systems/IoStreamSystem.h"
 
 #include <span>
 
@@ -40,9 +40,9 @@ namespace dalia {
 		std::unique_ptr<ma_device> device;
 
 		// --- Messaging Queues ---
-		std::unique_ptr<RtCommandQueue>		rtCommandQueue;
-		std::unique_ptr<RtEventQueue>		rtEventQueue;
-		std::unique_ptr<IoRequestQueue>		ioRequestQueue;
+		std::unique_ptr<RtCommandQueue>			rtCommands;
+		std::unique_ptr<RtEventQueue>			rtEvents;
+		std::unique_ptr<IoStreamRequestQueue>	ioStreamRequests;
 
 		// --- Resource Capacities ---
 		uint32_t voiceCapacity	= 0;
@@ -51,7 +51,7 @@ namespace dalia {
 
 		// --- Pools ---
 		std::unique_ptr<Voice[]>				voicePool;
-		std::unique_ptr<StreamingContext[]>		streamPool;
+		std::unique_ptr<StreamContext[]>		streamPool;
 		std::unique_ptr<Bus[]>					busPool;
 		std::unique_ptr<float[]>				busMemoryPool;
 		Bus* masterBus = nullptr;
@@ -73,20 +73,20 @@ namespace dalia {
 		bool isMixOrderDirty		= false;
 		bool isMixOrderSwapPending	= false;
 
-		std::unique_ptr<RealTimeSystem> realTimeSystem;
-		std::unique_ptr<IoSystem> ioSystem;
+		std::unique_ptr<RtSystem> rtSystem;
+		std::unique_ptr<IoStreamSystem> ioStreamSystem;
 
 		EngineInternalState(const EngineConfig& config)
 			: voiceCapacity(config.voiceCapacity), streamCapacity(config.streamCapacity), busCapacity(config.busCapacity) {
 			// Message Queues
-			rtCommandQueue		= std::make_unique<RtCommandQueue>(config.rtCommandQueueCapacity);
-			rtEventQueue		= std::make_unique<RtEventQueue>(config.rtEventQueueCapacity);
-			ioRequestQueue		= std::make_unique<IoRequestQueue>(config.ioRequestQueueCapacity);
+			rtCommands			= std::make_unique<RtCommandQueue>(config.rtCommandQueueCapacity);
+			rtEvents			= std::make_unique<RtEventQueue>(config.rtEventQueueCapacity);
+			ioStreamRequests	= std::make_unique<IoStreamRequestQueue>(config.ioStreamRequestQueueCapacity);
 
 			// Pools
 			voicePool		= std::make_unique<Voice[]>(voiceCapacity);
 			voicePoolMirror	= std::make_unique<VoiceMirror[]>(voiceCapacity);
-			streamPool		= std::make_unique<StreamingContext[]>(streamCapacity);
+			streamPool		= std::make_unique<StreamContext[]>(streamCapacity);
 			busPool			= std::make_unique<Bus[]>(busCapacity);
 			busPoolMirror	= std::make_unique<BusMirror[]>(busCapacity);
 
@@ -139,21 +139,21 @@ namespace dalia {
 		TryUpdateMixOrder();
 
 		// --- SYSTEMS SETUP ---
-		RealTimeSystemConfig rtConfig;
-		rtConfig.rtCommandQueue = m_state->rtCommandQueue.get();
-		rtConfig.rtEventQueue	= m_state->rtEventQueue.get();
-		rtConfig.ioRequestQueue = m_state->ioRequestQueue.get();
+		RtSystemConfig rtConfig;
+		rtConfig.rtCommands		= m_state->rtCommands.get();
+		rtConfig.rtEvents		= m_state->rtEvents.get();
+		rtConfig.ioStreamRequests = m_state->ioStreamRequests.get();
 		rtConfig.voicePool		= std::span<Voice>(m_state->voicePool.get(), m_state->voiceCapacity);
-		rtConfig.streamPool		= std::span<StreamingContext>(m_state->streamPool.get(), m_state->streamCapacity);
+		rtConfig.streamPool		= std::span<StreamContext>(m_state->streamPool.get(), m_state->streamCapacity);
 		rtConfig.busPool		= std::span<Bus>(m_state->busPool.get(), m_state->busCapacity);
 		rtConfig.masterBus		= m_state->masterBus;
-		m_state->realTimeSystem = std::make_unique<RealTimeSystem>(rtConfig);
+		m_state->rtSystem = std::make_unique<RtSystem>(rtConfig);
 
-		IoSystemConfig ioConfig;
-		ioConfig.ioRequestQueue = m_state->ioRequestQueue.get();
-		ioConfig.streamPool		= std::span<StreamingContext>(m_state->streamPool.get(), m_state->streamCapacity);
-		ioConfig.freeStreams	= m_state->freeStreams.get();
-		m_state->ioSystem		= std::make_unique<IoSystem>(ioConfig);
+		IoStreamSystemConfig ioStreamingConfig;
+		ioStreamingConfig.ioStreamRequests	= m_state->ioStreamRequests.get();
+		ioStreamingConfig.streamPool		= std::span<StreamContext>(m_state->streamPool.get(), m_state->streamCapacity);
+		ioStreamingConfig.freeStreams		= m_state->freeStreams.get();
+		m_state->ioStreamSystem				= std::make_unique<IoStreamSystem>(ioStreamingConfig);
 
 		// --- BACKEND SETUP ---
 		m_state->device					= std::make_unique<ma_device>();
@@ -163,7 +163,7 @@ namespace dalia {
 		deviceConfig.sampleRate			= 48000; // Hz
 		deviceConfig.dataCallback		= data_callback;
 		deviceConfig.periodSizeInFrames = 480;
-		deviceConfig.pUserData			= m_state->realTimeSystem.get();
+		deviceConfig.pUserData			= m_state->rtSystem.get();
 
 		if (ma_device_init(NULL, &deviceConfig, m_state->device.get()) != MA_SUCCESS) {
 			Logger::Log(LogLevel::Critical, "Device", "Failed to initialize playback device");
@@ -175,7 +175,7 @@ namespace dalia {
 
 		// --- SYSTEMS START ---
 		// I/O Thread Start
-		m_state->ioSystem->Start();
+		m_state->ioStreamSystem->Start();
 
 		// Audio Thread Start
 		if (ma_device_start(m_state->device.get()) != MA_SUCCESS) {
@@ -202,7 +202,7 @@ namespace dalia {
 		ma_device_uninit(m_state->device.get());
 
 		// --- I/O Thread Stop ---
-		m_state->ioSystem->Stop();
+		m_state->ioStreamSystem->Stop();
 
 		m_state.reset();
 
@@ -217,7 +217,7 @@ namespace dalia {
 
 		// --- Process Event Inbox ---
 		RtEvent ev;
-		while (m_state->rtEventQueue->Pop(ev)) {
+		while (m_state->rtEvents->Pop(ev)) {
 			switch (ev.type) {
 				case RtEvent::Type::MixOrderSwapped: {
 					m_state->isUsingMixOrderA = !m_state->isUsingMixOrderA;
@@ -240,7 +240,7 @@ namespace dalia {
 
 		TryUpdateMixOrder();
 
-		m_state->rtCommandQueue->Dispatch(); // Send all commands accumulated from this frame to the audio thread
+		m_state->rtCommands->Dispatch(); // Send all commands accumulated from this frame to the audio thread
 		Logger::ProcessLogs(); // Print all logs accumulated from this frame
 	}
 
@@ -269,8 +269,8 @@ namespace dalia {
 
 		// Send I/O request to prepare stream
 		m_state->streamPool[streamIndex].state.store(StreamState::Preparing, std::memory_order_release);
-		IoRequest req = IoRequest::PrepareStream(streamIndex, filepath);
-		if (!m_state->ioRequestQueue->Push(req)) {
+		IoStreamRequest req = IoStreamRequest::PrepareStream(streamIndex, filepath);
+		if (!m_state->ioStreamRequests->Push(req)) {
 			m_state->freeVoices->Push(voiceIndex);
 
 			m_state->streamPool[streamIndex].state.store(StreamState::Free, std::memory_order_release);
@@ -282,7 +282,7 @@ namespace dalia {
 
 		// Send command to audio thread (can't fail as it is pushed into a vector)
 		RtCommand cmd = RtCommand::PrepareVoiceStreaming(voiceIndex, vMirror.generation, streamIndex);
-		m_state->rtCommandQueue->Enqueue(cmd);
+		m_state->rtCommands->Enqueue(cmd);
 
 		handle = PlaybackHandle::Create(voiceIndex, vMirror.generation);
 
@@ -301,7 +301,9 @@ namespace dalia {
 		}
 
 		RtCommand cmd = RtCommand::PlayVoice(voiceIndex, generation);
-		m_state->rtCommandQueue->Enqueue(cmd);
+		m_state->rtCommands->Enqueue(cmd);
+
+		return Result::Ok;
 	}
 
 	void Engine::TryUpdateMixOrder() {
@@ -316,7 +318,7 @@ namespace dalia {
 
 		uint32_t sortedCount = m_state->busGraphCompiler->Compile(busMirror, backBufferSpan);
 		if (sortedCount > 0) {
-			m_state->rtCommandQueue->Enqueue(RtCommand::SwapMixOrder(backBufferPtr, sortedCount));
+			m_state->rtCommands->Enqueue(RtCommand::SwapMixOrder(backBufferPtr, sortedCount));
 
 			m_state->isMixOrderSwapPending = true;
 			m_state->isMixOrderDirty = false;
@@ -328,7 +330,7 @@ namespace dalia {
 	}
 
 	void Engine::data_callback(ma_device* pDevice, void* pOutput, const void* pInput, uint32_t frameCount) {
-		RealTimeSystem* rtSystem = static_cast<RealTimeSystem*>(pDevice->pUserData);
+		RtSystem* rtSystem = static_cast<RtSystem*>(pDevice->pUserData);
 		rtSystem->OnAudioCallback(static_cast<float*>(pOutput), frameCount, pDevice->playback.channels);
 	}
 }

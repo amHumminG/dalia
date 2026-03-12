@@ -23,7 +23,7 @@ namespace dalia {
     };
 
     // Is this really thread safe?
-    struct StreamingContext {
+    struct StreamContext {
         std::atomic<StreamState> state = StreamState::Free;
         std::atomic<uint32_t> generation{0};
 
