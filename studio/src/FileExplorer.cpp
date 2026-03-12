@@ -1,6 +1,7 @@
 #include <windows.h>
 #include <shobjidl.h>
 #include <string>
+#include <vector>
 
 namespace dalia::studio {
 
@@ -10,9 +11,9 @@ namespace dalia::studio {
      * Usage example:
      * std::string filePath = OpenFileExplorer("Image files", "*.png;*.jpg;*.gif;");
      */
-    inline std::string OpenFileExplorer(const std::string& filterLabel = "", const std::string& filterFileTypes = "") {
+    inline std::vector<std::string> OpenFileExplorer(const std::string& filterLabel = "", const std::string& filterFileTypes = "") {
         OPENFILENAME ofn;
-        char fileName[MAX_PATH] = "";
+        char fileName[2048] = ""; // Will contain path to directory of selected files and names of all selected files
 
         ZeroMemory(&ofn, sizeof(ofn));
         ofn.lStructSize = sizeof(ofn);
@@ -23,13 +24,22 @@ namespace dalia::studio {
         ofn.lpstrFilter = filter.c_str();
 
         ofn.lpstrFile = fileName;
-        ofn.nMaxFile = MAX_PATH;
-        ofn.Flags = OFN_EXPLORER | OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST;
+        ofn.nMaxFile = sizeof(fileName);
+        ofn.Flags = OFN_EXPLORER | OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST | OFN_ALLOWMULTISELECT;
 
         if (GetOpenFileName(&ofn)) {
-            return std::string(fileName);
+            std::vector<std::string> filePaths;
+            std::string directory = fileName;
+            char* currentFile = fileName + directory.length() + 1;
+
+            while (*currentFile) {
+                filePaths.push_back(directory + "\\" + currentFile);
+                currentFile += strlen(currentFile) + 1;
+            }
+
+            return filePaths;
         }
 
-        return "";
+        return std::vector<std::string>();
     }
 }

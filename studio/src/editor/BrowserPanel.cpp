@@ -13,10 +13,12 @@ namespace dalia::studio {
 
     void BrowserPanel::Render() {
         if (ImGui::Button("Import Sound")) {
-            const std::string filePath = dalia::studio::OpenFileExplorer();
-            if (!filePath.empty()) {
-                m_project.ImportSound(filePath);
-                Logger::Log(LogLevel::Info, "Browser", "Imported asset");
+            const std::vector<std::string> filePaths = dalia::studio::OpenFileExplorer();
+            if (!filePaths.empty()) {
+                for (const std::string& filePath : filePaths) {
+                    m_project.ImportSound(filePath);
+                    Logger::Log(LogLevel::Info, "Browser", "Imported asset");
+                }
             }
         }
 
