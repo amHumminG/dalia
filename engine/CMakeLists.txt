@@ -60,6 +60,8 @@ set(ENGINE_FILES
     src/resources/ResidentSound.h
     include/dalia/audio/ResourceHandle.h
     src/core/HandlePool.h
+    src/resources/AssetRegistry.cpp
+    src/resources/AssetRegistry.h
 )
 
 add_library(dalia_engine STATIC ${ENGINE_FILES})
