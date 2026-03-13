@@ -57,6 +57,7 @@ set(ENGINE_FILES
     src/core/Constants.h
     src/systems/IoLoadSystem.cpp
     src/systems/IoLoadSystem.h
+    src/resources/ResidentSound.h
 )
 
 add_library(dalia_engine STATIC ${ENGINE_FILES})
