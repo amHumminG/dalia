@@ -79,13 +79,14 @@ namespace dalia {
                 sound->pcmData.resize(totalFloatsNeeded);
                 sound->channels = info.channels;
                 sound->sampleRate = info.sample_rate;
+                sound->totalFrames = totalFloatsNeeded / info.channels;
 
                 // Decode file into sound data vector
                 int floatsDecoded = stb_vorbis_get_samples_float_interleaved(
                     decoder,
                     info.channels,
                     sound->pcmData.data(),
-                    totalFloatsNeeded
+                    static_cast<int>(totalFloatsNeeded)
                 );
                 stb_vorbis_close(decoder);
 

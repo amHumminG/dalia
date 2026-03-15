@@ -8,6 +8,7 @@ namespace dalia {
 		bool IsValid() const { return uuid != 0; }
 
 		// Could add a hash function for this too?
+		uint64_t GetUUID() const { return uuid; }
 
 		bool operator==(const PlaybackHandle& other) const { return uuid == other.uuid; }
 		bool operator!=(const PlaybackHandle& other) const { return uuid != other.uuid; }

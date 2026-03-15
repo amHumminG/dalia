@@ -21,6 +21,7 @@ namespace dalia {
         Paused,
 
         Finished,
+        Stopped,
         Killed
     };
 
@@ -67,14 +68,22 @@ namespace dalia {
     };
 
     struct VoiceMirror {
+        // TODO: Expand this to hold all voice parameters
         uint32_t generation = 0;
         bool isBusy = false;
-        uint32_t parentBusIndex;
         VoiceState state = VoiceState::Free;
+
+        // Asset
+        VoiceSourceType sourceType = VoiceSourceType::None;
+        uint64_t assetUuid;
+
+        // Parameters
+        uint32_t parentBusIndex;
+
+        // Callback
         void* callbackOnFinished = nullptr;
         AudioEventCallback callback = nullptr;
         void* userData = nullptr;
-        // We probably keep other voice data here too (volume etc.)
 
         void Reset() {
             isBusy = false;

@@ -11,9 +11,7 @@ namespace dalia {
 			MixOrderSwapped,
 
 			// Voice Lifecycle
-			VoiceFinished,	// Finished by reaching EOF
 			VoiceStopped,	// Manually stopped by user command
-			VoiceKilled		// Killed by the engine
 		};
 
 		Type type = Type::None;
@@ -23,6 +21,7 @@ namespace dalia {
 			struct {
 				uint32_t index;
 				uint32_t generation;
+				// TODO: Add info here about how the voice was stopped (killed, finished, and so on...)
 			} voiceState;
 
 		} data = {};
@@ -33,25 +32,9 @@ namespace dalia {
 			return ev;
 		}
 
-		static RtEvent VoiceFinished(uint32_t index, uint32_t generation) {
-			RtEvent ev;
-			ev.type = Type::VoiceFinished;
-			ev.data.voiceState.index = index;
-			ev.data.voiceState.generation = generation;
-			return ev;
-		}
-
 		static RtEvent VoiceStopped(uint32_t index, uint32_t generation) {
 			RtEvent ev;
 			ev.type = Type::VoiceStopped;
-			ev.data.voiceState.index = index;
-			ev.data.voiceState.generation = generation;
-			return ev;
-		}
-
-		static RtEvent VoiceKilled(uint32_t index, uint32_t generation) {
-			RtEvent ev;
-			ev.type = Type::VoiceKilled;
 			ev.data.voiceState.index = index;
 			ev.data.voiceState.generation = generation;
 			return ev;

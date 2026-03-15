@@ -82,6 +82,9 @@ namespace dalia {
 	            	voice.channels = cmd.data.prepResident.channels;
 	            	voice.sampleRate = cmd.data.prepResident.sampleRate;
 
+	            	Logger::Log(LogLevel::Debug, "RtSystem", "Prepared resident voice with %d frames.",
+	            		cmd.data.prepResident.frames);
+
 	            	break;
 	            }
                 case RtCommand::Type::PlayVoice: {
@@ -96,12 +99,22 @@ namespace dalia {
 	            		Logger::Log(LogLevel::Debug, "RtSystem", "Voice %d set to playing", voiceIndex);
 	            		voice.state = VoiceState::Playing;
 	            	}
+	            	break;
                 }
                 case RtCommand::Type::PauseVoice: {
                     // TODO: Implement
+	            	break;
                 }
                 case RtCommand::Type::StopVoice: {
-                    // TODO: Implement
+	            	uint32_t voiceIndex = cmd.data.voiceState.voiceIndex;
+	            	uint32_t expectedVoiceGen = cmd.data.voiceState.voiceGeneration;
+	            	Voice& voice = m_voicePool[voiceIndex];
+
+	            	// Check for outdated command
+	            	if (voice.generation != expectedVoiceGen) break;
+
+	            	voice.state = VoiceState::Killed;
+	            	break;
                 }
                 default: break;
             }
@@ -118,12 +131,15 @@ namespace dalia {
         // --- Voice Pass --- (Parallel ready when the time comes)
         for (uint32_t i = 0; i < m_voicePool.size(); i++) {
             Voice& voice = m_voicePool[i];
-            if (voice.state != VoiceState::Playing) continue; // TODO: We should handle error state or stopped state here too!
-
-        	Logger::Log(LogLevel::Debug, "RtSystem", "Mixing voice %d...", i);
-            bool isStillPlaying = MixVoiceToBus(voice, voice.parentBusIndex, frameCount);
-            if (!isStillPlaying) {
-            	FreeVoice(i);
+        	if (voice.state == VoiceState::Finished)	 FreeVoice(i);
+			else if (voice.state == VoiceState::Stopped) FreeVoice(i);
+        	else if (voice.state == VoiceState::Killed)  FreeVoice(i);
+            else if (voice.state == VoiceState::Playing) {
+            	Logger::Log(LogLevel::Debug, "RtSystem", "Mixing voice %d...", i);
+            	bool isStillPlaying = MixVoiceToBus(voice, voice.parentBusIndex, frameCount);
+            	if (!isStillPlaying) {
+            		FreeVoice(i);
+            	}
             }
         }
 
@@ -297,6 +313,6 @@ namespace dalia {
     	voice.state = VoiceState::Free;
     	voice.Reset();
 
-    	m_rtEvents->Push(RtEvent::VoiceFinished(voiceIndex, voice.generation));
+    	m_rtEvents->Push(RtEvent::VoiceStopped(voiceIndex, voice.generation));
     }
 }

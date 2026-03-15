@@ -45,6 +45,25 @@ namespace dalia {
 		}
 	};
 
+	struct VoiceID {
+		uint32_t index;
+		uint32_t generation;
+
+		bool operator==(const VoiceID& other) const {
+			return index == other.index && generation == other.generation;
+		}
+	};
+
+	struct PendingResidentUnload {
+		ResidentSoundHandle handle;
+		std::vector<VoiceID> voicesToStop;
+	};
+
+	struct PendingStreamUnload {
+		StreamSoundHandle handle;
+		std::vector<VoiceID> voicesToStop;
+	};
+
 	struct EngineInternalState {
 		bool initialized = false;
 
@@ -87,6 +106,9 @@ namespace dalia {
 		bool isMixOrderDirty		= false;
 		bool isMixOrderSwapPending	= false;
 
+		std::vector<PendingResidentUnload> pendingResidentUnloads;
+		std::vector<PendingStreamUnload> pendingStreamUnloads;
+
 		std::unique_ptr<RtSystem> rtSystem;
 		std::unique_ptr<IoStreamSystem> ioStreamSystem;
 		std::unique_ptr<IoLoadSystem> ioLoadSystem;
@@ -118,9 +140,9 @@ namespace dalia {
 			freeVoices	= std::make_unique<FixedStack<uint32_t>>(voiceCapacity);
 			freeStreams = std::make_unique<SPSCRingBuffer<uint32_t>>(streamCapacity);
 			freeBuses	= std::make_unique<FixedStack<uint32_t>>(busCapacity);
-			for (uint32_t i = 0; i < voiceCapacity; i++)	freeVoices->Push(i);
-			for (uint32_t i = 0; i < streamCapacity; i++)	freeStreams->Push(i);
-			for (uint32_t i = 1; i < busCapacity; i++)		freeBuses->Push(i); // Skip Master (index 0)
+			for (int i = voiceCapacity - 1; i >= 0; i--)	freeVoices->Push(i);
+			for (int i = streamCapacity - 1; i >= 0; i--)	freeStreams->Push(i);
+			for (int i = busCapacity - 1; i >= 0; i--)		freeBuses->Push(i); // Skip Master (index 0)
 
 			// Resources
 			assetRegistry = std::make_unique<AssetRegistry>(config.residentSoundCapacity, config.streamSoundCapacity);
@@ -254,7 +276,7 @@ namespace dalia {
 					m_state->isMixOrderSwapPending = false;
 					break;
 				}
-				case RtEvent::Type::VoiceFinished: {
+				case RtEvent::Type::VoiceStopped: {
 					uint32_t index = ev.data.voiceState.index;
 					uint32_t generation = ev.data.voiceState.generation;
 					if (m_state->voicePoolMirror[index].generation == generation) {
@@ -262,6 +284,51 @@ namespace dalia {
 						m_state->voicePoolMirror[index].Reset();
 						m_state->freeVoices->Push(index);
 						Logger::Log(LogLevel::Debug, "Engine", "Freed voice %d.", index);
+
+						// --- Check garbage collection ---
+						VoiceID stoppedVoice = {index, generation};
+
+						// Resident
+						for (auto it = m_state->pendingResidentUnloads.begin(); it != m_state->pendingResidentUnloads.end(); ) {
+							auto& waitingList = it->voicesToStop;
+
+							for (size_t i = 0; i < waitingList.size(); i++) {
+								if (waitingList[i] == stoppedVoice) {
+									waitingList[i] = waitingList.back();
+									waitingList.pop_back();
+									break;
+								}
+							}
+
+							if (waitingList.empty()) {
+								m_state->assetRegistry->FreeResidentSound(it->handle);
+								Logger::Log(LogLevel::Debug, "Engine", "Unloaded resident sound with handle %d (delayed)",
+									it->handle.GetUUID());
+								it = m_state->pendingResidentUnloads.erase(it);
+							}
+							else it++;
+						}
+
+						// Stream
+						for (auto it = m_state->pendingStreamUnloads.begin(); it != m_state->pendingStreamUnloads.end(); ) {
+							auto& waitingList = it->voicesToStop;
+
+							for (size_t i = 0; i < waitingList.size(); i++) {
+								if (waitingList[i] == stoppedVoice) {
+									waitingList[i] = waitingList.back();
+									waitingList.pop_back();
+									break;
+								}
+							}
+
+							if (waitingList.empty()) {
+								m_state->assetRegistry->FreeStreamSound(it->handle);
+								Logger::Log(LogLevel::Debug, "Engine", "Unloaded stream sound with handle %d (delayed)",
+									it->handle.GetUUID());
+								it = m_state->pendingStreamUnloads.erase(it);
+							}
+							else it++;
+						}
 					}
 					break;
 				}
@@ -275,6 +342,8 @@ namespace dalia {
 	}
 
 	Result Engine::LoadResidentSound(ResidentSoundHandle& soundHandle, const char* filepath) {
+		if (!m_state || !m_state->initialized) return Result::NotInitialized;
+
 		StringID pathId(filepath);
 
 		// Duplicate check
@@ -306,6 +375,8 @@ namespace dalia {
 	}
 
 	Result Engine::LoadStreamSound(StreamSoundHandle& soundHandle, const char* filepath) {
+		if (!m_state || !m_state->initialized) return Result::NotInitialized;
+
 		StringID pathId(filepath);
 
 		// Duplicate check
@@ -318,6 +389,8 @@ namespace dalia {
 		}
 
 		soundHandle = m_state->assetRegistry->AllocateStreamSound();
+		if (!m_state || !m_state->initialized) return Result::NotInitialized;
+
 		if (!soundHandle.IsValid()) {
 			Logger::Log(LogLevel::Warning, "Engine", "Failed to load stream sound. Invalid handle.");
 			return Result::Error; // TODO: Return descriptive error
@@ -337,7 +410,8 @@ namespace dalia {
 	}
 
 	Result Engine::Unload(ResidentSoundHandle soundHandle) {
-		// TODO: This function has to check if the sound is being used anywhere in the system before unloading
+		if (!m_state || !m_state->initialized) return Result::NotInitialized;
+
 		ResidentSound* sound = m_state->assetRegistry->GetResidentSound(soundHandle);
 		if (!sound) return Result::InvalidHandle;
 
@@ -345,14 +419,40 @@ namespace dalia {
 
 		if (sound->refCount == 0) {
 			m_state->assetRegistry->UnregisterLoadedResidentSound(StringID::FromHash(sound->pathHash));
-			m_state->assetRegistry->FreeResidentSound(soundHandle);
+
+			// Collect all voice indices using the handle
+			// TODO: Find a more efficient way to do this (time complexity wise)
+			PendingResidentUnload pendingUnload;
+			pendingUnload.handle = soundHandle;
+			for (uint32_t i = 0; i < m_state->voiceCapacity; i++) {
+				VoiceMirror& vMirror = m_state->voicePoolMirror[i];
+
+				if (vMirror.state != VoiceState::Free &&
+					vMirror.assetUuid == soundHandle.GetUUID() &&
+					vMirror.sourceType == VoiceSourceType::Resident) {
+					pendingUnload.voicesToStop.push_back({i, vMirror.generation});
+
+					m_state->rtCommands->Enqueue(RtCommand::StopVoice(i, vMirror.generation));
+					Logger::Log(LogLevel::Debug, "Engine", "Commanded to stop voice: %d", i);
+				}
+			}
+
+			if (!pendingUnload.voicesToStop.empty()) {
+				m_state->pendingResidentUnloads.push_back(std::move(pendingUnload));
+			}
+			else {
+				m_state->assetRegistry->FreeResidentSound(soundHandle);
+				Logger::Log(LogLevel::Debug, "Engine", "Unloaded resident sound with handle %d (instant)",
+					soundHandle.GetUUID());
+			}
 		}
 
 		return Result::Ok;
 	}
 
 	Result Engine::Unload(StreamSoundHandle soundHandle) {
-		// TODO: This function has to check if the sound is being used anywhere in the system before unloading
+		if (!m_state || !m_state->initialized) return Result::NotInitialized;
+
 		StreamSound* sound = m_state->assetRegistry->GetStreamSound(soundHandle);
 		if (!sound) return Result::InvalidHandle;
 
@@ -360,7 +460,32 @@ namespace dalia {
 
 		if (sound->refCount == 0) {
 			m_state->assetRegistry->UnregisterLoadedStreamSound(StringID::FromHash(sound->pathHash));
-			m_state->assetRegistry->FreeStreamSound(soundHandle);
+
+
+			// Collect all voice indices using the handle
+			// TODO: Find a more efficient way to do this (time complexity wise)
+			PendingStreamUnload pendingUnload;
+			pendingUnload.handle = soundHandle;
+			for (uint32_t i = 0; i < m_state->voiceCapacity; i++) {
+				VoiceMirror& vMirror = m_state->voicePoolMirror[i];
+
+				if (vMirror.state != VoiceState::Free &&
+					vMirror.assetUuid == soundHandle.GetUUID() &&
+					vMirror.sourceType == VoiceSourceType::Stream) {
+					pendingUnload.voicesToStop.push_back({i, vMirror.generation});
+
+					m_state->rtCommands->Enqueue(RtCommand::StopVoice(i, vMirror.generation));
+				}
+			}
+
+			if (!pendingUnload.voicesToStop.empty()) {
+				m_state->pendingStreamUnloads.push_back(std::move(pendingUnload));
+			}
+			else {
+				m_state->assetRegistry->FreeStreamSound(soundHandle);
+				Logger::Log(LogLevel::Debug, "Engine", "Unloaded stream sound with handle %d (instant)",
+					soundHandle.GetUUID());
+			}
 		}
 
 		return Result::Ok;
@@ -383,9 +508,12 @@ namespace dalia {
 			return Result::VoicePoolExhausted;
 		}
 
+		// Prime voice mirror
 		VoiceMirror& vMirror = m_state->voicePoolMirror[voiceIndex];
 		vMirror.generation++;
 		vMirror.state = VoiceState::Inactive;
+		vMirror.sourceType = VoiceSourceType::Resident;
+		vMirror.assetUuid = soundHandle.GetUUID();
 
 
 		RtCommand cmd = RtCommand::PrepareVoiceResident(
@@ -428,9 +556,12 @@ namespace dalia {
 			return Result::StreamPoolExhausted;
 		}
 
+		// Prime voice mirror
 		VoiceMirror& vMirror = m_state->voicePoolMirror[voiceIndex];
 		vMirror.generation++;
 		vMirror.state = VoiceState::Inactive;
+		vMirror.sourceType = VoiceSourceType::Stream;
+		vMirror.assetUuid = soundHandle.GetUUID();
 
 		// Send I/O request to prepare stream
 		m_state->streamPool[streamIndex].state.store(StreamState::Preparing, std::memory_order_release);
