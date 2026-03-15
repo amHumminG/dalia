@@ -1,6 +1,7 @@
 #pragma once
 #include "dalia/core/Result.h"
 #include "dalia/core/LogLevel.h"
+#include "PlaybackControl.h"
 #include "dalia/audio/ResourceHandle.h"
 #include <memory>
 
@@ -11,6 +12,9 @@ namespace dalia {
 	class StringID;
 	struct EngineInternalState;
 	struct PlaybackHandle;
+
+	struct RtEvent;
+	struct IoLoadEvent;
 
 	struct EngineConfig {
 		LogLevel logLevel = LogLevel::Warning;
@@ -45,13 +49,14 @@ namespace dalia {
 
 		// --- Loose File Functionality ---
 
-		Result LoadResidentSound(ResidentSoundHandle& soundHandle, const char* filepath);
-		Result LoadStreamSound(StreamSoundHandle& soundHandle, const char* filepath);
+		Result LoadResidentSound(ResidentSoundHandle& soundHandle, const char* filepath,
+			AssetLoadCallback callback = nullptr, uint32_t* outRequestId = nullptr);
+		Result LoadStreamSound(StreamSoundHandle& soundHandle, const char* filepath,
+			AssetLoadCallback callback = nullptr, uint32_t* outRequestId = nullptr);
 
 		Result Unload(ResidentSoundHandle soundHandle);
 		Result Unload(StreamSoundHandle soundHandle);
 
-		// TODO: These are far from implemented
 		Result CreatePlayback(PlaybackHandle& pbkHandle, ResidentSoundHandle soundHandle);
 		Result CreatePlayback(PlaybackHandle& pbkHandle, StreamSoundHandle soundHandle);
 
@@ -70,6 +75,8 @@ namespace dalia {
 		Result Play(PlaybackHandle handle);
 
 	private:
+		void ProcessRtEvent(const RtEvent& ev);
+		void ProcessIoLoadEvent(const IoLoadEvent& ev);
 		void TryUpdateMixOrder();
 		static void data_callback(ma_device* pDevice, void* pOutput, const void* pInput, uint32_t frameCount);
 

@@ -1,5 +1,7 @@
 #pragma once
+#include "dalia/core/Result.h"
 #include <cstdint>
+#include <functional>
 
 namespace dalia {
 
@@ -35,5 +37,10 @@ namespace dalia {
 
 	// TODO: Have AudioEventCallback contain an enum communicating the reason for the sound finish
 	// E.g. Finished naturally, stop was called on it, or engine killed it and so on...
-	using AudioEventCallback = void(*)(PlaybackHandle handle, void* userData);
+	using AudioEventCallback = std::function<void(PlaybackHandle)>;
+
+	constexpr uint32_t INVALID_REQUEST_ID = 0;
+	using AssetLoadCallback = std::function<void(uint32_t requestId, Result result)>;
+
+
 }

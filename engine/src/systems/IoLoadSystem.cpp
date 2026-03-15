@@ -66,9 +66,10 @@ namespace dalia {
                 int error;
                 stb_vorbis* decoder = stb_vorbis_open_filename(req.data.soundFromFile.filepath, &error, nullptr);
                 if (!decoder) {
+                    sound->state.store(LoadState::Error, std::memory_order_release);
+                    m_ioLoadEvents->Push(IoLoadEvent(IoLoadEvent::SoundLoadFailed(req.requestId, Result::FileReadError)));
                     Logger::Log(LogLevel::Error, "IoLoadSystem", "Failed to load resident sound from %s. %s.",
                         req.data.soundFromFile.filepath, GetStbVorbisErrorString(error));
-                    sound->state.store(LoadState::Error, std::memory_order_release);
                     return;
                 }
 
@@ -91,15 +92,19 @@ namespace dalia {
                 stb_vorbis_close(decoder);
 
                 if (floatsDecoded == 0) {
+                    sound->state.store(LoadState::Error, std::memory_order_release);
+                    m_ioLoadEvents->Push(IoLoadEvent(IoLoadEvent::SoundLoadFailed(req.requestId, Result::FileReadError)));
                     Logger::Log(LogLevel::Error, "IoLoadSystem", "Read %d samples from %s",
                         floatsDecoded, req.data.soundFromFile.filepath);
-                    sound->state.store(LoadState::Error, std::memory_order_release);
                     return;
                 }
 
                 sound->state.store(LoadState::Loaded, std::memory_order_release);
+                m_ioLoadEvents->Push(IoLoadEvent(IoLoadEvent::SoundLoaded(req.requestId, targetHandle.GetUUID(),
+                    VoiceSourceType::Resident)));
                 Logger::Log(LogLevel::Debug, "IoLoadSystem", "Successfully loaded resident sound for file: %s",
                     req.data.soundFromFile.filepath);
+
                 break;
             }
             case IoLoadRequest::Type::LoadStreamSound: {
@@ -110,9 +115,10 @@ namespace dalia {
                 int error;
                 stb_vorbis* decoder = stb_vorbis_open_filename(req.data.soundFromFile.filepath, &error, nullptr);
                 if (!decoder) {
+                    sound->state.store(LoadState::Error, std::memory_order_release);
+                    m_ioLoadEvents->Push(IoLoadEvent(IoLoadEvent::SoundLoadFailed(req.requestId, Result::FileReadError)));
                     Logger::Log(LogLevel::Error, "IoLoadSystem", "Failed to load stream sound from %s. %s.",
                         req.data.soundFromFile.filepath, GetStbVorbisErrorString(error));
-                    sound->state.store(LoadState::Error, std::memory_order_release);
                     return;
                 }
 
@@ -121,11 +127,13 @@ namespace dalia {
                 stb_vorbis_info info = stb_vorbis_get_info(decoder);
                 sound->channels = info.channels;
                 sound->sampleRate = info.sample_rate;
-                sound->totalFrames = stb_vorbis_stream_length_in_samples(decoder); // Is this necessary?
+                sound->totalFrames = stb_vorbis_stream_length_in_samples(decoder);
 
                 stb_vorbis_close(decoder);
 
                 sound->state.store(LoadState::Loaded, std::memory_order_release);
+                m_ioLoadEvents->Push(IoLoadEvent(IoLoadEvent::SoundLoaded(req.requestId, targetHandle.GetUUID(),
+                    VoiceSourceType::Stream)));
                 Logger::Log(LogLevel::Debug, "IoLoadSystem", "Successfully loaded stream sound for file: %s",
                     req.data.soundFromFile.filepath);
                 break;

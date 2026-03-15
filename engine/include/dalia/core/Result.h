@@ -24,9 +24,14 @@ namespace dalia {
 		VoicePoolExhausted	= -200,
 		StreamPoolExhausted = -201,
 		BusPoolExhausted	= -202,
+		PlaybackCorrupted	= -203,
+
+		// I/O Errors
+		AssetLoadError		= -300,
+		FileReadError		= -301,
 
 		// Backed Errors
-		DeviceFailed		= -300,
+		DeviceFailed		= -400,
 	};
 
 	constexpr const char* GetErrorString(const Result result) {

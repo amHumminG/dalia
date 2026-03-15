@@ -15,6 +15,8 @@ namespace dalia {
 
     enum class VoiceState : uint8_t {
         Free,
+        PendingLoadInactive, // Goes from Pending -> Inactive on load event
+        PendingLoadPlaying,  // Goes from Pending -> Playing on load event
         Inactive,
         Playing,
         Virtual,
@@ -81,15 +83,13 @@ namespace dalia {
         uint32_t parentBusIndex;
 
         // Callback
-        void* callbackOnFinished = nullptr;
-        AudioEventCallback callback = nullptr;
+        AudioEventCallback onFinishedCallback = nullptr;
         void* userData = nullptr;
 
         void Reset() {
             isBusy = false;
             state = VoiceState::Free;
-            callbackOnFinished = nullptr;
-            callback = nullptr;
+            onFinishedCallback = nullptr;
             userData = nullptr;
         }
     };
