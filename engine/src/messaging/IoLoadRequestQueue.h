@@ -1,4 +1,5 @@
 #pragma once
+#include "dalia/audio/ResourceHandle.h"
 #include "core/Constants.h"
 #include "core/SPSCRingBuffer.h"
 #include <cstdint>
@@ -9,7 +10,9 @@ namespace dalia {
         enum class Type {
             None,
 
-            LoadSoundFromFile,
+            LoadResidentSound,
+            LoadStreamSound,
+            // LoadBank
 
         } type = Type::None;
 
@@ -17,14 +20,32 @@ namespace dalia {
 
         union {
             struct {
-                // ResidentSound* sound;
+                uint64_t resourceHandleUuid;
                 char filepath[MAX_IO_PATH_SIZE];
-            } LoadSoundFromFile;
+            } soundFromFile;
 
         } data = {};
 
-        static IoLoadRequest LoadSoundFromFile(const char* filepath) {
+        static IoLoadRequest LoadResidentSound(uint32_t reqId, ResidentSoundHandle handle, const char* filepath) {
+            IoLoadRequest req;
+            req.type = Type::LoadResidentSound;
+            req.requestId = reqId;
 
+            req.data.soundFromFile.resourceHandleUuid = handle.GetUUID();
+            strncpy_s(req.data.soundFromFile.filepath, MAX_IO_PATH_SIZE, filepath, _TRUNCATE);
+
+            return req;
+        }
+
+        static IoLoadRequest LoadStreamSound(uint32_t reqId, StreamSoundHandle handle, const char* filepath) {
+            IoLoadRequest req;
+            req.type = Type::LoadStreamSound;
+            req.requestId = reqId;
+
+            req.data.soundFromFile.resourceHandleUuid = handle.GetUUID();
+            strncpy_s(req.data.soundFromFile.filepath, MAX_IO_PATH_SIZE, filepath, _TRUNCATE);
+
+            return req;
         }
     };
 
