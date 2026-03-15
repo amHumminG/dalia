@@ -1,25 +1,29 @@
 #pragma once
+#include <algorithm>
+
 #include "core/States.h"
-#include <vector>
-#include <span>
+#include "core/Constants.h"
+#include <cstdint>
 #include <atomic>
 
 namespace dalia {
 
-    struct ResidentSound {
+    struct StreamSound {
         std::atomic<LoadState> state{LoadState::Unloaded};
         uint32_t refCount = 0;
 
         uint32_t pathHash = 0;
 
-        std::vector<float> pcmData;
+        char filepath[MAX_IO_PATH_SIZE];
+
+        // Used if inside a soundbank
+        size_t byteOffset = 0;
+        size_t byteLenght = 0;
+
+        // Format
         uint32_t channels = 0;
         uint32_t sampleRate = 0;
-        uint32_t totalFrames = 0; // Do we even care about this? probably not
-
-        std::span<float> GetBuffer() {
-            return std::span<float>(pcmData.data(), pcmData.size());
-        }
+        uint32_t totalFrames = 0;
 
         void Reset() {
             state.store(LoadState::Unloaded, std::memory_order_relaxed);
@@ -27,7 +31,10 @@ namespace dalia {
 
             pathHash = 0;
 
-            pcmData.clear();
+            filepath[0] = '\0';
+            byteOffset = 0;
+            byteLenght = 0;
+
             channels = 0;
             sampleRate = 0;
             totalFrames = 0;
