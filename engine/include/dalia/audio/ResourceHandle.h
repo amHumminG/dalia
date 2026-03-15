@@ -4,7 +4,7 @@
 namespace dalia {
 
     class AssetRegistry;
-    template <typename T, typename H, uint32_t C> class HandlePool;
+    template <typename T, typename H> class HandlePool;
 
     template <typename Tag>
     struct ResourceHandle {
@@ -13,9 +13,17 @@ namespace dalia {
         bool operator==(const ResourceHandle& other) const { return uuid == other.uuid; }
         bool operator!=(const ResourceHandle& other) const { return uuid != other.uuid; }
 
+        uint64_t GetUUID() const { return uuid; }
+
+        static ResourceHandle FromUUID(uint64_t rawUuid) {
+            ResourceHandle handle;
+            handle.uuid = rawUuid;
+            return handle;
+        }
+
     private:
         friend class AssetRegistry;
-        template <typename T, typename H, uint32_t C> friend class HandlePool;
+        template <typename T, typename H> friend class HandlePool;
 
         static ResourceHandle Create(uint32_t index, uint32_t generation) {
             ResourceHandle handle;
@@ -27,14 +35,14 @@ namespace dalia {
         uint32_t GetGeneration() const { return static_cast<uint32_t>(uuid >> 32); }
 
         uint64_t uuid = 0;
-
-        struct ResidentTag {};
-        struct StreamTag {};
-        struct BankTag {};
-
-        // The actual handle types exposed to the engine
-        using ResidentHandle = ResourceHandle<ResidentTag>;
-        using StreamHandle   = ResourceHandle<StreamTag>;
-        using BankHandle     = ResourceHandle<BankTag>;
     };
+
+    struct ResidentSoundTag {};
+    struct StreamSoundTag {};
+    struct BankTag {};
+
+    // The actual handle types exposed to the engine
+    using ResidentSoundHandle = ResourceHandle<ResidentSoundTag>;
+    using StreamSoundHandle   = ResourceHandle<StreamSoundTag>;
+    using BankHandle          = ResourceHandle<BankTag>;
 }
