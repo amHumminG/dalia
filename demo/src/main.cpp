@@ -6,6 +6,8 @@
 
 #include "dalia.h"
 
+#include <chrono>
+#include <thread>
 #include <iostream>
 
 int main() {
@@ -19,11 +21,21 @@ int main() {
 		EngineConfig config;
 		config.logLevel = LogLevel::Debug;
 		engine.Init(config);
+		// assets/Faouzia - UNETHICAL.ogg
+		// assets/spiderman.ogg
 
-		PlaybackHandle handle;
-		// engine.CreateStreamPlayback(handle, "assets/Faouzia - UNETHICAL.ogg");
-		engine.CreateStreamPlayback(handle, "assets/spiderman.ogg");
-		engine.Play(handle);
+		// StreamSoundHandle soundHandle;
+		// engine.LoadStreamSound(soundHandle, "assets/spiderman.ogg");
+
+		ResidentSoundHandle soundHandle;
+		engine.LoadResidentSound(soundHandle, "assets/spiderman.ogg");
+
+		std::this_thread::sleep_for(std::chrono::milliseconds(500));
+
+		PlaybackHandle playbackHandle;
+		engine.CreatePlayback(playbackHandle, soundHandle);
+
+		engine.Play(playbackHandle);
 
 		while (true) {
 			engine.Update();
