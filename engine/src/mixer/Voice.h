@@ -29,9 +29,6 @@ namespace dalia {
 
         VoiceState state = VoiceState::Free;
 
-        // FIXME: Reference to sound in soundbank (probably unnecessary here)
-        uint32_t assetID = 0;
-
         // Bus routing
         uint32_t parentBusIndex;
 
@@ -40,17 +37,22 @@ namespace dalia {
         float volume = 1.0f;
         float pitch = 1.0f;
         float pan = 0.0f;
-        uint32_t channels = 2;  // This is probably read from the soundbank
-        float cursor = 0.0f;    // Frame or sample position?
+        uint32_t channels = 2;
+        uint32_t sampleRate = 48000;
+        double cursor = 0.0f;
 
         VoiceSourceType sourceType = VoiceSourceType::None;
+        union {
+            struct {
+                const float* pcmData;
+                uint32_t frames;
+            } resident;
 
-        // Resident
-        std::span<float> buffer;
-
-        // Streaming
-        uint8_t frontBufferIndex = 0;
-        uint16_t streamContextIndex;
+            struct {
+                uint32_t streamContextIndex;
+                uint8_t frontBufferIndex;
+            } stream;
+        } data;
 
         // Use this when releasing a voice
         void Reset() {
@@ -59,7 +61,6 @@ namespace dalia {
             volume = 1.0f;
             pitch = 1.0f;
             pan = 0.0f;
-            frontBufferIndex = 0;
             cursor = 0.0f;
             // TODO: Keep updating this
         }

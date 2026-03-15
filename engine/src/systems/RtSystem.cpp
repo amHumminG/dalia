@@ -54,14 +54,34 @@ namespace dalia {
 	            	break;
 	            }
 				case RtCommand::Type::PrepareVoiceStreaming: {
-	            	uint32_t voiceIndex = cmd.data.voicePrepStreaming.voiceIndex;
+	            	uint32_t voiceIndex = cmd.data.prepStreaming.voiceIndex;
 	            	Voice& voice = m_voicePool[voiceIndex];
 
 	            	// Voice setup
 	            	voice.sourceType = VoiceSourceType::Stream;
 	            	voice.state = VoiceState::Inactive;
-	            	voice.generation = cmd.data.voicePrepStreaming.voiceGeneration;
-	            	voice.streamContextIndex = cmd.data.voicePrepStreaming.streamIndex;
+	            	voice.generation = cmd.data.prepStreaming.voiceGeneration;
+
+	            	voice.data.stream.streamContextIndex = cmd.data.prepStreaming.streamIndex;
+	            	voice.data.stream.frontBufferIndex = 0;
+
+	            	break;
+	            }
+				case RtCommand::Type::PrepareVoiceResident: {
+	            	uint32_t voiceIndex = cmd.data.prepResident.voiceIndex;
+	            	Voice& voice = m_voicePool[voiceIndex];
+
+	            	// Voice setup
+	            	voice.sourceType = VoiceSourceType::Resident;
+	            	voice.state = VoiceState::Inactive;
+	            	voice.generation = cmd.data.prepResident.voiceGeneration;
+
+	            	voice.data.resident.pcmData = cmd.data.prepResident.pcmData;
+	            	voice.data.resident.frames = cmd.data.prepResident.frames;
+
+	            	voice.channels = cmd.data.prepResident.channels;
+	            	voice.sampleRate = cmd.data.prepResident.sampleRate;
+
 	            	break;
 	            }
                 case RtCommand::Type::PlayVoice: {
@@ -139,32 +159,35 @@ namespace dalia {
     	const float gainR = std::sin(angle) * voice.volume;
 
         while (framesMixed < frameCount) {
-			float* sourceData = nullptr;
+			const float* sourceData = nullptr;
         	uint32_t framesInSource = 0;
         	uint32_t sourceChannels = 0;
         	uint32_t cursorInt = static_cast<uint32_t>(voice.cursor);
 
 			if (voice.sourceType == VoiceSourceType::Resident) {
-				sourceData = voice.buffer.data();
-				framesInSource = static_cast<uint32_t>(voice.buffer.size() / voice.channels);
+				sourceData = voice.data.resident.pcmData;
+				framesInSource = static_cast<uint32_t>(voice.data.resident.frames);
 				sourceChannels = voice.channels;
 			}
 			else if (voice.sourceType == VoiceSourceType::Stream) {
-				StreamContext& stream = m_streamPool[voice.streamContextIndex];
-				if (stream.state.load(std::memory_order_acquire) != StreamState::Streaming) {
-					// Voice is not ready to stream yet
+				StreamContext& stream = m_streamPool[voice.data.stream.streamContextIndex];
+				StreamState streamState = stream.state.load(std::memory_order_acquire);
+				if (streamState != StreamState::Streaming) {
+					// Stream could be preparing still, check if it has failed
+					if (streamState == StreamState::Error) return false;
+
 					return true;
 				}
-				if (!stream.bufferReady[voice.frontBufferIndex].load(std::memory_order_acquire)) {
+				if (!stream.bufferReady[voice.data.stream.frontBufferIndex].load(std::memory_order_acquire)) {
 					Logger::Log(LogLevel::Error, "RtSystem", "Stream buffer underrun");
 					return true;
 				}
 
-				sourceData = stream.buffers[voice.frontBufferIndex];
+				sourceData = stream.buffers[voice.data.stream.frontBufferIndex];
 				sourceChannels = stream.channels;
 
 				// Determine the number of valid frames in the buffer
-				const uint32_t eofIndex = stream.eofIndex[voice.frontBufferIndex];
+				const uint32_t eofIndex = stream.eofIndex[voice.data.stream.frontBufferIndex];
 				if (!voice.isLooping && eofIndex != NO_EOF) {
 					uint32_t samplesInSource = eofIndex;
 					framesInSource = samplesInSource / stream.channels;
@@ -227,20 +250,25 @@ namespace dalia {
 					}
 				}
 				else if (voice.sourceType == VoiceSourceType::Stream) {
-					StreamContext& stream = m_streamPool[voice.streamContextIndex];
+					StreamContext& stream = m_streamPool[voice.data.stream.streamContextIndex];
 
 					// Did we hit EOF?
-					if (stream.eofIndex[voice.frontBufferIndex] != NO_EOF && !voice.isLooping) {
+					if (stream.eofIndex[voice.data.stream.frontBufferIndex] != NO_EOF && !voice.isLooping) {
 						voice.state = VoiceState::Finished;
 						return false;
 					}
 
-					stream.bufferReady[voice.frontBufferIndex].store(false, std::memory_order_release);
+					stream.bufferReady[voice.data.stream.frontBufferIndex].store(false, std::memory_order_release);
 					const uint32_t gen = stream.generation.load(std::memory_order_relaxed);
-					m_ioStreamRequests->Push(IoStreamRequest::RefillStreamBuffer(voice.streamContextIndex, gen, voice.frontBufferIndex));
+					IoStreamRequest req = IoStreamRequest::RefillStreamBuffer(
+						voice.data.stream.streamContextIndex,
+						gen,
+						voice.data.stream.frontBufferIndex
+					);
+					m_ioStreamRequests->Push(req);
 
 					// Swap buffers
-					voice.frontBufferIndex = 1 - voice.frontBufferIndex;
+					voice.data.stream.frontBufferIndex = 1 - voice.data.stream.frontBufferIndex;
 					voice.cursor = 0.0f;
 				}
 				else return false;
@@ -254,9 +282,9 @@ namespace dalia {
     	Voice& voice = m_voicePool[voiceIndex];
 
     	if (voice.sourceType == VoiceSourceType::Stream) {
-    		StreamContext& stream = m_streamPool[voice.streamContextIndex];
+    		StreamContext& stream = m_streamPool[voice.data.stream.streamContextIndex];
     		stream.generation.fetch_add(1, std::memory_order_relaxed);
-    		m_ioStreamRequests->Push(IoStreamRequest::ReleaseStream(voice.streamContextIndex));
+    		m_ioStreamRequests->Push(IoStreamRequest::ReleaseStream(voice.data.stream.streamContextIndex));
     	}
 
     	if (voice.state == VoiceState::Finished) {
