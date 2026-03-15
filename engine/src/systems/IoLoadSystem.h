@@ -5,11 +5,15 @@
 namespace dalia {
 
     class IoLoadRequestQueue;
+    struct IoLoadRequest;
     class IoLoadEventQueue;
+    class AssetRegistry;
 
     struct IoLoadSystemConfig {
         IoLoadRequestQueue* ioLoadRequests = nullptr;
         IoLoadEventQueue* ioLoadEvents = nullptr;
+
+        AssetRegistry*  assetRegistry = nullptr;
     };
 
     class IoLoadSystem {
@@ -22,9 +26,12 @@ namespace dalia {
 
     private:
         void ThreadMain();
+        void ProcessRequest(const IoLoadRequest& request);
 
         IoLoadRequestQueue* m_ioLoadRequests;
         IoLoadEventQueue* m_ioLoadEvents;
+
+        AssetRegistry* m_assetRegistry;
 
         std::thread m_thread;
         std::atomic<bool> m_isRunning;

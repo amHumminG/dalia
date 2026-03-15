@@ -6,7 +6,10 @@
 #include "messaging/IoStreamRequestQueue.h"
 #include "mixer/StreamContext.h"
 
+#define STB_VORBIS_HEADER_ONLY
 #include "stb_vorbis.c"
+
+#include "core/Utility.h"
 
 #include <chrono>
 
@@ -66,7 +69,7 @@ namespace dalia {
 
                             // Channels
                             if (info.channels == 0 || info.channels > 2) {
-                                Logger::Log(LogLevel::Error, "IoSystem",
+                                Logger::Log(LogLevel::Error, "IoStreamSystem",
                                     "Failed to load file: %s. Unsupported channel count (%d) in file.",
                                     req.data.stream.path, info.channels);
                                 isSupported = false;
@@ -75,7 +78,7 @@ namespace dalia {
                             // Sample rate
                             static constexpr uint32_t ENGINE_SAMPLE_RATE = 48000;
                             if (info.sample_rate != ENGINE_SAMPLE_RATE) {
-                                Logger::Log(LogLevel::Error, "IoSystem",
+                                Logger::Log(LogLevel::Error, "IoStreamSystem",
                                     "Failed to load file: %s. Unsupported sample rate (%d).",
                                     req.data.stream.path, info.sample_rate);
                                 isSupported = false;
@@ -94,12 +97,13 @@ namespace dalia {
                             FillBuffer(stream, 1);
                             stream.state.store(StreamState::Streaming);
 
-                            Logger::Log(LogLevel::Debug, "IoSystem", "Finished preparing stream %d for file: %s",
+                            Logger::Log(LogLevel::Debug, "IoStreamSystem", "Finished preparing stream %d for file: %s",
                                 req.data.stream.poolIndex, req.data.stream.path);
                             break;
                         }
                         else {
-                            Logger::Log(LogLevel::Error, "IoSystem", "Failed to open stream for: %s (error: %d)", req.data.stream.path, error);
+                            Logger::Log(LogLevel::Error, "IoStreamSystem", "Failed to open stream for %s. %s.",
+                                req.data.stream.path, GetStbVorbisErrorString(error));
                             stream.state.store(StreamState::Error, std::memory_order_release);
                         }
 
@@ -115,7 +119,7 @@ namespace dalia {
                         stream.Reset();
                         stream.state = StreamState::Free;
                         m_freeStreams->Push(req.data.stream.poolIndex);
-                        Logger::Log(LogLevel::Debug, "IoSystem", "Freed stream %d", req.data.stream.poolIndex);
+                        Logger::Log(LogLevel::Debug, "IoStreamSystem", "Freed stream %d", req.data.stream.poolIndex);
                         break;
                     }
                     case IoStreamRequest::Type::RefillStreamBuffer: {
@@ -125,7 +129,7 @@ namespace dalia {
                         if (stream.generation.load(std::memory_order_relaxed) != req.data.stream.generation) break;
 
                         FillBuffer(stream, req.data.stream.bufferIndex);
-                        Logger::Log(LogLevel::Debug, "IoSystem", "Refilled buffer %d for stream %d",
+                        Logger::Log(LogLevel::Debug, "IoStreamSystem", "Refilled buffer %d for stream %d",
                             req.data.stream.bufferIndex, req.data.stream.poolIndex);
                         break;
                     }
@@ -169,13 +173,13 @@ namespace dalia {
             if (framesRead == 0) {
                 // Hit EOF
                 if (justLooped) {
-                    Logger::Log(LogLevel::Error, "IoSystem", "Stream loop failed. Corrupted file.");
+                    Logger::Log(LogLevel::Error, "IoStreamSystem", "Stream loop failed. Corrupted file.");
                     stream.state.store(StreamState::Error, std::memory_order_release);
                     return;
                 }
 
                 stream.eofIndex[bufferIndex] = framesWritten;
-                Logger::Log(LogLevel::Debug, "IoSystem", "Stream buffer found EOF at index %d", framesWritten);
+                Logger::Log(LogLevel::Debug, "IoStreamSystem", "Stream buffer found EOF at index %d", framesWritten);
                 stb_vorbis_seek_start(stream.decoder);
                 justLooped = true;
                 foundEOF = true;

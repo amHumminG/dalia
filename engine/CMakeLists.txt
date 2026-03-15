@@ -29,6 +29,7 @@ set(ENGINE_FILES
     # Internal headers and cpp-files
     src/Engine.cpp
     src/backend/miniaudio_impl.cpp
+    src/backend/stb_vorbis_impl.cpp
     src/messaging/RtCommandQueue.h
     src/messaging/RtCommandQueue.cpp
     src/messaging/RtEventQueue.h
