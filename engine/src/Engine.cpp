@@ -1,11 +1,16 @@
 #include "dalia/audio/Engine.h"
 #include "dalia/audio/PlaybackControl.h"
+
 #include "core/Logger.h"
 #include "core/FixedStack.h"
 #include "core/SPSCRingBuffer.h"
+
 #include "messaging/RtCommandQueue.h"
 #include "messaging/RtEventQueue.h"
 #include "messaging/IoStreamRequestQueue.h"
+#include "messaging/IoLoadRequestQueue.h"
+#include "messaging/IoLoadEventQueue.h"
+
 #include "mixer/Voice.h"
 #include "mixer/StreamContext.h"
 #include "mixer/Bus.h"
@@ -13,6 +18,13 @@
 
 #include "systems/RtSystem.h"
 #include "systems/IoStreamSystem.h"
+#include "systems/IoLoadSystem.h"
+
+#include "resources/AssetRegistry.h"
+#include "resources/ResidentSound.h"
+#include "resources/StreamSound.h"
+
+#include "StringID.h"
 
 #include <span>
 
@@ -43,6 +55,8 @@ namespace dalia {
 		std::unique_ptr<RtCommandQueue>			rtCommands;
 		std::unique_ptr<RtEventQueue>			rtEvents;
 		std::unique_ptr<IoStreamRequestQueue>	ioStreamRequests;
+		std::unique_ptr<IoLoadRequestQueue>		ioLoadRequests;
+		std::unique_ptr<IoLoadEventQueue>		ioLoadEvents;
 
 		// --- Resource Capacities ---
 		uint32_t voiceCapacity	= 0;
@@ -75,6 +89,10 @@ namespace dalia {
 
 		std::unique_ptr<RtSystem> rtSystem;
 		std::unique_ptr<IoStreamSystem> ioStreamSystem;
+		std::unique_ptr<IoLoadSystem> ioLoadSystem;
+
+		// --- Resources ---
+		std::unique_ptr<AssetRegistry> assetRegistry;
 
 		EngineInternalState(const EngineConfig& config)
 			: voiceCapacity(config.voiceCapacity), streamCapacity(config.streamCapacity), busCapacity(config.busCapacity) {
@@ -82,6 +100,8 @@ namespace dalia {
 			rtCommands			= std::make_unique<RtCommandQueue>(config.rtCommandQueueCapacity);
 			rtEvents			= std::make_unique<RtEventQueue>(config.rtEventQueueCapacity);
 			ioStreamRequests	= std::make_unique<IoStreamRequestQueue>(config.ioStreamRequestQueueCapacity);
+			ioLoadRequests		= std::make_unique<IoLoadRequestQueue>(config.ioLoadRequestQueueCapacity);
+			ioLoadEvents		= std::make_unique<IoLoadEventQueue>(config.ioLoadEventQueueCapacity);
 
 			// Pools
 			voicePool		= std::make_unique<Voice[]>(voiceCapacity);
@@ -101,6 +121,9 @@ namespace dalia {
 			for (uint32_t i = 0; i < voiceCapacity; i++)	freeVoices->Push(i);
 			for (uint32_t i = 0; i < streamCapacity; i++)	freeStreams->Push(i);
 			for (uint32_t i = 1; i < busCapacity; i++)		freeBuses->Push(i); // Skip Master (index 0)
+
+			// Resources
+			assetRegistry = std::make_unique<AssetRegistry>(config.residentSoundCapacity, config.streamSoundCapacity);
 		}
 	};
 
@@ -155,6 +178,12 @@ namespace dalia {
 		ioStreamingConfig.freeStreams		= m_state->freeStreams.get();
 		m_state->ioStreamSystem				= std::make_unique<IoStreamSystem>(ioStreamingConfig);
 
+		IoLoadSystemConfig ioLoadSystemConfig;
+		ioLoadSystemConfig.ioLoadRequests = m_state->ioLoadRequests.get();
+		ioLoadSystemConfig.ioLoadEvents = m_state->ioLoadEvents.get();
+		ioLoadSystemConfig.assetRegistry = m_state->assetRegistry.get();
+		m_state->ioLoadSystem = std::make_unique<IoLoadSystem>(ioLoadSystemConfig);
+
 		// --- BACKEND SETUP ---
 		m_state->device					= std::make_unique<ma_device>();
 		ma_device_config deviceConfig	= ma_device_config_init(ma_device_type_playback);
@@ -176,6 +205,7 @@ namespace dalia {
 		// --- SYSTEMS START ---
 		// I/O Thread Start
 		m_state->ioStreamSystem->Start();
+		m_state->ioLoadSystem->Start();
 
 		// Audio Thread Start
 		if (ma_device_start(m_state->device.get()) != MA_SUCCESS) {
@@ -244,9 +274,144 @@ namespace dalia {
 		Logger::ProcessLogs(); // Print all logs accumulated from this frame
 	}
 
-	Result Engine::CreateStreamPlayback(PlaybackHandle& handle, const char* filepath) {
-		if (!m_state || !m_state->initialized) {
-			return Result::NotInitialized;
+	Result Engine::LoadResidentSound(ResidentSoundHandle& soundHandle, const char* filepath) {
+		StringID pathId(filepath);
+
+		// Duplicate check
+		if (m_state->assetRegistry->GetLoadedResidentSoundHandle(pathId, soundHandle)) {
+			ResidentSound* sound = m_state->assetRegistry->GetResidentSound(soundHandle);
+			if (sound) {
+				sound->refCount++;
+				return Result::Ok;
+			}
+		}
+
+		soundHandle = m_state->assetRegistry->AllocateResident();
+		if (!soundHandle.IsValid()) {
+			Logger::Log(LogLevel::Warning, "Engine", "Failed to load resident sound. Invalid handle.");
+			return Result::Error; // TODO: Return descriptive error
+		}
+
+		ResidentSound* sound = m_state->assetRegistry->GetResidentSound(soundHandle);
+		sound->refCount = 1;
+		sound->pathHash = pathId.GetHash();
+		sound->state.store(LoadState::Loading, std::memory_order_relaxed);
+
+		m_state->assetRegistry->RegisterLoadedResidentSound(pathId, soundHandle);
+
+		uint32_t requestId = 0; // TODO: Implement a system for request id's
+		m_state->ioLoadRequests->Push(IoLoadRequest::LoadResidentSound(requestId, soundHandle, filepath));
+
+		return Result::Ok;
+	}
+
+	Result Engine::LoadStreamSound(StreamSoundHandle& soundHandle, const char* filepath) {
+		StringID pathId(filepath);
+
+		// Duplicate check
+		if (m_state->assetRegistry->GetLoadedStreamSoundHandle(pathId, soundHandle)) {
+			StreamSound* sound = m_state->assetRegistry->GetStreamSound(soundHandle);
+			if (sound) {
+				sound->refCount++;
+				return Result::Ok;
+			}
+		}
+
+		soundHandle = m_state->assetRegistry->AllocateStreamSound();
+		if (!soundHandle.IsValid()) {
+			Logger::Log(LogLevel::Warning, "Engine", "Failed to load stream sound. Invalid handle.");
+			return Result::Error; // TODO: Return descriptive error
+		}
+
+
+		StreamSound* sound = m_state->assetRegistry->GetStreamSound(soundHandle);
+		sound->refCount = 1;
+		sound->pathHash = pathId.GetHash();
+		sound->state.store(LoadState::Loading, std::memory_order_relaxed);
+
+		m_state->assetRegistry->RegisterLoadedStreamSound(pathId, soundHandle);
+
+		uint32_t requestId = 0; // TODO: Implement a system for request id's
+		m_state->ioLoadRequests->Push(IoLoadRequest::LoadStreamSound(requestId, soundHandle, filepath));
+		return Result::Ok;
+	}
+
+	Result Engine::Unload(ResidentSoundHandle soundHandle) {
+		// TODO: This function has to check if the sound is being used anywhere in the system before unloading
+		ResidentSound* sound = m_state->assetRegistry->GetResidentSound(soundHandle);
+		if (!sound) return Result::InvalidHandle;
+
+		if (sound->refCount > 0) sound->refCount--;
+
+		if (sound->refCount == 0) {
+			m_state->assetRegistry->UnregisterLoadedResidentSound(StringID::FromHash(sound->pathHash));
+			m_state->assetRegistry->FreeResidentSound(soundHandle);
+		}
+
+		return Result::Ok;
+	}
+
+	Result Engine::Unload(StreamSoundHandle soundHandle) {
+		// TODO: This function has to check if the sound is being used anywhere in the system before unloading
+		StreamSound* sound = m_state->assetRegistry->GetStreamSound(soundHandle);
+		if (!sound) return Result::InvalidHandle;
+
+		if (sound->refCount > 0) sound->refCount--;
+
+		if (sound->refCount == 0) {
+			m_state->assetRegistry->UnregisterLoadedStreamSound(StringID::FromHash(sound->pathHash));
+			m_state->assetRegistry->FreeStreamSound(soundHandle);
+		}
+
+		return Result::Ok;
+	}
+
+	Result Engine::CreatePlayback(PlaybackHandle& pbkHandle, ResidentSoundHandle soundHandle) {
+		if (!m_state || !m_state->initialized) return Result::NotInitialized;
+
+		ResidentSound* sound = m_state->assetRegistry->GetResidentSound(soundHandle);
+		if (!sound) return Result::InvalidHandle;
+
+		if (sound->state.load(std::memory_order_acquire) != LoadState::Loaded) {
+			Logger::Log(LogLevel::Warning, "Engine", "Failed to play resident sound. Not finished loading.");
+			return Result::Error; // TODO: Return descriptive error
+		}
+
+		uint32_t voiceIndex;
+		if (!m_state->freeVoices->Pop(voiceIndex)) {
+			Logger::Log(LogLevel::Error, "Engine", "Voice pool exhausted. Failed to create playback instance.");
+			return Result::VoicePoolExhausted;
+		}
+
+		VoiceMirror& vMirror = m_state->voicePoolMirror[voiceIndex];
+		vMirror.generation++;
+		vMirror.state = VoiceState::Inactive;
+
+
+		RtCommand cmd = RtCommand::PrepareVoiceResident(
+			voiceIndex,
+			vMirror.generation,
+			sound->pcmData.data(),
+			sound->totalFrames,
+			sound->channels,
+			sound->sampleRate
+		);
+		m_state->rtCommands->Enqueue(cmd);
+
+		pbkHandle = PlaybackHandle::Create(voiceIndex, vMirror.generation);
+
+		return Result::Ok;
+	}
+
+	Result Engine::CreatePlayback(PlaybackHandle& pbkHandle, StreamSoundHandle soundHandle) {
+		if (!m_state || !m_state->initialized) return Result::NotInitialized;
+
+		StreamSound* sound = m_state->assetRegistry->GetStreamSound(soundHandle);
+		if (!sound) return Result::InvalidHandle;
+
+		if (sound->state.load(std::memory_order_acquire) != LoadState::Loaded) {
+			Logger::Log(LogLevel::Warning, "Engine", "Failed to play resident sound. Not finished loading.");
+			return Result::Error; // TODO: Return descriptive error
 		}
 
 		uint32_t voiceIndex;
@@ -269,7 +434,8 @@ namespace dalia {
 
 		// Send I/O request to prepare stream
 		m_state->streamPool[streamIndex].state.store(StreamState::Preparing, std::memory_order_release);
-		IoStreamRequest req = IoStreamRequest::PrepareStream(streamIndex, filepath);
+		// TODO: We probably want to send a bit more here (like channels, sample rate and so on...)
+		IoStreamRequest req = IoStreamRequest::PrepareStream(streamIndex, sound->filepath);
 		if (!m_state->ioStreamRequests->Push(req)) {
 			m_state->freeVoices->Push(voiceIndex);
 
@@ -280,11 +446,16 @@ namespace dalia {
 			return Result::IoRequestQueueFull;
 		}
 
-		// Send command to audio thread (can't fail as it is pushed into a vector)
-		RtCommand cmd = RtCommand::PrepareVoiceStreaming(voiceIndex, vMirror.generation, streamIndex);
+		RtCommand cmd = RtCommand::PrepareVoiceStreaming(
+			voiceIndex,
+			vMirror.generation,
+			streamIndex,
+			sound->channels,
+			sound->sampleRate
+		);
 		m_state->rtCommands->Enqueue(cmd);
 
-		handle = PlaybackHandle::Create(voiceIndex, vMirror.generation);
+		pbkHandle = PlaybackHandle::Create(voiceIndex, vMirror.generation);
 
 		return Result::Ok;
 	}

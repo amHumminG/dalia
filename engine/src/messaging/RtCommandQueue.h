@@ -38,14 +38,21 @@ namespace dalia {
 			struct {
 				uint32_t voiceIndex;
 				uint32_t voiceGeneration;
+
 				uint32_t streamIndex;
-			} voicePrepStreaming;
+				uint32_t channels;
+				uint32_t sampleRate;
+			} prepStreaming;
 
 			struct {
 				uint32_t voiceIndex;
 				uint32_t voiceGeneration;
-				uint32_t assetId; // Assuming this is how we store assets in loaded soundbanks
-			} voicePrepResident;
+
+				const float* pcmData;
+				uint32_t frames;
+				uint32_t channels;
+				uint32_t sampleRate;
+			} prepResident;
 
 			struct {
 				uint32_t voiceIndex;
@@ -74,21 +81,30 @@ namespace dalia {
 			return cmd;
 		}
 
-		static RtCommand PrepareVoiceStreaming(uint32_t index, uint32_t generation, uint32_t streamIndex) {
+		static RtCommand PrepareVoiceStreaming(uint32_t index, uint32_t generation, uint32_t streamIndex,
+			uint32_t channels, uint32_t sampleRate) {
 			RtCommand cmd;
 			cmd.type = Type::PrepareVoiceStreaming;
-			cmd.data.voicePrepStreaming.voiceIndex = index;
-			cmd.data.voicePrepStreaming.voiceGeneration = generation;
-			cmd.data.voicePrepStreaming.streamIndex = streamIndex;
+			cmd.data.prepStreaming.voiceIndex = index;
+			cmd.data.prepStreaming.voiceGeneration = generation;
+			cmd.data.prepStreaming.streamIndex = streamIndex;
+
+			cmd.data.prepStreaming.channels = channels;
+			cmd.data.prepStreaming.sampleRate = sampleRate;
 			return cmd;
 		}
 
-		static RtCommand PrepareVoiceResident(uint32_t index, uint32_t generation, uint32_t assetId) {
+		static RtCommand PrepareVoiceResident(uint32_t index, uint32_t generation, const float* dataPtr,
+			uint32_t frames, uint32_t channels, uint32_t sampleRate) {
 			RtCommand cmd;
 			cmd.type = Type::PrepareVoiceResident;
-			cmd.data.voicePrepResident.voiceIndex = index;
-			cmd.data.voicePrepResident.voiceGeneration = generation;
-			cmd.data.voicePrepResident.assetId = assetId;
+			cmd.data.prepResident.voiceIndex = index;
+			cmd.data.prepResident.voiceGeneration = generation;
+
+			cmd.data.prepResident.pcmData = dataPtr;
+			cmd.data.prepResident.frames = frames;
+			cmd.data.prepResident.channels = channels;
+			cmd.data.prepResident.sampleRate = sampleRate;
 			return cmd;
 		}
 

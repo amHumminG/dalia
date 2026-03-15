@@ -65,6 +65,8 @@ set(ENGINE_FILES
     src/resources/AssetRegistry.h
     src/resources/StreamSound.h
     src/core/States.h
+    src/core/Utility.cpp
+    src/core/Utility.h
 )
 
 add_library(dalia_engine STATIC ${ENGINE_FILES})

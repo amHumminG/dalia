@@ -1,18 +1,23 @@
 #pragma once
 #include "dalia/core/Result.h"
 #include "dalia/core/LogLevel.h"
+#include "dalia/audio/ResourceHandle.h"
 #include <memory>
 
 struct ma_device;
 
 namespace dalia {
 
+	class StringID;
 	struct EngineInternalState;
 	struct PlaybackHandle;
 
 	struct EngineConfig {
 		LogLevel logLevel = LogLevel::Warning;
 		LogCallback logCallback = nullptr;
+
+		uint32_t residentSoundCapacity = 256; // Maybe this should be higher?
+		uint32_t streamSoundCapacity = 256;
 
 		uint32_t voiceCapacity		= 128;
 		uint32_t maxActiveVoices	= 64;
@@ -22,6 +27,8 @@ namespace dalia {
 		size_t rtCommandQueueCapacity		= 1024;
 		size_t rtEventQueueCapacity			= 1024;
 		size_t ioStreamRequestQueueCapacity	= 256;
+		size_t ioLoadRequestQueueCapacity	= 64;
+		size_t ioLoadEventQueueCapacity		= 64;
 	};
 
 	class Engine {
@@ -34,7 +41,32 @@ namespace dalia {
 
 		void Update();
 
-		Result CreateStreamPlayback(PlaybackHandle& handle, const char* filepath);
+
+
+		// --- Loose File Functionality ---
+
+		Result LoadResidentSound(ResidentSoundHandle& soundHandle, const char* filepath);
+		Result LoadStreamSound(StreamSoundHandle& soundHandle, const char* filepath);
+
+		Result Unload(ResidentSoundHandle soundHandle);
+		Result Unload(StreamSoundHandle soundHandle);
+
+		// TODO: These are far from implemented
+		Result CreatePlayback(PlaybackHandle& pbkHandle, ResidentSoundHandle soundHandle);
+		Result CreatePlayback(PlaybackHandle& pbkHandle, StreamSoundHandle soundHandle);
+
+
+		// --- Soundbank Functionality ---
+
+		// Result LoadBank(BankHandle& handle, StringID pathId);
+		// Result Unload(BankHandle handle);
+
+		// Result PostEvent(EventHandle& handle, StringID);
+
+
+
+
+		// Result CreateStreamPlayback(PlaybackHandle& handle, const char* filepath);
 		Result Play(PlaybackHandle handle);
 
 	private:
