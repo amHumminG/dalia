@@ -1,5 +1,6 @@
 #pragma once
 #include <cstdint>
+#include <functional>
 
 namespace dalia {
 
@@ -25,12 +26,27 @@ namespace dalia {
 
         constexpr uint32_t GetHash() const { return m_hash; }
 
+        static constexpr StringID FromHash(uint32_t hash) {
+            StringID id;
+            id.m_hash = hash;
+            return id;
+        }
+
         constexpr bool operator==(const StringID& other) const {
             return m_hash == other.m_hash;
         }
 
     private:
         uint32_t m_hash;
+    };
+}
+
+namespace std {
+    template <>
+    struct hash<dalia::StringID> {
+        size_t operator()(const dalia::StringID& id) const {
+            return id.GetHash();
+        }
     };
 }
 
