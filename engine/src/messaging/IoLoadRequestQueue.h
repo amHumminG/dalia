@@ -1,5 +1,5 @@
 #pragma once
-#include "dalia/audio/ResourceHandle.h"
+#include "dalia/audio/SoundHandle.h"
 #include "core/Constants.h"
 #include "core/SPSCRingBuffer.h"
 #include <cstdint>
@@ -10,8 +10,7 @@ namespace dalia {
         enum class Type {
             None,
 
-            LoadResidentSound,
-            LoadStreamSound,
+            LoadSound,
             // LoadBank
 
         } type = Type::None;
@@ -26,20 +25,9 @@ namespace dalia {
 
         } data = {};
 
-        static IoLoadRequest LoadResidentSound(uint32_t reqId, ResidentSoundHandle handle, const char* filepath) {
+        static IoLoadRequest LoadSound(uint32_t reqId, SoundHandle handle, const char* filepath) {
             IoLoadRequest req;
-            req.type = Type::LoadResidentSound;
-            req.requestId = reqId;
-
-            req.data.soundFromFile.resourceHandleUuid = handle.GetUUID();
-            strncpy_s(req.data.soundFromFile.filepath, MAX_IO_PATH_SIZE, filepath, _TRUNCATE);
-
-            return req;
-        }
-
-        static IoLoadRequest LoadStreamSound(uint32_t reqId, StreamSoundHandle handle, const char* filepath) {
-            IoLoadRequest req;
-            req.type = Type::LoadStreamSound;
+            req.type = Type::LoadSound;
             req.requestId = reqId;
 
             req.data.soundFromFile.resourceHandleUuid = handle.GetUUID();

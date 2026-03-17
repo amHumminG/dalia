@@ -7,34 +7,50 @@ namespace dalia {
         m_streamSoundPool(streamSoundCapacity) {
     }
 
-    ResidentSoundHandle AssetRegistry::AllocateResident() {
-        return m_residentSoundPool.Allocate();
+    SoundHandle AssetRegistry::AllocateSound(SoundType type) {
+        uint32_t index, generation;
+
+        if (type == SoundType::Resident) {
+            if (m_residentSoundPool.Allocate(index, generation)) {
+                return SoundHandle::Create(index, generation, SoundType::Resident);
+            }
+        }
+        else if (type == SoundType::Stream) {
+            if (m_streamSoundPool.Allocate(index, generation)) {
+                return SoundHandle::Create(index, generation, SoundType::Stream);
+            }
+        }
+
+        return SoundHandle{};
     }
 
-    void AssetRegistry::FreeResidentSound(ResidentSoundHandle handle) {
-        m_residentSoundPool.Free(handle);
+    void AssetRegistry::FreeSound(SoundHandle handle) {
+        if (!handle.IsValid()) {
+            Logger::Log(LogLevel::Warning, "Engine", "Attempting to free invalid sound handle.");
+        }
+
+        if (handle.GetType() == SoundType::Resident) {
+            m_residentSoundPool.Free(handle.GetIndex(), handle.GetGeneration());
+        }
+        else if (handle.GetType() == SoundType::Stream) {
+            m_streamSoundPool.Free(handle.GetIndex(), handle.GetGeneration());
+        }
     }
 
-    ResidentSound* AssetRegistry::GetResidentSound(ResidentSoundHandle handle) {
-        return m_residentSoundPool.Get(handle);
+    ResidentSound* AssetRegistry::GetResidentSound(SoundHandle handle) {
+        if (handle.GetType() != SoundType::Resident) return nullptr;
+        return m_residentSoundPool.Get(handle.GetIndex(), handle.GetGeneration());
     }
 
-    StreamSoundHandle AssetRegistry::AllocateStreamSound() {
-        return m_streamSoundPool.Allocate();
+    StreamSound* AssetRegistry::GetStreamSound(SoundHandle handle) {
+        if (handle.GetType() != SoundType::Stream) return nullptr;
+        return m_streamSoundPool.Get(handle.GetIndex(), handle.GetGeneration());
     }
 
-    void AssetRegistry::FreeStreamSound(StreamSoundHandle handle) {
-        m_streamSoundPool.Free(handle);
-    }
-
-    StreamSound* AssetRegistry::GetStreamSound(StreamSoundHandle handle) {
-        return m_streamSoundPool.Get(handle);
-    }
-
-    bool AssetRegistry::GetLoadedResidentSoundHandle(StringID pathId, ResidentSoundHandle& handle) {
+    bool AssetRegistry::GetLoadedSoundHandle(StringID pathId, SoundHandle& handle) {
         std::lock_guard<std::mutex> lock(m_pathMutex);
-        auto it = m_loadedResidentAssets.find(pathId);
-        if (it != m_loadedResidentAssets.end()) {
+        auto it = m_loadedSounds.find(pathId);
+        if (it != m_loadedSounds.end()) {
             handle = it->second;
             return true;
         }
@@ -42,34 +58,13 @@ namespace dalia {
         return false;
     }
 
-    void AssetRegistry::RegisterLoadedResidentSound(StringID pathId, ResidentSoundHandle handle) {
+    void AssetRegistry::RegisterLoadedSound(StringID pathId, SoundHandle handle) {
         std::lock_guard<std::mutex> lock(m_pathMutex);
-        m_loadedResidentAssets[pathId] = handle;
+        m_loadedSounds[pathId] = handle;
     }
 
-    void AssetRegistry::UnregisterLoadedResidentSound(StringID pathId) {
+    void AssetRegistry::UnregisterLoadedSound(StringID pathId) {
         std::lock_guard<std::mutex> lock(m_pathMutex);
-        m_loadedResidentAssets.erase(pathId);
-    }
-
-    bool AssetRegistry::GetLoadedStreamSoundHandle(StringID pathId, StreamSoundHandle& handle) {
-        std::lock_guard<std::mutex> lock(m_pathMutex);
-        auto it = m_loadedStreamAssets.find(pathId);
-        if (it != m_loadedStreamAssets.end()) {
-            handle = it->second;
-            return true;
-        }
-
-        return false;
-    }
-
-    void AssetRegistry::RegisterLoadedStreamSound(StringID pathId, StreamSoundHandle handle) {
-        std::lock_guard<std::mutex> lock(m_pathMutex);
-        m_loadedStreamAssets[pathId] = handle;
-    }
-
-    void AssetRegistry::UnregisterLoadedStreamSound(StringID pathId) {
-        std::lock_guard<std::mutex> lock(m_pathMutex);
-        m_loadedStreamAssets.erase(pathId);
+        m_loadedSounds.erase(pathId);
     }
 }

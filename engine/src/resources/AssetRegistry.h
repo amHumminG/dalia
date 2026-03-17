@@ -1,6 +1,7 @@
 #pragma once
-#include "dalia/audio/ResourceHandle.h"
-#include "core/HandlePool.h"
+// #include "dalia/audio/ResourceHandle.h"
+#include "dalia/audio/SoundHandle.h"
+#include "core/ResourcePool.h"
 
 // Resource types
 #include "resources/ResidentSound.h"
@@ -21,21 +22,15 @@ namespace dalia {
         AssetRegistry(const AssetRegistry&) = delete;
         AssetRegistry& operator=(const AssetRegistry&) = delete;
 
-        ResidentSoundHandle AllocateResident();
-        void FreeResidentSound(ResidentSoundHandle handle);
-        ResidentSound* GetResidentSound(ResidentSoundHandle handle);
+        SoundHandle AllocateSound(SoundType type);
+        void FreeSound(SoundHandle handle);
 
-        StreamSoundHandle AllocateStreamSound();
-        void FreeStreamSound(StreamSoundHandle handle);
-        StreamSound* GetStreamSound(StreamSoundHandle handle);
+        ResidentSound* GetResidentSound(SoundHandle handle);
+        StreamSound* GetStreamSound(SoundHandle handle);
 
-        bool GetLoadedResidentSoundHandle(StringID pathId, ResidentSoundHandle& handle);
-        void RegisterLoadedResidentSound(StringID pathId, ResidentSoundHandle handle);
-        void UnregisterLoadedResidentSound(StringID pathId);
-
-        bool GetLoadedStreamSoundHandle(StringID pathId, StreamSoundHandle& handle);
-        void RegisterLoadedStreamSound(StringID pathId, StreamSoundHandle handle);
-        void UnregisterLoadedStreamSound(StringID pathId);
+        bool GetLoadedSoundHandle(StringID pathId, SoundHandle& handle);
+        void RegisterLoadedSound(StringID pathId, SoundHandle handle);
+        void UnregisterLoadedSound(StringID pathId);
 
         // bool GetEventBlueprint(uint32_t eventHash, EventBlueprint& blueprint);
         // bool RegisterEvent(uint32_t eventHash, const EventBlueprint blueprint);
@@ -43,11 +38,10 @@ namespace dalia {
 
 
     private:
-        HandlePool<ResidentSound, ResidentSoundHandle> m_residentSoundPool;
-        HandlePool<StreamSound, StreamSoundHandle> m_streamSoundPool;
+        ResourcePool<ResidentSound> m_residentSoundPool;
+        ResourcePool<StreamSound> m_streamSoundPool;
 
-        std::unordered_map<StringID, ResidentSoundHandle> m_loadedResidentAssets;
-        std::unordered_map<StringID, StreamSoundHandle> m_loadedStreamAssets;
+        std::unordered_map<StringID, SoundHandle> m_loadedSounds;
         std::mutex m_pathMutex;
 
         // std::unordered_map<StringID, EventBlueprint> m_events;

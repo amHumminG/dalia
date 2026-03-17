@@ -15,8 +15,6 @@ namespace dalia {
 
     enum class VoiceState : uint8_t {
         Free,
-        PendingLoadInactive, // Goes from Pending -> Inactive on load event
-        PendingLoadPlaying,  // Goes from Pending -> Playing on load event
         Inactive,
         Playing,
         Virtual,
@@ -71,9 +69,10 @@ namespace dalia {
 
     struct VoiceMirror {
         // TODO: Expand this to hold all voice parameters
-        uint32_t generation = 0;
-        bool isBusy = false;
+        bool pendingLoad = false; // Used by the api thread only
+
         VoiceState state = VoiceState::Free;
+        uint32_t generation = 0;
 
         // Asset
         VoiceSourceType sourceType = VoiceSourceType::None;
@@ -87,8 +86,13 @@ namespace dalia {
         void* userData = nullptr;
 
         void Reset() {
-            isBusy = false;
+            pendingLoad = false;
+
             state = VoiceState::Free;
+            generation++;
+
+            assetUuid = 0;
+
             onFinishedCallback = nullptr;
             userData = nullptr;
         }

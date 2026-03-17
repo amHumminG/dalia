@@ -18,14 +18,12 @@ namespace dalia {
         Result result = Result::Ok;
 
         uint64_t assetUuid = 0;
-        VoiceSourceType sourceType = VoiceSourceType::None;
 
-        static IoLoadEvent SoundLoaded(uint32_t reqId, uint64_t uuid, VoiceSourceType sourceType) {
+        static IoLoadEvent SoundLoaded(uint32_t reqId, uint64_t uuid) {
             IoLoadEvent ev;
             ev.type = Type::SoundLoaded;
             ev.requestId = reqId;
             ev.assetUuid = uuid;
-            ev.sourceType = sourceType;
             return ev;
         }
 

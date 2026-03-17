@@ -1,6 +1,8 @@
 #pragma once
 #include <cstdint>
 
+// This class is currently unused (Will be used later for soundbanks and possibly events)
+
 namespace dalia {
 
     class AssetRegistry;
@@ -37,12 +39,8 @@ namespace dalia {
         uint64_t uuid = 0;
     };
 
-    struct ResidentSoundTag {};
-    struct StreamSoundTag {};
     struct BankTag {};
 
     // The actual handle types exposed to the engine
-    using ResidentSoundHandle = ResourceHandle<ResidentSoundTag>;
-    using StreamSoundHandle   = ResourceHandle<StreamSoundTag>;
     using BankHandle          = ResourceHandle<BankTag>;
 }

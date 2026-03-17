@@ -102,7 +102,18 @@ namespace dalia {
 	            	break;
                 }
                 case RtCommand::Type::PauseVoice: {
-                    // TODO: Implement
+	            	uint32_t voiceIndex = cmd.data.voiceState.voiceIndex;
+	            	uint32_t expectedVoiceGen = cmd.data.voiceState.voiceGeneration;
+	            	Voice& voice = m_voicePool[voiceIndex];
+
+	            	// Check for outdated command
+	            	if (voice.generation != expectedVoiceGen) break;
+
+	            	if (voice.state == VoiceState::Playing) {
+	            		Logger::Log(LogLevel::Debug, "RtSystem", "Voice %d set to paused", voiceIndex);
+	            		voice.state = VoiceState::Paused;
+	            	}
+
 	            	break;
                 }
                 case RtCommand::Type::StopVoice: {

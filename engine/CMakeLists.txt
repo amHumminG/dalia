@@ -60,13 +60,14 @@ set(ENGINE_FILES
     src/systems/IoLoadSystem.h
     src/resources/ResidentSound.h
     include/dalia/audio/ResourceHandle.h
-    src/core/HandlePool.h
+    src/core/ResourcePool.h
     src/resources/AssetRegistry.cpp
     src/resources/AssetRegistry.h
     src/resources/StreamSound.h
     src/core/States.h
     src/core/Utility.cpp
     src/core/Utility.h
+    include/dalia/audio/SoundHandle.h
 )
 
 add_library(dalia_engine STATIC ${ENGINE_FILES})

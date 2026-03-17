@@ -54,13 +54,8 @@ namespace dalia {
 		}
 	};
 
-	struct PendingResidentUnload {
-		ResidentSoundHandle handle;
-		std::vector<VoiceID> voicesToStop;
-	};
-
-	struct PendingStreamUnload {
-		StreamSoundHandle handle;
+	struct PendingSoundUnload {
+		SoundHandle handle;
 		std::vector<VoiceID> voicesToStop;
 	};
 
@@ -68,7 +63,6 @@ namespace dalia {
 		uint32_t voiceIndex;
 		uint32_t voiceGeneration;
 		uint64_t assetUuid;
-		VoiceSourceType sourceType;
 	};
 
 	struct EngineInternalState {
@@ -113,9 +107,6 @@ namespace dalia {
 		bool isMixOrderDirty		= false;
 		bool isMixOrderSwapPending	= false;
 
-		std::vector<PendingResidentUnload> pendingResidentUnloads;
-		std::vector<PendingStreamUnload> pendingStreamUnloads;
-
 		std::unique_ptr<RtSystem> rtSystem;
 		std::unique_ptr<IoStreamSystem> ioStreamSystem;
 		std::unique_ptr<IoLoadSystem> ioLoadSystem;
@@ -124,6 +115,9 @@ namespace dalia {
 		std::unique_ptr<AssetRegistry> assetRegistry;
 		uint32_t nextIoLoadRequestId = 1;
 		std::unordered_map<uint32_t, AssetLoadCallback> loadCallbacks;
+
+		// Deferred Unloads
+		std::vector<PendingSoundUnload> pendingSoundUnloads;
 
 		// Deferred playback
 		std::vector<PendingPlayback> pendingPlaybacks;
@@ -295,125 +289,127 @@ namespace dalia {
 		Logger::ProcessLogs(); // Print all logs accumulated from this frame
 	}
 
-	Result Engine::LoadResidentSound(ResidentSoundHandle& soundHandle, const char* filepath,
-		AssetLoadCallback callback, uint32_t* outRequestId) {
+	Result Engine::LoadSound(SoundHandle& soundHandle, SoundType soundType, const char* filepath, AssetLoadCallback callback,
+		uint32_t* outRequestId) {
 		if (!m_state || !m_state->initialized) return Result::NotInitialized;
 
 		StringID pathId(filepath);
 
 		// Duplicate check
-		if (m_state->assetRegistry->GetLoadedResidentSoundHandle(pathId, soundHandle)) {
+		if (m_state->assetRegistry->GetLoadedSoundHandle(pathId, soundHandle)) {
+			if (soundHandle.GetType() == soundType) {
+				if (soundType == SoundType::Resident) {
+					ResidentSound* sound = m_state->assetRegistry->GetResidentSound(soundHandle);
+					if (sound) sound->refCount++;
+				}
+				else if (soundType == SoundType::Stream) {
+					StreamSound* sound = m_state->assetRegistry->GetStreamSound(soundHandle);
+					if (sound) sound->refCount++;
+				}
+
+				if (callback) callback(INVALID_REQUEST_ID, Result::Ok);
+				if (outRequestId) *outRequestId = INVALID_REQUEST_ID;
+
+				return Result::Ok;
+			}
+		}
+
+		soundHandle = m_state->assetRegistry->AllocateSound(soundType);
+		if (!soundHandle.IsValid()) {
+			if (soundType == SoundType::Resident) {
+				Logger::Log(LogLevel::Error, "Engine", "Failed to load sound. Resident sound pool exhausted.");
+				return Result::ResidentSoundPoolExhausted;
+			}
+			else if (soundType == SoundType::Stream) {
+				Logger::Log(LogLevel::Error, "Engine", "Failed to load sound. Stream sound pool exhausted.");
+				return Result::StreamSoundPoolExhausted;
+			}
+		}
+
+		if (soundType == SoundType::Resident) {
 			ResidentSound* sound = m_state->assetRegistry->GetResidentSound(soundHandle);
-			if (sound) {
-				sound->refCount++;
-
-				if (callback) callback(INVALID_REQUEST_ID, Result::Ok);
-				if (outRequestId) *outRequestId = INVALID_REQUEST_ID;
-
-				return Result::Ok;
-			}
+			sound->refCount = 1;
+			sound->pathHash = pathId.GetHash();
+			sound->state.store(LoadState::Loading, std::memory_order_relaxed);
 		}
-
-		soundHandle = m_state->assetRegistry->AllocateResident();
-		if (!soundHandle.IsValid()) {
-			Logger::Log(LogLevel::Warning, "Engine", "Failed to load resident sound. Invalid handle.");
-			return Result::Error; // TODO: Return descriptive error
-		}
-
-		ResidentSound* sound = m_state->assetRegistry->GetResidentSound(soundHandle);
-		sound->refCount = 1;
-		sound->pathHash = pathId.GetHash();
-		sound->state.store(LoadState::Loading, std::memory_order_relaxed);
-
-		m_state->assetRegistry->RegisterLoadedResidentSound(pathId, soundHandle);
-
-		uint32_t requestId = m_state->GenerateIoLoadRequestId();
-		if (outRequestId) *outRequestId = requestId;
-		if (callback) m_state->loadCallbacks[requestId] = std::move(callback);
-
-		m_state->ioLoadRequests->Push(IoLoadRequest::LoadResidentSound(requestId, soundHandle, filepath));
-
-		return Result::Ok;
-	}
-
-	Result Engine::LoadStreamSound(StreamSoundHandle& soundHandle, const char* filepath,
-		AssetLoadCallback callback, uint32_t* outRequestId) {
-		if (!m_state || !m_state->initialized) return Result::NotInitialized;
-
-		StringID pathId(filepath);
-
-		// Duplicate check
-		if (m_state->assetRegistry->GetLoadedStreamSoundHandle(pathId, soundHandle)) {
+		else if (soundType == SoundType::Stream) {
 			StreamSound* sound = m_state->assetRegistry->GetStreamSound(soundHandle);
-			if (sound) {
-				sound->refCount++;
-
-				if (callback) callback(INVALID_REQUEST_ID, Result::Ok);
-				if (outRequestId) *outRequestId = INVALID_REQUEST_ID;
-
-				return Result::Ok;
-			}
+			sound->refCount = 1;
+			sound->pathHash = pathId.GetHash();
+			sound->state.store(LoadState::Loading, std::memory_order_relaxed);
 		}
-
-		soundHandle = m_state->assetRegistry->AllocateStreamSound();
-		if (!m_state || !m_state->initialized) return Result::NotInitialized;
-
-		if (!soundHandle.IsValid()) {
-			Logger::Log(LogLevel::Warning, "Engine", "Failed to load stream sound. Invalid handle.");
-			return Result::Error; // TODO: Return descriptive error
-		}
-
-
-		StreamSound* sound = m_state->assetRegistry->GetStreamSound(soundHandle);
-		sound->refCount = 1;
-		sound->pathHash = pathId.GetHash();
-		sound->state.store(LoadState::Loading, std::memory_order_relaxed);
-
-		m_state->assetRegistry->RegisterLoadedStreamSound(pathId, soundHandle);
+		m_state->assetRegistry->RegisterLoadedSound(pathId, soundHandle);
 
 		uint32_t requestId = m_state->GenerateIoLoadRequestId();
 		if (outRequestId) *outRequestId = requestId;
 		if (callback) m_state->loadCallbacks[requestId] = std::move(callback);
 
-		m_state->ioLoadRequests->Push(IoLoadRequest::LoadStreamSound(requestId, soundHandle, filepath));
+		m_state->ioLoadRequests->Push(IoLoadRequest::LoadSound(requestId, soundHandle, filepath));
 
 		return Result::Ok;
 	}
 
-	Result Engine::Unload(ResidentSoundHandle soundHandle) {
+	Result Engine::UnloadSound(SoundHandle soundHandle) {
 		if (!m_state || !m_state->initialized) return Result::NotInitialized;
 
-		ResidentSound* sound = m_state->assetRegistry->GetResidentSound(soundHandle);
-		if (!sound) return Result::InvalidHandle;
+		SoundType soundType = soundHandle.GetType();
+		uint32_t soundRefCount;
+		uint32_t soundPathHash;
 
-		if (sound->refCount > 0) sound->refCount--;
+		if (soundType == SoundType::Resident) {
+			ResidentSound* sound = m_state->assetRegistry->GetResidentSound(soundHandle);
+			if (!sound) return Result::InvalidHandle;
+			if (sound->refCount > 0) sound->refCount--;
+			soundRefCount = sound->refCount;
+			soundPathHash = sound->pathHash;
+		}
+		else {
+			StreamSound* sound = m_state->assetRegistry->GetStreamSound(soundHandle);
+			if (!sound) return Result::InvalidHandle;
+			if (sound->refCount > 0) sound->refCount--;
+			soundRefCount = sound->refCount;
+			soundPathHash = sound->pathHash;
+		}
 
-		if (sound->refCount == 0) {
-			m_state->assetRegistry->UnregisterLoadedResidentSound(StringID::FromHash(sound->pathHash));
+		if (soundRefCount == 0) {
+			m_state->assetRegistry->UnregisterLoadedSound(StringID::FromHash(soundPathHash));
 
-			// Collect all voice indices using the handle
-			// TODO: Find a more efficient way to do this (time complexity wise)
-			PendingResidentUnload pendingUnload;
+			PendingSoundUnload pendingUnload;
 			pendingUnload.handle = soundHandle;
+
+			// Remove pending playbacks for the sound
+			for (auto it = m_state->pendingPlaybacks.begin(); it != m_state->pendingPlaybacks.end(); ) {
+				if (it->assetUuid == soundHandle.GetUUID()) {
+					VoiceMirror& vMirror = m_state->voicePoolMirror[it->voiceIndex];
+
+					vMirror.Reset();
+					m_state->freeVoices->Push(it->voiceIndex);
+
+					Logger::Log(LogLevel::Debug, "Engine", "Aborted deferred playback for voice %d due to unload.",
+						it->voiceIndex);
+					it = m_state->pendingPlaybacks.erase(it);
+				}
+				else it++;
+			}
+
+			// Command active voices using the asset to stop
 			for (uint32_t i = 0; i < m_state->voiceCapacity; i++) {
 				VoiceMirror& vMirror = m_state->voicePoolMirror[i];
 
-				if (vMirror.state != VoiceState::Free &&
-					vMirror.assetUuid == soundHandle.GetUUID() &&
-					vMirror.sourceType == VoiceSourceType::Resident) {
+				if (vMirror.state != VoiceState::Free && vMirror.assetUuid == soundHandle.GetUUID()) {
 					pendingUnload.voicesToStop.push_back({i, vMirror.generation});
 
 					m_state->rtCommands->Enqueue(RtCommand::StopVoice(i, vMirror.generation));
 					Logger::Log(LogLevel::Debug, "Engine", "Commanded to stop voice: %d", i);
-				}
+					}
 			}
 
 			if (!pendingUnload.voicesToStop.empty()) {
-				m_state->pendingResidentUnloads.push_back(std::move(pendingUnload));
+				m_state->pendingSoundUnloads.push_back(std::move(pendingUnload));
 			}
 			else {
-				m_state->assetRegistry->FreeResidentSound(soundHandle);
-				Logger::Log(LogLevel::Debug, "Engine", "Unloaded resident sound with handle %d (instant)",
+				m_state->assetRegistry->FreeSound(soundHandle);
+				Logger::Log(LogLevel::Debug, "Engine", "Unloaded sound with handle %d (instant)",
 					soundHandle.GetUUID());
 			}
 		}
@@ -421,57 +417,28 @@ namespace dalia {
 		return Result::Ok;
 	}
 
-	Result Engine::Unload(StreamSoundHandle soundHandle) {
+	Result Engine::CreatePlayback(PlaybackHandle& pbkHandle, SoundHandle soundHandle) {
 		if (!m_state || !m_state->initialized) return Result::NotInitialized;
 
-		StreamSound* sound = m_state->assetRegistry->GetStreamSound(soundHandle);
-		if (!sound) return Result::InvalidHandle;
+		SoundType soundType = soundHandle.GetType();
+		ResidentSound* residentSound = nullptr;
+		StreamSound* streamSound = nullptr;
+		LoadState soundLoadState;
 
-		if (sound->refCount > 0) sound->refCount--;
-
-		if (sound->refCount == 0) {
-			m_state->assetRegistry->UnregisterLoadedStreamSound(StringID::FromHash(sound->pathHash));
-
-
-			// Collect all voice indices using the handle
-			// TODO: Find a more efficient way to do this (time complexity wise)
-			PendingStreamUnload pendingUnload;
-			pendingUnload.handle = soundHandle;
-			for (uint32_t i = 0; i < m_state->voiceCapacity; i++) {
-				VoiceMirror& vMirror = m_state->voicePoolMirror[i];
-
-				if (vMirror.state != VoiceState::Free &&
-					vMirror.assetUuid == soundHandle.GetUUID() &&
-					vMirror.sourceType == VoiceSourceType::Stream) {
-					pendingUnload.voicesToStop.push_back({i, vMirror.generation});
-
-					m_state->rtCommands->Enqueue(RtCommand::StopVoice(i, vMirror.generation));
-				}
-			}
-
-			if (!pendingUnload.voicesToStop.empty()) {
-				m_state->pendingStreamUnloads.push_back(std::move(pendingUnload));
-			}
-			else {
-				m_state->assetRegistry->FreeStreamSound(soundHandle);
-				Logger::Log(LogLevel::Debug, "Engine", "Unloaded stream sound with handle %d (instant)",
-					soundHandle.GetUUID());
-			}
+		if (soundType == SoundType::Resident) {
+			residentSound = m_state->assetRegistry->GetResidentSound(soundHandle);
+			if (!residentSound) return Result::InvalidHandle;
+			soundLoadState = residentSound->state.load(std::memory_order_acquire);
+		}
+		else {
+			streamSound = m_state->assetRegistry->GetStreamSound(soundHandle);
+			if (!streamSound) return Result::InvalidHandle;
+			soundLoadState = streamSound->state.load(std::memory_order_acquire);
 		}
 
-		return Result::Ok;
-	}
-
-	Result Engine::CreatePlayback(PlaybackHandle& pbkHandle, ResidentSoundHandle soundHandle) {
-		if (!m_state || !m_state->initialized) return Result::NotInitialized;
-
-		ResidentSound* sound = m_state->assetRegistry->GetResidentSound(soundHandle);
-		if (!sound) return Result::InvalidHandle;
-
-		LoadState currentLoadState = sound->state.load(std::memory_order_acquire);
-		if (currentLoadState == LoadState::Error) {
-			Logger::Log(LogLevel::Warning, "Engine", "Failed to play resident sound. Not finished loading.");
-			return Result::AssetLoadError;
+		if (soundLoadState == LoadState::Error) {
+			Logger::Log(LogLevel::Error, "Engine", "Failed to play sound. Sound loading failed.");
+			return Result::SoundLoadError;
 		}
 
 		uint32_t voiceIndex;
@@ -484,111 +451,69 @@ namespace dalia {
 		VoiceMirror& vMirror = m_state->voicePoolMirror[voiceIndex];
 		vMirror.generation++;
 		vMirror.state = VoiceState::Inactive;
-		vMirror.sourceType = VoiceSourceType::Resident;
+		if (soundType == SoundType::Resident) vMirror.sourceType = VoiceSourceType::Resident;
+		else if (soundType == SoundType::Stream) vMirror.sourceType = VoiceSourceType::Stream;
 		vMirror.assetUuid = soundHandle.GetUUID();
 
 		// Deferred playback
-		if (currentLoadState == LoadState::Loading) {
+		if (soundLoadState == LoadState::Loading) {
 			m_state->pendingPlaybacks.push_back({
 				voiceIndex,
 				vMirror.generation,
-				soundHandle.GetUUID(),
-				VoiceSourceType::Resident
+				soundHandle.GetUUID()
 			});
-			vMirror.state = VoiceState::PendingLoadInactive;
-			Logger::Log(LogLevel::Debug, "Engine", "Deferring resident playback for voice %d. Asset not yet loaded.",
+			vMirror.pendingLoad = true;
+			Logger::Log(LogLevel::Debug, "Engine", "Deferring playback for voice %d. Sound not yet loaded.",
 				voiceIndex);
 
 			pbkHandle = PlaybackHandle::Create(voiceIndex, vMirror.generation);
 			return Result::Ok;
 		}
 
-		RtCommand cmd = RtCommand::PrepareVoiceResident(
-			voiceIndex,
-			vMirror.generation,
-			sound->pcmData.data(),
-			sound->totalFrames,
-			sound->channels,
-			sound->sampleRate
-		);
-		m_state->rtCommands->Enqueue(cmd);
-
-		pbkHandle = PlaybackHandle::Create(voiceIndex, vMirror.generation);
-		return Result::Ok;
-	}
-
-	Result Engine::CreatePlayback(PlaybackHandle& pbkHandle, StreamSoundHandle soundHandle) {
-		if (!m_state || !m_state->initialized) return Result::NotInitialized;
-
-		StreamSound* sound = m_state->assetRegistry->GetStreamSound(soundHandle);
-		if (!sound) return Result::InvalidHandle;
-
-		LoadState currentLoadState = sound->state.load(std::memory_order_acquire);
-		if (currentLoadState == LoadState::Error) {
-			Logger::Log(LogLevel::Error, "Engine", "Failed to play resident sound. Asset loading failed.");
-			return Result::AssetLoadError;
-		}
-
-		uint32_t voiceIndex;
-		if (!m_state->freeVoices->Pop(voiceIndex)) {
-			Logger::Log(LogLevel::Error, "Engine", "Failed to create playback instance. Voice pool exhausted.");
-			return Result::VoicePoolExhausted;
-		}
-
-		// Prime voice mirror
-		VoiceMirror& vMirror = m_state->voicePoolMirror[voiceIndex];
-		vMirror.generation++;
-		vMirror.state = VoiceState::Inactive;
-		vMirror.sourceType = VoiceSourceType::Stream;
-		vMirror.assetUuid = soundHandle.GetUUID();
-
-		// Deferred playback
-		if (currentLoadState == LoadState::Loading) {
-			m_state->pendingPlaybacks.push_back({
+		if (soundType == SoundType::Resident) {
+			RtCommand cmd = RtCommand::PrepareVoiceResident(
 				voiceIndex,
 				vMirror.generation,
-				soundHandle.GetUUID(),
-				VoiceSourceType::Stream
-			});
-			vMirror.state = VoiceState::PendingLoadInactive;
-			Logger::Log(LogLevel::Debug, "Engine", "Deferring stream playback for voice %d. Asset not yet loaded.",
-				voiceIndex);
-
-			pbkHandle = PlaybackHandle::Create(voiceIndex, vMirror.generation);
-			return Result::Ok;
+				residentSound->pcmData.data(),
+				residentSound->totalFrames,
+				residentSound->channels,
+				residentSound->sampleRate
+			);
+			m_state->rtCommands->Enqueue(cmd);
 		}
+		else if (soundType == SoundType::Stream) {
+			uint32_t streamIndex;
+			if (!m_state->freeStreams->Pop(streamIndex)) {
+				m_state->freeVoices->Push(voiceIndex);
+				vMirror.Reset();
 
-		uint32_t streamIndex;
-		if (!m_state->freeStreams->Pop(streamIndex)) {
-			m_state->freeVoices->Push(voiceIndex);
-			vMirror.Reset();
+				Logger::Log(LogLevel::Error, "Engine", "Failed to create playback instance. Stream pool exhausted.");
+				return Result::StreamPoolExhausted;
+			}
 
-			Logger::Log(LogLevel::Error, "Engine", "Failed to create playback instance. Stream pool exhausted.");
-			return Result::StreamPoolExhausted;
+			// Send I/O request to prepare stream
+			m_state->streamPool[streamIndex].state.store(StreamState::Preparing, std::memory_order_release);
+			IoStreamRequest req = IoStreamRequest::PrepareStream(streamIndex, streamSound->filepath);
+			if (!m_state->ioStreamRequests->Push(req)) {
+				m_state->freeVoices->Push(voiceIndex);
+				vMirror.Reset();
+
+				m_state->streamPool[streamIndex].state.store(StreamState::Free, std::memory_order_release);
+				m_state->freeStreams->Push(streamIndex);
+
+				Logger::Log(LogLevel::Error, "Engine", "Failed to create playback instance. IO Request queue full.");
+				return Result::IoRequestQueueFull;
+			}
+
+			RtCommand cmd = RtCommand::PrepareVoiceStreaming(
+				voiceIndex,
+				vMirror.generation,
+				streamIndex,
+				streamSound->channels,
+				streamSound->sampleRate
+			);
+			m_state->rtCommands->Enqueue(cmd);
 		}
-
-		// Send I/O request to prepare stream
-		m_state->streamPool[streamIndex].state.store(StreamState::Preparing, std::memory_order_release);
-		IoStreamRequest req = IoStreamRequest::PrepareStream(streamIndex, sound->filepath);
-		if (!m_state->ioStreamRequests->Push(req)) {
-			m_state->freeVoices->Push(voiceIndex);
-			vMirror.Reset();
-
-			m_state->streamPool[streamIndex].state.store(StreamState::Free, std::memory_order_release);
-			m_state->freeStreams->Push(streamIndex);
-
-			Logger::Log(LogLevel::Error, "Engine", "Failed to create playback instance. IO Request queue full.");
-			return Result::IoRequestQueueFull;
-		}
-
-		RtCommand cmd = RtCommand::PrepareVoiceStreaming(
-			voiceIndex,
-			vMirror.generation,
-			streamIndex,
-			sound->channels,
-			sound->sampleRate
-		);
-		m_state->rtCommands->Enqueue(cmd);
 
 		pbkHandle = PlaybackHandle::Create(voiceIndex, vMirror.generation);
 		return Result::Ok;
@@ -598,25 +523,22 @@ namespace dalia {
 		if (!m_state || !m_state->initialized) return Result::NotInitialized;
 
 		if (!handle.IsValid()) return Result::InvalidHandle;
-
 		uint32_t voiceIndex = handle.GetIndex();
-		uint32_t generation = handle.GetGeneration();
+		uint32_t voiceGeneration = handle.GetGeneration();
 
 		VoiceMirror& vMirror = m_state->voicePoolMirror[voiceIndex];
-		if (vMirror.generation != generation) {
-			return Result::ExpiredHandle;
-		}
+		if (vMirror.generation != voiceGeneration) return Result::ExpiredHandle;
 
 		// Deffered playback
-		if (vMirror.state == VoiceState::PendingLoadInactive) {
-			vMirror.state = VoiceState::PendingLoadPlaying;
+		if (vMirror.pendingLoad) {
+			vMirror.state = VoiceState::Playing;
 			Logger::Log(LogLevel::Warning, "Engine",
 				"Calling play on asset that is still loading. Will play when finished loading.");
 			return Result::Ok;
 		}
 
 		// Check for double calls
-		if (vMirror.state == VoiceState::Playing || vMirror.state == VoiceState::PendingLoadPlaying) {
+		if (vMirror.state == VoiceState::Playing) {
 			Logger::Log(LogLevel::Warning, "Engine", "Calling play on handle already set to play.");
 			return Result::Ok;
 		}
@@ -625,9 +547,60 @@ namespace dalia {
 			return Result::PlaybackCorrupted;
 		}
 
-		RtCommand cmd = RtCommand::PlayVoice(voiceIndex, generation);
+		RtCommand cmd = RtCommand::PlayVoice(voiceIndex, voiceGeneration);
 		m_state->rtCommands->Enqueue(cmd);
 		vMirror.state = VoiceState::Playing;
+
+		return Result::Ok;
+	}
+
+	Result Engine::Pause(PlaybackHandle handle) {
+		if (!m_state || !m_state->initialized) return Result::NotInitialized;
+
+		if (!handle.IsValid()) return Result::InvalidHandle;
+		uint32_t voiceIndex = handle.GetIndex();
+		uint32_t voiceGeneration = handle.GetGeneration();
+
+		VoiceMirror& vMirror = m_state->voicePoolMirror[voiceIndex];
+		if (vMirror.generation != voiceGeneration) return Result::ExpiredHandle;
+
+		if (vMirror.state != VoiceState::Playing) {
+			Logger::Log(LogLevel::Warning, "Engine", "Failed to pause voice %d. Not currently playing.", voiceIndex);
+		}
+		vMirror.state = VoiceState::Paused;
+		if (vMirror.pendingLoad) return Result::Ok;
+
+		m_state->rtCommands->Enqueue(RtCommand::PauseVoice(voiceIndex, voiceGeneration));
+		return Result::Ok;
+	}
+
+	Result Engine::Stop(PlaybackHandle handle) {
+		if (!m_state || !m_state->initialized) return Result::NotInitialized;
+
+		if (!handle.IsValid()) return Result::InvalidHandle;
+		uint32_t voiceIndex = handle.GetIndex();
+		uint32_t voiceGeneration = handle.GetGeneration();
+
+		VoiceMirror& vMirror = m_state->voicePoolMirror[voiceIndex];
+		if (vMirror.generation != voiceGeneration) return Result::ExpiredHandle;
+
+		// Handle pending playbacks
+		if (vMirror.pendingLoad) {
+			for (auto it = m_state->pendingPlaybacks.begin(); it != m_state->pendingPlaybacks.end(); ) {
+				if (it->voiceIndex == voiceIndex) {
+					vMirror.Reset();
+					m_state->freeVoices->Push(voiceIndex);
+					Logger::Log(LogLevel::Debug, "Engine",
+					"Stopped voice %d before it started playing.", voiceIndex);
+					it = m_state->pendingPlaybacks.erase(it);
+					return Result::Ok;
+				}
+				else it++;
+			}
+		}
+
+		vMirror.state = VoiceState::Stopped;
+		m_state->rtCommands->Enqueue(RtCommand::StopVoice(voiceIndex, voiceGeneration));
 
 		return Result::Ok;
 	}
@@ -650,9 +623,7 @@ namespace dalia {
 
 					// --- Check garbage collection ---
 					VoiceID stoppedVoice = {index, generation};
-
-					// Resident
-					for (auto it = m_state->pendingResidentUnloads.begin(); it != m_state->pendingResidentUnloads.end(); ) {
+					for (auto it = m_state->pendingSoundUnloads.begin(); it != m_state->pendingSoundUnloads.end(); ) {
 						auto& waitingList = it->voicesToStop;
 
 						for (size_t i = 0; i < waitingList.size(); i++) {
@@ -664,31 +635,13 @@ namespace dalia {
 						}
 
 						if (waitingList.empty()) {
-							m_state->assetRegistry->FreeResidentSound(it->handle);
-							Logger::Log(LogLevel::Debug, "Engine", "Unloaded resident sound with handle %d (delayed)",
-								it->handle.GetUUID());
-							it = m_state->pendingResidentUnloads.erase(it);
-						}
-						else it++;
-					}
+							m_state->assetRegistry->FreeSound(it->handle);
 
-					// Stream
-					for (auto it = m_state->pendingStreamUnloads.begin(); it != m_state->pendingStreamUnloads.end(); ) {
-						auto& waitingList = it->voicesToStop;
+							const char* typeStr = (it->handle.GetType() == SoundType::Resident) ? "resident" : "stream";
+							Logger::Log(LogLevel::Debug, "Engine", "Unloaded %s sound with handle %d (deferred)",
+								typeStr, it->handle.GetUUID());
 
-						for (size_t i = 0; i < waitingList.size(); i++) {
-							if (waitingList[i] == stoppedVoice) {
-								waitingList[i] = waitingList.back();
-								waitingList.pop_back();
-								break;
-							}
-						}
-
-						if (waitingList.empty()) {
-							m_state->assetRegistry->FreeStreamSound(it->handle);
-							Logger::Log(LogLevel::Debug, "Engine", "Unloaded stream sound with handle %d (delayed)",
-								it->handle.GetUUID());
-							it = m_state->pendingStreamUnloads.erase(it);
+							it = m_state->pendingSoundUnloads.erase(it);
 						}
 						else it++;
 					}
@@ -712,18 +665,18 @@ namespace dalia {
 			case IoLoadEvent::Type::SoundLoaded: {
 				// Process deferred playbacks
 				for (auto it = m_state->pendingPlaybacks.begin(); it != m_state->pendingPlaybacks.end(); ) {
-					if (it->assetUuid == ev.assetUuid && it->sourceType == ev.sourceType) {
+					if (it->assetUuid == ev.assetUuid) {
 						VoiceMirror& vMirror = m_state->voicePoolMirror[it->voiceIndex];
 
-						if (vMirror.generation == it->voiceGeneration &&
-							(vMirror.state == VoiceState::PendingLoadInactive || vMirror.state == VoiceState::PendingLoadPlaying)) {
-							RtCommand cmd;
+						if (vMirror.generation == it->voiceGeneration && vMirror.pendingLoad) {
 
-							if (it->sourceType == VoiceSourceType::Resident) {
-								ResidentSoundHandle handle = ResidentSoundHandle::FromUUID(ev.assetUuid);
+							SoundHandle handle = SoundHandle::FromUUID(ev.assetUuid);
+							SoundType soundType = handle.GetType();
+
+							if (soundType == SoundType::Resident) {
 								ResidentSound* sound = m_state->assetRegistry->GetResidentSound(handle);
 
-								cmd = RtCommand::PrepareVoiceResident(
+								RtCommand cmd = RtCommand::PrepareVoiceResident(
 									it->voiceIndex,
 									it->voiceGeneration,
 									sound->pcmData.data(),
@@ -732,17 +685,8 @@ namespace dalia {
 									sound->sampleRate
 								);
 								m_state->rtCommands->Enqueue(cmd);
-
-								if (vMirror.state == VoiceState::PendingLoadPlaying) {
-									vMirror.state = VoiceState::Playing;
-									m_state->rtCommands->Enqueue(RtCommand::PlayVoice(it->voiceIndex, it->voiceGeneration));
-								}
-								else {
-									vMirror.state = VoiceState::Inactive;
-								}
 							}
-							else if (it->sourceType == VoiceSourceType::Stream) {
-								StreamSoundHandle handle = StreamSoundHandle::FromUUID(ev.assetUuid);
+							else if (soundType == SoundType::Stream) {
 								StreamSound* sound = m_state->assetRegistry->GetStreamSound(handle);
 
 								// Allocate stream context
@@ -781,14 +725,14 @@ namespace dalia {
 									sound->sampleRate
 								);
 								m_state->rtCommands->Enqueue(cmd);
+							}
 
-								if (vMirror.state == VoiceState::PendingLoadPlaying) {
-									vMirror.state = VoiceState::Playing;
-									m_state->rtCommands->Enqueue(RtCommand::PlayVoice(it->voiceIndex, it->voiceGeneration));
-								}
-								else {
-									vMirror.state = VoiceState::Inactive;
-								}
+							vMirror.pendingLoad = false;
+							if (vMirror.state == VoiceState::Playing) {
+								m_state->rtCommands->Enqueue(RtCommand::PlayVoice(it->voiceIndex, it->voiceGeneration));
+							}
+							else if (vMirror.state == VoiceState::Paused) {
+								m_state->rtCommands->Enqueue(RtCommand::PauseVoice(it->voiceIndex, it->voiceGeneration));
 							}
 						}
 
@@ -802,7 +746,7 @@ namespace dalia {
 			}
 			case IoLoadEvent::Type::SoundLoadFailed: {
 				for (auto it = m_state->pendingPlaybacks.begin(); it != m_state->pendingPlaybacks.end(); ) {
-					if (it->assetUuid == ev.assetUuid && it->sourceType == ev.sourceType) {
+					if (it->assetUuid == ev.assetUuid) {
 						VoiceMirror& vMirror = m_state->voicePoolMirror[it->voiceIndex];
 
 						if (vMirror.generation == it->voiceGeneration) {

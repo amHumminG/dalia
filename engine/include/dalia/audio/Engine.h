@@ -2,7 +2,8 @@
 #include "dalia/core/Result.h"
 #include "dalia/core/LogLevel.h"
 #include "PlaybackControl.h"
-#include "dalia/audio/ResourceHandle.h"
+// #include "dalia/audio/ResourceHandle.h"
+#include "dalia/audio/SoundHandle.h"
 #include <memory>
 
 struct ma_device;
@@ -11,7 +12,6 @@ namespace dalia {
 
 	class StringID;
 	struct EngineInternalState;
-	struct PlaybackHandle;
 
 	struct RtEvent;
 	struct IoLoadEvent;
@@ -49,16 +49,13 @@ namespace dalia {
 
 		// --- Loose File Functionality ---
 
-		Result LoadResidentSound(ResidentSoundHandle& soundHandle, const char* filepath,
-			AssetLoadCallback callback = nullptr, uint32_t* outRequestId = nullptr);
-		Result LoadStreamSound(StreamSoundHandle& soundHandle, const char* filepath,
+		Result LoadSound(SoundHandle& soundHandle, SoundType type, const char* filepath,
 			AssetLoadCallback callback = nullptr, uint32_t* outRequestId = nullptr);
 
-		Result Unload(ResidentSoundHandle soundHandle);
-		Result Unload(StreamSoundHandle soundHandle);
+		Result UnloadSound(SoundHandle soundHandle);
 
-		Result CreatePlayback(PlaybackHandle& pbkHandle, ResidentSoundHandle soundHandle);
-		Result CreatePlayback(PlaybackHandle& pbkHandle, StreamSoundHandle soundHandle);
+		Result CreatePlayback(PlaybackHandle& pbkHandle, SoundHandle soundHandle);
+
 
 
 		// --- Soundbank Functionality ---
@@ -71,8 +68,13 @@ namespace dalia {
 
 
 
-		// Result CreateStreamPlayback(PlaybackHandle& handle, const char* filepath);
+		// --- Playback manipulation ---
+
 		Result Play(PlaybackHandle handle);
+
+		Result Pause(PlaybackHandle handle);
+
+		Result Stop(PlaybackHandle handle);
 
 	private:
 		void ProcessRtEvent(const RtEvent& ev);

@@ -58,83 +58,84 @@ namespace dalia {
 
     void IoLoadSystem::ProcessRequest(const IoLoadRequest& req) {
         switch (req.type) {
-            case IoLoadRequest::Type::LoadResidentSound: {
-                ResidentSoundHandle targetHandle = ResidentSoundHandle::FromUUID(req.data.soundFromFile.resourceHandleUuid);
-                ResidentSound* sound = m_assetRegistry->GetResidentSound(targetHandle);
-                if (!sound) return;
+            case IoLoadRequest::Type::LoadSound: {
+                SoundHandle soundHandle = SoundHandle::FromUUID(req.data.soundFromFile.resourceHandleUuid);
+                SoundType soundType = soundHandle.GetType();
+
+                ResidentSound* residentSound = nullptr;
+                StreamSound* streamSound = nullptr;
+                std::atomic<LoadState>* soundLoadStatePtr = nullptr;
+
+                if (soundType == SoundType::Resident) {
+                    residentSound = m_assetRegistry->GetResidentSound(soundHandle);
+                    if (!residentSound) {
+                        Logger::Log(LogLevel::Error, "IoLoadSystem", "Failed to load sound. Invalid handle: %d.",
+                            soundHandle.GetUUID());
+                        return;
+                    }
+                    soundLoadStatePtr = &residentSound->state;
+                }
+                else {
+                    streamSound = m_assetRegistry->GetStreamSound(soundHandle);
+                    if (!streamSound) {
+                        Logger::Log(LogLevel::Error, "IoLoadSystem", "Failed to load sound. Invalid handle: %d.",
+                            soundHandle.GetUUID());
+                        return;
+                    }
+                    soundLoadStatePtr = &streamSound->state;
+                }
 
                 int error;
                 stb_vorbis* decoder = stb_vorbis_open_filename(req.data.soundFromFile.filepath, &error, nullptr);
                 if (!decoder) {
-                    sound->state.store(LoadState::Error, std::memory_order_release);
+                    soundLoadStatePtr->store(LoadState::Error, std::memory_order_release);
                     m_ioLoadEvents->Push(IoLoadEvent(IoLoadEvent::SoundLoadFailed(req.requestId, Result::FileReadError)));
-                    Logger::Log(LogLevel::Error, "IoLoadSystem", "Failed to load resident sound from %s. %s.",
+                    Logger::Log(LogLevel::Error, "IoLoadSystem", "Failed to load sound from %s. %s.",
                         req.data.soundFromFile.filepath, GetStbVorbisErrorString(error));
                     return;
                 }
 
                 stb_vorbis_info info = stb_vorbis_get_info(decoder);
-                uint32_t totalSamplesPerChannel = stb_vorbis_stream_length_in_samples(decoder);
-                uint32_t totalFloatsNeeded = totalSamplesPerChannel * info.channels;
+                uint32_t totalFrames = stb_vorbis_stream_length_in_samples(decoder); // Does this really return what we want?
 
-                sound->pcmData.resize(totalFloatsNeeded);
-                sound->channels = info.channels;
-                sound->sampleRate = info.sample_rate;
-                sound->totalFrames = totalFloatsNeeded / info.channels;
+                if (soundType == SoundType::Resident) {
+                    uint32_t totalSamples = totalFrames * info.channels;
 
-                // Decode file into sound data vector
-                int floatsDecoded = stb_vorbis_get_samples_float_interleaved(
-                    decoder,
-                    info.channels,
-                    sound->pcmData.data(),
-                    static_cast<int>(totalFloatsNeeded)
-                );
-                stb_vorbis_close(decoder);
+                    residentSound->pcmData.resize(totalSamples);
+                    residentSound->channels = info.channels;
+                    residentSound->sampleRate = info.sample_rate;
+                    residentSound->totalFrames = totalFrames;
 
-                if (floatsDecoded == 0) {
-                    sound->state.store(LoadState::Error, std::memory_order_release);
-                    m_ioLoadEvents->Push(IoLoadEvent(IoLoadEvent::SoundLoadFailed(req.requestId, Result::FileReadError)));
-                    Logger::Log(LogLevel::Error, "IoLoadSystem", "Read %d samples from %s",
-                        floatsDecoded, req.data.soundFromFile.filepath);
-                    return;
+                    // Decode file into sound data vector
+                    int floatsDecoded = stb_vorbis_get_samples_float_interleaved(
+                        decoder,
+                        info.channels,
+                        residentSound->pcmData.data(),
+                        static_cast<int>(totalSamples)
+                    );
+
+                    if (floatsDecoded == 0) {
+                        soundLoadStatePtr->store(LoadState::Error, std::memory_order_release);
+                        m_ioLoadEvents->Push(IoLoadEvent(IoLoadEvent::SoundLoadFailed(req.requestId, Result::FileReadError)));
+                        Logger::Log(LogLevel::Error, "IoLoadSystem", "Read %d samples from %s",
+                            floatsDecoded, req.data.soundFromFile.filepath);
+
+                        stb_vorbis_close(decoder);
+                        return;
+                    }
                 }
-
-                sound->state.store(LoadState::Loaded, std::memory_order_release);
-                m_ioLoadEvents->Push(IoLoadEvent(IoLoadEvent::SoundLoaded(req.requestId, targetHandle.GetUUID(),
-                    VoiceSourceType::Resident)));
-                Logger::Log(LogLevel::Debug, "IoLoadSystem", "Successfully loaded resident sound for file: %s",
-                    req.data.soundFromFile.filepath);
-
-                break;
-            }
-            case IoLoadRequest::Type::LoadStreamSound: {
-                StreamSoundHandle targetHandle = StreamSoundHandle::FromUUID(req.data.soundFromFile.resourceHandleUuid);
-                StreamSound* sound = m_assetRegistry->GetStreamSound(targetHandle);
-                if (!sound) break;
-
-                int error;
-                stb_vorbis* decoder = stb_vorbis_open_filename(req.data.soundFromFile.filepath, &error, nullptr);
-                if (!decoder) {
-                    sound->state.store(LoadState::Error, std::memory_order_release);
-                    m_ioLoadEvents->Push(IoLoadEvent(IoLoadEvent::SoundLoadFailed(req.requestId, Result::FileReadError)));
-                    Logger::Log(LogLevel::Error, "IoLoadSystem", "Failed to load stream sound from %s. %s.",
-                        req.data.soundFromFile.filepath, GetStbVorbisErrorString(error));
-                    return;
+                else if (soundType == SoundType::Stream) {
+                    streamSound->channels = info.channels;
+                    streamSound->sampleRate = info.sample_rate;
+                    streamSound->totalFrames = totalFrames;
+                    strncpy_s(streamSound->filepath, MAX_IO_PATH_SIZE, req.data.soundFromFile.filepath, _TRUNCATE);
                 }
-
-                strncpy_s(sound->filepath, MAX_IO_PATH_SIZE, req.data.soundFromFile.filepath, _TRUNCATE);
-
-                stb_vorbis_info info = stb_vorbis_get_info(decoder);
-                sound->channels = info.channels;
-                sound->sampleRate = info.sample_rate;
-                sound->totalFrames = stb_vorbis_stream_length_in_samples(decoder);
-
                 stb_vorbis_close(decoder);
+                soundLoadStatePtr->store(LoadState::Loaded, std::memory_order_release);
 
-                sound->state.store(LoadState::Loaded, std::memory_order_release);
-                m_ioLoadEvents->Push(IoLoadEvent(IoLoadEvent::SoundLoaded(req.requestId, targetHandle.GetUUID(),
-                    VoiceSourceType::Stream)));
-                Logger::Log(LogLevel::Debug, "IoLoadSystem", "Successfully loaded stream sound for file: %s",
+                m_ioLoadEvents->Push(IoLoadEvent(IoLoadEvent::SoundLoaded(req.requestId, soundHandle.GetUUID())));
+
+                Logger::Log(LogLevel::Debug, "IoLoadSystem", "Successfully loaded sound for file: %s",
                     req.data.soundFromFile.filepath);
                 break;
             }
