@@ -1,6 +1,7 @@
 #include "editor/BrowserPanel.h"
 #include "imgui_internal.h"
 #include "core/Logger.h"
+#include "FileExplorer.cpp"
 
 namespace dalia::studio {
 
@@ -12,9 +13,13 @@ namespace dalia::studio {
 
     void BrowserPanel::Render() {
         if (ImGui::Button("Import Sound")) {
-            // TODO: Open file explorer window here
-            m_project.ImportSound("assets/Zeri.ogg");
-            Logger::Log(LogLevel::Info, "Browser", "Imported asset");
+            const std::vector<std::string> filePaths = dalia::studio::OpenFileExplorer();
+            if (!filePaths.empty()) {
+                for (const std::string& filePath : filePaths) {
+                    m_project.ImportSound(filePath);
+                    Logger::Log(LogLevel::Info, "Browser", "Imported asset");
+                }
+            }
         }
 
         ImGui::SameLine();
