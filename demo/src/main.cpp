@@ -10,39 +10,169 @@
 #include <thread>
 #include <iostream>
 
+using namespace dalia;
+
+// --- Helper Structs for the UI State ---
+struct LoadedAsset {
+    std::string path;
+    SoundHandle handle;
+};
+
+struct PlaybackInstance {
+    std::string name;
+    PlaybackHandle handle;
+};
+
 int main() {
-	using namespace dalia;
+    // --- 1. Initialize Raylib and ImGui ---
+    InitWindow(1000, 1000, "Dalia Engine - Audio Testbed");
+    SetTargetFPS(60);
+    rlImGuiSetup(true);
 
-	// Testing Engine
-	{
-		std::cout << "Testing Engine Init/Deinit" << std::endl;
+    // --- 2. Initialize Dalia Engine ---
+    Engine engine;
+    EngineConfig config;
+    config.logLevel = LogLevel::Debug;
+    engine.Init(config);
 
-		Engine engine;
-		EngineConfig config;
-		config.logLevel = LogLevel::Debug;
-		engine.Init(config);
-		// assets/Faouzia - UNETHICAL.ogg
-		// assets/spiderman.ogg
+    // --- 3. UI State Variables ---
+    char assetPathInput[256] = "assets/spiderman.ogg";
 
-		// StreamSoundHandle soundHandle;
-		// engine.LoadStreamSound(soundHandle, "assets/spiderman.ogg");
+    // UNIFIED LISTS!
+    std::vector<LoadedAsset> loadedAssets;
+    std::vector<PlaybackInstance> playbacks;
 
-		ResidentSoundHandle soundHandle;
-		engine.LoadResidentSound(soundHandle, "assets/spiderman.ogg");
+    int selectedAssetIdx = -1;
+    int selectedPlaybackIdx = -1;
 
-		std::this_thread::sleep_for(std::chrono::milliseconds(500));
+    Result lastResult = Result::Ok;
 
-		PlaybackHandle playbackHandle;
-		engine.CreatePlayback(playbackHandle, soundHandle);
+    // --- 4. Main Game Loop ---
+    while (!WindowShouldClose()) {
+        // Engine tick processes events, callbacks, and garbage collection
+        engine.Update();
 
-		engine.Play(playbackHandle);
+        BeginDrawing();
+        ClearBackground(DARKGRAY);
+        rlImGuiBegin();
 
-		while (true) {
-			engine.Update();
-		}
+        // Main UI Window
+        ImGui::SetNextWindowSize(ImVec2(960, 700), ImGuiCond_FirstUseEver);
+        ImGui::Begin("Engine Inspector", nullptr, ImGuiWindowFlags_NoCollapse);
 
-		engine.Deinit();
-	}
+        ImGui::Text("Last Engine API Result: %d", static_cast<int>(lastResult));
+        ImGui::Separator();
 
-	return 0;
+        // --- SPLIT INTO TWO COLUMNS ---
+        ImGui::Columns(2, "MainColumns");
+
+        // ==========================================
+        // LEFT COLUMN: ASSET MANAGEMENT
+        // ==========================================
+        ImGui::TextDisabled("ASSET REGISTRY");
+        ImGui::Spacing();
+
+        ImGui::InputText("Filepath", assetPathInput, 256);
+        ImGui::Spacing();
+
+        // Unified Loading
+        if (ImGui::Button("Load to RAM (Resident)", ImVec2(180, 30))) {
+            SoundHandle h;
+            lastResult = engine.LoadSound(h, SoundType::Resident, assetPathInput);
+            if (lastResult == Result::Ok) {
+                loadedAssets.push_back({assetPathInput, h});
+            }
+        }
+        ImGui::SameLine();
+        if (ImGui::Button("Load to Disk (Stream)", ImVec2(180, 30))) {
+            SoundHandle h;
+            lastResult = engine.LoadSound(h, SoundType::Stream, assetPathInput);
+            if (lastResult == Result::Ok) {
+                loadedAssets.push_back({assetPathInput, h});
+            }
+        }
+
+        ImGui::Spacing();
+
+        // Unified Asset List
+        ImGui::BeginChild("AssetList", ImVec2(0, 200), true);
+        for (int i = 0; i < loadedAssets.size(); i++) {
+            SoundHandle h = loadedAssets[i].handle;
+            std::string typeTag = (h.GetType() == SoundType::Resident) ? "[RAM] " : "[DISK] ";
+            std::string label = typeTag + loadedAssets[i].path + " (UUID: " + std::to_string(h.GetUUID()) + ")";
+
+            if (ImGui::Selectable(label.c_str(), selectedAssetIdx == i)) {
+                selectedAssetIdx = i;
+            }
+        }
+        ImGui::EndChild();
+
+// Unified Asset Controls
+        if (ImGui::Button("Unload Selected Asset") && selectedAssetIdx >= 0 && selectedAssetIdx < loadedAssets.size()) {
+            lastResult = engine.UnloadSound(loadedAssets[selectedAssetIdx].handle);
+            loadedAssets.erase(loadedAssets.begin() + selectedAssetIdx);
+            selectedAssetIdx = -1;
+        }
+        ImGui::SameLine();
+        if (ImGui::Button("Create Playback") && selectedAssetIdx >= 0 && selectedAssetIdx < loadedAssets.size()) {
+            PlaybackHandle pHandle;
+            lastResult = engine.CreatePlayback(pHandle, loadedAssets[selectedAssetIdx].handle);
+            if (lastResult == Result::Ok) {
+                std::string typeTag = (loadedAssets[selectedAssetIdx].handle.GetType() == SoundType::Resident) ? "[RAM] " : "[STR] ";
+                playbacks.push_back({typeTag + loadedAssets[selectedAssetIdx].path, pHandle});
+            }
+        }
+
+        ImGui::NextColumn();
+
+        // ==========================================
+        // RIGHT COLUMN: PLAYBACK VOICES
+        // ==========================================
+        ImGui::TextDisabled("VOICE MIXER");
+        ImGui::Spacing();
+
+        ImGui::Text("Active Playback Instances");
+        ImGui::BeginChild("PlaybackList", ImVec2(0, 300), true);
+        for (int i = 0; i < playbacks.size(); i++) {
+            // We can safely prune dead handles from the UI if we want to get fancy,
+            // but for now, we just display them.
+            std::string label = playbacks[i].name + " (Handle: " + std::to_string(playbacks[i].handle.GetUUID()) + ")";
+            if (ImGui::Selectable(label.c_str(), selectedPlaybackIdx == i)) {
+                selectedPlaybackIdx = i;
+            }
+        }
+        ImGui::EndChild();
+
+        if (selectedPlaybackIdx >= 0 && selectedPlaybackIdx < playbacks.size()) {
+            PlaybackHandle currentHandle = playbacks[selectedPlaybackIdx].handle;
+
+            // Unified Transport Controls!
+            if (ImGui::Button("Play", ImVec2(80, 40))) {
+                lastResult = engine.Play(currentHandle);
+            }
+            ImGui::SameLine();
+            if (ImGui::Button("Pause", ImVec2(80, 40))) {
+                lastResult = engine.Pause(currentHandle);
+            }
+            ImGui::SameLine();
+            if (ImGui::Button("Stop", ImVec2(80, 40))) {
+                lastResult = engine.Stop(currentHandle);
+            }
+        } else {
+            ImGui::TextDisabled("Select a playback instance to control it.");
+        }
+
+        ImGui::Columns(1);
+        ImGui::End();
+
+        rlImGuiEnd();
+        EndDrawing();
+    }
+
+    // --- 5. Cleanup ---
+    engine.Deinit();
+    rlImGuiShutdown();
+    CloseWindow();
+
+    return 0;
 }
