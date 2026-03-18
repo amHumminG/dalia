@@ -1,11 +1,10 @@
 #pragma once
+
 #include "dalia/core/Result.h"
 #include "dalia/core/LogLevel.h"
-#include "PlaybackControl.h"
-// #include "dalia/audio/ResourceHandle.h"
-#include "dalia/audio/SoundHandle.h"
 
-struct ma_device;
+#include "dalia/audio/PlaybackControl.h"
+#include "dalia/audio/SoundHandle.h"
 
 namespace dalia {
 
@@ -47,8 +46,6 @@ namespace dalia {
 
 		void Update();
 
-
-
 		// --- Loose File Functionality ---
 
 		Result LoadSound(SoundHandle& soundHandle, SoundType type, const char* filepath,
@@ -69,7 +66,6 @@ namespace dalia {
 
 
 
-
 		// --- Playback manipulation ---
 
 		Result Play(PlaybackHandle handle);
@@ -79,16 +75,7 @@ namespace dalia {
 		Result Stop(PlaybackHandle handle);
 
 	private:
-		// --- Event Processing ---
-		void ProcessRtEvent(const RtEvent& ev);
-		void ProcessIoLoadEvent(const IoLoadEvent& ev);
-
-		// --- Scheduling ---
-		void TryUpdateMixOrder();
-
-		// --- Hardware Callbacks ---
-		static void data_callback(ma_device* pDevice, void* pOutput, const void* pInput, uint32_t frameCount);
-
 		EngineInternalState* m_state = nullptr;
+
 	};
 }

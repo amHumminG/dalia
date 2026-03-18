@@ -25,9 +25,7 @@
 #include "resources/ResidentSound.h"
 #include "resources/StreamSound.h"
 
-#include "StringID.h"
-
-#include <span>
+#include "StringID.h" // From common
 
 #include "miniaudio.h"
 
@@ -43,9 +41,18 @@ namespace dalia {
 		}
 	};
 
+	struct VoiceID {
+		uint32_t index;
+		uint32_t generation;
+
+		bool operator==(const VoiceID& other) const {
+			return index == other.index && generation == other.generation;
+		}
+	};
+
 	struct PendingSoundUnload {
 		SoundHandle handle;
-		std::vector<PlaybackHandle> voicesToStop;
+		std::vector<VoiceID> voicesToStop;
 	};
 
 	struct PendingPlayback {
@@ -182,6 +189,186 @@ namespace dalia {
 		return Result::Ok;
 	}
 
+	static void ProcessRtEvent(EngineInternalState* state,  RtEvent& ev) {
+		switch (ev.type) {
+			case RtEvent::Type::MixOrderSwapped: {
+				state->isUsingMixOrderA = !state->isUsingMixOrderA;
+				state->isMixOrderSwapPending = false;
+				break;
+			}
+			case RtEvent::Type::VoiceStopped: {
+				uint32_t index = ev.data.voiceState.index;
+				uint32_t generation = ev.data.voiceState.generation;
+				if (state->voicePoolMirror[index].generation == generation) {
+					// Voice is still valid -> Return it to the pool
+					state->voicePoolMirror[index].Reset();
+					state->freeVoices->Push(index);
+					Logger::Log(LogLevel::Debug, "Engine", "Freed voice %d.", index);
+
+					// --- Check garbage collection ---
+					VoiceID stoppedVoice = {index, generation};
+					for (auto it = state->pendingSoundUnloads.begin(); it != state->pendingSoundUnloads.end(); ) {
+						auto& waitingList = it->voicesToStop;
+
+						for (size_t i = 0; i < waitingList.size(); i++) {
+							if (waitingList[i] == stoppedVoice) {
+								waitingList[i] = waitingList.back();
+								waitingList.pop_back();
+								break;
+							}
+						}
+
+						if (waitingList.empty()) {
+							state->assetRegistry->FreeSound(it->handle);
+
+							const char* typeStr = (it->handle.GetType() == SoundType::Resident) ? "resident" : "stream";
+							Logger::Log(LogLevel::Debug, "Engine", "Unloaded %s sound with handle %d (deferred)",
+								typeStr, it->handle.GetUUID());
+
+							it = state->pendingSoundUnloads.erase(it);
+						}
+						else it++;
+					}
+				}
+				break;
+			}
+		}
+	}
+
+	static void ProcessIoLoadEvent(EngineInternalState* state, const IoLoadEvent& ev) {
+		// Execute user-registered callback
+		auto it = state->loadCallbacks.find(ev.requestId);
+		if (it != state->loadCallbacks.end()) {
+			if (it->second) {
+				it->second(ev.requestId, ev.result); // Call it
+			}
+			state->loadCallbacks.erase(it);
+		}
+
+		switch (ev.type) {
+			case IoLoadEvent::Type::SoundLoaded: {
+				// Process deferred playbacks
+				for (auto it = state->pendingPlaybacks.begin(); it != state->pendingPlaybacks.end(); ) {
+					if (it->assetUuid == ev.assetUuid) {
+						VoiceMirror* vMirror = nullptr;
+						Result res = ResolveVoiceMirror(state, it->voiceIndex, it->voiceGeneration, vMirror);
+
+						if (res == Result::Ok && vMirror->pendingLoad) {
+							SoundHandle handle = SoundHandle::FromUUID(ev.assetUuid);
+							SoundType soundType = handle.GetType();
+
+							if (soundType == SoundType::Resident) {
+								ResidentSound* sound = state->assetRegistry->GetResidentSound(handle);
+
+								RtCommand cmd = RtCommand::PrepareVoiceResident(
+									it->voiceIndex,
+									it->voiceGeneration,
+									sound->pcmData.data(),
+									sound->frameCount,
+									sound->channels,
+									sound->sampleRate
+								);
+								state->rtCommands->Enqueue(cmd);
+							}
+							else if (soundType == SoundType::Stream) {
+								StreamSound* sound = state->assetRegistry->GetStreamSound(handle);
+
+								uint32_t streamIndex;
+								Result streamResult = DispatchStreamPrepare(state, sound->filepath, streamIndex);
+								if (streamResult != Result::Ok) {
+									vMirror->Reset();
+									state->freeVoices->Push(it->voiceIndex);
+
+									Logger::Log(LogLevel::Error, "Engine",
+										"Aborting deferred playback. Stream preparation failed");
+									it = state->pendingPlaybacks.erase(it);
+									continue;
+								}
+
+								RtCommand cmd = RtCommand::PrepareVoiceStreaming(
+									it->voiceIndex,
+									vMirror->generation,
+									streamIndex,
+									sound->channels,
+									sound->sampleRate
+								);
+								state->rtCommands->Enqueue(cmd);
+							}
+
+							vMirror->pendingLoad = false;
+							if (vMirror->state == VoiceState::Playing) {
+								state->rtCommands->Enqueue(RtCommand::PlayVoice(it->voiceIndex, it->voiceGeneration));
+							}
+							else if (vMirror->state == VoiceState::Paused) {
+								state->rtCommands->Enqueue(RtCommand::PauseVoice(it->voiceIndex, it->voiceGeneration));
+							}
+							else if (vMirror->state == VoiceState::Stopped) {
+								state->rtCommands->Enqueue(RtCommand::StopVoice(it->voiceIndex, it->voiceGeneration));
+							}
+						}
+
+						it = state->pendingPlaybacks.erase(it);
+					}
+					else {
+						it++;
+					}
+				}
+				break;
+			}
+			case IoLoadEvent::Type::SoundLoadFailed: {
+				for (auto it = state->pendingPlaybacks.begin(); it != state->pendingPlaybacks.end(); ) {
+					if (it->assetUuid == ev.assetUuid) {
+						VoiceMirror* vMirror = nullptr;
+						Result res = ResolveVoiceMirror(state, it->voiceIndex, it->voiceGeneration, vMirror);
+
+						if (res == Result::Ok) {
+							Logger::Log(LogLevel::Warning, "Engine",
+								"Aborting deferred playback. Asset failed to load.");
+							vMirror->Reset();
+							state->freeVoices->Push(it->voiceIndex);
+						}
+
+						it = state->pendingPlaybacks.erase(it);
+					}
+					else {
+						it++;
+					}
+				}
+				break;
+			}
+			default:
+				break;
+		}
+	}
+
+	static void TryUpdateMixOrder(EngineInternalState* state) {
+		if (!state->isMixOrderDirty || state->isMixOrderSwapPending) return;
+
+		uint32_t* backBufferPtr = state->isUsingMixOrderA
+		? state->mixOrderBuffer->listB.get()
+		: state->mixOrderBuffer->listA.get();
+
+		std::span<uint32_t> backBufferSpan(backBufferPtr, state->busCapacity);
+		std::span<const BusMirror> busMirror(state->busPoolMirror.get(), state->busCapacity);
+
+		uint32_t sortedCount = state->busGraphCompiler->Compile(busMirror, backBufferSpan);
+		if (sortedCount > 0) {
+			state->rtCommands->Enqueue(RtCommand::SwapMixOrder(backBufferPtr, sortedCount));
+
+			state->isMixOrderSwapPending = true;
+			state->isMixOrderDirty = false;
+		}
+		else {
+			Logger::Log(LogLevel::Critical, "Bus Routing", "Failed to compile mix graph: Cycle detected.");
+			state->isMixOrderDirty = false;
+		}
+	}
+
+	static void data_callback(ma_device* pDevice, void* pOutput, const void* pInput, uint32_t frameCount) {
+		RtSystem* rtSystem = static_cast<RtSystem*>(pDevice->pUserData);
+		rtSystem->OnAudioCallback(static_cast<float*>(pOutput), frameCount, pDevice->playback.channels);
+	}
+
 	// ------------------------
 
 	Engine::Engine() = default;
@@ -215,7 +402,7 @@ namespace dalia {
 
 		m_state->isMixOrderDirty = true;
 		m_state->isMixOrderSwapPending = false;
-		TryUpdateMixOrder();
+		TryUpdateMixOrder(m_state);
 
 		// --- SYSTEMS SETUP ---
 		RtSystemConfig rtConfig;
@@ -307,15 +494,15 @@ namespace dalia {
 		// --- Process Event Inbox ---
 		RtEvent RtEv;
 		while (m_state->rtEvents->Pop(RtEv)) {
-			ProcessRtEvent(RtEv);
+			ProcessRtEvent(m_state, RtEv);
 		}
 
 		IoLoadEvent loadEv;
 		while (m_state->ioLoadEvents->Pop(loadEv)) {
-			ProcessIoLoadEvent(loadEv);
+			ProcessIoLoadEvent(m_state, loadEv);
 		}
 
-		TryUpdateMixOrder();
+		TryUpdateMixOrder(m_state);
 
 		m_state->rtCommands->Dispatch(); // Send all commands accumulated from this frame to the audio thread
 		Logger::ProcessLogs(); // Print all logs accumulated from this frame
@@ -429,7 +616,7 @@ namespace dalia {
 				VoiceMirror& vMirror = m_state->voicePoolMirror[i];
 
 				if (vMirror.state != VoiceState::Free && vMirror.assetUuid == soundHandle.GetUUID()) {
-					pendingUnload.voicesToStop.push_back(PlaybackHandle::Create(i, vMirror.generation));
+					pendingUnload.voicesToStop.push_back(VoiceID(i, vMirror.generation));
 
 					m_state->rtCommands->Enqueue(RtCommand::StopVoice(i, vMirror.generation));
 					Logger::Log(LogLevel::Debug, "Engine", "Commanded to stop voice: %d", i);
@@ -506,7 +693,7 @@ namespace dalia {
 				voiceIndex,
 				vMirror.generation,
 				residentSound->pcmData.data(),
-				residentSound->totalFrames,
+				residentSound->frameCount,
 				residentSound->channels,
 				residentSound->sampleRate
 			);
@@ -624,185 +811,5 @@ namespace dalia {
 		m_state->rtCommands->Enqueue(RtCommand::StopVoice(voiceIndex, voiceGeneration));
 
 		return Result::Ok;
-	}
-
-	void Engine::ProcessRtEvent(const RtEvent& ev) {
-		switch (ev.type) {
-			case RtEvent::Type::MixOrderSwapped: {
-				m_state->isUsingMixOrderA = !m_state->isUsingMixOrderA;
-				m_state->isMixOrderSwapPending = false;
-				break;
-			}
-			case RtEvent::Type::VoiceStopped: {
-				uint32_t index = ev.data.voiceState.index;
-				uint32_t generation = ev.data.voiceState.generation;
-				if (m_state->voicePoolMirror[index].generation == generation) {
-					// Voice is still valid -> Return it to the pool
-					m_state->voicePoolMirror[index].Reset();
-					m_state->freeVoices->Push(index);
-					Logger::Log(LogLevel::Debug, "Engine", "Freed voice %d.", index);
-
-					// --- Check garbage collection ---
-					PlaybackHandle stoppedVoice = PlaybackHandle::Create(index, generation);
-					for (auto it = m_state->pendingSoundUnloads.begin(); it != m_state->pendingSoundUnloads.end(); ) {
-						auto& waitingList = it->voicesToStop;
-
-						for (size_t i = 0; i < waitingList.size(); i++) {
-							if (waitingList[i] == stoppedVoice) {
-								waitingList[i] = waitingList.back();
-								waitingList.pop_back();
-								break;
-							}
-						}
-
-						if (waitingList.empty()) {
-							m_state->assetRegistry->FreeSound(it->handle);
-
-							const char* typeStr = (it->handle.GetType() == SoundType::Resident) ? "resident" : "stream";
-							Logger::Log(LogLevel::Debug, "Engine", "Unloaded %s sound with handle %d (deferred)",
-								typeStr, it->handle.GetUUID());
-
-							it = m_state->pendingSoundUnloads.erase(it);
-						}
-						else it++;
-					}
-				}
-				break;
-			}
-		}
-	}
-
-	void Engine::ProcessIoLoadEvent(const IoLoadEvent& ev) {
-		// Execute user-registered callback
-		auto it = m_state->loadCallbacks.find(ev.requestId);
-		if (it != m_state->loadCallbacks.end()) {
-			if (it->second) {
-				it->second(ev.requestId, ev.result); // Call it
-			}
-			m_state->loadCallbacks.erase(it);
-		}
-
-		switch (ev.type) {
-			case IoLoadEvent::Type::SoundLoaded: {
-				// Process deferred playbacks
-				for (auto it = m_state->pendingPlaybacks.begin(); it != m_state->pendingPlaybacks.end(); ) {
-					if (it->assetUuid == ev.assetUuid) {
-						VoiceMirror* vMirror = nullptr;
-						Result res = ResolveVoiceMirror(m_state, it->voiceIndex, it->voiceGeneration, vMirror);
-
-						if (res == Result::Ok && vMirror->pendingLoad) {
-							SoundHandle handle = SoundHandle::FromUUID(ev.assetUuid);
-							SoundType soundType = handle.GetType();
-
-							if (soundType == SoundType::Resident) {
-								ResidentSound* sound = m_state->assetRegistry->GetResidentSound(handle);
-
-								RtCommand cmd = RtCommand::PrepareVoiceResident(
-									it->voiceIndex,
-									it->voiceGeneration,
-									sound->pcmData.data(),
-									sound->totalFrames,
-									sound->channels,
-									sound->sampleRate
-								);
-								m_state->rtCommands->Enqueue(cmd);
-							}
-							else if (soundType == SoundType::Stream) {
-								StreamSound* sound = m_state->assetRegistry->GetStreamSound(handle);
-
-								uint32_t streamIndex;
-								Result streamResult = DispatchStreamPrepare(m_state, sound->filepath, streamIndex);
-								if (streamResult != Result::Ok) {
-									vMirror->Reset();
-									m_state->freeVoices->Push(it->voiceIndex);
-
-									Logger::Log(LogLevel::Error, "Engine",
-										"Aborting deferred playback. Stream preparation failed");
-									it = m_state->pendingPlaybacks.erase(it);
-									continue;
-								}
-
-								RtCommand cmd = RtCommand::PrepareVoiceStreaming(
-									it->voiceIndex,
-									vMirror->generation,
-									streamIndex,
-									sound->channels,
-									sound->sampleRate
-								);
-								m_state->rtCommands->Enqueue(cmd);
-							}
-
-							vMirror->pendingLoad = false;
-							if (vMirror->state == VoiceState::Playing) {
-								m_state->rtCommands->Enqueue(RtCommand::PlayVoice(it->voiceIndex, it->voiceGeneration));
-							}
-							else if (vMirror->state == VoiceState::Paused) {
-								m_state->rtCommands->Enqueue(RtCommand::PauseVoice(it->voiceIndex, it->voiceGeneration));
-							}
-							else if (vMirror->state == VoiceState::Stopped) {
-								m_state->rtCommands->Enqueue(RtCommand::StopVoice(it->voiceIndex, it->voiceGeneration));
-							}
-						}
-
-						it = m_state->pendingPlaybacks.erase(it);
-					}
-					else {
-						it++;
-					}
-				}
-				break;
-			}
-			case IoLoadEvent::Type::SoundLoadFailed: {
-				for (auto it = m_state->pendingPlaybacks.begin(); it != m_state->pendingPlaybacks.end(); ) {
-					if (it->assetUuid == ev.assetUuid) {
-						VoiceMirror* vMirror = nullptr;
-						Result res = ResolveVoiceMirror(m_state, it->voiceIndex, it->voiceGeneration, vMirror);
-
-						if (res == Result::Ok) {
-							Logger::Log(LogLevel::Warning, "Engine",
-								"Aborting deferred playback. Asset failed to load.");
-							vMirror->Reset();
-							m_state->freeVoices->Push(it->voiceIndex);
-						}
-
-						it = m_state->pendingPlaybacks.erase(it);
-					}
-					else {
-						it++;
-					}
-				}
-				break;
-			}
-			default:
-				break;
-		}
-	}
-
-	void Engine::TryUpdateMixOrder() {
-		if (!m_state->isMixOrderDirty || m_state->isMixOrderSwapPending) return;
-
-		uint32_t* backBufferPtr = m_state->isUsingMixOrderA
-		? m_state->mixOrderBuffer->listB.get()
-		: m_state->mixOrderBuffer->listA.get();
-
-		std::span<uint32_t> backBufferSpan(backBufferPtr, m_state->busCapacity);
-		std::span<const BusMirror> busMirror(m_state->busPoolMirror.get(), m_state->busCapacity);
-
-		uint32_t sortedCount = m_state->busGraphCompiler->Compile(busMirror, backBufferSpan);
-		if (sortedCount > 0) {
-			m_state->rtCommands->Enqueue(RtCommand::SwapMixOrder(backBufferPtr, sortedCount));
-
-			m_state->isMixOrderSwapPending = true;
-			m_state->isMixOrderDirty = false;
-		}
-		else {
-			Logger::Log(LogLevel::Critical, "Bus Routing", "Failed to compile mix graph: Cycle detected.");
-			m_state->isMixOrderDirty = false;
-		}
-	}
-
-	void Engine::data_callback(ma_device* pDevice, void* pOutput, const void* pInput, uint32_t frameCount) {
-		RtSystem* rtSystem = static_cast<RtSystem*>(pDevice->pUserData);
-		rtSystem->OnAudioCallback(static_cast<float*>(pOutput), frameCount, pDevice->playback.channels);
 	}
 }

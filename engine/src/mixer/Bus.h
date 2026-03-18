@@ -1,13 +1,9 @@
 #pragma once
+#include "core/Constants.h"
 #include <string>
-#include <vector>
-#include <array>
 #include <span>
 
 namespace dalia {
-
-    static constexpr size_t MAX_FRAMES_PER_RENDER = 1024;
-    static constexpr uint32_t NO_PARENT = INT32_MAX;
 
     class Bus {
     public:
@@ -33,7 +29,9 @@ namespace dalia {
         bool isBusy = false;
         uint32_t generation = 0;
         uint32_t parentBusIndex = NO_PARENT;
-        // We probably keep other bus data here too (volume etc.)
+
+        // Mixing Properties
+        float volume = 1.0f;
 
         void Reset() {
             isBusy = false;

@@ -1,8 +1,8 @@
 #pragma once
-#include <algorithm>
 
 #include "core/States.h"
 #include "core/Constants.h"
+
 #include <cstdint>
 #include <atomic>
 
@@ -23,7 +23,7 @@ namespace dalia {
         // Format
         uint32_t channels = 0;
         uint32_t sampleRate = 0;
-        uint32_t totalFrames = 0;
+        uint32_t frameCount = 0;
 
         void Reset() {
             state.store(LoadState::Unloaded, std::memory_order_relaxed);
@@ -37,7 +37,7 @@ namespace dalia {
 
             channels = 0;
             sampleRate = 0;
-            totalFrames = 0;
+            frameCount = 0;
         }
     };
 }

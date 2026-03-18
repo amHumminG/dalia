@@ -1,6 +1,8 @@
 #pragma once
+
 #include "core/States.h"
 #include <vector>
+
 #include <span>
 #include <atomic>
 
@@ -15,7 +17,7 @@ namespace dalia {
         std::vector<float> pcmData;
         uint32_t channels = 0;
         uint32_t sampleRate = 0;
-        uint32_t totalFrames = 0; // Do we even care about this? probably not
+        uint32_t frameCount = 0; // Do we even care about this? probably not
 
         std::span<float> GetBuffer() {
             return std::span<float>(pcmData.data(), pcmData.size());
@@ -30,7 +32,7 @@ namespace dalia {
             pcmData.clear();
             channels = 0;
             sampleRate = 0;
-            totalFrames = 0;
+            frameCount = 0;
         }
     };
 }

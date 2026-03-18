@@ -39,14 +39,19 @@ namespace dalia {
 
         // Called by the io-thread on request by the audio thread upon voice finish
         void Reset() {
+            state.store(StreamState::Free, std::memory_order_release);
+            generation.fetch_add(1, std::memory_order_release);
+
             std::fill_n(&buffers[0][0], (2 * DOUBLE_BUFFER_SIZE), 0.0f);
+            readCursor = 0;
+
             bufferReady[0].store(false);
             bufferReady[1].store(false);
             eofIndex = {NO_EOF, NO_EOF};
 
-            readCursor = 0;
-
-            // TODO: Make sure this resets everything to base values
+            decoder = nullptr;
+            channels = 0;
+            sampleRate = 0;
         }
     };
 }

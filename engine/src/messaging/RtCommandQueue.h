@@ -49,7 +49,7 @@ namespace dalia {
 				uint32_t voiceGeneration;
 
 				const float* pcmData;
-				uint32_t frames;
+				uint32_t frameCount;
 				uint32_t channels;
 				uint32_t sampleRate;
 			} prepResident;
@@ -95,14 +95,14 @@ namespace dalia {
 		}
 
 		static RtCommand PrepareVoiceResident(uint32_t index, uint32_t generation, const float* dataPtr,
-			uint32_t frames, uint32_t channels, uint32_t sampleRate) {
+			uint32_t frameCount, uint32_t channels, uint32_t sampleRate) {
 			RtCommand cmd;
 			cmd.type = Type::PrepareVoiceResident;
 			cmd.data.prepResident.voiceIndex = index;
 			cmd.data.prepResident.voiceGeneration = generation;
 
 			cmd.data.prepResident.pcmData = dataPtr;
-			cmd.data.prepResident.frames = frames;
+			cmd.data.prepResident.frameCount = frameCount;
 			cmd.data.prepResident.channels = channels;
 			cmd.data.prepResident.sampleRate = sampleRate;
 			return cmd;

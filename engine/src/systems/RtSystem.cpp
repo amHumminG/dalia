@@ -79,13 +79,13 @@ namespace dalia {
 	            	voice.generation = cmd.data.prepResident.voiceGeneration;
 
 	            	voice.data.resident.pcmData = cmd.data.prepResident.pcmData;
-	            	voice.data.resident.frames = cmd.data.prepResident.frames;
+	            	voice.data.resident.frameCount = cmd.data.prepResident.frameCount;
 
 	            	voice.channels = cmd.data.prepResident.channels;
 	            	voice.sampleRate = cmd.data.prepResident.sampleRate;
 
 	            	Logger::Log(LogLevel::Debug, "RtSystem", "Prepared resident voice with %d frames.",
-	            		cmd.data.prepResident.frames);
+	            		cmd.data.prepResident.frameCount);
 
 	            	break;
 	            }
@@ -195,7 +195,7 @@ namespace dalia {
 
 			if (voice.soundType == SoundType::Resident) {
 				sourceData = voice.data.resident.pcmData;
-				framesInSource = static_cast<uint32_t>(voice.data.resident.frames);
+				framesInSource = static_cast<uint32_t>(voice.data.resident.frameCount);
 				sourceChannels = voice.channels;
 			}
 			else if (voice.soundType == SoundType::Stream) {
@@ -311,8 +311,6 @@ namespace dalia {
     	Voice& voice = m_voicePool[voiceIndex];
 
     	if (voice.soundType == SoundType::Stream) {
-    		StreamContext& stream = m_streamPool[voice.data.stream.streamContextIndex];
-    		stream.generation.fetch_add(1, std::memory_order_relaxed);
     		m_ioStreamRequests->Push(IoStreamRequest::ReleaseStream(voice.data.stream.streamContextIndex));
     	}
 
@@ -323,9 +321,7 @@ namespace dalia {
     		Logger::Log(LogLevel::Debug, "RtSystem", "Voice %d killed.", voiceIndex);
     	}
 
-    	voice.state = VoiceState::Free;
     	voice.Reset();
-
     	m_rtEvents->Push(RtEvent::VoiceStopped(voiceIndex, voice.generation));
     }
 }

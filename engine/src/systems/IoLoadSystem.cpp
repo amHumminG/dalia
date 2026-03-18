@@ -1,6 +1,8 @@
 #include "systems/IoLoadSystem.h"
 
 #include "core/Logger.h"
+#include "core/Utility.h"
+
 #include "messaging/IoLoadRequestQueue.h"
 #include "messaging/IoLoadEventQueue.h"
 
@@ -10,8 +12,6 @@
 
 #define STB_VORBIS_HEADER_ONLY
 #include "stb_vorbis.c"
-
-#include "core/Utility.h"
 
 namespace dalia {
 
@@ -104,7 +104,7 @@ namespace dalia {
                     residentSound->pcmData.resize(totalSamples);
                     residentSound->channels = info.channels;
                     residentSound->sampleRate = info.sample_rate;
-                    residentSound->totalFrames = totalFrames;
+                    residentSound->frameCount = totalFrames;
 
                     // Decode file into sound data vector
                     int floatsDecoded = stb_vorbis_get_samples_float_interleaved(
@@ -127,7 +127,7 @@ namespace dalia {
                 else if (soundType == SoundType::Stream) {
                     streamSound->channels = info.channels;
                     streamSound->sampleRate = info.sample_rate;
-                    streamSound->totalFrames = totalFrames;
+                    streamSound->frameCount = totalFrames;
                     strncpy_s(streamSound->filepath, MAX_IO_PATH_SIZE, req.data.soundFromFile.filepath, _TRUNCATE);
                 }
                 stb_vorbis_close(decoder);

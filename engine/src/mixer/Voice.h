@@ -22,17 +22,17 @@ namespace dalia {
 
     struct Voice {
         uint32_t generation = 0;
-
         VoiceState state = VoiceState::Free;
 
-        // Bus routing
-        uint32_t parentBusIndex;
+        // Routing
+        uint32_t parentBusIndex = 0;
 
-        // Playback
+        // Mixing Properties
         bool isLooping = false;
         float volume = 1.0f;
         float pitch = 1.0f;
         float pan = 0.0f;
+
         uint32_t channels = 2;
         uint32_t sampleRate = 48000;
         double cursor = 0.0f;
@@ -41,55 +41,73 @@ namespace dalia {
         union {
             struct {
                 const float* pcmData;
-                uint32_t frames;
+                uint32_t frameCount;
             } resident;
 
             struct {
                 uint32_t streamContextIndex;
                 uint8_t frontBufferIndex;
             } stream;
-        } data;
+        } data = {};
 
         // Use this when releasing a voice
         void Reset() {
             parentBusIndex = 0;
+            state = VoiceState::Free;
+
             isLooping = false;
             volume = 1.0f;
             pitch = 1.0f;
             pan = 0.0f;
+
+            channels = 2;
+            sampleRate = 48000;
             cursor = 0.0f;
-            // TODO: Keep updating this
         }
     };
 
     struct VoiceMirror {
-        // TODO: Expand this to hold all voice parameters
-        bool pendingLoad = false; // Used by the api thread only
+        // --- API Thread Only Stuff ---
+        bool pendingLoad = false; // Pending playback due to asset loading
 
-        VoiceState state = VoiceState::Free;
+        AudioEventCallback onFinishedCallback = nullptr;
+        void* userData = nullptr;
+
+        uint64_t assetUuid;
+
+        // --- Voice Properties ---
         uint32_t generation = 0;
+        VoiceState state = VoiceState::Free;
+
+        // Routing
+        uint32_t parentBusIndex = 0;
+
+        // Mixing Properties
+        bool isLooping = false;
+        float volume = 1.0f;
+        float pitch = 1.0f;
+        float pan = 0.0f;
 
         // Asset
         SoundType soundType;
-        uint64_t assetUuid;
-
-        // Parameters
-        uint32_t parentBusIndex;
-
-        // Callback
-        AudioEventCallback onFinishedCallback = nullptr;
-        void* userData = nullptr;
 
         void Reset() {
             pendingLoad = false;
 
-            state = VoiceState::Free;
-            generation++;
+            onFinishedCallback = nullptr;
+            userData = nullptr;
 
             assetUuid = 0;
 
-            onFinishedCallback = nullptr;
-            userData = nullptr;
+            generation++;
+            state = VoiceState::Free;
+
+            parentBusIndex = 0;
+
+            isLooping = false;
+            volume = 1.0f;
+            pitch = 1.0f;
+            pan = 0.0f;
         }
     };
 }
