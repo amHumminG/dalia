@@ -1,17 +1,12 @@
 #pragma once
 #include "dalia/audio/PlaybackControl.h"
+#include "dalia/audio/SoundHandle.h"
 #include <cstdint>
 #include <span>
 
 namespace dalia {
 
     class Bus;
-
-    enum class VoiceSourceType {
-        None,
-        Resident,   // Played from RAM
-        Stream      // Streamed from soundbank (double buffered)
-    };
 
     enum class VoiceState : uint8_t {
         Free,
@@ -42,7 +37,7 @@ namespace dalia {
         uint32_t sampleRate = 48000;
         double cursor = 0.0f;
 
-        VoiceSourceType sourceType = VoiceSourceType::None;
+        SoundType soundType;
         union {
             struct {
                 const float* pcmData;
@@ -75,7 +70,7 @@ namespace dalia {
         uint32_t generation = 0;
 
         // Asset
-        VoiceSourceType sourceType = VoiceSourceType::None;
+        SoundType soundType;
         uint64_t assetUuid;
 
         // Parameters

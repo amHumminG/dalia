@@ -4,7 +4,6 @@
 #include "PlaybackControl.h"
 // #include "dalia/audio/ResourceHandle.h"
 #include "dalia/audio/SoundHandle.h"
-#include <memory>
 
 struct ma_device;
 
@@ -39,6 +38,9 @@ namespace dalia {
 	public:
 		Engine();
 		~Engine();
+
+		Engine(const Engine&) = delete;
+		Engine& operator=(const Engine&) = delete;
 
 		Result Init(const EngineConfig& config);
 		Result Deinit();
@@ -77,11 +79,16 @@ namespace dalia {
 		Result Stop(PlaybackHandle handle);
 
 	private:
+		// --- Event Processing ---
 		void ProcessRtEvent(const RtEvent& ev);
 		void ProcessIoLoadEvent(const IoLoadEvent& ev);
+
+		// --- Scheduling ---
 		void TryUpdateMixOrder();
+
+		// --- Hardware Callbacks ---
 		static void data_callback(ma_device* pDevice, void* pOutput, const void* pInput, uint32_t frameCount);
 
-		std::unique_ptr<EngineInternalState> m_state;
+		EngineInternalState* m_state = nullptr;
 	};
 }

@@ -10,6 +10,8 @@
 #include "messaging/RtEventQueue.h"
 #include "messaging/IoStreamRequestQueue.h"
 
+#include "dalia/audio/SoundHandle.h"
+
 #include <cmath>
 
 #ifndef M_PI_2
@@ -58,7 +60,7 @@ namespace dalia {
 	            	Voice& voice = m_voicePool[voiceIndex];
 
 	            	// Voice setup
-	            	voice.sourceType = VoiceSourceType::Stream;
+	            	voice.soundType = SoundType::Stream;
 	            	voice.state = VoiceState::Inactive;
 	            	voice.generation = cmd.data.prepStreaming.voiceGeneration;
 
@@ -72,7 +74,7 @@ namespace dalia {
 	            	Voice& voice = m_voicePool[voiceIndex];
 
 	            	// Voice setup
-	            	voice.sourceType = VoiceSourceType::Resident;
+	            	voice.soundType = SoundType::Resident;
 	            	voice.state = VoiceState::Inactive;
 	            	voice.generation = cmd.data.prepResident.voiceGeneration;
 
@@ -191,12 +193,12 @@ namespace dalia {
         	uint32_t sourceChannels = 0;
         	uint32_t cursorInt = static_cast<uint32_t>(voice.cursor);
 
-			if (voice.sourceType == VoiceSourceType::Resident) {
+			if (voice.soundType == SoundType::Resident) {
 				sourceData = voice.data.resident.pcmData;
 				framesInSource = static_cast<uint32_t>(voice.data.resident.frames);
 				sourceChannels = voice.channels;
 			}
-			else if (voice.sourceType == VoiceSourceType::Stream) {
+			else if (voice.soundType == SoundType::Stream) {
 				StreamContext& stream = m_streamPool[voice.data.stream.streamContextIndex];
 				StreamState streamState = stream.state.load(std::memory_order_acquire);
 				if (streamState != StreamState::Streaming) {
@@ -267,7 +269,7 @@ namespace dalia {
 
 			// Handle end of buffer
 			if (static_cast<uint32_t>(voice.cursor) >= framesInSource) {
-				if (voice.sourceType == VoiceSourceType::Resident) {
+				if (voice.soundType == SoundType::Resident) {
 					if (voice.isLooping) {
 						voice.cursor = 0.0f; // Loop back to start
 					}
@@ -276,7 +278,7 @@ namespace dalia {
 						return false;
 					}
 				}
-				else if (voice.sourceType == VoiceSourceType::Stream) {
+				else if (voice.soundType == SoundType::Stream) {
 					StreamContext& stream = m_streamPool[voice.data.stream.streamContextIndex];
 
 					// Did we hit EOF?
@@ -308,7 +310,7 @@ namespace dalia {
     void RtSystem::FreeVoice(uint32_t voiceIndex) {
     	Voice& voice = m_voicePool[voiceIndex];
 
-    	if (voice.sourceType == VoiceSourceType::Stream) {
+    	if (voice.soundType == SoundType::Stream) {
     		StreamContext& stream = m_streamPool[voice.data.stream.streamContextIndex];
     		stream.generation.fetch_add(1, std::memory_order_relaxed);
     		m_ioStreamRequests->Push(IoStreamRequest::ReleaseStream(voice.data.stream.streamContextIndex));

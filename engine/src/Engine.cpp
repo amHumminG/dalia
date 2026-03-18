@@ -4,6 +4,7 @@
 #include "core/Logger.h"
 #include "core/FixedStack.h"
 #include "core/SPSCRingBuffer.h"
+#include "core/Constants.h"
 
 #include "messaging/RtCommandQueue.h"
 #include "messaging/RtEventQueue.h"
@@ -32,9 +33,6 @@
 
 namespace dalia {
 
-	static constexpr uint8_t CHANNELS_STEREO = 2;
-	static constexpr uint32_t MASTER_BUS_INDEX = 0;
-
 	struct MixOrderBuffer {
 		std::unique_ptr<uint32_t[]> listA;
 		std::unique_ptr<uint32_t[]> listB;
@@ -45,18 +43,9 @@ namespace dalia {
 		}
 	};
 
-	struct VoiceID {
-		uint32_t index;
-		uint32_t generation;
-
-		bool operator==(const VoiceID& other) const {
-			return index == other.index && generation == other.generation;
-		}
-	};
-
 	struct PendingSoundUnload {
 		SoundHandle handle;
-		std::vector<VoiceID> voicesToStop;
+		std::vector<PlaybackHandle> voicesToStop;
 	};
 
 	struct PendingPlayback {
@@ -157,20 +146,57 @@ namespace dalia {
 		}
 	};
 
+	// --- INTERNAL HELPERS ---
+	static inline bool IsInitialized(const EngineInternalState* state) {
+		return state != nullptr && state->initialized;
+	}
+
+	static inline Result ResolveVoiceMirror(EngineInternalState* state, uint32_t index, uint32_t generation, VoiceMirror*& outMirror) {
+		if (index >= state->voiceCapacity) return Result::InvalidHandle;
+
+		VoiceMirror* mirror = &state->voicePoolMirror[index];
+		if (mirror->generation != generation) return Result::ExpiredHandle;
+
+		outMirror = mirror;
+		return Result::Ok;
+	}
+
+	static inline Result DispatchStreamPrepare(EngineInternalState* state, const char* filepath, uint32_t& streamIndex) {
+		if (!state->freeStreams->Pop(streamIndex)) {
+			Logger::Log(LogLevel::Error, "Engine", "Failed to prepare stream instance. Stream pool exhausted.");
+			return Result::StreamPoolExhausted;
+		}
+
+		// Send I/O request to prepare stream
+		state->streamPool[streamIndex].state.store(StreamState::Preparing, std::memory_order_release);
+		IoStreamRequest req = IoStreamRequest::PrepareStream(streamIndex, filepath);
+		if (!state->ioStreamRequests->Push(req)) {
+			// Rollback
+			state->streamPool[streamIndex].state.store(StreamState::Free, std::memory_order_release);
+			state->freeStreams->Push(streamIndex);
+
+			Logger::Log(LogLevel::Error, "Engine", "Failed to prepare stream instance. IO Request queue full.");
+			return Result::IoRequestQueueFull;
+		}
+
+		return Result::Ok;
+	}
+
+	// ------------------------
 
 	Engine::Engine() = default;
-	Engine::~Engine() = default;
+	Engine::~Engine() { if (m_state) delete m_state; };
 
 	Result Engine::Init(const EngineConfig& config) {
-		Logger::Init(config.logLevel, 256);
-
-		if (m_state) {
+		if (m_state != nullptr) {
 			Logger::Log(LogLevel::Warning, "Engine", "Attempting to initialize engine that is already initialized");
 			return Result::AlreadyInitialized;
 		}
 
+		Logger::Init(config.logLevel, 256);
+
 		// --- INTERNAL STATE SETUP ---
-		m_state = std::make_unique<EngineInternalState>(config);
+		m_state = new EngineInternalState(config);
 
 		// Bus buffer allocation and assignment
 		// Setup bus memory pool (Room for 1024 frames) maybe we should check this against m_periodSize?
@@ -226,6 +252,8 @@ namespace dalia {
 
 		if (ma_device_init(NULL, &deviceConfig, m_state->device.get()) != MA_SUCCESS) {
 			Logger::Log(LogLevel::Critical, "Device", "Failed to initialize playback device");
+			delete m_state;
+			m_state = nullptr;
 			return Result::DeviceFailed;
 		}
 
@@ -237,6 +265,8 @@ namespace dalia {
 		// Audio Thread Start
 		if (ma_device_start(m_state->device.get()) != MA_SUCCESS) {
 			Logger::Log(LogLevel::Critical, "Device", "Failed to start playback device");
+			delete m_state;
+			m_state = nullptr;
 			return Result::DeviceFailed;
 		}
 
@@ -246,7 +276,7 @@ namespace dalia {
 	}
 
 	Result Engine::Deinit() {
-		if (!m_state) {
+		if (!IsInitialized(m_state)) {
 			Logger::Log(LogLevel::Warning, "Engine", "Attempting to deinitialize engine that is not initialized");
 			return Result::NotInitialized;
 		}
@@ -259,9 +289,11 @@ namespace dalia {
 		ma_device_uninit(m_state->device.get());
 
 		// --- I/O Thread Stop ---
+		m_state->ioLoadSystem->Stop();
 		m_state->ioStreamSystem->Stop();
 
-		m_state.reset();
+		delete m_state;
+		m_state = nullptr;
 
 		Logger::Log(LogLevel::Info, "Engine", "Deinitialized engine");
 		Logger::Deinit();
@@ -270,7 +302,7 @@ namespace dalia {
 	}
 
 	void Engine::Update() {
-		if (!m_state->initialized) return;
+		if (!IsInitialized(m_state)) return;
 
 		// --- Process Event Inbox ---
 		RtEvent RtEv;
@@ -291,7 +323,7 @@ namespace dalia {
 
 	Result Engine::LoadSound(SoundHandle& soundHandle, SoundType soundType, const char* filepath, AssetLoadCallback callback,
 		uint32_t* outRequestId) {
-		if (!m_state || !m_state->initialized) return Result::NotInitialized;
+		if (!IsInitialized(m_state)) return Result::NotInitialized;
 
 		StringID pathId(filepath);
 
@@ -350,7 +382,7 @@ namespace dalia {
 	}
 
 	Result Engine::UnloadSound(SoundHandle soundHandle) {
-		if (!m_state || !m_state->initialized) return Result::NotInitialized;
+		if (!IsInitialized(m_state)) return Result::NotInitialized;
 
 		SoundType soundType = soundHandle.GetType();
 		uint32_t soundRefCount;
@@ -397,7 +429,7 @@ namespace dalia {
 				VoiceMirror& vMirror = m_state->voicePoolMirror[i];
 
 				if (vMirror.state != VoiceState::Free && vMirror.assetUuid == soundHandle.GetUUID()) {
-					pendingUnload.voicesToStop.push_back({i, vMirror.generation});
+					pendingUnload.voicesToStop.push_back(PlaybackHandle::Create(i, vMirror.generation));
 
 					m_state->rtCommands->Enqueue(RtCommand::StopVoice(i, vMirror.generation));
 					Logger::Log(LogLevel::Debug, "Engine", "Commanded to stop voice: %d", i);
@@ -418,7 +450,7 @@ namespace dalia {
 	}
 
 	Result Engine::CreatePlayback(PlaybackHandle& pbkHandle, SoundHandle soundHandle) {
-		if (!m_state || !m_state->initialized) return Result::NotInitialized;
+		if (!IsInitialized(m_state)) return Result::NotInitialized;
 
 		SoundType soundType = soundHandle.GetType();
 		ResidentSound* residentSound = nullptr;
@@ -451,8 +483,7 @@ namespace dalia {
 		VoiceMirror& vMirror = m_state->voicePoolMirror[voiceIndex];
 		vMirror.generation++;
 		vMirror.state = VoiceState::Inactive;
-		if (soundType == SoundType::Resident) vMirror.sourceType = VoiceSourceType::Resident;
-		else if (soundType == SoundType::Stream) vMirror.sourceType = VoiceSourceType::Stream;
+		vMirror.soundType = soundType;
 		vMirror.assetUuid = soundHandle.GetUUID();
 
 		// Deferred playback
@@ -482,27 +513,13 @@ namespace dalia {
 			m_state->rtCommands->Enqueue(cmd);
 		}
 		else if (soundType == SoundType::Stream) {
+
 			uint32_t streamIndex;
-			if (!m_state->freeStreams->Pop(streamIndex)) {
-				m_state->freeVoices->Push(voiceIndex);
+			Result streamResult = DispatchStreamPrepare(m_state, streamSound->filepath, streamIndex);
+			if (streamResult != Result::Ok) {
 				vMirror.Reset();
-
-				Logger::Log(LogLevel::Error, "Engine", "Failed to create playback instance. Stream pool exhausted.");
-				return Result::StreamPoolExhausted;
-			}
-
-			// Send I/O request to prepare stream
-			m_state->streamPool[streamIndex].state.store(StreamState::Preparing, std::memory_order_release);
-			IoStreamRequest req = IoStreamRequest::PrepareStream(streamIndex, streamSound->filepath);
-			if (!m_state->ioStreamRequests->Push(req)) {
 				m_state->freeVoices->Push(voiceIndex);
-				vMirror.Reset();
-
-				m_state->streamPool[streamIndex].state.store(StreamState::Free, std::memory_order_release);
-				m_state->freeStreams->Push(streamIndex);
-
-				Logger::Log(LogLevel::Error, "Engine", "Failed to create playback instance. IO Request queue full.");
-				return Result::IoRequestQueueFull;
+				return streamResult;
 			}
 
 			RtCommand cmd = RtCommand::PrepareVoiceStreaming(
@@ -520,75 +537,79 @@ namespace dalia {
 	}
 
 	Result Engine::Play(PlaybackHandle handle) {
-		if (!m_state || !m_state->initialized) return Result::NotInitialized;
+		if (!IsInitialized(m_state)) return Result::NotInitialized;
 
 		if (!handle.IsValid()) return Result::InvalidHandle;
 		uint32_t voiceIndex = handle.GetIndex();
 		uint32_t voiceGeneration = handle.GetGeneration();
 
-		VoiceMirror& vMirror = m_state->voicePoolMirror[voiceIndex];
-		if (vMirror.generation != voiceGeneration) return Result::ExpiredHandle;
+		VoiceMirror* vMirror = nullptr;
+		Result res = ResolveVoiceMirror(m_state, voiceIndex, voiceGeneration, vMirror);
+		if (res != Result::Ok) return res;
 
 		// Deffered playback
-		if (vMirror.pendingLoad) {
-			vMirror.state = VoiceState::Playing;
+		if (vMirror->pendingLoad) {
+			vMirror->state = VoiceState::Playing;
 			Logger::Log(LogLevel::Warning, "Engine",
 				"Calling play on asset that is still loading. Will play when finished loading.");
 			return Result::Ok;
 		}
 
 		// Check for double calls
-		if (vMirror.state == VoiceState::Playing) {
+		if (vMirror->state == VoiceState::Playing) {
 			Logger::Log(LogLevel::Warning, "Engine", "Calling play on handle already set to play.");
 			return Result::Ok;
 		}
 
-		if (vMirror.state != VoiceState::Inactive && vMirror.state != VoiceState::Paused) {
+		if (vMirror->state != VoiceState::Inactive && vMirror->state != VoiceState::Paused) {
 			return Result::PlaybackCorrupted;
 		}
 
+		vMirror->state = VoiceState::Playing;
 		RtCommand cmd = RtCommand::PlayVoice(voiceIndex, voiceGeneration);
 		m_state->rtCommands->Enqueue(cmd);
-		vMirror.state = VoiceState::Playing;
 
 		return Result::Ok;
 	}
 
 	Result Engine::Pause(PlaybackHandle handle) {
-		if (!m_state || !m_state->initialized) return Result::NotInitialized;
+		if (!IsInitialized(m_state)) return Result::NotInitialized;
 
 		if (!handle.IsValid()) return Result::InvalidHandle;
 		uint32_t voiceIndex = handle.GetIndex();
 		uint32_t voiceGeneration = handle.GetGeneration();
 
-		VoiceMirror& vMirror = m_state->voicePoolMirror[voiceIndex];
-		if (vMirror.generation != voiceGeneration) return Result::ExpiredHandle;
+		VoiceMirror* vMirror = nullptr;
+		Result res = ResolveVoiceMirror(m_state, voiceIndex, voiceGeneration, vMirror);
+		if (res != Result::Ok) return res;
 
-		if (vMirror.state != VoiceState::Playing) {
+		if (vMirror->state != VoiceState::Playing) {
 			Logger::Log(LogLevel::Warning, "Engine", "Failed to pause voice %d. Not currently playing.", voiceIndex);
+			return Result::Ok;
 		}
-		vMirror.state = VoiceState::Paused;
-		if (vMirror.pendingLoad) return Result::Ok;
+		vMirror->state = VoiceState::Paused;
+		if (vMirror->pendingLoad) return Result::Ok;
 
 		m_state->rtCommands->Enqueue(RtCommand::PauseVoice(voiceIndex, voiceGeneration));
 		return Result::Ok;
 	}
 
 	Result Engine::Stop(PlaybackHandle handle) {
-		if (!m_state || !m_state->initialized) return Result::NotInitialized;
+		if (!IsInitialized(m_state)) return Result::NotInitialized;
 
 		if (!handle.IsValid()) return Result::InvalidHandle;
 		uint32_t voiceIndex = handle.GetIndex();
 		uint32_t voiceGeneration = handle.GetGeneration();
 
-		VoiceMirror& vMirror = m_state->voicePoolMirror[voiceIndex];
-		if (vMirror.generation != voiceGeneration) return Result::ExpiredHandle;
+		VoiceMirror* vMirror = nullptr;
+		Result res = ResolveVoiceMirror(m_state, voiceIndex, voiceGeneration, vMirror);
+		if (res != Result::Ok) return res;
 
 		// Handle pending playbacks
-		if (vMirror.pendingLoad) {
+		if (vMirror->pendingLoad) {
 			for (auto it = m_state->pendingPlaybacks.begin(); it != m_state->pendingPlaybacks.end(); ) {
 				if (it->voiceIndex == voiceIndex) {
-					vMirror.Reset();
+					vMirror->Reset();
 					m_state->freeVoices->Push(voiceIndex);
 					Logger::Log(LogLevel::Debug, "Engine",
 					"Stopped voice %d before it started playing.", voiceIndex);
@@ -599,7 +620,7 @@ namespace dalia {
 			}
 		}
 
-		vMirror.state = VoiceState::Stopped;
+		vMirror->state = VoiceState::Stopped;
 		m_state->rtCommands->Enqueue(RtCommand::StopVoice(voiceIndex, voiceGeneration));
 
 		return Result::Ok;
@@ -622,7 +643,7 @@ namespace dalia {
 					Logger::Log(LogLevel::Debug, "Engine", "Freed voice %d.", index);
 
 					// --- Check garbage collection ---
-					VoiceID stoppedVoice = {index, generation};
+					PlaybackHandle stoppedVoice = PlaybackHandle::Create(index, generation);
 					for (auto it = m_state->pendingSoundUnloads.begin(); it != m_state->pendingSoundUnloads.end(); ) {
 						auto& waitingList = it->voicesToStop;
 
@@ -666,10 +687,10 @@ namespace dalia {
 				// Process deferred playbacks
 				for (auto it = m_state->pendingPlaybacks.begin(); it != m_state->pendingPlaybacks.end(); ) {
 					if (it->assetUuid == ev.assetUuid) {
-						VoiceMirror& vMirror = m_state->voicePoolMirror[it->voiceIndex];
+						VoiceMirror* vMirror = nullptr;
+						Result res = ResolveVoiceMirror(m_state, it->voiceIndex, it->voiceGeneration, vMirror);
 
-						if (vMirror.generation == it->voiceGeneration && vMirror.pendingLoad) {
-
+						if (res == Result::Ok && vMirror->pendingLoad) {
 							SoundHandle handle = SoundHandle::FromUUID(ev.assetUuid);
 							SoundType soundType = handle.GetType();
 
@@ -689,37 +710,21 @@ namespace dalia {
 							else if (soundType == SoundType::Stream) {
 								StreamSound* sound = m_state->assetRegistry->GetStreamSound(handle);
 
-								// Allocate stream context
 								uint32_t streamIndex;
-								if (!m_state->freeStreams->Pop(streamIndex)) {
+								Result streamResult = DispatchStreamPrepare(m_state, sound->filepath, streamIndex);
+								if (streamResult != Result::Ok) {
+									vMirror->Reset();
 									m_state->freeVoices->Push(it->voiceIndex);
-									vMirror.Reset();
 
 									Logger::Log(LogLevel::Error, "Engine",
-										"Aborting deferred playback. Stream pool exhausted.");
-									it = m_state->pendingPlaybacks.erase(it);
-									continue;
-								}
-
-								// Send I/O request to prepare stream
-								m_state->streamPool[streamIndex].state.store(StreamState::Preparing, std::memory_order_release);
-								IoStreamRequest req = IoStreamRequest::PrepareStream(streamIndex, sound->filepath);
-								if (!m_state->ioStreamRequests->Push(req)) {
-									m_state->freeVoices->Push(it->voiceIndex);
-									vMirror.Reset();
-
-									m_state->streamPool[streamIndex].state.store(StreamState::Free, std::memory_order_release);
-									m_state->freeStreams->Push(streamIndex);
-
-									Logger::Log(LogLevel::Error, "Engine",
-										"Aborting deferred playback. IO Request queue full.");
+										"Aborting deferred playback. Stream preparation failed");
 									it = m_state->pendingPlaybacks.erase(it);
 									continue;
 								}
 
 								RtCommand cmd = RtCommand::PrepareVoiceStreaming(
 									it->voiceIndex,
-									vMirror.generation,
+									vMirror->generation,
 									streamIndex,
 									sound->channels,
 									sound->sampleRate
@@ -727,12 +732,15 @@ namespace dalia {
 								m_state->rtCommands->Enqueue(cmd);
 							}
 
-							vMirror.pendingLoad = false;
-							if (vMirror.state == VoiceState::Playing) {
+							vMirror->pendingLoad = false;
+							if (vMirror->state == VoiceState::Playing) {
 								m_state->rtCommands->Enqueue(RtCommand::PlayVoice(it->voiceIndex, it->voiceGeneration));
 							}
-							else if (vMirror.state == VoiceState::Paused) {
+							else if (vMirror->state == VoiceState::Paused) {
 								m_state->rtCommands->Enqueue(RtCommand::PauseVoice(it->voiceIndex, it->voiceGeneration));
+							}
+							else if (vMirror->state == VoiceState::Stopped) {
+								m_state->rtCommands->Enqueue(RtCommand::StopVoice(it->voiceIndex, it->voiceGeneration));
 							}
 						}
 
@@ -747,12 +755,13 @@ namespace dalia {
 			case IoLoadEvent::Type::SoundLoadFailed: {
 				for (auto it = m_state->pendingPlaybacks.begin(); it != m_state->pendingPlaybacks.end(); ) {
 					if (it->assetUuid == ev.assetUuid) {
-						VoiceMirror& vMirror = m_state->voicePoolMirror[it->voiceIndex];
+						VoiceMirror* vMirror = nullptr;
+						Result res = ResolveVoiceMirror(m_state, it->voiceIndex, it->voiceGeneration, vMirror);
 
-						if (vMirror.generation == it->voiceGeneration) {
+						if (res == Result::Ok) {
 							Logger::Log(LogLevel::Warning, "Engine",
 								"Aborting deferred playback. Asset failed to load.");
-							vMirror.Reset();
+							vMirror->Reset();
 							m_state->freeVoices->Push(it->voiceIndex);
 						}
 
