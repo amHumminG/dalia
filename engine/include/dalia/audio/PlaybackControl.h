@@ -15,9 +15,10 @@ namespace dalia {
 		bool operator==(const PlaybackHandle& other) const { return uuid == other.uuid; }
 		bool operator!=(const PlaybackHandle& other) const { return uuid != other.uuid; }
 
-		friend class Engine;
-
 	private:
+		friend class Engine;
+		friend struct EngineInternalState;
+
 		static PlaybackHandle Create(uint32_t index, uint32_t generation) {
 			PlaybackHandle handle;
 			handle.uuid = (static_cast<uint64_t>(generation) << 32) | index;
@@ -35,12 +36,14 @@ namespace dalia {
 		uint64_t uuid = 0;
 	};
 
-	// TODO: Have AudioEventCallback contain an enum communicating the reason for the sound finish
-	// E.g. Finished naturally, stop was called on it, or engine killed it and so on...
-	using AudioEventCallback = std::function<void(PlaybackHandle)>;
+	enum class PlaybackExitCondition : uint8_t {
+		NaturalEnd		= 0,
+		ExplicitStop	= 1,
+		Evicted			= 2,
+		Error			= 3,
+	};
+	using AudioEventCallback = std::function<void(PlaybackHandle handle, PlaybackExitCondition exitCondition)>;
 
 	constexpr uint32_t INVALID_REQUEST_ID = 0;
 	using AssetLoadCallback = std::function<void(uint32_t requestId, Result result)>;
-
-
 }

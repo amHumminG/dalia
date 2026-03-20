@@ -2,7 +2,6 @@
 #include "dalia/audio/PlaybackControl.h"
 #include "dalia/audio/SoundHandle.h"
 #include <cstdint>
-#include <span>
 
 namespace dalia {
 
@@ -14,15 +13,13 @@ namespace dalia {
         Playing,
         Virtual,
         Paused,
-
-        Finished,
-        Stopped,
-        Killed
+        Stopped
     };
 
     struct Voice {
         uint32_t generation = 0;
         VoiceState state = VoiceState::Free;
+        PlaybackExitCondition exitCondition = PlaybackExitCondition::NaturalEnd;
 
         // Routing
         uint32_t parentBusIndex = 0;
@@ -54,6 +51,7 @@ namespace dalia {
         void Reset() {
             parentBusIndex = 0;
             state = VoiceState::Free;
+            exitCondition = PlaybackExitCondition::NaturalEnd;
 
             isLooping = false;
             volume = 1.0f;
@@ -69,10 +67,7 @@ namespace dalia {
     struct VoiceMirror {
         // --- API Thread Only Stuff ---
         bool pendingLoad = false; // Pending playback due to asset loading
-
-        AudioEventCallback onFinishedCallback = nullptr;
-        void* userData = nullptr;
-
+        AudioEventCallback onStopCallback = nullptr;
         uint64_t assetUuid;
 
         // --- Voice Properties ---
@@ -93,10 +88,7 @@ namespace dalia {
 
         void Reset() {
             pendingLoad = false;
-
-            onFinishedCallback = nullptr;
-            userData = nullptr;
-
+            onStopCallback = nullptr;
             assetUuid = 0;
 
             generation++;

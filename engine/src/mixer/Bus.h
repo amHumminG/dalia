@@ -19,6 +19,8 @@ namespace dalia {
         uint32_t parentIndex = NO_PARENT;
 
     private:
+        void Reset();
+
         std::string m_name; // Do we just use this for debug?
         float m_volume = 1.0f;
 

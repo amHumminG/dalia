@@ -6,6 +6,7 @@
 namespace dalia {
 
     class IoStreamRequestQueue;
+    struct IoStreamRequest;
     struct StreamContext;
     template <typename T> class SPSCRingBuffer;
 
@@ -25,7 +26,7 @@ namespace dalia {
 
     private:
         void ThreadMain();
-
+        void ProcessRequest(const IoStreamRequest& req);
         void FillBuffer(StreamContext& stream, uint32_t bufferIndex);
 
         IoStreamRequestQueue* m_ioStreamRequests;

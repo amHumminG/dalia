@@ -50,7 +50,6 @@ namespace dalia {
             }
 
             if (!didWork) {
-                // TODO: Check if maybe we should sleep for longer here
                 std::this_thread::sleep_for(std::chrono::milliseconds(1)); // Based on OS interrupt (Windows: 15.6ms)
             }
         }

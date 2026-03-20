@@ -46,101 +46,103 @@ namespace dalia {
 
             while (m_ioStreamRequests->Pop(req)) {
                 didWork = true;
-
-                // Handle requests
-                switch (req.type) {
-                    case IoStreamRequest::Type::PrepareStream: {
-                        StreamContext& stream = m_streamPool[req.data.stream.poolIndex];
-                        if (stream.state.load(std::memory_order_acquire) != StreamState::Preparing) break;
-
-                        if (stream.decoder) {
-                            stb_vorbis_close(stream.decoder);
-                            stream.decoder = nullptr;
-                        }
-
-                        int error;
-                        stream.decoder = stb_vorbis_open_filename(req.data.stream.path, &error, nullptr);
-
-                        if (stream.decoder) {
-                            stb_vorbis_info info = stb_vorbis_get_info(stream.decoder);
-
-                            // --- Check for unsupported formats ---
-                            bool isSupported = true;
-
-                            // Channels
-                            if (info.channels == 0 || info.channels > 2) {
-                                Logger::Log(LogLevel::Error, "IoStreamSystem",
-                                    "Failed to load file: %s. Unsupported channel count (%d) in file.",
-                                    req.data.stream.path, info.channels);
-                                isSupported = false;
-                            }
-
-                            // Sample rate
-                            static constexpr uint32_t ENGINE_SAMPLE_RATE = 48000;
-                            if (info.sample_rate != ENGINE_SAMPLE_RATE) {
-                                Logger::Log(LogLevel::Error, "IoStreamSystem",
-                                    "Failed to load file: %s. Unsupported sample rate (%d).",
-                                    req.data.stream.path, info.sample_rate);
-                                isSupported = false;
-                            }
-
-                            if (!isSupported) {
-                                stb_vorbis_close(stream.decoder);
-                                stream.decoder = nullptr;
-                                stream.state.store(StreamState::Error, std::memory_order_release);
-                                break;
-                            }
-
-                            stream.channels = info.channels;
-                            stream.sampleRate = info.sample_rate;
-                            FillBuffer(stream, 0);
-                            FillBuffer(stream, 1);
-                            stream.state.store(StreamState::Streaming);
-
-                            Logger::Log(LogLevel::Debug, "IoStreamSystem", "Finished preparing stream %d for file: %s",
-                                req.data.stream.poolIndex, req.data.stream.path);
-                            break;
-                        }
-                        else {
-                            Logger::Log(LogLevel::Error, "IoStreamSystem", "Failed to open stream for %s. %s.",
-                                req.data.stream.path, GetStbVorbisErrorString(error));
-                            stream.state.store(StreamState::Error, std::memory_order_release);
-                        }
-
-                        break;
-                    }
-                    case IoStreamRequest::Type::ReleaseStream: {
-                        StreamContext& stream = m_streamPool[req.data.stream.poolIndex];
-                        if (stream.decoder) {
-                            stb_vorbis_close(stream.decoder);
-                            stream.decoder = nullptr;
-                        }
-
-                        stream.Reset();
-                        stream.state = StreamState::Free;
-                        m_freeStreams->Push(req.data.stream.poolIndex);
-                        Logger::Log(LogLevel::Debug, "IoStreamSystem", "Freed stream %d", req.data.stream.poolIndex);
-                        break;
-                    }
-                    case IoStreamRequest::Type::RefillStreamBuffer: {
-                        StreamContext& stream = m_streamPool[req.data.stream.poolIndex];
-
-                        if (stream.state.load(std::memory_order_acquire) != StreamState::Streaming) break;
-                        if (stream.generation.load(std::memory_order_relaxed) != req.data.stream.generation) break;
-
-                        FillBuffer(stream, req.data.stream.bufferIndex);
-                        Logger::Log(LogLevel::Debug, "IoStreamSystem", "Refilled buffer %d for stream %d",
-                            req.data.stream.bufferIndex, req.data.stream.poolIndex);
-                        break;
-                    }
-                    default:
-                        break;
-                }
+                ProcessRequest(req);
             }
 
             if (!didWork) {
                 std::this_thread::sleep_for(std::chrono::milliseconds(1)); // Based on OS interrupt (Windows: 15.6ms)
             }
+        }
+    }
+
+    void IoStreamSystem::ProcessRequest(const IoStreamRequest& req) {
+        switch (req.type) {
+            case IoStreamRequest::Type::PrepareStream: {
+                StreamContext& stream = m_streamPool[req.data.stream.poolIndex];
+                if (stream.state.load(std::memory_order_acquire) != StreamState::Preparing) break;
+
+                if (stream.decoder) {
+                    stb_vorbis_close(stream.decoder);
+                    stream.decoder = nullptr;
+                }
+
+                int error;
+                stream.decoder = stb_vorbis_open_filename(req.data.stream.path, &error, nullptr);
+
+                if (stream.decoder) {
+                    stb_vorbis_info info = stb_vorbis_get_info(stream.decoder);
+
+                    // --- Check for unsupported formats ---
+                    bool isSupported = true;
+
+                    // Channels
+                    if (info.channels == 0 || info.channels > 2) {
+                        Logger::Log(LogLevel::Error, "IoStreamSystem",
+                            "Failed to load file: %s. Unsupported channel count (%d) in file.",
+                            req.data.stream.path, info.channels);
+                        isSupported = false;
+                    }
+
+                    // Sample rate
+                    static constexpr uint32_t ENGINE_SAMPLE_RATE = 48000;
+                    if (info.sample_rate != ENGINE_SAMPLE_RATE) {
+                        Logger::Log(LogLevel::Error, "IoStreamSystem",
+                            "Failed to load file: %s. Unsupported sample rate (%d).",
+                            req.data.stream.path, info.sample_rate);
+                        isSupported = false;
+                    }
+
+                    if (!isSupported) {
+                        stb_vorbis_close(stream.decoder);
+                        stream.decoder = nullptr;
+                        stream.state.store(StreamState::Error, std::memory_order_release);
+                        break;
+                    }
+
+                    stream.channels = info.channels;
+                    stream.sampleRate = info.sample_rate;
+                    FillBuffer(stream, 0);
+                    FillBuffer(stream, 1);
+                    stream.state.store(StreamState::Streaming);
+
+                    Logger::Log(LogLevel::Debug, "IoStreamSystem", "Finished preparing stream %d for file: %s",
+                        req.data.stream.poolIndex, req.data.stream.path);
+                    break;
+                }
+                else {
+                    Logger::Log(LogLevel::Error, "IoStreamSystem", "Failed to open stream for %s. %s.",
+                        req.data.stream.path, GetStbVorbisErrorString(error));
+                    stream.state.store(StreamState::Error, std::memory_order_release);
+                }
+
+                break;
+            }
+            case IoStreamRequest::Type::ReleaseStream: {
+                StreamContext& stream = m_streamPool[req.data.stream.poolIndex];
+                if (stream.decoder) {
+                    stb_vorbis_close(stream.decoder);
+                    stream.decoder = nullptr;
+                }
+
+                stream.Reset();
+                stream.state = StreamState::Free;
+                m_freeStreams->Push(req.data.stream.poolIndex);
+                Logger::Log(LogLevel::Debug, "IoStreamSystem", "Freed stream %d", req.data.stream.poolIndex);
+                break;
+            }
+            case IoStreamRequest::Type::RefillStreamBuffer: {
+                StreamContext& stream = m_streamPool[req.data.stream.poolIndex];
+
+                if (stream.state.load(std::memory_order_acquire) != StreamState::Streaming) break;
+                if (stream.generation.load(std::memory_order_relaxed) != req.data.stream.generation) break;
+
+                FillBuffer(stream, req.data.stream.bufferIndex);
+                Logger::Log(LogLevel::Debug, "IoStreamSystem", "Refilled buffer %d for stream %d",
+                    req.data.stream.bufferIndex, req.data.stream.poolIndex);
+                break;
+            }
+            default:
+                break;
         }
     }
 

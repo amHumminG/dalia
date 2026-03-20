@@ -24,8 +24,8 @@ namespace dalia {
 
     // Is this really thread safe?
     struct StreamContext {
-        std::atomic<StreamState> state = StreamState::Free;
         std::atomic<uint32_t> generation{0};
+        std::atomic<StreamState> state = StreamState::Free;
 
         alignas(64) float buffers[2][DOUBLE_BUFFER_SIZE];
         int readCursor = 0;

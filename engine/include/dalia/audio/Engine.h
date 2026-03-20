@@ -53,7 +53,8 @@ namespace dalia {
 
 		Result UnloadSound(SoundHandle soundHandle);
 
-		Result CreatePlayback(PlaybackHandle& pbkHandle, SoundHandle soundHandle);
+		Result CreatePlayback(PlaybackHandle& pbkHandle, SoundHandle soundHandle,
+			AudioEventCallback callback = nullptr);
 
 
 

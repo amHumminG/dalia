@@ -126,7 +126,8 @@ namespace dalia {
 	            	// Check for outdated command
 	            	if (voice.generation != expectedVoiceGen) break;
 
-	            	voice.state = VoiceState::Killed;
+	            	voice.state = VoiceState::Stopped;
+	            	voice.exitCondition = PlaybackExitCondition::ExplicitStop;
 	            	break;
                 }
                 default: break;
@@ -144,9 +145,7 @@ namespace dalia {
         // --- Voice Pass --- (Parallel ready when the time comes)
         for (uint32_t i = 0; i < m_voicePool.size(); i++) {
             Voice& voice = m_voicePool[i];
-        	if (voice.state == VoiceState::Finished)	 FreeVoice(i);
-			else if (voice.state == VoiceState::Stopped) FreeVoice(i);
-        	else if (voice.state == VoiceState::Killed)  FreeVoice(i);
+        	if (voice.state == VoiceState::Stopped)	 FreeVoice(i);
             else if (voice.state == VoiceState::Playing) {
             	Logger::Log(LogLevel::Debug, "RtSystem", "Mixing voice %d...", i);
             	bool isStillPlaying = MixVoiceToBus(voice, voice.parentBusIndex, frameCount);
@@ -203,8 +202,13 @@ namespace dalia {
 				StreamState streamState = stream.state.load(std::memory_order_acquire);
 				if (streamState != StreamState::Streaming) {
 					// Stream could be preparing still, check if it has failed
-					if (streamState == StreamState::Error) return false;
+					if (streamState == StreamState::Error) {
+						voice.state = VoiceState::Stopped;
+						voice.exitCondition = PlaybackExitCondition::Error;
+						return false;
+					}
 
+					// It's still preparing
 					return true;
 				}
 				if (!stream.bufferReady[voice.data.stream.frontBufferIndex].load(std::memory_order_acquire)) {
@@ -274,7 +278,8 @@ namespace dalia {
 						voice.cursor = 0.0f; // Loop back to start
 					}
 					else {
-						voice.state = VoiceState::Finished;
+						voice.state = VoiceState::Stopped;
+						voice.exitCondition = PlaybackExitCondition::NaturalEnd;
 						return false;
 					}
 				}
@@ -283,7 +288,8 @@ namespace dalia {
 
 					// Did we hit EOF?
 					if (stream.eofIndex[voice.data.stream.frontBufferIndex] != NO_EOF && !voice.isLooping) {
-						voice.state = VoiceState::Finished;
+						voice.state = VoiceState::Stopped;
+						voice.exitCondition = PlaybackExitCondition::NaturalEnd;
 						return false;
 					}
 
@@ -310,18 +316,25 @@ namespace dalia {
     void RtSystem::FreeVoice(uint32_t voiceIndex) {
     	Voice& voice = m_voicePool[voiceIndex];
 
+
     	if (voice.soundType == SoundType::Stream) {
     		m_ioStreamRequests->Push(IoStreamRequest::ReleaseStream(voice.data.stream.streamContextIndex));
     	}
 
-    	if (voice.state == VoiceState::Finished) {
-    		Logger::Log(LogLevel::Debug, "RtSystem", "Voice %d finished.", voiceIndex);
+    	if (voice.exitCondition == PlaybackExitCondition::NaturalEnd) {
+    		Logger::Log(LogLevel::Debug, "RtSystem", "Voice %d finished naturally.", voiceIndex);
     	}
-    	else if (voice.state == VoiceState::Killed) {
-    		Logger::Log(LogLevel::Debug, "RtSystem", "Voice %d killed.", voiceIndex);
+    	else if (voice.exitCondition == PlaybackExitCondition::ExplicitStop) {
+    		Logger::Log(LogLevel::Debug, "RtSystem", "Voice %d stopped explicitly.", voiceIndex);
+    	}
+    	else if (voice.exitCondition == PlaybackExitCondition::Evicted) {
+    		Logger::Log(LogLevel::Debug, "RtSystem", "Voice %d stopped by eviction.", voiceIndex);
+    	}
+    	else if (voice.exitCondition == PlaybackExitCondition::Error) {
+    		Logger::Log(LogLevel::Debug, "RtSystem", "Voice %d stopped by error.", voiceIndex);
     	}
 
+    	m_rtEvents->Push(RtEvent::VoiceStopped(voiceIndex, voice.generation, voice.exitCondition));
     	voice.Reset();
-    	m_rtEvents->Push(RtEvent::VoiceStopped(voiceIndex, voice.generation));
     }
 }

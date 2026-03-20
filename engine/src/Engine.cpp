@@ -118,8 +118,6 @@ namespace dalia {
 		// Deferred playback
 		std::vector<PendingPlayback> pendingPlaybacks;
 
-		uint32_t GenerateIoLoadRequestId() {return nextIoLoadRequestId++; }
-
 		EngineInternalState(const EngineConfig& config)
 			: voiceCapacity(config.voiceCapacity), streamCapacity(config.streamCapacity), busCapacity(config.busCapacity) {
 			// Message Queues
@@ -150,6 +148,11 @@ namespace dalia {
 
 			// Resources
 			assetRegistry = std::make_unique<AssetRegistry>(config.residentSoundCapacity, config.streamSoundCapacity);
+		}
+
+		uint32_t GenerateIoLoadRequestId() {return nextIoLoadRequestId++; }
+		PlaybackHandle ForgePlaybackHandle(uint32_t index, uint32_t generation) {
+			return PlaybackHandle::Create(index, generation);
 		}
 	};
 
@@ -197,13 +200,17 @@ namespace dalia {
 				break;
 			}
 			case RtEvent::Type::VoiceStopped: {
-				uint32_t index = ev.data.voiceState.index;
-				uint32_t generation = ev.data.voiceState.generation;
-				if (state->voicePoolMirror[index].generation == generation) {
-					// Voice is still valid -> Return it to the pool
-					state->voicePoolMirror[index].Reset();
+				uint32_t index = ev.data.voice.index;
+				uint32_t generation = ev.data.voice.generation;
+				VoiceMirror* vMirror;
+				Result res = ResolveVoiceMirror(state, index, generation, vMirror);
+
+				if (res == Result::Ok) { // Voice is still valid
+					AudioEventCallback callback = vMirror->onStopCallback;
+					vMirror->Reset();
 					state->freeVoices->Push(index);
 					Logger::Log(LogLevel::Debug, "Engine", "Freed voice %d.", index);
+					if (callback) callback(state->ForgePlaybackHandle(index, generation), ev.data.voice.exitCondition);
 
 					// --- Check garbage collection ---
 					VoiceID stoppedVoice = {index, generation};
@@ -636,7 +643,7 @@ namespace dalia {
 		return Result::Ok;
 	}
 
-	Result Engine::CreatePlayback(PlaybackHandle& pbkHandle, SoundHandle soundHandle) {
+	Result Engine::CreatePlayback(PlaybackHandle& pbkHandle, SoundHandle soundHandle, AudioEventCallback callback) {
 		if (!IsInitialized(m_state)) return Result::NotInitialized;
 
 		SoundType soundType = soundHandle.GetType();
@@ -672,6 +679,7 @@ namespace dalia {
 		vMirror.state = VoiceState::Inactive;
 		vMirror.soundType = soundType;
 		vMirror.assetUuid = soundHandle.GetUUID();
+		if (callback) vMirror.onStopCallback = callback;
 
 		// Deferred playback
 		if (soundLoadState == LoadState::Loading) {

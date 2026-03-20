@@ -32,14 +32,14 @@ namespace dalia {
         bool MixVoiceToBus(Voice& voice, uint32_t busIndex, uint32_t frameCount);
         void FreeVoice(uint32_t voiceIndex);
 
-        std::span<Voice> m_voicePool;
-        std::span<StreamContext> m_streamPool;
-        std::span<Bus> m_busPool;
-
-        Bus* m_masterBus;
         RtCommandQueue* m_rtCommands;
         RtEventQueue* m_rtEvents;
         IoStreamRequestQueue* m_ioStreamRequests;
+
+        std::span<Voice> m_voicePool;
+        std::span<StreamContext> m_streamPool;
+        std::span<Bus> m_busPool;
+        Bus* m_masterBus;
 
         std::span<const uint32_t> m_activeMixOrder;
     };
