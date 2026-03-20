@@ -23,8 +23,8 @@ struct PlaybackInstance {
     PlaybackHandle handle;
 };
 
-int main() {
-    // --- 1. Initialize Raylib and ImGui ---
+void TestInterface() {
+     // --- 1. Initialize Raylib and ImGui ---
     InitWindow(1000, 1000, "Dalia Engine - Audio Testbed");
     SetTargetFPS(60);
     rlImGuiSetup(true);
@@ -173,6 +173,62 @@ int main() {
     engine.Deinit();
     rlImGuiShutdown();
     CloseWindow();
+}
+
+void SpidermanFinishedLoading(uint32_t requestId, Result result) {
+    if (result == Result::Ok) {
+        std::cout << "SPIDERMAN LOADED" << std::endl;
+    }
+    else {
+        std::cout << "SPIDERMAN LOAD FAILED" << std::endl;
+    }
+}
+
+void SpidermanFinishedPlaying(PlaybackHandle handle, PlaybackExitCondition exitCondition) {
+    if (exitCondition == PlaybackExitCondition::NaturalEnd) {
+        std::cout << "SPIDERMAN FINISHED NATURALLY" << std::endl;
+    }
+    else if (exitCondition == PlaybackExitCondition::ExplicitStop) {
+        std::cout << "SPIDERMAN STOPPED EXPLICITLY" << std::endl;
+    }
+    else if (exitCondition == PlaybackExitCondition::Evicted) {
+        std::cout << "SPIDERMAN EVICTED (lol)" << std::endl;
+    }
+    else if (exitCondition == PlaybackExitCondition::Error) {
+        std::cout << "SPIDERMAN STOPPED BY ERROR" << std::endl;
+    }
+}
+
+int main() {
+
+    Engine engine;
+    EngineConfig config;
+    config.logLevel = LogLevel::Debug;
+    engine.Init(config);
+
+    SoundHandle spidermanSound;
+    engine.LoadSound(spidermanSound, SoundType::Resident, "assets/spiderman.ogg", SpidermanFinishedLoading);
+
+    PlaybackHandle spidermanPlayback;
+    engine.CreatePlayback(spidermanPlayback, spidermanSound, SpidermanFinishedPlaying);
+    engine.Play(spidermanPlayback);
+
+    while (true) {
+        engine.Update();
+    }
+
+    // engine.Update();
+    // std::this_thread::sleep_for(std::chrono::seconds(1));
+    // engine.Update();
+    // std::this_thread::sleep_for(std::chrono::seconds(1));
+    // engine.Stop(spidermanPlayback);
+    // std::this_thread::sleep_for(std::chrono::seconds(1));
+    // engine.Update();
+    // std::this_thread::sleep_for(std::chrono::seconds(1));
+    // engine.Update();
+    // std::this_thread::sleep_for(std::chrono::seconds(1));
+
+    engine.Deinit();
 
     return 0;
 }
