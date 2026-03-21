@@ -1,8 +1,5 @@
 #pragma once
 
-#define DALIA_OK(res) (static_cast<int>(res) >= 0)
-#define DALIA_ERROR(res) (static_cast<int>(res) < 0)
-
 namespace dalia {
 
 	enum class Result : int {

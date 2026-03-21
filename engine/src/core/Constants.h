@@ -1,6 +1,13 @@
 #pragma once
 #include <cstdint>
 
+// Compiler build detection
+#if defined(_DEBUG) || !defined(NDEBUG)
+    #define DALIA_DEBUG 1
+#else
+    #define DALIA_DEBUG 0
+#endif
+
 namespace dalia {
 
     // -- I/O ---
