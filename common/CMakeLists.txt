@@ -1,12 +1,13 @@
 set(COMMON_FILES
-    src/Soundbank.h
-    src/StringID.h
+    include/common/Soundbank.h
+    include/common/StringID.h
     src/SoundbankWriter.cpp
-    src/SoundbankWriter.h
+    include/common/SoundbankWriter.h
 )
 
 add_library(dalia_common STATIC ${COMMON_FILES})
 
 target_include_directories(dalia_common
-    PUBLIC src
+    PUBLIC include
+    PRIVATE src
 )

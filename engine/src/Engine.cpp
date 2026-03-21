@@ -25,7 +25,7 @@
 #include "resources/ResidentSound.h"
 #include "resources/StreamSound.h"
 
-#include "StringID.h" // From common
+#include "common/StringID.h" // From common
 
 #include "miniaudio.h"
 

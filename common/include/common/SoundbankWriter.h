@@ -5,7 +5,7 @@
 #include <vector>
 
 #include "Soundbank.h"
-#include "StringID.h"
+#include "common/StringID.h"
 
 
 namespace dalia {
