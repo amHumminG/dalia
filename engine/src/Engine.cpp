@@ -5,6 +5,7 @@
 #include "core/FixedStack.h"
 #include "core/SPSCRingBuffer.h"
 #include "core/Constants.h"
+#include "core/Types.h"
 
 #include "messaging/RtCommandQueue.h"
 #include "messaging/RtEventQueue.h"
@@ -519,7 +520,7 @@ namespace dalia {
 		uint32_t* outRequestId) {
 		if (!IsInitialized(m_state)) return Result::NotInitialized;
 
-		StringID pathId(filepath);
+		SoundID pathId(filepath);
 
 		// Duplicate check
 		if (m_state->assetRegistry->GetLoadedSoundHandle(pathId, soundHandle)) {
@@ -598,7 +599,7 @@ namespace dalia {
 		}
 
 		if (soundRefCount == 0) {
-			m_state->assetRegistry->UnregisterLoadedSound(StringID::FromHash(soundPathHash));
+			m_state->assetRegistry->UnregisterLoadedSound(SoundID::FromHash(soundPathHash));
 
 			PendingSoundUnload pendingUnload;
 			pendingUnload.handle = soundHandle;

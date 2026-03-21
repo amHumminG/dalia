@@ -1,4 +1,5 @@
 #include "resources/AssetRegistry.h"
+#include "core/Types.h"
 
 namespace dalia {
 
@@ -47,7 +48,7 @@ namespace dalia {
         return m_streamSoundPool.Get(handle.GetIndex(), handle.GetGeneration());
     }
 
-    bool AssetRegistry::GetLoadedSoundHandle(StringID pathId, SoundHandle& handle) {
+    bool AssetRegistry::GetLoadedSoundHandle(SoundID pathId, SoundHandle& handle) {
         std::lock_guard<std::mutex> lock(m_pathMutex);
         auto it = m_loadedSounds.find(pathId);
         if (it != m_loadedSounds.end()) {
@@ -58,12 +59,12 @@ namespace dalia {
         return false;
     }
 
-    void AssetRegistry::RegisterLoadedSound(StringID pathId, SoundHandle handle) {
+    void AssetRegistry::RegisterLoadedSound(SoundID pathId, SoundHandle handle) {
         std::lock_guard<std::mutex> lock(m_pathMutex);
         m_loadedSounds[pathId] = handle;
     }
 
-    void AssetRegistry::UnregisterLoadedSound(StringID pathId) {
+    void AssetRegistry::UnregisterLoadedSound(SoundID pathId) {
         std::lock_guard<std::mutex> lock(m_pathMutex);
         m_loadedSounds.erase(pathId);
     }

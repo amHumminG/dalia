@@ -9,7 +9,8 @@
 // #include "resources/EventDescriptor"
 // #include "resources/BankRepresentation"
 
-#include "StringId.h"
+#include "core/Types.h"
+
 #include <unordered_map>
 #include <mutex>
 
@@ -28,9 +29,9 @@ namespace dalia {
         ResidentSound* GetResidentSound(SoundHandle handle);
         StreamSound* GetStreamSound(SoundHandle handle);
 
-        bool GetLoadedSoundHandle(StringID pathId, SoundHandle& handle);
-        void RegisterLoadedSound(StringID pathId, SoundHandle handle);
-        void UnregisterLoadedSound(StringID pathId);
+        bool GetLoadedSoundHandle(SoundID pathId, SoundHandle& handle);
+        void RegisterLoadedSound(SoundID pathId, SoundHandle handle);
+        void UnregisterLoadedSound(SoundID pathId);
 
         // bool GetEventBlueprint(uint32_t eventHash, EventBlueprint& blueprint);
         // bool RegisterEvent(uint32_t eventHash, const EventBlueprint blueprint);
@@ -41,7 +42,7 @@ namespace dalia {
         ResourcePool<ResidentSound> m_residentSoundPool;
         ResourcePool<StreamSound> m_streamSoundPool;
 
-        std::unordered_map<StringID, SoundHandle> m_loadedSounds;
+        std::unordered_map<SoundID, SoundHandle> m_loadedSounds;
         std::mutex m_pathMutex;
 
         // std::unordered_map<StringID, EventBlueprint> m_events;

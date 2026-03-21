@@ -1,6 +1,9 @@
 #pragma once
+#include "common/StringID.h"
 
 namespace dalia {
+
+    using SoundID = StringID;
 
     // Asset lifecycles
     enum class LoadState : uint8_t {

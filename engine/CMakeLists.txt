@@ -64,10 +64,10 @@ set(ENGINE_FILES
     src/resources/AssetRegistry.cpp
     src/resources/AssetRegistry.h
     src/resources/StreamSound.h
-    src/core/States.h
     src/core/Utility.cpp
     src/core/Utility.h
     include/dalia/audio/SoundHandle.h
+    src/core/Types.h
 )
 
 add_library(dalia_engine STATIC ${ENGINE_FILES})
