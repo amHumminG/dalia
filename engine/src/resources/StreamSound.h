@@ -1,6 +1,6 @@
 #pragma once
 
-#include "core/States.h"
+#include "core/Types.h"
 #include "core/Constants.h"
 
 #include <cstdint>

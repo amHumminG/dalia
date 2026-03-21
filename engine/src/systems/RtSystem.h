@@ -29,6 +29,7 @@ namespace dalia {
     private:
         void ProcessCommands();
         void Render(float* output, uint32_t frameCount, uint32_t channels);
+        bool AdvanceVirtualVoice(Voice& voice, uint32_t frameCount);
         bool MixVoiceToBus(Voice& voice, uint32_t busIndex, uint32_t frameCount);
         void FreeVoice(uint32_t voiceIndex);
 

@@ -12,18 +12,26 @@ namespace dalia {
 			SwapMixOrder,
 
 			// Voice Lifecycle
-			PrepareVoiceStreaming,
-			PrepareVoiceResident,
+			AllocateVoiceStreaming,
+			AllocateVoiceResident,
 			PlayVoice,
 			PauseVoice,
 			StopVoice,
 
-			// Voice Parameters
+			// Voice Properties
+			SetVoiceParent,
 			SetVoiceVolume,
 			SetVoicePitch,
 			SetVoicePan,
 			SetVoicePosition,
-			SetVoiceVelocity
+			SetVoiceVelocity,
+
+			// Bus Lifecycle
+			AllocateBus,
+			DeallocateBus,
+
+			// Bus Properties
+			SetBusParent
 		};
 
 		Type type = Type::None;
@@ -38,11 +46,13 @@ namespace dalia {
 			struct {
 				uint32_t voiceIndex;
 				uint32_t voiceGeneration;
+			} voice;
 
-				uint32_t streamIndex;
-				uint32_t channels;
-				uint32_t sampleRate;
-			} prepStreaming;
+			struct {
+				uint32_t voiceIndex;
+				uint32_t voiceGeneration;
+				uint32_t parentBusIndex;
+			} voiceParent;
 
 			struct {
 				uint32_t voiceIndex;
@@ -57,7 +67,11 @@ namespace dalia {
 			struct {
 				uint32_t voiceIndex;
 				uint32_t voiceGeneration;
-			} voiceState;
+
+				uint32_t streamIndex;
+				uint32_t channels;
+				uint32_t sampleRate;
+			} prepStreaming;
 
 			struct {
 				uint32_t voiceIndex;
@@ -71,6 +85,11 @@ namespace dalia {
 				float x, y, z;
 			} voiceVector3;
 
+			struct {
+				uint32_t busIndex;
+				uint32_t parentBusIndex;
+			} bus;
+
 		} data = {};
 
 		static RtCommand SwapMixOrder(uint32_t* ptr, uint32_t nodeCount) {
@@ -81,23 +100,10 @@ namespace dalia {
 			return cmd;
 		}
 
-		static RtCommand PrepareVoiceStreaming(uint32_t index, uint32_t generation, uint32_t streamIndex,
-			uint32_t channels, uint32_t sampleRate) {
-			RtCommand cmd;
-			cmd.type = Type::PrepareVoiceStreaming;
-			cmd.data.prepStreaming.voiceIndex = index;
-			cmd.data.prepStreaming.voiceGeneration = generation;
-			cmd.data.prepStreaming.streamIndex = streamIndex;
-
-			cmd.data.prepStreaming.channels = channels;
-			cmd.data.prepStreaming.sampleRate = sampleRate;
-			return cmd;
-		}
-
 		static RtCommand PrepareVoiceResident(uint32_t index, uint32_t generation, const float* dataPtr,
 			uint32_t frameCount, uint32_t channels, uint32_t sampleRate) {
 			RtCommand cmd;
-			cmd.type = Type::PrepareVoiceResident;
+			cmd.type = Type::AllocateVoiceResident;
 			cmd.data.prepResident.voiceIndex = index;
 			cmd.data.prepResident.voiceGeneration = generation;
 
@@ -108,27 +114,49 @@ namespace dalia {
 			return cmd;
 		}
 
+		static RtCommand PrepareVoiceStreaming(uint32_t index, uint32_t generation, uint32_t streamIndex,
+			uint32_t channels, uint32_t sampleRate) {
+			RtCommand cmd;
+			cmd.type = Type::AllocateVoiceStreaming;
+			cmd.data.prepStreaming.voiceIndex = index;
+			cmd.data.prepStreaming.voiceGeneration = generation;
+			cmd.data.prepStreaming.streamIndex = streamIndex;
+
+			cmd.data.prepStreaming.channels = channels;
+			cmd.data.prepStreaming.sampleRate = sampleRate;
+			return cmd;
+		}
+
 		static RtCommand PlayVoice(uint32_t index, uint32_t generation) {
 			RtCommand cmd;
 			cmd.type = Type::PlayVoice;
-			cmd.data.voiceState.voiceIndex = index;
-			cmd.data.voiceState.voiceGeneration = generation;
+			cmd.data.voice.voiceIndex = index;
+			cmd.data.voice.voiceGeneration = generation;
 			return cmd;
 		}
 
 		static RtCommand PauseVoice(uint32_t index, uint32_t generation) {
 			RtCommand cmd;
 			cmd.type = Type::PauseVoice;
-			cmd.data.voiceState.voiceIndex = index;
-			cmd.data.voiceState.voiceGeneration = generation;
+			cmd.data.voice.voiceIndex = index;
+			cmd.data.voice.voiceGeneration = generation;
 			return cmd;
 		}
 
 		static RtCommand StopVoice(uint32_t index, uint32_t generation) {
 			RtCommand cmd;
 			cmd.type = Type::StopVoice;
-			cmd.data.voiceState.voiceIndex = index;
-			cmd.data.voiceState.voiceGeneration = generation;
+			cmd.data.voice.voiceIndex = index;
+			cmd.data.voice.voiceGeneration = generation;
+			return cmd;
+		}
+
+		static RtCommand SetVoiceParent(uint32_t index, uint32_t generation, uint32_t parentBusIndex) {
+			RtCommand cmd;
+			cmd.type = Type::SetVoiceParent;
+			cmd.data.voiceParent.voiceIndex = index;
+			cmd.data.voiceParent.voiceGeneration = generation;
+			cmd.data.voiceParent.parentBusIndex = parentBusIndex;
 			return cmd;
 		}
 
@@ -138,6 +166,29 @@ namespace dalia {
 			cmd.data.voiceFloat.voiceIndex = index;
 			cmd.data.voiceFloat.voiceGeneration = generation;
 			cmd.data.voiceFloat.value = value;
+			return cmd;
+		}
+
+		static RtCommand AllocateBus(uint32_t index, uint32_t parentIndex) {
+			RtCommand cmd;
+			cmd.type = Type::AllocateBus;
+			cmd.data.bus.busIndex = index;
+			cmd.data.bus.parentBusIndex = parentIndex;
+			return cmd;
+		}
+
+		static RtCommand DeallocateBus(uint32_t index) {
+			RtCommand cmd;
+			cmd.type = Type::DeallocateBus;
+			cmd.data.bus.busIndex = index;
+			return cmd;
+		}
+
+		static RtCommand SetBusParent(uint32_t index, uint32_t parentIndex) {
+			RtCommand cmd;
+			cmd.type = Type::SetBusParent;
+			cmd.data.bus.busIndex = index;
+			cmd.data.bus.parentBusIndex = parentIndex;
 			return cmd;
 		}
 	};

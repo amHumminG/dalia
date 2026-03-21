@@ -11,6 +11,8 @@ namespace dalia {
 		AlreadyInitialized			= -3,
 		InvalidHandle				= -4,
 		ExpiredHandle				= -5,
+		BusNotFound					= -6,
+		InvalidRouting				= -8,
 
 		// Messaging Errors
 		RtCommandQueueFull			= -100,

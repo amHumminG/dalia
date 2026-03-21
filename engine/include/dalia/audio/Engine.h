@@ -48,13 +48,23 @@ namespace dalia {
 
 		// --- Loose File Functionality ---
 
-		Result LoadSound(SoundHandle& soundHandle, SoundType type, const char* filepath,
+		Result LoadSoundAsync(SoundHandle& soundHandle, SoundType type, const char* filepath,
 			AssetLoadCallback callback = nullptr, uint32_t* outRequestId = nullptr);
 
 		Result UnloadSound(SoundHandle soundHandle);
 
 		Result CreatePlayback(PlaybackHandle& pbkHandle, SoundHandle soundHandle,
 			AudioEventCallback callback = nullptr);
+
+		// --- Bussing Manipulation ---
+
+		Result CreateBus(const char* identifier, const char* parentIdentifier = "Master");
+
+		Result DestroyBus(const char* identifier);
+
+		Result RouteBus(const char* identifier, const char* parentIdentifier);
+
+		Result RoutePlayback(PlaybackHandle handle, const char* busIdentifier);
 
 
 

@@ -21,10 +21,10 @@ namespace dalia {
 
 		// Calculate the amount of children each bus has
 		for (uint32_t i = 0; i < m_busCapacity; i++) {
-			if (busPoolMirror[i].isBusy) {
+			if (busPoolMirror[i].refCount > 0) {
 				activeBusCount++;
 				uint32_t parentIndex = busPoolMirror[i].parentBusIndex;
-				if (parentIndex != NO_PARENT && busPoolMirror[parentIndex].isBusy) {
+				if (parentIndex != NO_PARENT && busPoolMirror[parentIndex].refCount > 0) {
 					m_pendingChildrenCount[parentIndex]++;
 				}
 			}
@@ -32,7 +32,7 @@ namespace dalia {
 
 		// Find the buses with no children (leaves)
 		for (uint32_t i = 0; i < m_busCapacity; i++) {
-			if (busPoolMirror[i].isBusy && m_pendingChildrenCount[i] == 0) {
+			if (busPoolMirror[i].refCount > 0 && m_pendingChildrenCount[i] == 0) {
 				m_leaves->Push(i);
 			}
 		}
@@ -49,7 +49,7 @@ namespace dalia {
 
 			// Tell the parent that one of its children is sorted
 			uint32_t parentIndex = busPoolMirror[currentBusIndex].parentBusIndex;
-			if (parentIndex != NO_PARENT && busPoolMirror[parentIndex].isBusy) {
+			if (parentIndex != NO_PARENT && busPoolMirror[parentIndex].refCount > 0) {
 				m_pendingChildrenCount[parentIndex]--;
 
 				// If the parent has no more pending children, it is ready to be processed

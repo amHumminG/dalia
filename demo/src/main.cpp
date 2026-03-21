@@ -78,7 +78,7 @@ void TestInterface() {
         // Unified Loading
         if (ImGui::Button("Load to RAM (Resident)", ImVec2(180, 30))) {
             SoundHandle h;
-            lastResult = engine.LoadSound(h, SoundType::Resident, assetPathInput);
+            lastResult = engine.LoadSoundAsync(h, SoundType::Resident, assetPathInput);
             if (lastResult == Result::Ok) {
                 loadedAssets.push_back({assetPathInput, h});
             }
@@ -86,7 +86,7 @@ void TestInterface() {
         ImGui::SameLine();
         if (ImGui::Button("Load to Disk (Stream)", ImVec2(180, 30))) {
             SoundHandle h;
-            lastResult = engine.LoadSound(h, SoundType::Stream, assetPathInput);
+            lastResult = engine.LoadSoundAsync(h, SoundType::Stream, assetPathInput);
             if (lastResult == Result::Ok) {
                 loadedAssets.push_back({assetPathInput, h});
             }
@@ -207,7 +207,7 @@ int main() {
     engine.Init(config);
 
     SoundHandle spidermanSound;
-    engine.LoadSound(spidermanSound, SoundType::Resident, "assets/spiderman.ogg", SpidermanFinishedLoading);
+    engine.LoadSoundAsync(spidermanSound, SoundType::Resident, "assets/spiderman.ogg", SpidermanFinishedLoading);
 
     PlaybackHandle spidermanPlayback;
     engine.CreatePlayback(spidermanPlayback, spidermanSound, SpidermanFinishedPlaying);

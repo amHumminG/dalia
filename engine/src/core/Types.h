@@ -4,6 +4,8 @@
 namespace dalia {
 
     using SoundID = StringID;
+    using BusID = StringID;
+    // using BankID = StringID;
 
     // Asset lifecycles
     enum class LoadState : uint8_t {

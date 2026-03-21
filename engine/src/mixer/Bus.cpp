@@ -4,8 +4,11 @@
 #include <algorithm>
 
 namespace dalia {
-    void Bus::SetName(const std::string& name) {
-        m_name = name;
+
+    void Bus::Reset() {
+        m_parentBusIndex = NO_PARENT;
+
+        m_volume = 1.0f;
     }
 
     void Bus::SetBuffer(std::span<float> buffer) {
