@@ -170,7 +170,7 @@ void TestInterface() {
     }
 
     // --- 5. Cleanup ---
-    engine.Deinit();
+    engine.Shutdown();
     rlImGuiShutdown();
     CloseWindow();
 }
@@ -248,7 +248,7 @@ int main() {
     // engine.Update();
     // std::this_thread::sleep_for(std::chrono::seconds(1));
 
-    engine.Deinit();
+    engine.Shutdown();
 
     return 0;
 }

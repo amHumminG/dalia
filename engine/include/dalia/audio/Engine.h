@@ -42,7 +42,7 @@ namespace dalia {
 		Engine& operator=(const Engine&) = delete;
 
 		Result Init(const EngineConfig& config);
-		Result Deinit();
+		Result Shutdown();
 
 		void Update();
 

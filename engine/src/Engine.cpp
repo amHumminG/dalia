@@ -496,7 +496,7 @@ namespace dalia {
 		return Result::Ok;
 	}
 
-	Result Engine::Deinit() {
+	Result Engine::Shutdown() {
 		if (!IsInitialized(m_state)) {
 			Logger::Log(LogLevel::Warning, "Uninit", "Attempting to deinitialize engine that is not initialized");
 			return Result::NotInitialized;
