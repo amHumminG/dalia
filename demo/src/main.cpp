@@ -206,7 +206,10 @@ int main() {
     config.logLevel = LogLevel::Debug;
     engine.Init(config);
 
+
+    // MUSIC
     engine.CreateBus("Music", "Master");
+    engine.SetBusVolumeDb("Music", -20.0f);
 
     SoundHandle spidermanSound;
     engine.LoadSoundAsync(spidermanSound, SoundType::Resident, "assets/spiderman.ogg", SpidermanFinishedLoading);
@@ -216,6 +219,19 @@ int main() {
     engine.RoutePlayback(spidermanPlayback, "Music");
 
     engine.Play(spidermanPlayback);
+
+    // SFX
+    engine.CreateBus("SFX");
+    engine.SetBusVolumeDb("SFX", 0.0f);
+
+    SoundHandle musicSound;
+    engine.LoadSoundAsync(musicSound, SoundType::Stream, "assets/Faouzia - UNETHICAL.ogg");
+
+    PlaybackHandle musicPlayback;
+    engine.CreatePlayback(musicPlayback, musicSound);
+    engine.RoutePlayback(musicPlayback, "SFX");
+
+    engine.Play(musicPlayback);
 
     while (true) {
         engine.Update();

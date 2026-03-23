@@ -8,7 +8,7 @@ namespace dalia {
     void Bus::Reset() {
         m_parentBusIndex = NO_PARENT;
 
-        m_volume = 1.0f;
+        m_volumeLinear = DEFAULT_VOLUME_LINEAR;
     }
 
     void Bus::SetBuffer(std::span<float> buffer) {
@@ -24,15 +24,15 @@ namespace dalia {
     }
 
     void Bus::ApplyDSP(uint32_t sampleCount) {
-        if (m_volume == 1.0f) return;
+        if (m_volumeLinear == DEFAULT_VOLUME_LINEAR) return;
 
-        if (m_volume <= 0.0f) {
-            std::ranges::fill(m_buffer.subspan(0, sampleCount), 0.0f);
+        if (m_volumeLinear <= MIN_VOLUME_LINEAR) {
+            std::ranges::fill(m_buffer.subspan(0, sampleCount), MIN_VOLUME_LINEAR);
             return;
         }
 
         for (uint32_t i = 0; i < sampleCount; i++) {
-            m_buffer[i] *= m_volume;
+            m_buffer[i] *= m_volumeLinear;
         }
 
         // This is where we apply effects and filters in the future!

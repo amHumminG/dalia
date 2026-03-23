@@ -1,5 +1,6 @@
 #include "resources/AssetRegistry.h"
 #include "core/Types.h"
+#include "core/Logger.h"
 
 namespace dalia {
 

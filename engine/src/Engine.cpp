@@ -6,6 +6,7 @@
 #include "core/SPSCRingBuffer.h"
 #include "core/Constants.h"
 #include "core/Types.h"
+#include "core/Math.h"
 
 #include "messaging/RtCommandQueue.h"
 #include "messaging/RtEventQueue.h"
@@ -149,8 +150,8 @@ namespace dalia {
 			freeStreams = std::make_unique<SPSCRingBuffer<uint32_t>>(streamCapacity);
 			freeBuses	= std::make_unique<FixedStack<uint32_t>>(busCapacity);
 			for (int i = voiceCapacity - 1; i >= 0; i--)	freeVoices->Push(i);
-			for (int i = streamCapacity - 1; i >= 0; i--)	freeStreams->Push(i);
-			for (int i = busCapacity - 1; i >= 1; i--)		freeBuses->Push(i); // Skip Master (index 0)
+			for (int i = 0; i < streamCapacity; i++)	freeStreams->Push(i);     // Queue, dont push in reverse
+			for (int i = busCapacity - 1; i >= 1; i--)		freeBuses->Push(i);   // Skip Master (index 0)
 
 			// Resources
 			assetRegistry = std::make_unique<AssetRegistry>(config.residentSoundCapacity, config.streamSoundCapacity);
@@ -174,6 +175,16 @@ namespace dalia {
 		if (mirror->generation != generation) return Result::ExpiredHandle;
 
 		outMirror = mirror;
+		return Result::Ok;
+	}
+
+	static inline Result ResolveBusIndex(EngineInternalState* state, const char* identifier, uint32_t& outIndex) {
+		const BusID bId(identifier);
+
+		auto it = state->busHashMap.find(bId);
+		if (it == state->busHashMap.end()) return Result::BusNotFound;
+
+		outIndex = it->second;
 		return Result::Ok;
 	}
 
@@ -374,7 +385,7 @@ namespace dalia {
 			Logger::Log(LogLevel::Debug, "TryUpdateMixOrder", "Recompiled mix order (%d buses).", sortedCount);
 		}
 		else {
-			Logger::Log(LogLevel::Critical, "Bus Routing", "Failed to compile mix graph: Cycle detected.");
+			Logger::Log(LogLevel::Critical, "Engine", "Failed to compile mix order: Cycle detected.");
 			state->isMixOrderDirty = false;
 		}
 	}
@@ -391,7 +402,7 @@ namespace dalia {
 
 	Result Engine::Init(const EngineConfig& config) {
 		if (m_state != nullptr) {
-			Logger::Log(LogLevel::Warning, "Engine", "Attempting to initialize engine that is already initialized");
+			Logger::Log(LogLevel::Warning, "API", "Attempting to initialize engine that is already initialized");
 			return Result::AlreadyInitialized;
 		}
 
@@ -424,7 +435,6 @@ namespace dalia {
 
 		// --- Mix Order Setup ---
 		m_state->isMixOrderDirty = true;
-		m_state->isMixOrderSwapPending = false;
 		TryUpdateMixOrder(m_state);
 
 		// --- SYSTEMS SETUP ---
@@ -455,13 +465,13 @@ namespace dalia {
 		ma_device_config deviceConfig	= ma_device_config_init(ma_device_type_playback);
 		deviceConfig.playback.format	= ma_format_f32;
 		deviceConfig.playback.channels	= CHANNELS_STEREO; // Stereo playback only
-		deviceConfig.sampleRate			= 48000; // Hz
+		deviceConfig.sampleRate			= OUTPUT_SAMPLE_RATE; // Hz
 		deviceConfig.dataCallback		= data_callback;
 		deviceConfig.periodSizeInFrames = 480;
 		deviceConfig.pUserData			= m_state->rtSystem.get();
 
 		if (ma_device_init(NULL, &deviceConfig, m_state->device.get()) != MA_SUCCESS) {
-			Logger::Log(LogLevel::Critical, "Device", "Failed to initialize playback device");
+			Logger::Log(LogLevel::Critical, "Init", "Failed to initialize playback device");
 			delete m_state;
 			m_state = nullptr;
 			return Result::DeviceFailed;
@@ -474,26 +484,27 @@ namespace dalia {
 
 		// Audio Thread Start
 		if (ma_device_start(m_state->device.get()) != MA_SUCCESS) {
-			Logger::Log(LogLevel::Critical, "Device", "Failed to start playback device");
+			Logger::Log(LogLevel::Critical, "Init", "Failed to start playback device");
 			delete m_state;
 			m_state = nullptr;
 			return Result::DeviceFailed;
 		}
 
 		m_state->initialized = true;
-		Logger::Log(LogLevel::Info, "Engine", "Initialized engine");
+		Logger::Log(LogLevel::Info, "Init", "Initialized engine");
+		DALIA_LOG_INFO("API", "Initialized engine");
 		return Result::Ok;
 	}
 
 	Result Engine::Deinit() {
 		if (!IsInitialized(m_state)) {
-			Logger::Log(LogLevel::Warning, "Engine", "Attempting to deinitialize engine that is not initialized");
+			Logger::Log(LogLevel::Warning, "Uninit", "Attempting to deinitialize engine that is not initialized");
 			return Result::NotInitialized;
 		}
 
 		// --- Audio Thread Stop ---
 		if (ma_device_stop(m_state->device.get()) != MA_SUCCESS) {
-			Logger::Log(LogLevel::Critical, "Device", "Failed to stop playback device");
+			Logger::Log(LogLevel::Critical, "Deinit", "Failed to stop playback device");
 			return Result::DeviceFailed;
 		}
 		ma_device_uninit(m_state->device.get());
@@ -505,7 +516,7 @@ namespace dalia {
 		delete m_state;
 		m_state = nullptr;
 
-		Logger::Log(LogLevel::Info, "Engine", "Deinitialized engine");
+		Logger::Log(LogLevel::Info, "Deinit", "Deinitialized engine");
 		Logger::Deinit();
 
 		return Result::Ok;
@@ -559,11 +570,13 @@ namespace dalia {
 		soundHandle = m_state->assetRegistry->AllocateSound(soundType);
 		if (!soundHandle.IsValid()) {
 			if (soundType == SoundType::Resident) {
-				Logger::Log(LogLevel::Error, "Engine", "Failed to load sound. Resident sound pool exhausted.");
+				Logger::Log(LogLevel::Error, "LoadSoundAsync",
+					"Failed to load sound. Resident sound pool exhausted.");
 				return Result::ResidentSoundPoolExhausted;
 			}
 			else if (soundType == SoundType::Stream) {
-				Logger::Log(LogLevel::Error, "Engine", "Failed to load sound. Stream sound pool exhausted.");
+				Logger::Log(LogLevel::Error, "LoadSoundAsync",
+					"Failed to load sound. Stream sound pool exhausted.");
 				return Result::StreamSoundPoolExhausted;
 			}
 		}
@@ -627,8 +640,8 @@ namespace dalia {
 					vMirror.Reset();
 					m_state->freeVoices->Push(it->voiceIndex);
 
-					Logger::Log(LogLevel::Debug, "Engine", "Aborted deferred playback for voice %d due to unload.",
-						it->voiceIndex);
+					Logger::Log(LogLevel::Debug, "UnloadSound",
+						"Aborted deferred playback for voice %d due to unload.", it->voiceIndex);
 					it = m_state->pendingPlaybacks.erase(it);
 				}
 				else it++;
@@ -642,7 +655,7 @@ namespace dalia {
 					pendingUnload.voicesToStop.push_back(VoiceID(i, vMirror.generation));
 
 					m_state->rtCommands->Enqueue(RtCommand::StopVoice(i, vMirror.generation));
-					Logger::Log(LogLevel::Debug, "Engine", "Commanded to stop voice: %d", i);
+					Logger::Log(LogLevel::Debug, "UnloadSound", "Commanded to stop voice: %d", i);
 					}
 			}
 
@@ -651,10 +664,208 @@ namespace dalia {
 			}
 			else {
 				m_state->assetRegistry->FreeSound(soundHandle);
-				Logger::Log(LogLevel::Debug, "Engine", "Unloaded sound with handle %d (instant)",
+				Logger::Log(LogLevel::Debug, "UnloadSound", "Unloaded sound with handle %d (instant)",
 					soundHandle.GetUUID());
 			}
 		}
+
+		return Result::Ok;
+	}
+
+	Result Engine::CreateBus(const char* identifier, const char* parentIdentifier) {
+		if (!IsInitialized(m_state)) return Result::NotInitialized;
+
+		const BusID bId(identifier);
+		const BusID bParentId(parentIdentifier);
+		uint32_t bIndex;
+		uint32_t bIndexParent = NO_PARENT;
+		bool parentFound = false;
+
+		// Fetch parent bus
+		Result resParent = ResolveBusIndex(m_state, parentIdentifier, bIndexParent);
+		if (resParent == Result::Ok) parentFound = true;
+
+		// Fetch bus
+		Result res = ResolveBusIndex(m_state, identifier, bIndex);
+		if (res == Result::Ok) {
+			BusMirror& bMirror  = m_state->busPoolMirror[bIndex];
+			bMirror.refCount++;
+
+			if (parentFound && bMirror.parentBusIndex != bIndexParent) {
+				Logger::Log(LogLevel::Warning, "CreateBus",
+					"CreateBus called for existing bus (%s) with conflicting parent. Ignoring new parent.",
+					identifier);
+			}
+			return Result::Ok;
+		}
+
+		if (!parentFound) {
+			Logger::Log(LogLevel::Error, "CreateBus",
+			"Failed to create bus with routing (%s -> %s). No bus with identifier (%s) exists.",
+			identifier, parentIdentifier, parentIdentifier);
+			return resParent;
+		}
+
+		// Bus does not exist yet
+		if (!m_state->freeBuses->Pop(bIndex)) {
+			Logger::Log(LogLevel::Error, "CreateBus", "Failed to create bus (%s). Bus pool exhausted.",
+				identifier);
+			return Result::BusPoolExhausted;
+		}
+
+		BusMirror& bMirror = m_state->busPoolMirror[bIndex];
+		bMirror.refCount = 1;
+		bMirror.parentBusIndex = bIndexParent;
+
+		m_state->busHashMap[bId] = bIndex;
+#if DALIA_DEBUG
+		m_state->busDebugNames[bId] = identifier;
+#endif
+
+		Logger::Log(LogLevel::Debug, "CreateBus", "Created bus with routing %d -> %d.",
+			bIndex, bIndexParent);
+		Logger::Log(LogLevel::Debug, "CreateBus", "Created bus with routing %s -> %s.",
+			identifier, parentIdentifier);
+		m_state->rtCommands->Enqueue(RtCommand::AllocateBus(bIndex, bIndexParent));
+		m_state->isMixOrderDirty = true;
+
+		return Result::Ok;
+	}
+
+	Result Engine::DestroyBus(const char* identifier) {
+		if (!IsInitialized(m_state)) return Result::NotInitialized;
+
+		auto it = m_state->busHashMap.find(BusID(identifier));
+		if (it == m_state->busHashMap.end()) {
+			Logger::Log(LogLevel::Error, "DestroyBus", "Failed to destroy bus (%s). Bus does not exist.",
+				identifier);
+			return Result::BusNotFound;
+		}
+		uint32_t bIndex = it->second;
+
+		if (bIndex == MASTER_BUS_INDEX) {
+			Logger::Log(LogLevel::Warning, "DestroyBus", "Failed to destroy bus (%s). Master cannot be destroyed.",
+				identifier);
+			return Result::Error;
+		}
+
+		BusMirror& bMirror = m_state->busPoolMirror[bIndex];
+
+		if (bMirror.refCount > 1) {
+			bMirror.refCount--;
+			return Result::Ok;
+		}
+
+		Logger::Log(LogLevel::Debug, "DestroyBus", "Destroying bus %s (index: %d).", identifier, bIndex);
+
+		// Reference count is 1 -> Destroy bus
+		// Remove parent from child buses
+		for (uint32_t i = 0; i < m_state->busCapacity; i++) {
+			BusMirror* bMirrorChild = &m_state->busPoolMirror[i];
+			if (bMirrorChild->parentBusIndex == bIndex) {
+				bMirrorChild->parentBusIndex = NO_PARENT;
+				m_state->rtCommands->Enqueue(RtCommand::SetBusParent(i, NO_PARENT));
+				Logger::Log(LogLevel::Debug, "DestroyBus", "Orphaned bus (index: %d).", i);
+			}
+		}
+
+		for (uint32_t i = 0; i < m_state->voiceCapacity; i++) {
+			VoiceMirror& vMirrorChild = m_state->voicePoolMirror[i];
+			if (vMirrorChild.parentBusIndex == bIndex) {
+				vMirrorChild.parentBusIndex = NO_PARENT;
+				m_state->rtCommands->Enqueue(RtCommand::SetVoiceParent(i, vMirrorChild.generation, NO_PARENT));
+				Logger::Log(LogLevel::Debug, "DestroyBus", "Orphaned voice (index: %d).", i);
+			}
+		}
+
+		bMirror.Reset();
+		m_state->busHashMap.erase(it);
+#if DALIA_DEBUG
+		m_state->busDebugNames.erase(BusID(identifier));
+#endif
+
+		m_state->freeBuses->Push(bIndex);
+
+		Logger::Log(LogLevel::Debug, "DestroyBus", "Destroyed bus %s (index: %d).", identifier, bIndex);
+		m_state->rtCommands->Enqueue(RtCommand::DeallocateBus(bIndex));
+		m_state->isMixOrderDirty = true;
+
+		return Result::Ok;
+	}
+
+	Result Engine::RouteBus(const char* identifier, const char* parentIdentifier) {
+		if (!IsInitialized(m_state)) return Result::NotInitialized;
+
+		const BusID bId(identifier);
+		const BusID bParentId(parentIdentifier);
+
+		// Fetch bus
+		uint32_t bIndex;
+		Result res = ResolveBusIndex(m_state, identifier, bIndex);
+		if (res != Result::Ok) {
+			Logger::Log(LogLevel::Error, "RouteBus",
+				"Failed to route bus (%s -> %s). No bus with identifier (%s) exists.",
+				identifier, parentIdentifier, identifier);
+			return res;
+		}
+
+
+		if (bIndex == MASTER_BUS_INDEX) {
+			Logger::Log(LogLevel::Error, "RouteBus",
+			"Failed to route bus (%s -> %s). Master cannot be routed.", identifier, parentIdentifier);
+			return Result::InvalidRouting;
+		}
+
+		// Fetch parent bus
+		uint32_t bIndexParent;
+		Result resParent = ResolveBusIndex(m_state, identifier, bIndexParent);
+		if (resParent != Result::Ok) {
+			Logger::Log(LogLevel::Error, "RouteBus",
+			"Failed to route bus (%s -> %s). No bus with identifier (%s) exists.",
+			identifier, parentIdentifier, parentIdentifier);
+			return resParent;
+		}
+
+		// Cycle detection
+		uint32_t currentAncestor = bIndexParent;
+		while (currentAncestor != NO_PARENT) {
+			if (currentAncestor == bIndex) {
+				Logger::Log(LogLevel::Error, "RouteBus", "Failed to route bus (%s -> %s). Bus graph cycle detected.",
+					identifier, parentIdentifier);
+				return Result::InvalidRouting;
+			}
+			currentAncestor = m_state->busPoolMirror[currentAncestor].parentBusIndex;
+		}
+
+		BusMirror& bMirror = m_state->busPoolMirror[bIndex];
+		bMirror.parentBusIndex = bIndexParent;
+
+		Logger::Log(LogLevel::Debug, "RouteBus", "Routed bus %s (index: %d) -> %s (index: %d).",
+			identifier, bIndex, parentIdentifier, bIndexParent);
+		m_state->rtCommands->Enqueue(RtCommand::SetBusParent(bIndex, bIndexParent));
+		m_state->isMixOrderDirty = true;
+
+		return Result::Ok;
+	}
+
+	Result Engine::SetBusVolumeDb(const char* identifier, float volumeDb) {
+		if (!IsInitialized(m_state)) return Result::NotInitialized;
+
+		// Fetch bus
+		uint32_t bIndex;
+		Result res = ResolveBusIndex(m_state, identifier, bIndex);
+		if (res != Result::Ok) {
+			Logger::Log(LogLevel::Error, "RouteBus",
+				"Failed to set bus volume. No bus with identifier (%s) exists.", identifier);
+			return res;
+		}
+
+		float clampedVolumeDb = std::clamp(volumeDb, MIN_VOLUME_DB, MAX_VOLUME_DB);
+		m_state->busPoolMirror[bIndex].volumeDb = clampedVolumeDb;
+
+		m_state->rtCommands->Enqueue(RtCommand::SetBusVolume(bIndex, DbToLinear(clampedVolumeDb)));
+
+		Logger::Log(LogLevel::Debug, "Engine", "Set bus (%s) volume to %f dB", identifier, clampedVolumeDb);
 
 		return Result::Ok;
 	}
@@ -679,19 +890,20 @@ namespace dalia {
 		}
 
 		if (soundLoadState == LoadState::Error) {
-			Logger::Log(LogLevel::Error, "Engine", "Failed to play sound. Sound loading failed.");
+			Logger::Log(LogLevel::Error, "CreatePlayback",
+				"Failed to play sound. Sound loading failed.");
 			return Result::SoundLoadError;
 		}
 
 		uint32_t voiceIndex;
 		if (!m_state->freeVoices->Pop(voiceIndex)) {
-			Logger::Log(LogLevel::Error, "Engine", "Failed to create playback instance. Voice pool exhausted.");
+			Logger::Log(LogLevel::Error, "CreatePlayback",
+				"Failed to create playback instance. Voice pool exhausted.");
 			return Result::VoicePoolExhausted;
 		}
 
 		// Prime voice mirror
 		VoiceMirror& vMirror = m_state->voicePoolMirror[voiceIndex];
-		vMirror.generation++;
 		vMirror.state = VoiceState::Inactive;
 		vMirror.soundType = soundType;
 		vMirror.assetUuid = soundHandle.GetUUID();
@@ -705,7 +917,8 @@ namespace dalia {
 				soundHandle.GetUUID()
 			});
 			vMirror.pendingLoad = true;
-			Logger::Log(LogLevel::Debug, "Engine", "Deferring playback for voice %d. Sound not yet loaded.",
+			Logger::Log(LogLevel::Debug, "CreatePlayback",
+				"Deferring playback for voice %d. Sound not yet loaded.",
 				voiceIndex);
 
 			pbkHandle = PlaybackHandle::Create(voiceIndex, vMirror.generation);
@@ -747,183 +960,6 @@ namespace dalia {
 		return Result::Ok;
 	}
 
-	Result Engine::CreateBus(const char* identifier, const char* parentIdentifier) {
-		if (!IsInitialized(m_state)) return Result::NotInitialized;
-
-		const BusID bId(identifier);
-		const BusID bParentId(parentIdentifier);
-		uint32_t bIndex;
-		uint32_t bIndexParent = NO_PARENT;
-		bool parentFound = false;
-
-		// Fetch parent bus
-		auto parentIt = m_state->busHashMap.find(bParentId);
-		if (parentIt != m_state->busHashMap.end()) {
-			parentFound = true;
-			bIndexParent = parentIt->second;
-		}
-
-		// Fetch bus
-		auto it = m_state->busHashMap.find(bId);
-		if (it != m_state->busHashMap.end()) {
-			bIndex = it->second;
-			BusMirror& bMirror  = m_state->busPoolMirror[bIndex];
-			bMirror.refCount++;
-
-			if (parentFound && bMirror.parentBusIndex != bIndexParent) {
-				Logger::Log(LogLevel::Warning, "CreateBus",
-					"CreateBus called for existing bus (%s) with conflicting parent. Ignoring new parent.",
-					identifier);
-			}
-			return Result::Ok;
-		}
-
-		if (!parentFound) {
-			Logger::Log(LogLevel::Error, "CreateBus",
-			"Failed to create bus with routing (%s -> %s). No bus with identifier (%s) exists.",
-			identifier, parentIdentifier, parentIdentifier);
-			return Result::BusNotFound;
-		}
-
-		// Bus does not exist yet
-		if (!m_state->freeBuses->Pop(bIndex)) {
-			Logger::Log(LogLevel::Error, "CreateBus", "Failed to create bus (%s). Bus pool exhausted.",
-				identifier);
-			return Result::BusPoolExhausted;
-		}
-
-		BusMirror& bMirror = m_state->busPoolMirror[bIndex];
-		bMirror.refCount = 1;
-		bMirror.parentBusIndex = bIndexParent;
-
-		m_state->busHashMap[bId] = bIndex;
-#if DALIA_DEBUG
-		m_state->busDebugNames[bId] = identifier;
-#endif
-
-		Logger::Log(LogLevel::Debug, "CreateBus", "Created bus with routing %d -> %d.",
-			bIndex, bIndexParent);
-		Logger::Log(LogLevel::Debug, "CreateBus", "Created bus with routing %s -> %s.",
-			identifier, parentIdentifier);
-		m_state->rtCommands->Enqueue(RtCommand::AllocateBus(bIndex, bIndexParent));
-		m_state->isMixOrderDirty = true;
-
-		return Result::Ok;
-	}
-
-	Result Engine::DestroyBus(const char* identifier) {
-		if (!IsInitialized(m_state)) return Result::NotInitialized;
-
-		const BusID bId(identifier);
-
-		auto it = m_state->busHashMap.find(bId);
-		if (it == m_state->busHashMap.end()) {
-			Logger::Log(LogLevel::Warning, "Engine", "Failed to destroy bus (%s). Bus does not exist.",
-				identifier);
-			return Result::BusNotFound;
-		}
-		uint32_t bIndex = it->second;
-
-		if (bIndex == MASTER_BUS_INDEX) {
-			Logger::Log(LogLevel::Warning, "Engine", "Failed to destroy bus (%s). Master cannot be destroyed.",
-				identifier);
-			return Result::Error;
-		}
-
-		BusMirror& bMirror = m_state->busPoolMirror[bIndex];
-
-		if (bMirror.refCount > 1) {
-			bMirror.refCount--;
-			return Result::Ok;
-		}
-
-		Logger::Log(LogLevel::Debug, "DestroyBus", "Destroying bus %s (index: %d).", identifier, bIndex);
-
-		// Reference count is 1 -> Destroy bus
-		// Remove parent from child buses
-		for (uint32_t i = 0; i < m_state->busCapacity; i++) {
-			BusMirror* bMirrorChild = &m_state->busPoolMirror[i];
-			if (bMirrorChild->parentBusIndex == bIndex) {
-				bMirrorChild->parentBusIndex = NO_PARENT;
-				m_state->rtCommands->Enqueue(RtCommand::SetBusParent(i, NO_PARENT));
-				Logger::Log(LogLevel::Debug, "DestroyBus", "Orphaned bus (index: %d).", i);
-			}
-		}
-
-		for (uint32_t i = 0; i < m_state->voiceCapacity; i++) {
-			VoiceMirror& vMirrorChild = m_state->voicePoolMirror[i];
-			if (vMirrorChild.parentBusIndex == bIndex) {
-				vMirrorChild.parentBusIndex = NO_PARENT;
-				m_state->rtCommands->Enqueue(RtCommand::SetVoiceParent(i, vMirrorChild.generation, NO_PARENT));
-				Logger::Log(LogLevel::Debug, "DestroyBus", "Orphaned voice (index: %d).", i);
-			}
-		}
-
-		bMirror.Reset();
-		m_state->busHashMap.erase(it);
-		m_state->freeBuses->Push(bIndex);
-
-		Logger::Log(LogLevel::Debug, "DestroyBus", "Destroyed bus %s (index: %d).", identifier, bIndex);
-		m_state->rtCommands->Enqueue(RtCommand::DeallocateBus(bIndex));
-		m_state->isMixOrderDirty = true;
-
-		return Result::Ok;
-	}
-
-	Result Engine::RouteBus(const char* identifier, const char* parentIdentifier) {
-		if (!IsInitialized(m_state)) return Result::NotInitialized;
-
-		const BusID bId(identifier);
-		const BusID bParentId(parentIdentifier);
-
-		// Fetch bus
-		auto it = m_state->busHashMap.find(bId);
-		if (it == m_state->busHashMap.end()) {
-			Logger::Log(LogLevel::Error, "RouteBus",
-				"Failed to route bus (%s -> %s). No bus with identifier (%s) exists.",
-				identifier, parentIdentifier, identifier);
-			return Result::BusNotFound;
-		}
-		uint32_t bIndex = it->second;
-
-		if (bIndex == MASTER_BUS_INDEX) {
-			Logger::Log(LogLevel::Error, "RouteBus",
-			"Failed to route bus (%s -> %s). Master cannot be routed.", identifier, parentIdentifier);
-			return Result::InvalidRouting;
-		}
-
-		// Fetch parent bus
-		auto parentIt = m_state->busHashMap.find(bParentId);
-		if (parentIt == m_state->busHashMap.end()) {
-			Logger::Log(LogLevel::Error, "RouteBus",
-			"Failed to route bus (%s -> %s). No bus with identifier (%s) exists.",
-			identifier, parentIdentifier, parentIdentifier);
-			return Result::BusNotFound;
-		}
-		uint32_t bIndexParent = parentIt->second;
-
-		// Cycle detection
-		uint32_t currentAncestor = bIndexParent;
-		while (currentAncestor != NO_PARENT) {
-			if (currentAncestor == bIndex) {
-				Logger::Log(LogLevel::Error, "RouteBus", "Failed to route bus (%s -> %s). Bus graph cycle detected.",
-					identifier, parentIdentifier);
-				return Result::InvalidRouting;
-			}
-			currentAncestor = m_state->busPoolMirror[currentAncestor].parentBusIndex;
-		}
-
-		BusMirror& bMirror = m_state->busPoolMirror[bIndex];
-		bMirror.parentBusIndex = bIndexParent;
-
-		Logger::Log(LogLevel::Debug, "RouteBus", "Routed bus %s (index: %d) -> %s (index: %d).",
-			identifier, bIndex, parentIdentifier, bIndexParent);
-		m_state->rtCommands->Enqueue(RtCommand::SetBusParent(bIndex, bIndexParent));
-		m_state->isMixOrderDirty = true;
-
-		return Result::Ok;
-	}
-
 	Result Engine::RoutePlayback(PlaybackHandle handle, const char* busIdentifier) {
 		if (!IsInitialized(m_state)) return Result::NotInitialized;
 
@@ -932,18 +968,17 @@ namespace dalia {
 
 		// Fetch voice mirror
 		VoiceMirror* vMirror = nullptr;
-		Result res = ResolveVoiceMirror(m_state, vIndex, vGeneration, vMirror);
-		if (res != Result::Ok) return res;
+		Result resVoice = ResolveVoiceMirror(m_state, vIndex, vGeneration, vMirror);
+		if (resVoice != Result::Ok) return resVoice;
 
 		// Fetch bus
-		const BusID bId(busIdentifier);
-		auto it = m_state->busHashMap.find(bId);
-		if (it == m_state->busHashMap.end()) {
+		uint32_t bIndex;
+		Result resBus = ResolveBusIndex(m_state, busIdentifier, bIndex);
+		if (resBus != Result::Ok) {
 			Logger::Log(LogLevel::Error, "RoutePlayback",
 				"Failed to route playback. No bus with identifier (%s) exists.", busIdentifier);
-			return Result::BusNotFound;
+			return resBus;
 		}
-		uint32_t bIndex = it->second;
 
 		Logger::Log(LogLevel::Debug, "RoutePlayback", "Routed voice (index: %d) to bus %s (index: %d).",
 			vIndex, busIdentifier, bIndex);
@@ -967,14 +1002,14 @@ namespace dalia {
 		// Deffered playback
 		if (vMirror->pendingLoad) {
 			vMirror->state = VoiceState::Playing;
-			Logger::Log(LogLevel::Warning, "Engine",
+			Logger::Log(LogLevel::Warning, "Play",
 				"Calling play on asset that is still loading. Will play when finished loading.");
 			return Result::Ok;
 		}
 
 		// Check for double calls
 		if (vMirror->state == VoiceState::Playing) {
-			Logger::Log(LogLevel::Warning, "Engine", "Calling play on handle already set to play.");
+			Logger::Log(LogLevel::Warning, "Play", "Calling play on handle already set to play.");
 			return Result::Ok;
 		}
 
@@ -985,6 +1020,8 @@ namespace dalia {
 		vMirror->state = VoiceState::Playing;
 		RtCommand cmd = RtCommand::PlayVoice(vIndex, vGeneration);
 		m_state->rtCommands->Enqueue(cmd);
+
+		Logger::Log(LogLevel::Debug, "Engine", "Calling play on handle for voice %d", vIndex);
 
 		return Result::Ok;
 	}
@@ -1001,7 +1038,8 @@ namespace dalia {
 		if (res != Result::Ok) return res;
 
 		if (vMirror->state != VoiceState::Playing) {
-			Logger::Log(LogLevel::Warning, "Engine", "Failed to pause voice %d. Not currently playing.", vIndex);
+			Logger::Log(LogLevel::Warning, "Pause", "Failed to pause voice %d. Not currently playing.",
+				vIndex);
 			return Result::Ok;
 		}
 		vMirror->state = VoiceState::Paused;
@@ -1028,7 +1066,7 @@ namespace dalia {
 				if (it->voiceIndex == vIndex) {
 					vMirror->Reset();
 					m_state->freeVoices->Push(vIndex);
-					Logger::Log(LogLevel::Debug, "Engine",
+					Logger::Log(LogLevel::Debug, "Stop",
 					"Stopped voice %d before it started playing.", vIndex);
 					it = m_state->pendingPlaybacks.erase(it);
 					return Result::Ok;

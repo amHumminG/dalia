@@ -31,7 +31,8 @@ namespace dalia {
 			DeallocateBus,
 
 			// Bus Properties
-			SetBusParent
+			SetBusParent,
+			SetBusVolume
 		};
 
 		Type type = Type::None;
@@ -89,6 +90,11 @@ namespace dalia {
 				uint32_t busIndex;
 				uint32_t parentBusIndex;
 			} bus;
+
+			struct {
+				uint32_t busIndex;
+				float value;
+			} busFloat;
 
 		} data = {};
 
@@ -160,7 +166,7 @@ namespace dalia {
 			return cmd;
 		}
 
-		static RtCommand SetVolume(uint32_t index, uint32_t generation, float value) {
+		static RtCommand SetVoiceVolume(uint32_t index, uint32_t generation, float value) {
 			RtCommand cmd;
 			cmd.type = Type::SetVoiceVolume;
 			cmd.data.voiceFloat.voiceIndex = index;
@@ -189,6 +195,14 @@ namespace dalia {
 			cmd.type = Type::SetBusParent;
 			cmd.data.bus.busIndex = index;
 			cmd.data.bus.parentBusIndex = parentIndex;
+			return cmd;
+		}
+
+		static RtCommand SetBusVolume(uint32_t index, float volume) {
+			RtCommand cmd;
+			cmd.type = Type::SetBusVolume;
+			cmd.data.busFloat.busIndex = index;
+			cmd.data.busFloat.value = volume;
 			return cmd;
 		}
 	};

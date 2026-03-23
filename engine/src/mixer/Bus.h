@@ -21,7 +21,7 @@ namespace dalia {
         uint32_t m_parentBusIndex = NO_PARENT;
 
         // Mixing Properties
-        float m_volume = 1.0f;
+        float m_volumeLinear = DEFAULT_VOLUME_LINEAR; // Stored as linear amplitude
 
     private:
         std::span<float> m_buffer;
@@ -33,13 +33,13 @@ namespace dalia {
         uint32_t parentBusIndex = NO_PARENT;
 
         // Mixing Properties
-        float volume = 1.0f;
+        float volumeDb = DEFAULT_VOLUME_DB; // Stored in decibels
 
         void Reset() {
             refCount = 0;
             parentBusIndex = NO_PARENT;
 
-            volume = 1.0f;
+            volumeDb = DEFAULT_VOLUME_DB;
         }
     };
 }

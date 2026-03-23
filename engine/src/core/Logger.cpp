@@ -57,7 +57,7 @@ namespace dalia {
 			if (m_sink) {
 				m_sink(entry.level, entry.category, entry.message);
 			}
-			std::printf("[DALIA %s] %s: %s\n", GetLevelString(entry.level), entry.category, entry.message);
+			std::printf("[DALIA %s] [%s] %s\n", GetLevelString(entry.level), entry.category, entry.message);
 			didPrint = true;
 		}
 

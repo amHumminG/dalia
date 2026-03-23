@@ -1,6 +1,6 @@
 #pragma once
 #include "core/FixedStack.h"
-#include "core/Logger.h"
+#include "core/Constants.h"
 #include <memory>
 #include <cstdint>
 
@@ -36,6 +36,7 @@ namespace dalia {
             if (index >= m_capacity) return;
             if (m_slots[index].generation == generation) {
                 m_slots[index].generation++;
+                if (m_slots[index].generation == INVALID_GENERATION) m_slots[index].generation = START_GENERATION;
                 m_freeSlotsIndices.Push(index);
             }
         }
@@ -50,7 +51,7 @@ namespace dalia {
     private:
         struct Slot {
             T resource;
-            uint32_t generation = 1;
+            uint32_t generation = START_GENERATION;
         };
 
         uint32_t m_capacity;

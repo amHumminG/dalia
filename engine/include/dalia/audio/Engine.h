@@ -53,9 +53,6 @@ namespace dalia {
 
 		Result UnloadSound(SoundHandle soundHandle);
 
-		Result CreatePlayback(PlaybackHandle& pbkHandle, SoundHandle soundHandle,
-			AudioEventCallback callback = nullptr);
-
 		// --- Bussing Manipulation ---
 
 		Result CreateBus(const char* identifier, const char* parentIdentifier = "Master");
@@ -64,8 +61,7 @@ namespace dalia {
 
 		Result RouteBus(const char* identifier, const char* parentIdentifier);
 
-		Result RoutePlayback(PlaybackHandle handle, const char* busIdentifier);
-
+		Result SetBusVolumeDb(const char* identifier, float volumeDb);
 
 
 		// --- Soundbank Functionality ---
@@ -79,11 +75,17 @@ namespace dalia {
 
 		// --- Playback manipulation ---
 
+		Result CreatePlayback(PlaybackHandle& pbkHandle, SoundHandle soundHandle,
+			AudioEventCallback callback = nullptr);
+
+		Result RoutePlayback(PlaybackHandle handle, const char* busIdentifier);
+
 		Result Play(PlaybackHandle handle);
 
 		Result Pause(PlaybackHandle handle);
 
 		Result Stop(PlaybackHandle handle);
+
 
 	private:
 		EngineInternalState* m_state = nullptr;

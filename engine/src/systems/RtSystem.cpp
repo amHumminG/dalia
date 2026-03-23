@@ -89,8 +89,20 @@ namespace dalia {
 
 	            	break;
 	            }
-                case RtCommand::Type::PlayVoice: {
-                    uint32_t voiceIndex = cmd.data.voice.voiceIndex;
+				case RtCommand::Type::SetVoiceParent: {
+	            	uint32_t voiceIndex = cmd.data.voiceParent.voiceIndex;
+	            	uint32_t expectedVoiceGen = cmd.data.voiceParent.voiceGeneration;
+	            	uint32_t newParentIndex = cmd.data.voiceParent.parentBusIndex;
+	            	Voice& voice = m_voicePool[voiceIndex];
+
+	            	// Check for outdated command
+	            	if (voice.generation != expectedVoiceGen) break;
+
+	            	voice.parentBusIndex = newParentIndex;
+	            	break;
+				}
+				case RtCommand::Type::PlayVoice: {
+	            	uint32_t voiceIndex = cmd.data.voice.voiceIndex;
 	            	uint32_t expectedVoiceGen = cmd.data.voice.voiceGeneration;
 	            	Voice& voice = m_voicePool[voiceIndex];
 
@@ -101,8 +113,9 @@ namespace dalia {
 	            		Logger::Log(LogLevel::Debug, "RtSystem", "Voice %d set to playing", voiceIndex);
 	            		voice.state = VoiceState::Playing;
 	            	}
+
 	            	break;
-                }
+				}
                 case RtCommand::Type::PauseVoice: {
 	            	uint32_t voiceIndex = cmd.data.voice.voiceIndex;
 	            	uint32_t expectedVoiceGen = cmd.data.voice.voiceGeneration;
@@ -143,7 +156,20 @@ namespace dalia {
 	            	m_busPool[busIndex].Reset();
 	            	break;
 				}
+				case RtCommand::Type::SetBusParent: {
+	            	uint32_t busIndex = cmd.data.bus.busIndex;
+	            	uint32_t busParentIndex = cmd.data.bus.parentBusIndex;
 
+	            	m_busPool[busIndex].m_parentBusIndex = busParentIndex;
+		            break;
+	            }
+				case RtCommand::Type::SetBusVolume: {
+	            	uint32_t busIndex = cmd.data.busFloat.busIndex;
+	            	float newVolume = cmd.data.busFloat.value;
+
+	            	m_busPool[busIndex].m_volumeLinear = newVolume;
+	            	break;
+				}
                 default: break;
             }
         }
@@ -156,23 +182,30 @@ namespace dalia {
         for (uint32_t busIndex : m_activeMixOrder) m_busPool[busIndex].Clear();
 
         // --- Voice Pass ---
+    	uint32_t voicesMixed = 0;
         for (uint32_t i = 0; i < m_voicePool.size(); i++) {
             Voice& voice = m_voicePool[i];
         	if (voice.state == VoiceState::Stopped)	FreeVoice(i);
             else if (voice.state == VoiceState::Playing) {
             	// Virtual
             	if (voice.parentBusIndex == NO_PARENT) { // This is where we perform the virtual check later
+            		Logger::Log(LogLevel::Debug, "RtSystem", "Mixing voice %d (VIRTUAL)", i);
             		bool isStillPlaying = AdvanceVirtualVoice(voice, frameCount);
             		if (!isStillPlaying) FreeVoice(i);
             		continue;
             	}
 
             	// Non-Virtual
-            	// Logger::Log(LogLevel::Debug, "RtSystem", "Mixing voice %d...", i); // Only for testing
+            	Logger::Log(LogLevel::Debug, "RtSystem", "Mixing voice %d -> bus %d ",
+            		i, voice.parentBusIndex);
             	bool isStillPlaying = MixVoiceToBus(voice, voice.parentBusIndex, frameCount);
             	if (!isStillPlaying) FreeVoice(i);
+
+            	voicesMixed++;
             }
         }
+
+    	if (voicesMixed == 0) return; // Early return to save compute power
 
         // --- Bus Pass ---
         for (uint32_t busIndex : m_activeMixOrder) {
@@ -181,6 +214,7 @@ namespace dalia {
 
             uint32_t parentIndex = bus.m_parentBusIndex;
             if (parentIndex != NO_PARENT) {
+            	Logger::Log(LogLevel::Debug, "Mixer", "Mixing bus %d -> bus %d.", busIndex, parentIndex);
                 Bus& parentBus = m_busPool[parentIndex];
                 parentBus.MixInBuffer(bus.GetBuffer(), sampleCount);
             }
@@ -294,8 +328,8 @@ namespace dalia {
     	// --- Panning & DSP ---
     	const float panNormalized = (voice.pan + 1.0f) * 0.5f;
     	const float angle = panNormalized * static_cast<float>(M_PI_2); // Angle between 0 and PI/2 radians
-    	const float gainL = std::cos(angle) * voice.volume;
-    	const float gainR = std::sin(angle) * voice.volume;
+    	const float gainL = std::cos(angle) * voice.volumeLinear;
+    	const float gainR = std::sin(angle) * voice.volumeLinear;
 
         while (framesMixed < frameCount) {
 			const float* sourceData = nullptr;

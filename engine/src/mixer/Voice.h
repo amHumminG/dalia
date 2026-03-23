@@ -1,6 +1,7 @@
 #pragma once
 #include "dalia/audio/PlaybackControl.h"
 #include "dalia/audio/SoundHandle.h"
+#include "core/Constants.h"
 #include <cstdint>
 
 namespace dalia {
@@ -17,21 +18,21 @@ namespace dalia {
     };
 
     struct Voice {
-        uint32_t generation = 0;
+        uint32_t generation = START_GENERATION;
         VoiceState state = VoiceState::Free;
         PlaybackExitCondition exitCondition = PlaybackExitCondition::NaturalEnd;
 
         // Routing
-        uint32_t parentBusIndex = 0;
+        uint32_t parentBusIndex = MASTER_BUS_INDEX;
 
         // Mixing Properties
         bool isLooping = false;
-        float volume = 1.0f;
+        float volumeLinear = DEFAULT_VOLUME_LINEAR;
         float pitch = 1.0f;
         float pan = 0.0f;
 
-        uint32_t channels = 2;
-        uint32_t sampleRate = 48000;
+        uint32_t channels = CHANNELS_STEREO;
+        uint32_t sampleRate = OUTPUT_SAMPLE_RATE;
         double cursor = 0.0f;
 
         SoundType soundType;
@@ -49,17 +50,20 @@ namespace dalia {
 
         // Use this when releasing a voice
         void Reset() {
-            parentBusIndex = 0;
+            generation++;
+            if (generation == INVALID_GENERATION) generation = START_GENERATION;
+
+            parentBusIndex = MASTER_BUS_INDEX;
             state = VoiceState::Free;
             exitCondition = PlaybackExitCondition::NaturalEnd;
 
             isLooping = false;
-            volume = 1.0f;
+            volumeLinear = DEFAULT_VOLUME_LINEAR;
             pitch = 1.0f;
             pan = 0.0f;
 
-            channels = 2;
-            sampleRate = 48000;
+            channels = CHANNELS_STEREO;
+            sampleRate = OUTPUT_SAMPLE_RATE;
             cursor = 0.0f;
         }
     };
@@ -71,15 +75,15 @@ namespace dalia {
         uint64_t assetUuid;
 
         // --- Voice Properties ---
-        uint32_t generation = 0;
+        uint32_t generation = START_GENERATION;
         VoiceState state = VoiceState::Free;
 
         // Routing
-        uint32_t parentBusIndex = 0;
+        uint32_t parentBusIndex = MASTER_BUS_INDEX;
 
         // Mixing Properties
         bool isLooping = false;
-        float volume = 1.0f;
+        float volumeDb = DEFAULT_VOLUME_DB;
         float pitch = 1.0f;
         float pan = 0.0f;
 
@@ -92,12 +96,13 @@ namespace dalia {
             assetUuid = 0;
 
             generation++;
+            if (generation == INVALID_GENERATION) generation = START_GENERATION;
             state = VoiceState::Free;
 
-            parentBusIndex = 0;
+            parentBusIndex = MASTER_BUS_INDEX;
 
             isLooping = false;
-            volume = 1.0f;
+            volumeDb = DEFAULT_VOLUME_DB;
             pitch = 1.0f;
             pan = 0.0f;
         }
