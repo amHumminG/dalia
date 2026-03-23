@@ -68,6 +68,7 @@ set(ENGINE_FILES
     src/core/Utility.h
     include/dalia/audio/SoundHandle.h
     src/core/Types.h
+    src/core/Math.h
 )
 
 add_library(dalia_engine STATIC ${ENGINE_FILES})
