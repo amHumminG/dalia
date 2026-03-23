@@ -12,7 +12,7 @@ namespace dalia {
         Free,
         Inactive,
         Playing,
-        Virtual,
+        Virtual, // Should probably not be a state
         Paused,
         Stopped
     };

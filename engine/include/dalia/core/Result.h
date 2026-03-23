@@ -17,7 +17,8 @@ namespace dalia {
 		// Messaging Errors
 		RtCommandQueueFull			= -100,
 		RtEventQueueFull			= -101,
-		IoRequestQueueFull			= -102,
+		IoStreamRequestQueueFull	= -102,
+		IoLoadRequestQueueFull		= -103,
 
 		// Playback Errors
 		VoicePoolExhausted			= -200,

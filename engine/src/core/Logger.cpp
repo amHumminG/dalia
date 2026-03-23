@@ -30,14 +30,14 @@ namespace dalia {
 		m_sink = std::move(sink);
 	}
 
-	void Logger::Log(LogLevel level, const char* category, const char* format, ...) {
+	void Logger::Log(LogLevel level, const char* context, const char* format, ...) {
 		if (!m_buffer) return;
 
 		if (static_cast<int>(level) < static_cast<int>(m_logLevel)) return;
 
 		LogEntry entry;
 		entry.level = level;
-		strncpy(entry.category, category, sizeof(entry.category) - 1);
+		strncpy(entry.category, context, sizeof(entry.category) - 1);
 		entry.category[sizeof(entry.category) - 1] = '\0';
 
 		va_list args;

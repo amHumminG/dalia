@@ -14,14 +14,14 @@
 #include "messaging/IoLoadRequestQueue.h"
 #include "messaging/IoLoadEventQueue.h"
 
+#include "mixer/RtSystem.h"
 #include "mixer/Voice.h"
 #include "mixer/StreamContext.h"
 #include "mixer/Bus.h"
 #include "mixer/BusGraphCompiler.h"
 
-#include "systems/RtSystem.h"
-#include "systems/IoStreamSystem.h"
-#include "systems/IoLoadSystem.h"
+#include "io/IoStreamSystem.h"
+#include "io/IoLoadSystem.h"
 
 #include "resources/AssetRegistry.h"
 #include "resources/ResidentSound.h"
@@ -189,10 +189,7 @@ namespace dalia {
 	}
 
 	static inline Result DispatchStreamPrepare(EngineInternalState* state, const char* filepath, uint32_t& streamIndex) {
-		if (!state->freeStreams->Pop(streamIndex)) {
-			Logger::Log(LogLevel::Error, "Engine", "Failed to prepare stream instance. Stream pool exhausted.");
-			return Result::StreamPoolExhausted;
-		}
+		if (!state->freeStreams->Pop(streamIndex)) return Result::StreamPoolExhausted;
 
 		// Send I/O request to prepare stream
 		state->streamPool[streamIndex].state.store(StreamState::Preparing, std::memory_order_release);
@@ -202,8 +199,7 @@ namespace dalia {
 			state->streamPool[streamIndex].state.store(StreamState::Free, std::memory_order_release);
 			state->freeStreams->Push(streamIndex);
 
-			Logger::Log(LogLevel::Error, "Engine", "Failed to prepare stream instance. IO Request queue full.");
-			return Result::IoRequestQueueFull;
+			return Result::IoStreamRequestQueueFull;
 		}
 
 		return Result::Ok;
@@ -226,7 +222,7 @@ namespace dalia {
 					AudioEventCallback callback = vMirror->onStopCallback;
 					vMirror->Reset();
 					state->freeVoices->Push(index);
-					Logger::Log(LogLevel::Debug, "Engine", "Freed voice %d.", index);
+					DALIA_LOG_DEBUG(LOG_CTX_CORE, "Freed voice %d.", index);
 					if (callback) callback(state->ForgePlaybackHandle(index, generation), ev.data.voice.exitCondition);
 
 					// --- Check garbage collection ---
@@ -246,7 +242,7 @@ namespace dalia {
 							state->assetRegistry->FreeSound(it->handle);
 
 							const char* typeStr = (it->handle.GetType() == SoundType::Resident) ? "resident" : "stream";
-							Logger::Log(LogLevel::Debug, "Engine", "Unloaded %s sound with handle %d (deferred)",
+							DALIA_LOG_DEBUG(LOG_CTX_CORE, "Unloaded %s sound with handle %d (deferred)",
 								typeStr, it->handle.GetUUID());
 
 							it = state->pendingSoundUnloads.erase(it);
@@ -303,8 +299,7 @@ namespace dalia {
 									vMirror->Reset();
 									state->freeVoices->Push(it->voiceIndex);
 
-									Logger::Log(LogLevel::Error, "Engine",
-										"Aborting deferred playback. Stream preparation failed");
+									DALIA_LOG_ERR(LOG_CTX_CORE, "Aborting deferred playback. Stream preparation failed.");
 									it = state->pendingPlaybacks.erase(it);
 									continue;
 								}
@@ -346,8 +341,7 @@ namespace dalia {
 						Result res = ResolveVoiceMirror(state, it->voiceIndex, it->voiceGeneration, vMirror);
 
 						if (res == Result::Ok) {
-							Logger::Log(LogLevel::Warning, "Engine",
-								"Aborting deferred playback. Asset failed to load.");
+							DALIA_LOG_ERR(LOG_CTX_CORE, "Aborting deferred playback. Sound failed to load.");
 							vMirror->Reset();
 							state->freeVoices->Push(it->voiceIndex);
 						}
@@ -382,10 +376,10 @@ namespace dalia {
 			state->isMixOrderSwapPending = true;
 			state->isMixOrderDirty = false;
 
-			Logger::Log(LogLevel::Debug, "TryUpdateMixOrder", "Recompiled mix order (%d buses).", sortedCount);
+			DALIA_LOG_DEBUG(LOG_CTX_CORE, "Recompiled mix order (%d buses).", sortedCount);
 		}
 		else {
-			Logger::Log(LogLevel::Critical, "Engine", "Failed to compile mix order: Cycle detected.");
+			DALIA_LOG_CRIT(LOG_CTX_CORE, "Failed to compile mix order. Cycle detected.");
 			state->isMixOrderDirty = false;
 		}
 	}
@@ -402,7 +396,7 @@ namespace dalia {
 
 	Result Engine::Init(const EngineConfig& config) {
 		if (m_state != nullptr) {
-			Logger::Log(LogLevel::Warning, "API", "Attempting to initialize engine that is already initialized");
+			DALIA_LOG_WARN(LOG_CTX_API, "Attempting to initailze engine that is already initialized.");
 			return Result::AlreadyInitialized;
 		}
 
@@ -471,7 +465,7 @@ namespace dalia {
 		deviceConfig.pUserData			= m_state->rtSystem.get();
 
 		if (ma_device_init(NULL, &deviceConfig, m_state->device.get()) != MA_SUCCESS) {
-			Logger::Log(LogLevel::Critical, "Init", "Failed to initialize playback device");
+			DALIA_LOG_CRIT(LOG_CTX_API, "Failed to initialize playback device.");
 			delete m_state;
 			m_state = nullptr;
 			return Result::DeviceFailed;
@@ -484,27 +478,26 @@ namespace dalia {
 
 		// Audio Thread Start
 		if (ma_device_start(m_state->device.get()) != MA_SUCCESS) {
-			Logger::Log(LogLevel::Critical, "Init", "Failed to start playback device");
+			DALIA_LOG_CRIT(LOG_CTX_API, "Failed to start playback device.");
 			delete m_state;
 			m_state = nullptr;
 			return Result::DeviceFailed;
 		}
 
 		m_state->initialized = true;
-		Logger::Log(LogLevel::Info, "Init", "Initialized engine");
-		DALIA_LOG_INFO("API", "Initialized engine");
+		DALIA_LOG_INFO(LOG_CTX_API, "Initialized engine.");
 		return Result::Ok;
 	}
 
 	Result Engine::Shutdown() {
 		if (!IsInitialized(m_state)) {
-			Logger::Log(LogLevel::Warning, "Uninit", "Attempting to deinitialize engine that is not initialized");
+			DALIA_LOG_WARN(LOG_CTX_API, "Attempting to shutdown uninitialized engine.");
 			return Result::NotInitialized;
 		}
 
 		// --- Audio Thread Stop ---
 		if (ma_device_stop(m_state->device.get()) != MA_SUCCESS) {
-			Logger::Log(LogLevel::Critical, "Deinit", "Failed to stop playback device");
+			DALIA_LOG_CRIT(LOG_CTX_API, "Failed to stop playback device.");
 			return Result::DeviceFailed;
 		}
 		ma_device_uninit(m_state->device.get());
@@ -516,7 +509,7 @@ namespace dalia {
 		delete m_state;
 		m_state = nullptr;
 
-		Logger::Log(LogLevel::Info, "Deinit", "Deinitialized engine");
+		DALIA_LOG_INFO(LOG_CTX_API, "Shutdown engine.");
 		Logger::Deinit();
 
 		return Result::Ok;
@@ -570,13 +563,11 @@ namespace dalia {
 		soundHandle = m_state->assetRegistry->AllocateSound(soundType);
 		if (!soundHandle.IsValid()) {
 			if (soundType == SoundType::Resident) {
-				Logger::Log(LogLevel::Error, "LoadSoundAsync",
-					"Failed to load sound. Resident sound pool exhausted.");
+				DALIA_LOG_ERR(LOG_CTX_API, "Failed to load sound %s. Resident sound pool exhausted.", filepath);
 				return Result::ResidentSoundPoolExhausted;
 			}
 			else if (soundType == SoundType::Stream) {
-				Logger::Log(LogLevel::Error, "LoadSoundAsync",
-					"Failed to load sound. Stream sound pool exhausted.");
+				DALIA_LOG_ERR(LOG_CTX_API, "Failed to load sound %s. Stream sound pool exhausted.", filepath);
 				return Result::StreamSoundPoolExhausted;
 			}
 		}
@@ -640,8 +631,8 @@ namespace dalia {
 					vMirror.Reset();
 					m_state->freeVoices->Push(it->voiceIndex);
 
-					Logger::Log(LogLevel::Debug, "UnloadSound",
-						"Aborted deferred playback for voice %d due to unload.", it->voiceIndex);
+					DALIA_LOG_DEBUG(LOG_CTX_API, "Aborted deferred playback for voice %d due to early unload.",
+						it->voiceIndex);
 					it = m_state->pendingPlaybacks.erase(it);
 				}
 				else it++;
@@ -655,7 +646,7 @@ namespace dalia {
 					pendingUnload.voicesToStop.push_back(VoiceID(i, vMirror.generation));
 
 					m_state->rtCommands->Enqueue(RtCommand::StopVoice(i, vMirror.generation));
-					Logger::Log(LogLevel::Debug, "UnloadSound", "Commanded to stop voice: %d", i);
+					DALIA_LOG_DEBUG(LOG_CTX_API, "Commanded to stop voice %d.", i);
 					}
 			}
 
@@ -664,8 +655,7 @@ namespace dalia {
 			}
 			else {
 				m_state->assetRegistry->FreeSound(soundHandle);
-				Logger::Log(LogLevel::Debug, "UnloadSound", "Unloaded sound with handle %d (instant)",
-					soundHandle.GetUUID());
+				DALIA_LOG_DEBUG(LOG_CTX_API, "Unloaded sound with handle %d.", soundHandle.GetUUID());
 			}
 		}
 
@@ -675,8 +665,6 @@ namespace dalia {
 	Result Engine::CreateBus(const char* identifier, const char* parentIdentifier) {
 		if (!IsInitialized(m_state)) return Result::NotInitialized;
 
-		const BusID bId(identifier);
-		const BusID bParentId(parentIdentifier);
 		uint32_t bIndex;
 		uint32_t bIndexParent = NO_PARENT;
 		bool parentFound = false;
@@ -692,24 +680,21 @@ namespace dalia {
 			bMirror.refCount++;
 
 			if (parentFound && bMirror.parentBusIndex != bIndexParent) {
-				Logger::Log(LogLevel::Warning, "CreateBus",
-					"CreateBus called for existing bus (%s) with conflicting parent. Ignoring new parent.",
-					identifier);
+				DALIA_LOG_WARN(LOG_CTX_API,
+					"CreateBus called for existing bus (%s) with conflicting parent. Ignoring new parent.", identifier);
 			}
 			return Result::Ok;
 		}
 
 		if (!parentFound) {
-			Logger::Log(LogLevel::Error, "CreateBus",
-			"Failed to create bus with routing (%s -> %s). No bus with identifier (%s) exists.",
-			identifier, parentIdentifier, parentIdentifier);
+			DALIA_LOG_ERR(LOG_CTX_API, "Failed to create bus %s (routed -> %s). No bus with identifier %s exists.",
+				identifier, parentIdentifier, parentIdentifier);
 			return resParent;
 		}
 
 		// Bus does not exist yet
 		if (!m_state->freeBuses->Pop(bIndex)) {
-			Logger::Log(LogLevel::Error, "CreateBus", "Failed to create bus (%s). Bus pool exhausted.",
-				identifier);
+			DALIA_LOG_ERR(LOG_CTX_API, "Failed to create bus (%s). Bus pool exhausted.", identifier);
 			return Result::BusPoolExhausted;
 		}
 
@@ -717,15 +702,14 @@ namespace dalia {
 		bMirror.refCount = 1;
 		bMirror.parentBusIndex = bIndexParent;
 
+		const BusID bId(identifier);
 		m_state->busHashMap[bId] = bIndex;
 #if DALIA_DEBUG
 		m_state->busDebugNames[bId] = identifier;
 #endif
 
-		Logger::Log(LogLevel::Debug, "CreateBus", "Created bus with routing %d -> %d.",
-			bIndex, bIndexParent);
-		Logger::Log(LogLevel::Debug, "CreateBus", "Created bus with routing %s -> %s.",
-			identifier, parentIdentifier);
+		DALIA_LOG_DEBUG(LOG_CTX_API, "Created bus with routing: %s (index: %d) -> %s (index: %d).",
+			identifier, bIndex, parentIdentifier, bIndexParent);
 		m_state->rtCommands->Enqueue(RtCommand::AllocateBus(bIndex, bIndexParent));
 		m_state->isMixOrderDirty = true;
 
@@ -737,15 +721,13 @@ namespace dalia {
 
 		auto it = m_state->busHashMap.find(BusID(identifier));
 		if (it == m_state->busHashMap.end()) {
-			Logger::Log(LogLevel::Error, "DestroyBus", "Failed to destroy bus (%s). Bus does not exist.",
-				identifier);
+			DALIA_LOG_ERR(LOG_CTX_API, "Failed to destroy bus (%s). Bus does not exist.", identifier);
 			return Result::BusNotFound;
 		}
 		uint32_t bIndex = it->second;
 
 		if (bIndex == MASTER_BUS_INDEX) {
-			Logger::Log(LogLevel::Warning, "DestroyBus", "Failed to destroy bus (%s). Master cannot be destroyed.",
-				identifier);
+			DALIA_LOG_ERR(LOG_CTX_API, "Failed to destroy bus (%s). Master cannot be destroyed.");
 			return Result::Error;
 		}
 
@@ -756,27 +738,34 @@ namespace dalia {
 			return Result::Ok;
 		}
 
-		Logger::Log(LogLevel::Debug, "DestroyBus", "Destroying bus %s (index: %d).", identifier, bIndex);
-
 		// Reference count is 1 -> Destroy bus
+
 		// Remove parent from child buses
+		uint32_t orphanedBuses = 0;
 		for (uint32_t i = 0; i < m_state->busCapacity; i++) {
 			BusMirror* bMirrorChild = &m_state->busPoolMirror[i];
 			if (bMirrorChild->parentBusIndex == bIndex) {
 				bMirrorChild->parentBusIndex = NO_PARENT;
 				m_state->rtCommands->Enqueue(RtCommand::SetBusParent(i, NO_PARENT));
-				Logger::Log(LogLevel::Debug, "DestroyBus", "Orphaned bus (index: %d).", i);
+				orphanedBuses++;
+				DALIA_LOG_DEBUG(LOG_CTX_API, "Orphaned voice (index: %d).", i);
 			}
 		}
+		if (orphanedBuses > 0) DALIA_LOG_WARN(LOG_CTX_API, "Destroying bus %s. Orphaned %d buses.",
+			identifier, orphanedBuses);
 
+		uint32_t orphanedPlaybacks = 0;
 		for (uint32_t i = 0; i < m_state->voiceCapacity; i++) {
 			VoiceMirror& vMirrorChild = m_state->voicePoolMirror[i];
 			if (vMirrorChild.parentBusIndex == bIndex) {
 				vMirrorChild.parentBusIndex = NO_PARENT;
 				m_state->rtCommands->Enqueue(RtCommand::SetVoiceParent(i, vMirrorChild.generation, NO_PARENT));
-				Logger::Log(LogLevel::Debug, "DestroyBus", "Orphaned voice (index: %d).", i);
+				orphanedPlaybacks++;
+				DALIA_LOG_DEBUG(LOG_CTX_API, "Orphaned voice (index: %d).", i);
 			}
 		}
+		if (orphanedBuses > 0) DALIA_LOG_WARN(LOG_CTX_API, "Destroying bus %s. Orphaned %d playbacks.",
+			identifier, orphanedPlaybacks);
 
 		bMirror.Reset();
 		m_state->busHashMap.erase(it);
@@ -786,7 +775,7 @@ namespace dalia {
 
 		m_state->freeBuses->Push(bIndex);
 
-		Logger::Log(LogLevel::Debug, "DestroyBus", "Destroyed bus %s (index: %d).", identifier, bIndex);
+		DALIA_LOG_DEBUG(LOG_CTX_API, "Destroyed bus %s (index: %d).", identifier, bIndex);
 		m_state->rtCommands->Enqueue(RtCommand::DeallocateBus(bIndex));
 		m_state->isMixOrderDirty = true;
 
@@ -803,16 +792,15 @@ namespace dalia {
 		uint32_t bIndex;
 		Result res = ResolveBusIndex(m_state, identifier, bIndex);
 		if (res != Result::Ok) {
-			Logger::Log(LogLevel::Error, "RouteBus",
-				"Failed to route bus (%s -> %s). No bus with identifier (%s) exists.",
+			DALIA_LOG_ERR(LOG_CTX_API, "Failed to route bus (%s -> %s). No bus with identifier %s exists.",
 				identifier, parentIdentifier, identifier);
 			return res;
 		}
 
 
 		if (bIndex == MASTER_BUS_INDEX) {
-			Logger::Log(LogLevel::Error, "RouteBus",
-			"Failed to route bus (%s -> %s). Master cannot be routed.", identifier, parentIdentifier);
+			DALIA_LOG_ERR(LOG_CTX_API, "Failed to route bus (%s -> %s). Master cannot be routed.",
+				identifier, parentIdentifier);
 			return Result::InvalidRouting;
 		}
 
@@ -820,9 +808,8 @@ namespace dalia {
 		uint32_t bIndexParent;
 		Result resParent = ResolveBusIndex(m_state, identifier, bIndexParent);
 		if (resParent != Result::Ok) {
-			Logger::Log(LogLevel::Error, "RouteBus",
-			"Failed to route bus (%s -> %s). No bus with identifier (%s) exists.",
-			identifier, parentIdentifier, parentIdentifier);
+			DALIA_LOG_ERR(LOG_CTX_API, "Failed to route bus (%s -> %s). No bus with identifier %s exists.",
+				identifier, parentIdentifier, parentIdentifier);
 			return resParent;
 		}
 
@@ -830,7 +817,7 @@ namespace dalia {
 		uint32_t currentAncestor = bIndexParent;
 		while (currentAncestor != NO_PARENT) {
 			if (currentAncestor == bIndex) {
-				Logger::Log(LogLevel::Error, "RouteBus", "Failed to route bus (%s -> %s). Bus graph cycle detected.",
+				DALIA_LOG_ERR(LOG_CTX_API, "Failed to route bus (%s -> %s). Bus graph cycle detected.",
 					identifier, parentIdentifier);
 				return Result::InvalidRouting;
 			}
@@ -840,7 +827,7 @@ namespace dalia {
 		BusMirror& bMirror = m_state->busPoolMirror[bIndex];
 		bMirror.parentBusIndex = bIndexParent;
 
-		Logger::Log(LogLevel::Debug, "RouteBus", "Routed bus %s (index: %d) -> %s (index: %d).",
+		DALIA_LOG_DEBUG(LOG_CTX_API, "Routed bus %s (index: %d) -> %s (index: %d).",
 			identifier, bIndex, parentIdentifier, bIndexParent);
 		m_state->rtCommands->Enqueue(RtCommand::SetBusParent(bIndex, bIndexParent));
 		m_state->isMixOrderDirty = true;
@@ -855,8 +842,7 @@ namespace dalia {
 		uint32_t bIndex;
 		Result res = ResolveBusIndex(m_state, identifier, bIndex);
 		if (res != Result::Ok) {
-			Logger::Log(LogLevel::Error, "RouteBus",
-				"Failed to set bus volume. No bus with identifier (%s) exists.", identifier);
+			DALIA_LOG_ERR(LOG_CTX_API, "Failed to set bus volume. No bus with identifier (%s) exists", identifier);
 			return res;
 		}
 
@@ -864,8 +850,7 @@ namespace dalia {
 		m_state->busPoolMirror[bIndex].volumeDb = clampedVolumeDb;
 
 		m_state->rtCommands->Enqueue(RtCommand::SetBusVolume(bIndex, DbToLinear(clampedVolumeDb)));
-
-		Logger::Log(LogLevel::Debug, "Engine", "Set bus (%s) volume to %f dB", identifier, clampedVolumeDb);
+		DALIA_LOG_DEBUG(LOG_CTX_API, "Set bus (%s) volume to %.2f dB.", identifier, clampedVolumeDb);
 
 		return Result::Ok;
 	}
@@ -890,20 +875,18 @@ namespace dalia {
 		}
 
 		if (soundLoadState == LoadState::Error) {
-			Logger::Log(LogLevel::Error, "CreatePlayback",
-				"Failed to play sound. Sound loading failed.");
+			DALIA_LOG_ERR(LOG_CTX_API, "Failed to play sound. Sound loading failed.");
 			return Result::SoundLoadError;
 		}
 
-		uint32_t voiceIndex;
-		if (!m_state->freeVoices->Pop(voiceIndex)) {
-			Logger::Log(LogLevel::Error, "CreatePlayback",
-				"Failed to create playback instance. Voice pool exhausted.");
+		uint32_t vIndex;
+		if (!m_state->freeVoices->Pop(vIndex)) {
+			DALIA_LOG_ERR(LOG_CTX_API, "Failed to create playback instance. Voice pool exhausted.");
 			return Result::VoicePoolExhausted;
 		}
 
 		// Prime voice mirror
-		VoiceMirror& vMirror = m_state->voicePoolMirror[voiceIndex];
+		VoiceMirror& vMirror = m_state->voicePoolMirror[vIndex];
 		vMirror.state = VoiceState::Inactive;
 		vMirror.soundType = soundType;
 		vMirror.assetUuid = soundHandle.GetUUID();
@@ -912,22 +895,20 @@ namespace dalia {
 		// Deferred playback
 		if (soundLoadState == LoadState::Loading) {
 			m_state->pendingPlaybacks.push_back({
-				voiceIndex,
+				vIndex,
 				vMirror.generation,
 				soundHandle.GetUUID()
 			});
 			vMirror.pendingLoad = true;
-			Logger::Log(LogLevel::Debug, "CreatePlayback",
-				"Deferring playback for voice %d. Sound not yet loaded.",
-				voiceIndex);
+			DALIA_LOG_DEBUG(LOG_CTX_API, "Deferring playback for voice %d. Sound not yet loaded", vIndex);
 
-			pbkHandle = PlaybackHandle::Create(voiceIndex, vMirror.generation);
+			pbkHandle = PlaybackHandle::Create(vIndex, vMirror.generation);
 			return Result::Ok;
 		}
 
 		if (soundType == SoundType::Resident) {
 			RtCommand cmd = RtCommand::PrepareVoiceResident(
-				voiceIndex,
+				vIndex,
 				vMirror.generation,
 				residentSound->pcmData.data(),
 				residentSound->frameCount,
@@ -939,15 +920,23 @@ namespace dalia {
 		else if (soundType == SoundType::Stream) {
 
 			uint32_t streamIndex;
-			Result streamResult = DispatchStreamPrepare(m_state, streamSound->filepath, streamIndex);
-			if (streamResult != Result::Ok) {
+			Result streamRes = DispatchStreamPrepare(m_state, streamSound->filepath, streamIndex);
+			if (streamRes != Result::Ok) {
 				vMirror.Reset();
-				m_state->freeVoices->Push(voiceIndex);
-				return streamResult;
+				m_state->freeVoices->Push(vIndex);
+
+				if (streamRes == Result::StreamPoolExhausted) {
+					DALIA_LOG_ERR(LOG_CTX_API, "Failed to prepare stream instance. Stream pool exhausted.");
+				}
+				if (streamRes == Result::IoStreamRequestQueueFull) {
+					DALIA_LOG_ERR(LOG_CTX_API, "Failed to prepare stream instance. I/O stream request queue full.");
+				}
+
+				return streamRes;
 			}
 
 			RtCommand cmd = RtCommand::PrepareVoiceStreaming(
-				voiceIndex,
+				vIndex,
 				vMirror.generation,
 				streamIndex,
 				streamSound->channels,
@@ -956,7 +945,10 @@ namespace dalia {
 			m_state->rtCommands->Enqueue(cmd);
 		}
 
-		pbkHandle = PlaybackHandle::Create(voiceIndex, vMirror.generation);
+		pbkHandle = PlaybackHandle::Create(vIndex, vMirror.generation);
+		DALIA_LOG_DEBUG(LOG_CTX_API, "Created playback instance using voice %d.", vIndex);
+
+
 		return Result::Ok;
 	}
 
@@ -975,13 +967,11 @@ namespace dalia {
 		uint32_t bIndex;
 		Result resBus = ResolveBusIndex(m_state, busIdentifier, bIndex);
 		if (resBus != Result::Ok) {
-			Logger::Log(LogLevel::Error, "RoutePlayback",
-				"Failed to route playback. No bus with identifier (%s) exists.", busIdentifier);
+			DALIA_LOG_ERR(LOG_CTX_API, "Failed to route playback. No bus with identifier %s exists.", busIdentifier);
 			return resBus;
 		}
 
-		Logger::Log(LogLevel::Debug, "RoutePlayback", "Routed voice (index: %d) to bus %s (index: %d).",
-			vIndex, busIdentifier, bIndex);
+		DALIA_LOG_DEBUG(LOG_CTX_API, "Routed voice %d to bus %s (index: %d).", vIndex, busIdentifier, bIndex);
 		vMirror->parentBusIndex = bIndex;
 		m_state->rtCommands->Enqueue(RtCommand::SetVoiceParent(vIndex, vGeneration, bIndex));
 
@@ -1002,26 +992,24 @@ namespace dalia {
 		// Deffered playback
 		if (vMirror->pendingLoad) {
 			vMirror->state = VoiceState::Playing;
-			Logger::Log(LogLevel::Warning, "Play",
-				"Calling play on asset that is still loading. Will play when finished loading.");
+			DALIA_LOG_WARN(LOG_CTX_API, "Calling play on for sound that is still loading. Will play when done loading");
 			return Result::Ok;
 		}
 
 		// Check for double calls
 		if (vMirror->state == VoiceState::Playing) {
-			Logger::Log(LogLevel::Warning, "Play", "Calling play on handle already set to play.");
+			DALIA_LOG_WARN(LOG_CTX_API, "Calling play on playback that is already set to play.");
 			return Result::Ok;
 		}
 
 		if (vMirror->state != VoiceState::Inactive && vMirror->state != VoiceState::Paused) {
-			return Result::PlaybackCorrupted;
+			return Result::PlaybackCorrupted; // Should we log this?
 		}
 
 		vMirror->state = VoiceState::Playing;
-		RtCommand cmd = RtCommand::PlayVoice(vIndex, vGeneration);
-		m_state->rtCommands->Enqueue(cmd);
 
-		Logger::Log(LogLevel::Debug, "Engine", "Calling play on handle for voice %d", vIndex);
+		m_state->rtCommands->Enqueue(RtCommand::PlayVoice(vIndex, vGeneration));
+		DALIA_LOG_DEBUG(LOG_CTX_API, "Setting voice %d to play.", vIndex);
 
 		return Result::Ok;
 	}
@@ -1038,14 +1026,15 @@ namespace dalia {
 		if (res != Result::Ok) return res;
 
 		if (vMirror->state != VoiceState::Playing) {
-			Logger::Log(LogLevel::Warning, "Pause", "Failed to pause voice %d. Not currently playing.",
-				vIndex);
+			DALIA_LOG_WARN(LOG_CTX_API, "Calling pause on playback that is not currently playing.");
 			return Result::Ok;
 		}
 		vMirror->state = VoiceState::Paused;
 		if (vMirror->pendingLoad) return Result::Ok;
 
 		m_state->rtCommands->Enqueue(RtCommand::PauseVoice(vIndex, vGeneration));
+		DALIA_LOG_DEBUG(LOG_CTX_API, "Setting voice %d to pause.", vIndex);
+
 		return Result::Ok;
 	}
 
@@ -1066,8 +1055,7 @@ namespace dalia {
 				if (it->voiceIndex == vIndex) {
 					vMirror->Reset();
 					m_state->freeVoices->Push(vIndex);
-					Logger::Log(LogLevel::Debug, "Stop",
-					"Stopped voice %d before it started playing.", vIndex);
+					DALIA_LOG_DEBUG(LOG_CTX_API, "Stopped voice %d before it started playing.", vIndex);
 					it = m_state->pendingPlaybacks.erase(it);
 					return Result::Ok;
 				}
@@ -1076,7 +1064,9 @@ namespace dalia {
 		}
 
 		vMirror->state = VoiceState::Stopped;
+
 		m_state->rtCommands->Enqueue(RtCommand::StopVoice(vIndex, voiceGeneration));
+		DALIA_LOG_DEBUG(LOG_CTX_API, "Setting voice %d to stop.", vIndex);
 
 		return Result::Ok;
 	}

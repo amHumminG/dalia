@@ -3,6 +3,13 @@
 
 namespace dalia {
 
+	static constexpr const char* LOG_CTX_API      = "Core";
+	static constexpr const char* LOG_CTX_CORE      = "Core";
+	static constexpr const char* LOG_CTX_IO        = "IO";
+	static constexpr const char* LOG_CTX_MESSAGING = "Messaging";
+	static constexpr const char* LOG_CTX_MIXER     = "Mixer";
+	static constexpr const char* LOG_CTX_RESOURCES = "Resources";
+
 	enum class LogLevel : int;
 
 	class Logger {
@@ -10,7 +17,7 @@ namespace dalia {
 		static void Init(LogLevel level, size_t capacity = 256);
 		static void Deinit();
 		static void SetSink(LogCallback sink);
-		static void Log(LogLevel level, const char* category, const char* format, ...);
+		static void Log(LogLevel level, const char* context, const char* format, ...);
 		static void ProcessLogs();
 
 	private:
@@ -18,20 +25,20 @@ namespace dalia {
 	};
 }
 
-#define DALIA_LOG_DEBUG(category, fmt, ...) \
-dalia::Logger::Log(dalia::LogLevel::Debug, category, "%s() - " fmt, __func__, ##__VA_ARGS__)
+#define DALIA_LOG_DEBUG(context, fmt, ...) \
+dalia::Logger::Log(dalia::LogLevel::Debug, context, "%s() - " fmt, __func__, ##__VA_ARGS__)
 
-#define DALIA_LOG_INFO(category, fmt, ...) \
-dalia::Logger::Log(dalia::LogLevel::Info, category, "%s() - " fmt, __func__, ##__VA_ARGS__)
+#define DALIA_LOG_INFO(context, fmt, ...) \
+dalia::Logger::Log(dalia::LogLevel::Info, context, "%s() - " fmt, __func__, ##__VA_ARGS__)
 
-#define DALIA_LOG_WARN(category, fmt, ...) \
-dalia::Logger::Log(dalia::LogLevel::Warning, category, "%s() - " fmt, __func__, ##__VA_ARGS__)
+#define DALIA_LOG_WARN(context, fmt, ...) \
+dalia::Logger::Log(dalia::LogLevel::Warning, context, "%s() - " fmt, __func__, ##__VA_ARGS__)
 
-#define DALIA_LOG_ERROR(category, fmt, ...) \
-dalia::Logger::Log(dalia::LogLevel::Error, category, "%s() - " fmt, __func__, ##__VA_ARGS__)
+#define DALIA_LOG_ERR(context, fmt, ...) \
+dalia::Logger::Log(dalia::LogLevel::Error, context, "%s() - " fmt, __func__, ##__VA_ARGS__)
 
-#define DALIA_LOG_CRITICAL(category, fmt, ...) \
-dalia::Logger::Log(dalia::LogLevel::Critical, category, "%s() - " fmt, __func__, ##__VA_ARGS__)
+#define DALIA_LOG_CRIT(context, fmt, ...) \
+dalia::Logger::Log(dalia::LogLevel::Critical, context, "%s() - " fmt, __func__, ##__VA_ARGS__)
 
 
 

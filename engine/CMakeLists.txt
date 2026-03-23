@@ -45,10 +45,10 @@ set(ENGINE_FILES
     src/mixer/StreamContext.h
     src/mixer/Bus.cpp
     src/mixer/Bus.h
-    src/systems/RtSystem.cpp
-    src/systems/RtSystem.h
-    src/systems/IoStreamSystem.cpp
-    src/systems/IoStreamSystem.h
+    src/mixer/RtSystem.cpp
+    src/mixer/RtSystem.h
+    src/io/IoStreamSystem.cpp
+    src/io/IoStreamSystem.h
     src/mixer/BusGraphCompiler.cpp
     src/mixer/BusGraphCompiler.h
     src/messaging/IoLoadRequestQueue.cpp
@@ -56,8 +56,8 @@ set(ENGINE_FILES
     src/messaging/IoLoadEventQueue.cpp
     src/messaging/IoLoadEventQueue.h
     src/core/Constants.h
-    src/systems/IoLoadSystem.cpp
-    src/systems/IoLoadSystem.h
+    src/io/IoLoadSystem.cpp
+    src/io/IoLoadSystem.h
     src/resources/ResidentSound.h
     include/dalia/audio/ResourceHandle.h
     src/core/ResourcePool.h

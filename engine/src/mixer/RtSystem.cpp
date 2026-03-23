@@ -1,4 +1,4 @@
-#include "systems/RtSystem.h"
+#include "RtSystem.h"
 
 #include "core/Logger.h"
 
