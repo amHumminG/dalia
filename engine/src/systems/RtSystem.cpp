@@ -168,7 +168,7 @@ namespace dalia {
             	}
 
             	// Non-Virtual
-            	Logger::Log(LogLevel::Debug, "RtSystem", "Mixing voice %d...", i); // Only for testing
+            	// Logger::Log(LogLevel::Debug, "RtSystem", "Mixing voice %d...", i); // Only for testing
             	bool isStillPlaying = MixVoiceToBus(voice, voice.parentBusIndex, frameCount);
             	if (!isStillPlaying) FreeVoice(i);
             }

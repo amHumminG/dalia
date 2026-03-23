@@ -206,11 +206,15 @@ int main() {
     config.logLevel = LogLevel::Debug;
     engine.Init(config);
 
+    engine.CreateBus("Music", "Master");
+
     SoundHandle spidermanSound;
     engine.LoadSoundAsync(spidermanSound, SoundType::Resident, "assets/spiderman.ogg", SpidermanFinishedLoading);
 
     PlaybackHandle spidermanPlayback;
     engine.CreatePlayback(spidermanPlayback, spidermanSound, SpidermanFinishedPlaying);
+    engine.RoutePlayback(spidermanPlayback, "Music");
+
     engine.Play(spidermanPlayback);
 
     while (true) {

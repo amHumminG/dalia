@@ -150,7 +150,7 @@ namespace dalia {
 			freeBuses	= std::make_unique<FixedStack<uint32_t>>(busCapacity);
 			for (int i = voiceCapacity - 1; i >= 0; i--)	freeVoices->Push(i);
 			for (int i = streamCapacity - 1; i >= 0; i--)	freeStreams->Push(i);
-			for (int i = busCapacity - 1; i >= 0; i--)		freeBuses->Push(i); // Skip Master (index 0)
+			for (int i = busCapacity - 1; i >= 1; i--)		freeBuses->Push(i); // Skip Master (index 0)
 
 			// Resources
 			assetRegistry = std::make_unique<AssetRegistry>(config.residentSoundCapacity, config.streamSoundCapacity);
@@ -370,6 +370,8 @@ namespace dalia {
 
 			state->isMixOrderSwapPending = true;
 			state->isMixOrderDirty = false;
+
+			Logger::Log(LogLevel::Debug, "TryUpdateMixOrder", "Recompiled mix order (%d buses).", sortedCount);
 		}
 		else {
 			Logger::Log(LogLevel::Critical, "Bus Routing", "Failed to compile mix graph: Cycle detected.");
@@ -751,7 +753,7 @@ namespace dalia {
 		const BusID bId(identifier);
 		const BusID bParentId(parentIdentifier);
 		uint32_t bIndex;
-		uint32_t bIndexParent;
+		uint32_t bIndexParent = NO_PARENT;
 		bool parentFound = false;
 
 		// Fetch parent bus
@@ -765,10 +767,11 @@ namespace dalia {
 		auto it = m_state->busHashMap.find(bId);
 		if (it != m_state->busHashMap.end()) {
 			bIndex = it->second;
-			BusMirror* bMirror  = &m_state->busPoolMirror[bIndex];
-			bMirror->refCount++;
-			if (parentFound && bMirror->parentBusIndex != bIndexParent) {
-				Logger::Log(LogLevel::Warning, "Engine",
+			BusMirror& bMirror  = m_state->busPoolMirror[bIndex];
+			bMirror.refCount++;
+
+			if (parentFound && bMirror.parentBusIndex != bIndexParent) {
+				Logger::Log(LogLevel::Warning, "CreateBus",
 					"CreateBus called for existing bus (%s) with conflicting parent. Ignoring new parent.",
 					identifier);
 			}
@@ -776,7 +779,7 @@ namespace dalia {
 		}
 
 		if (!parentFound) {
-			Logger::Log(LogLevel::Error, "Engine",
+			Logger::Log(LogLevel::Error, "CreateBus",
 			"Failed to create bus with routing (%s -> %s). No bus with identifier (%s) exists.",
 			identifier, parentIdentifier, parentIdentifier);
 			return Result::BusNotFound;
@@ -784,21 +787,24 @@ namespace dalia {
 
 		// Bus does not exist yet
 		if (!m_state->freeBuses->Pop(bIndex)) {
-			Logger::Log(LogLevel::Error, "Engine", "Failed to create bus (%s). Bus pool exhausted.",
+			Logger::Log(LogLevel::Error, "CreateBus", "Failed to create bus (%s). Bus pool exhausted.",
 				identifier);
 			return Result::BusPoolExhausted;
 		}
 
-		BusMirror* bMirror = &m_state->busPoolMirror[bIndex];
-		bMirror->hash = bId.GetHash();
-		bMirror->refCount = 1;
-		bMirror->parentBusIndex = bIndexParent;
+		BusMirror& bMirror = m_state->busPoolMirror[bIndex];
+		bMirror.refCount = 1;
+		bMirror.parentBusIndex = bIndexParent;
 
 		m_state->busHashMap[bId] = bIndex;
 #if DALIA_DEBUG
 		m_state->busDebugNames[bId] = identifier;
 #endif
 
+		Logger::Log(LogLevel::Debug, "CreateBus", "Created bus with routing %d -> %d.",
+			bIndex, bIndexParent);
+		Logger::Log(LogLevel::Debug, "CreateBus", "Created bus with routing %s -> %s.",
+			identifier, parentIdentifier);
 		m_state->rtCommands->Enqueue(RtCommand::AllocateBus(bIndex, bIndexParent));
 		m_state->isMixOrderDirty = true;
 
@@ -824,12 +830,14 @@ namespace dalia {
 			return Result::Error;
 		}
 
-		BusMirror* bMirror = &m_state->busPoolMirror[bIndex];
+		BusMirror& bMirror = m_state->busPoolMirror[bIndex];
 
-		if (bMirror->refCount > 1) {
-			bMirror->refCount--;
+		if (bMirror.refCount > 1) {
+			bMirror.refCount--;
 			return Result::Ok;
 		}
+
+		Logger::Log(LogLevel::Debug, "DestroyBus", "Destroying bus %s (index: %d).", identifier, bIndex);
 
 		// Reference count is 1 -> Destroy bus
 		// Remove parent from child buses
@@ -838,21 +846,24 @@ namespace dalia {
 			if (bMirrorChild->parentBusIndex == bIndex) {
 				bMirrorChild->parentBusIndex = NO_PARENT;
 				m_state->rtCommands->Enqueue(RtCommand::SetBusParent(i, NO_PARENT));
+				Logger::Log(LogLevel::Debug, "DestroyBus", "Orphaned bus (index: %d).", i);
 			}
 		}
 
 		for (uint32_t i = 0; i < m_state->voiceCapacity; i++) {
-			VoiceMirror* vMirrorChild = &m_state->voicePoolMirror[i];
-			if (vMirrorChild->parentBusIndex == bIndex) {
-				vMirrorChild->parentBusIndex = NO_PARENT;
-				m_state->rtCommands->Enqueue(RtCommand::SetVoiceParent(i, vMirrorChild->generation, NO_PARENT));
+			VoiceMirror& vMirrorChild = m_state->voicePoolMirror[i];
+			if (vMirrorChild.parentBusIndex == bIndex) {
+				vMirrorChild.parentBusIndex = NO_PARENT;
+				m_state->rtCommands->Enqueue(RtCommand::SetVoiceParent(i, vMirrorChild.generation, NO_PARENT));
+				Logger::Log(LogLevel::Debug, "DestroyBus", "Orphaned voice (index: %d).", i);
 			}
 		}
 
-		bMirror->Reset();
+		bMirror.Reset();
 		m_state->busHashMap.erase(it);
 		m_state->freeBuses->Push(bIndex);
 
+		Logger::Log(LogLevel::Debug, "DestroyBus", "Destroyed bus %s (index: %d).", identifier, bIndex);
 		m_state->rtCommands->Enqueue(RtCommand::DeallocateBus(bIndex));
 		m_state->isMixOrderDirty = true;
 
@@ -868,7 +879,7 @@ namespace dalia {
 		// Fetch bus
 		auto it = m_state->busHashMap.find(bId);
 		if (it == m_state->busHashMap.end()) {
-			Logger::Log(LogLevel::Error, "Engine",
+			Logger::Log(LogLevel::Error, "RouteBus",
 				"Failed to route bus (%s -> %s). No bus with identifier (%s) exists.",
 				identifier, parentIdentifier, identifier);
 			return Result::BusNotFound;
@@ -876,7 +887,7 @@ namespace dalia {
 		uint32_t bIndex = it->second;
 
 		if (bIndex == MASTER_BUS_INDEX) {
-			Logger::Log(LogLevel::Error, "Engine",
+			Logger::Log(LogLevel::Error, "RouteBus",
 			"Failed to route bus (%s -> %s). Master cannot be routed.", identifier, parentIdentifier);
 			return Result::InvalidRouting;
 		}
@@ -884,26 +895,29 @@ namespace dalia {
 		// Fetch parent bus
 		auto parentIt = m_state->busHashMap.find(bParentId);
 		if (parentIt == m_state->busHashMap.end()) {
-			Logger::Log(LogLevel::Error, "Engine",
+			Logger::Log(LogLevel::Error, "RouteBus",
 			"Failed to route bus (%s -> %s). No bus with identifier (%s) exists.",
 			identifier, parentIdentifier, parentIdentifier);
 			return Result::BusNotFound;
 		}
 		uint32_t bIndexParent = parentIt->second;
 
+		// Cycle detection
 		uint32_t currentAncestor = bIndexParent;
 		while (currentAncestor != NO_PARENT) {
 			if (currentAncestor == bIndex) {
-				Logger::Log(LogLevel::Error, "Engine", "Failed to rout bus (%s -> %s). Bus graph cycle detected.",
+				Logger::Log(LogLevel::Error, "RouteBus", "Failed to route bus (%s -> %s). Bus graph cycle detected.",
 					identifier, parentIdentifier);
 				return Result::InvalidRouting;
 			}
 			currentAncestor = m_state->busPoolMirror[currentAncestor].parentBusIndex;
 		}
 
-		BusMirror* bMirror = &m_state->busPoolMirror[bIndex];
-		bMirror->parentBusIndex = bIndexParent;
+		BusMirror& bMirror = m_state->busPoolMirror[bIndex];
+		bMirror.parentBusIndex = bIndexParent;
 
+		Logger::Log(LogLevel::Debug, "RouteBus", "Routed bus %s (index: %d) -> %s (index: %d).",
+			identifier, bIndex, parentIdentifier, bIndexParent);
 		m_state->rtCommands->Enqueue(RtCommand::SetBusParent(bIndex, bIndexParent));
 		m_state->isMixOrderDirty = true;
 
@@ -925,12 +939,14 @@ namespace dalia {
 		const BusID bId(busIdentifier);
 		auto it = m_state->busHashMap.find(bId);
 		if (it == m_state->busHashMap.end()) {
-			Logger::Log(LogLevel::Error, "Engine",
+			Logger::Log(LogLevel::Error, "RoutePlayback",
 				"Failed to route playback. No bus with identifier (%s) exists.", busIdentifier);
 			return Result::BusNotFound;
 		}
 		uint32_t bIndex = it->second;
 
+		Logger::Log(LogLevel::Debug, "RoutePlayback", "Routed voice (index: %d) to bus %s (index: %d).",
+			vIndex, busIdentifier, bIndex);
 		vMirror->parentBusIndex = bIndex;
 		m_state->rtCommands->Enqueue(RtCommand::SetVoiceParent(vIndex, vGeneration, bIndex));
 

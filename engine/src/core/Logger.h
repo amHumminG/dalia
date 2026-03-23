@@ -18,5 +18,20 @@ namespace dalia {
 	};
 }
 
+#define DALIA_LOG_DEBUG(category, fmt, ...) \
+dalia::Logger::Log(dalia::LogLevel::Debug, category, "%s() - " fmt, __func__, ##__VA_ARGS__)
+
+#define DALIA_LOG_INFO(category, fmt, ...) \
+dalia::Logger::Log(dalia::LogLevel::Info, category, "%s() - " fmt, __func__, ##__VA_ARGS__)
+
+#define DALIA_LOG_WARN(category, fmt, ...) \
+dalia::Logger::Log(dalia::LogLevel::Warning, category, "%s() - " fmt, __func__, ##__VA_ARGS__)
+
+#define DALIA_LOG_ERROR(category, fmt, ...) \
+dalia::Logger::Log(dalia::LogLevel::Error, category, "%s() - " fmt, __func__, ##__VA_ARGS__)
+
+#define DALIA_LOG_CRITICAL(category, fmt, ...) \
+dalia::Logger::Log(dalia::LogLevel::Critical, category, "%s() - " fmt, __func__, ##__VA_ARGS__)
+
 
 

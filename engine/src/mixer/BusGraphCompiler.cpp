@@ -19,7 +19,7 @@ namespace dalia {
 		std::fill_n(m_pendingChildrenCount.get(), m_busCapacity, 0);
 		m_leaves->Clear();
 
-		// Calculate the amount of children each bus has
+		// Calculate the number of children each bus has
 		for (uint32_t i = 0; i < m_busCapacity; i++) {
 			if (busPoolMirror[i].refCount > 0) {
 				activeBusCount++;

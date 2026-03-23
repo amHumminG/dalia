@@ -29,7 +29,6 @@ namespace dalia {
     };
 
     struct BusMirror {
-        uint32_t hash = 0;
         uint32_t refCount = 0;
         uint32_t parentBusIndex = NO_PARENT;
 
@@ -37,7 +36,6 @@ namespace dalia {
         float volume = 1.0f;
 
         void Reset() {
-            hash = 0;
             refCount = 0;
             parentBusIndex = NO_PARENT;
 
