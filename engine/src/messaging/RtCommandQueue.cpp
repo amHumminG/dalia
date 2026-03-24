@@ -16,7 +16,7 @@ namespace dalia {
 		size_t commandsPushed = 0;
 		for (const auto& command : m_stagingArea) {
 			if (!m_buffer.Push(command)) {
-				Logger::Log(LogLevel::Warning, "AudioCommandQueue", "Unable to push all commands this frame. Internal buffer is Full.");
+				DALIA_LOG_WARN(LOG_CTX_MESSAGING, "Unable to push all RtCommands this frame. Internal buffer full.");
 				break;
 			}
 			else {

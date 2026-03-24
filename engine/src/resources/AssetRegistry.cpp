@@ -28,7 +28,7 @@ namespace dalia {
 
     void AssetRegistry::FreeSound(SoundHandle handle) {
         if (!handle.IsValid()) {
-            Logger::Log(LogLevel::Warning, "Engine", "Attempting to free invalid sound handle.");
+            DALIA_LOG_WARN(LOG_CTX_RESOURCES, "Attempting to free sound with invalid handle (%s).", handle.GetUUID());
         }
 
         if (handle.GetType() == SoundType::Resident) {

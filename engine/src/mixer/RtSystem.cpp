@@ -56,8 +56,8 @@ namespace dalia {
 	            	break;
 	            }
 	            case RtCommand::Type::AllocateVoiceResident: {
-	            	uint32_t voiceIndex = cmd.data.prepResident.voiceIndex;
-	            	Voice& voice = m_voicePool[voiceIndex];
+	            	uint32_t vIndex = cmd.data.prepResident.voiceIndex;
+	            	Voice& voice = m_voicePool[vIndex];
 
 	            	// Voice setup
 	            	voice.soundType = SoundType::Resident;
@@ -70,14 +70,14 @@ namespace dalia {
 	            	voice.channels = cmd.data.prepResident.channels;
 	            	voice.sampleRate = cmd.data.prepResident.sampleRate;
 
-	            	Logger::Log(LogLevel::Debug, "RtSystem", "Prepared resident voice with %d frames.",
-						cmd.data.prepResident.frameCount);
+	            	DALIA_LOG_DEBUG(LOG_CTX_MIXER, "Prepared resident voice %d with %d frames",
+	            		vIndex, cmd.data.prepResident.frameCount);
 
 	            	break;
 	            }
 				case RtCommand::Type::AllocateVoiceStreaming: {
-	            	uint32_t voiceIndex = cmd.data.prepStreaming.voiceIndex;
-	            	Voice& voice = m_voicePool[voiceIndex];
+	            	uint32_t vIndex = cmd.data.prepStreaming.voiceIndex;
+	            	Voice& voice = m_voicePool[vIndex];
 
 	            	// Voice setup
 	            	voice.soundType = SoundType::Stream;
@@ -90,84 +90,84 @@ namespace dalia {
 	            	break;
 	            }
 				case RtCommand::Type::SetVoiceParent: {
-	            	uint32_t voiceIndex = cmd.data.voiceParent.voiceIndex;
-	            	uint32_t expectedVoiceGen = cmd.data.voiceParent.voiceGeneration;
-	            	uint32_t newParentIndex = cmd.data.voiceParent.parentBusIndex;
-	            	Voice& voice = m_voicePool[voiceIndex];
+	            	uint32_t vIndex = cmd.data.voiceParent.voiceIndex;
+	            	uint32_t vGen = cmd.data.voiceParent.voiceGeneration;
+	            	uint32_t bIndexParent = cmd.data.voiceParent.parentBusIndex;
+	            	Voice& voice = m_voicePool[vIndex];
 
 	            	// Check for outdated command
-	            	if (voice.generation != expectedVoiceGen) break;
+	            	if (voice.generation != vGen) break;
 
-	            	voice.parentBusIndex = newParentIndex;
+	            	voice.parentBusIndex = bIndexParent;
 	            	break;
 				}
 				case RtCommand::Type::PlayVoice: {
-	            	uint32_t voiceIndex = cmd.data.voice.voiceIndex;
-	            	uint32_t expectedVoiceGen = cmd.data.voice.voiceGeneration;
-	            	Voice& voice = m_voicePool[voiceIndex];
+	            	uint32_t vIndex = cmd.data.voice.voiceIndex;
+	            	uint32_t vGen = cmd.data.voice.voiceGeneration;
+	            	Voice& voice = m_voicePool[vIndex];
 
 	            	// Check for outdated command
-	            	if (voice.generation != expectedVoiceGen) break;
+	            	if (voice.generation != vGen) break;
 
 	            	if (voice.state == VoiceState::Inactive || voice.state == VoiceState::Paused) {
-	            		Logger::Log(LogLevel::Debug, "RtSystem", "Voice %d set to playing", voiceIndex);
+	            		DALIA_LOG_DEBUG(LOG_CTX_MIXER, "Voice %d set to playing", vIndex);
 	            		voice.state = VoiceState::Playing;
 	            	}
 
 	            	break;
 				}
                 case RtCommand::Type::PauseVoice: {
-	            	uint32_t voiceIndex = cmd.data.voice.voiceIndex;
-	            	uint32_t expectedVoiceGen = cmd.data.voice.voiceGeneration;
-	            	Voice& voice = m_voicePool[voiceIndex];
+	            	uint32_t vIndex = cmd.data.voice.voiceIndex;
+	            	uint32_t vGen = cmd.data.voice.voiceGeneration;
+	            	Voice& voice = m_voicePool[vIndex];
 
 	            	// Check for outdated command
-	            	if (voice.generation != expectedVoiceGen) break;
+	            	if (voice.generation != vGen) break;
 
 	            	if (voice.state == VoiceState::Playing) {
-	            		Logger::Log(LogLevel::Debug, "RtSystem", "Voice %d set to paused", voiceIndex);
+	            		DALIA_LOG_DEBUG(LOG_CTX_MIXER, "Voice %d set to paused", vIndex);
 	            		voice.state = VoiceState::Paused;
 	            	}
 
 	            	break;
                 }
                 case RtCommand::Type::StopVoice: {
-	            	uint32_t voiceIndex = cmd.data.voice.voiceIndex;
-	            	uint32_t expectedVoiceGen = cmd.data.voice.voiceGeneration;
-	            	Voice& voice = m_voicePool[voiceIndex];
+	            	uint32_t vIndex = cmd.data.voice.voiceIndex;
+	            	uint32_t vGen = cmd.data.voice.voiceGeneration;
+	            	Voice& voice = m_voicePool[vIndex];
 
 	            	// Check for outdated command
-	            	if (voice.generation != expectedVoiceGen) break;
+	            	if (voice.generation != vGen) break;
 
 	            	voice.state = VoiceState::Stopped;
 	            	voice.exitCondition = PlaybackExitCondition::ExplicitStop;
 	            	break;
                 }
 				case RtCommand::Type::AllocateBus: {
-		            uint32_t busIndex = cmd.data.bus.busIndex;
-	            	uint32_t busParentIndex = cmd.data.bus.parentBusIndex;
+		            uint32_t bIndex = cmd.data.bus.busIndex;
+	            	uint32_t bIndexParent = cmd.data.bus.parentBusIndex;
 
-	            	m_busPool[busIndex].m_parentBusIndex = busParentIndex;
+	            	m_busPool[bIndex].m_parentBusIndex = bIndexParent;
 	            	break;
 	            }
 				case RtCommand::Type::DeallocateBus: {
-	            	uint32_t busIndex = cmd.data.bus.busIndex;
+	            	uint32_t bIndex = cmd.data.bus.busIndex;
 
-	            	m_busPool[busIndex].Reset();
+	            	m_busPool[bIndex].Reset();
 	            	break;
 				}
 				case RtCommand::Type::SetBusParent: {
-	            	uint32_t busIndex = cmd.data.bus.busIndex;
-	            	uint32_t busParentIndex = cmd.data.bus.parentBusIndex;
+	            	uint32_t bIndex = cmd.data.bus.busIndex;
+	            	uint32_t bIndexParent = cmd.data.bus.parentBusIndex;
 
-	            	m_busPool[busIndex].m_parentBusIndex = busParentIndex;
+	            	m_busPool[bIndex].m_parentBusIndex = bIndexParent;
 		            break;
 	            }
 				case RtCommand::Type::SetBusVolume: {
-	            	uint32_t busIndex = cmd.data.busFloat.busIndex;
+	            	uint32_t bIndex = cmd.data.busFloat.busIndex;
 	            	float newVolume = cmd.data.busFloat.value;
 
-	            	m_busPool[busIndex].m_volumeLinear = newVolume;
+	            	m_busPool[bIndex].m_volumeLinear = newVolume;
 	            	break;
 				}
                 default: break;
@@ -179,7 +179,7 @@ namespace dalia {
         const uint32_t sampleCount = frameCount * channels;
 
     	// Clear bus buffers
-        for (uint32_t busIndex : m_activeMixOrder) m_busPool[busIndex].Clear();
+        for (uint32_t bIndex : m_activeMixOrder) m_busPool[bIndex].Clear();
 
         // --- Voice Pass ---
     	uint32_t voicesMixed = 0;
@@ -189,15 +189,14 @@ namespace dalia {
             else if (voice.state == VoiceState::Playing) {
             	// Virtual
             	if (voice.parentBusIndex == NO_PARENT) { // This is where we perform the virtual check later
-            		Logger::Log(LogLevel::Debug, "RtSystem", "Mixing voice %d (VIRTUAL)", i);
+            		DALIA_LOG_DEBUG(LOG_CTX_MIXER, "Mixing voice %d (virtual).", i);
             		bool isStillPlaying = AdvanceVirtualVoice(voice, frameCount);
             		if (!isStillPlaying) FreeVoice(i);
             		continue;
             	}
 
             	// Non-Virtual
-            	Logger::Log(LogLevel::Debug, "RtSystem", "Mixing voice %d -> bus %d ",
-            		i, voice.parentBusIndex);
+            	DALIA_LOG_DEBUG(LOG_CTX_MIXER, "Mixing voice %d -> bus %d.", i, voice.parentBusIndex);
             	bool isStillPlaying = MixVoiceToBus(voice, voice.parentBusIndex, frameCount);
             	if (!isStillPlaying) FreeVoice(i);
 
@@ -208,14 +207,14 @@ namespace dalia {
     	if (voicesMixed == 0) return; // Early return to save compute power
 
         // --- Bus Pass ---
-        for (uint32_t busIndex : m_activeMixOrder) {
-            Bus& bus = m_busPool[busIndex];
+        for (uint32_t bIndex : m_activeMixOrder) {
+            Bus& bus = m_busPool[bIndex];
             bus.ApplyDSP(sampleCount);
 
-            uint32_t parentIndex = bus.m_parentBusIndex;
-            if (parentIndex != NO_PARENT) {
-            	Logger::Log(LogLevel::Debug, "Mixer", "Mixing bus %d -> bus %d.", busIndex, parentIndex);
-                Bus& parentBus = m_busPool[parentIndex];
+            uint32_t bIndexParent = bus.m_parentBusIndex;
+            if (bIndexParent != NO_PARENT) {
+            	DALIA_LOG_DEBUG(LOG_CTX_MIXER, "Mixing bus %d -> bus %d.", bIndex, bIndexParent);
+                Bus& parentBus = m_busPool[bIndexParent];
                 parentBus.MixInBuffer(bus.GetBuffer(), sampleCount);
             }
         }
@@ -253,7 +252,7 @@ namespace dalia {
 					return true; // It's still preparing
 				}
 				if (!stream.bufferReady[voice.data.stream.frontBufferIndex].load(std::memory_order_acquire)) {
-					Logger::Log(LogLevel::Error, "RtSystem", "Virtual stream buffer underrun");
+					DALIA_LOG_ERR(LOG_CTX_MIXER, "Stream buffer underrun (virtual).");
 					return true;
 				}
 
@@ -321,8 +320,8 @@ namespace dalia {
 		return true;
     }
 
-    bool RtSystem::MixVoiceToBus(Voice& voice, uint32_t busIndex, uint32_t frameCount) {
-        std::span<float> busBuffer = m_busPool[busIndex].GetBuffer();
+    bool RtSystem::MixVoiceToBus(Voice& voice, uint32_t bIndex, uint32_t frameCount) {
+        std::span<float> busBuffer = m_busPool[bIndex].GetBuffer();
         uint32_t framesMixed = 0;
 
     	// --- Panning & DSP ---
@@ -357,7 +356,7 @@ namespace dalia {
 					return true;
 				}
 				if (!stream.bufferReady[voice.data.stream.frontBufferIndex].load(std::memory_order_acquire)) {
-					Logger::Log(LogLevel::Error, "RtSystem", "Stream buffer underrun");
+					DALIA_LOG_ERR(LOG_CTX_MIXER, "Stream buffer underrun.");
 					return true;
 				}
 
@@ -408,8 +407,8 @@ namespace dalia {
         			}
         		}
         		else {
-        			Logger::Log(LogLevel::Warning, "RtSystem",
-						"Failed to mix voice with invalid channel count: %d", sourceChannels);
+        			DALIA_LOG_WARN(LOG_CTX_MIXER, "Failed to mix voice with invalid channel count (%d).",
+        				sourceChannels);
         		}
         	}
 
@@ -458,8 +457,8 @@ namespace dalia {
 		return true;
     }
 
-    void RtSystem::FreeVoice(uint32_t voiceIndex) {
-    	Voice& voice = m_voicePool[voiceIndex];
+    void RtSystem::FreeVoice(uint32_t vIndex) {
+    	Voice& voice = m_voicePool[vIndex];
 
 
     	if (voice.soundType == SoundType::Stream) {
@@ -467,19 +466,19 @@ namespace dalia {
     	}
 
     	if (voice.exitCondition == PlaybackExitCondition::NaturalEnd) {
-    		Logger::Log(LogLevel::Debug, "RtSystem", "Voice %d finished naturally.", voiceIndex);
+    		DALIA_LOG_DEBUG(LOG_CTX_MIXER, "Voice %d finished naturally.", vIndex);
     	}
     	else if (voice.exitCondition == PlaybackExitCondition::ExplicitStop) {
-    		Logger::Log(LogLevel::Debug, "RtSystem", "Voice %d stopped explicitly.", voiceIndex);
+    		DALIA_LOG_DEBUG(LOG_CTX_MIXER, "Voice %d stopped explicitly.", vIndex);
     	}
     	else if (voice.exitCondition == PlaybackExitCondition::Evicted) {
-    		Logger::Log(LogLevel::Debug, "RtSystem", "Voice %d stopped by eviction.", voiceIndex);
+    		DALIA_LOG_DEBUG(LOG_CTX_MIXER, "Voice %d evicted.", vIndex);
     	}
     	else if (voice.exitCondition == PlaybackExitCondition::Error) {
-    		Logger::Log(LogLevel::Debug, "RtSystem", "Voice %d stopped by error.", voiceIndex);
+    		DALIA_LOG_DEBUG(LOG_CTX_MIXER, "Voice %d stopped by error.", vIndex);
     	}
 
-    	m_rtEvents->Push(RtEvent::VoiceStopped(voiceIndex, voice.generation, voice.exitCondition));
+    	m_rtEvents->Push(RtEvent::VoiceStopped(vIndex, voice.generation, voice.exitCondition));
     	voice.Reset();
     }
 }

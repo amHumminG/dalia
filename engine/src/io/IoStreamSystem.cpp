@@ -58,7 +58,12 @@ namespace dalia {
     void IoStreamSystem::ProcessRequest(const IoStreamRequest& req) {
         switch (req.type) {
             case IoStreamRequest::Type::PrepareStream: {
-                StreamContext& stream = m_streamPool[req.data.stream.poolIndex];
+                uint32_t sIndex = req.data.stream.poolIndex;
+                uint32_t sGen = req.data.stream.generation;
+                uint32_t bufferIndex = req.data.stream.bufferIndex;
+                const char* filepath = req.data.stream.filepath;
+
+                StreamContext& stream = m_streamPool[sIndex];
                 if (stream.state.load(std::memory_order_acquire) != StreamState::Preparing) break;
 
                 if (stream.decoder) {
@@ -67,7 +72,7 @@ namespace dalia {
                 }
 
                 int error;
-                stream.decoder = stb_vorbis_open_filename(req.data.stream.path, &error, nullptr);
+                stream.decoder = stb_vorbis_open_filename(filepath, &error, nullptr);
 
                 if (stream.decoder) {
                     stb_vorbis_info info = stb_vorbis_get_info(stream.decoder);
@@ -77,18 +82,15 @@ namespace dalia {
 
                     // Channels
                     if (info.channels == 0 || info.channels > 2) {
-                        Logger::Log(LogLevel::Error, "IoStreamSystem",
-                            "Failed to load file: %s. Unsupported channel count (%d) in file.",
-                            req.data.stream.path, info.channels);
+                        DALIA_LOG_ERR(LOG_CTX_IO, "Failed to load file (%s). Unsupported channel count (%d)",
+                            filepath, info.channels);
                         isSupported = false;
                     }
 
                     // Sample rate
-                    static constexpr uint32_t ENGINE_SAMPLE_RATE = 48000;
-                    if (info.sample_rate != ENGINE_SAMPLE_RATE) {
-                        Logger::Log(LogLevel::Error, "IoStreamSystem",
-                            "Failed to load file: %s. Unsupported sample rate (%d).",
-                            req.data.stream.path, info.sample_rate);
+                    if (info.sample_rate != OUTPUT_SAMPLE_RATE) {
+                        DALIA_LOG_ERR(LOG_CTX_IO, "Failed to load file (%s). Unsupported sample rate (%d).",
+                            filepath, info.sample_rate);
                         isSupported = false;
                     }
 
@@ -105,20 +107,21 @@ namespace dalia {
                     FillBuffer(stream, 1);
                     stream.state.store(StreamState::Streaming);
 
-                    Logger::Log(LogLevel::Debug, "IoStreamSystem", "Finished preparing stream %d for file: %s",
-                        req.data.stream.poolIndex, req.data.stream.path);
+                    DALIA_LOG_DEBUG(LOG_CTX_IO, "Finished preparing stream %d fro file: %s.", sIndex, filepath);
                     break;
                 }
                 else {
-                    Logger::Log(LogLevel::Error, "IoStreamSystem", "Failed to open stream for %s. %s.",
-                        req.data.stream.path, GetStbVorbisErrorString(error));
+                    DALIA_LOG_ERR(LOG_CTX_IO, "Failed to open stream for %s. %s.",
+                        filepath, GetStbVorbisErrorString(error));
                     stream.state.store(StreamState::Error, std::memory_order_release);
                 }
 
                 break;
             }
             case IoStreamRequest::Type::ReleaseStream: {
-                StreamContext& stream = m_streamPool[req.data.stream.poolIndex];
+                uint32_t sIndex = req.data.stream.poolIndex;
+
+                StreamContext& stream = m_streamPool[sIndex];
                 if (stream.decoder) {
                     stb_vorbis_close(stream.decoder);
                     stream.decoder = nullptr;
@@ -126,19 +129,22 @@ namespace dalia {
 
                 stream.Reset();
                 stream.state = StreamState::Free;
-                m_freeStreams->Push(req.data.stream.poolIndex);
-                Logger::Log(LogLevel::Debug, "IoStreamSystem", "Freed stream %d", req.data.stream.poolIndex);
+                m_freeStreams->Push(sIndex);
+                DALIA_LOG_DEBUG(LOG_CTX_IO, "Freed stream %d.", sIndex);
                 break;
             }
             case IoStreamRequest::Type::RefillStreamBuffer: {
-                StreamContext& stream = m_streamPool[req.data.stream.poolIndex];
+                uint32_t sIndex = req.data.stream.poolIndex;
+                uint32_t sGen = req.data.stream.generation;
+                uint32_t bufferIndex = req.data.stream.bufferIndex;
+
+                StreamContext& stream = m_streamPool[sIndex];
 
                 if (stream.state.load(std::memory_order_acquire) != StreamState::Streaming) break;
-                if (stream.generation.load(std::memory_order_relaxed) != req.data.stream.generation) break;
+                if (stream.generation.load(std::memory_order_relaxed) != sGen) break;
 
-                FillBuffer(stream, req.data.stream.bufferIndex);
-                Logger::Log(LogLevel::Debug, "IoStreamSystem", "Refilled buffer %d for stream %d",
-                    req.data.stream.bufferIndex, req.data.stream.poolIndex);
+                FillBuffer(stream, bufferIndex);
+                DALIA_LOG_DEBUG(LOG_CTX_IO, "Refilled buffer %d, for stream %d.", bufferIndex, sIndex);
                 break;
             }
             default:
@@ -148,7 +154,7 @@ namespace dalia {
 
     void IoStreamSystem::FillBuffer(StreamContext& stream, uint32_t bufferIndex) {
         if (!stream.decoder) {
-            Logger::Log(LogLevel::Error, "Stream buffer refill", "Invalid decoder");
+            DALIA_LOG_ERR(LOG_CTX_IO, "Invalid stream decoder.");
             stream.state.store(StreamState::Error, std::memory_order_release);
             return;
         }
@@ -175,13 +181,13 @@ namespace dalia {
             if (framesRead == 0) {
                 // Hit EOF
                 if (justLooped) {
-                    Logger::Log(LogLevel::Error, "IoStreamSystem", "Stream loop failed. Corrupted file.");
+                    DALIA_LOG_ERR(LOG_CTX_IO, "Stream loop failed. Corrupted file.");
                     stream.state.store(StreamState::Error, std::memory_order_release);
                     return;
                 }
 
                 stream.eofIndex[bufferIndex] = framesWritten;
-                Logger::Log(LogLevel::Debug, "IoStreamSystem", "Stream buffer found EOF at index %d", framesWritten);
+                DALIA_LOG_DEBUG(LOG_CTX_IO, "Stream buffer found EOF at index %d.", framesWritten);
                 stb_vorbis_seek_start(stream.decoder);
                 justLooped = true;
                 foundEOF = true;

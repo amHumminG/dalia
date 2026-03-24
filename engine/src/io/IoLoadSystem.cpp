@@ -68,7 +68,7 @@ namespace dalia {
                 if (soundType == SoundType::Resident) {
                     residentSound = m_assetRegistry->GetResidentSound(soundHandle);
                     if (!residentSound) {
-                        Logger::Log(LogLevel::Error, "IoLoadSystem", "Failed to load sound. Invalid handle: %d.",
+                        DALIA_LOG_ERR(LOG_CTX_IO, "Failed to load resident sound. Invalid handle (%d)",
                             soundHandle.GetUUID());
                         return;
                     }
@@ -77,7 +77,7 @@ namespace dalia {
                 else {
                     streamSound = m_assetRegistry->GetStreamSound(soundHandle);
                     if (!streamSound) {
-                        Logger::Log(LogLevel::Error, "IoLoadSystem", "Failed to load sound. Invalid handle: %d.",
+                        DALIA_LOG_ERR(LOG_CTX_IO, "Failed to load stream sound. Invalid handle (%d)",
                             soundHandle.GetUUID());
                         return;
                     }
@@ -88,9 +88,11 @@ namespace dalia {
                 stb_vorbis* decoder = stb_vorbis_open_filename(req.data.soundFromFile.filepath, &error, nullptr);
                 if (!decoder) {
                     soundLoadStatePtr->store(LoadState::Error, std::memory_order_release);
-                    m_ioLoadEvents->Push(IoLoadEvent(IoLoadEvent::SoundLoadFailed(req.requestId, Result::FileReadError)));
-                    Logger::Log(LogLevel::Error, "IoLoadSystem", "Failed to load sound from %s. %s.",
-                        req.data.soundFromFile.filepath, GetStbVorbisErrorString(error));
+
+                    m_ioLoadEvents->Push(IoLoadEvent::SoundLoadFailed(req.requestId, Result::FileReadError));
+                    DALIA_LOG_ERR(LOG_CTX_IO, "Failed to load sound from %s. %s.", req.data.soundFromFile.filepath,
+                        GetStbVorbisErrorString(error));
+
                     return;
                 }
 
@@ -115,9 +117,9 @@ namespace dalia {
 
                     if (floatsDecoded == 0) {
                         soundLoadStatePtr->store(LoadState::Error, std::memory_order_release);
-                        m_ioLoadEvents->Push(IoLoadEvent(IoLoadEvent::SoundLoadFailed(req.requestId, Result::FileReadError)));
-                        Logger::Log(LogLevel::Error, "IoLoadSystem", "Read %d samples from %s",
-                            floatsDecoded, req.data.soundFromFile.filepath);
+
+                        m_ioLoadEvents->Push(IoLoadEvent::SoundLoadFailed(req.requestId, Result::FileReadError));
+                        DALIA_LOG_ERR(LOG_CTX_IO, "Failed to read samples from %s.", req.data.soundFromFile.filepath);
 
                         stb_vorbis_close(decoder);
                         return;
@@ -132,10 +134,9 @@ namespace dalia {
                 stb_vorbis_close(decoder);
                 soundLoadStatePtr->store(LoadState::Loaded, std::memory_order_release);
 
-                m_ioLoadEvents->Push(IoLoadEvent(IoLoadEvent::SoundLoaded(req.requestId, soundHandle.GetUUID())));
+                m_ioLoadEvents->Push(IoLoadEvent::SoundLoaded(req.requestId, soundHandle.GetUUID()));
 
-                Logger::Log(LogLevel::Debug, "IoLoadSystem", "Successfully loaded sound for file: %s",
-                    req.data.soundFromFile.filepath);
+                DALIA_LOG_DEBUG(LOG_CTX_IO, "Loaded sound from file (%s).", req.data.soundFromFile.filepath);
                 break;
             }
             default:

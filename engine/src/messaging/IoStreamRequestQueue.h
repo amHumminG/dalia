@@ -19,7 +19,7 @@ namespace dalia {
                 uint32_t poolIndex;
                 uint32_t  generation;
                 uint32_t bufferIndex;
-                char path[MAX_IO_PATH_SIZE];
+                char filepath[MAX_IO_PATH_SIZE];
             } stream;
         } data = {};
 
@@ -27,7 +27,7 @@ namespace dalia {
             IoStreamRequest req;
             req.type = Type::PrepareStream;
             req.data.stream.poolIndex = poolIndex;
-            strncpy_s(req.data.stream.path, MAX_IO_PATH_SIZE, path, _TRUNCATE);
+            strncpy_s(req.data.stream.filepath, MAX_IO_PATH_SIZE, path, _TRUNCATE);
             return req;
         }
 
