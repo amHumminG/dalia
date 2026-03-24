@@ -222,6 +222,7 @@ namespace dalia {
 					AudioEventCallback callback = vMirror->onStopCallback;
 					vMirror->Reset();
 					state->freeVoices->Push(index);
+
 					DALIA_LOG_DEBUG(LOG_CTX_CORE, "Freed voice %d.", index);
 					if (callback) callback(state->ForgePlaybackHandle(index, generation), ev.data.voice.exitCondition);
 
@@ -900,7 +901,7 @@ namespace dalia {
 				soundHandle.GetUUID()
 			});
 			vMirror.pendingLoad = true;
-			DALIA_LOG_DEBUG(LOG_CTX_API, "Deferring playback for voice %d. Sound not yet loaded", vIndex);
+			DALIA_LOG_DEBUG(LOG_CTX_API, "Deferring playback for voice %d. Sound not yet loaded.", vIndex);
 
 			pbkHandle = PlaybackHandle::Create(vIndex, vMirror.generation);
 			return Result::Ok;
@@ -992,7 +993,7 @@ namespace dalia {
 		// Deffered playback
 		if (vMirror->pendingLoad) {
 			vMirror->state = VoiceState::Playing;
-			DALIA_LOG_WARN(LOG_CTX_API, "Calling play on for sound that is still loading. Will play when done loading");
+			DALIA_LOG_WARN(LOG_CTX_API, "Calling play on for sound that is still loading. Will play when done loading.");
 			return Result::Ok;
 		}
 

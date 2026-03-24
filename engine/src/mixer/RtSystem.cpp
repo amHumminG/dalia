@@ -186,19 +186,14 @@ namespace dalia {
         for (uint32_t i = 0; i < m_voicePool.size(); i++) {
             Voice& voice = m_voicePool[i];
         	if (voice.state == VoiceState::Stopped)	FreeVoice(i);
+        	else if (voice.parentBusIndex == NO_PARENT) { // Maybe this check should happen on the API thread instead?
+        		voice.exitCondition = PlaybackExitCondition::Evicted;
+        		FreeVoice(i);
+        	}
             else if (voice.state == VoiceState::Playing) {
-            	// Virtual
-            	if (voice.parentBusIndex == NO_PARENT) { // This is where we perform the virtual check later
-            		DALIA_LOG_DEBUG(LOG_CTX_MIXER, "Mixing voice %d (virtual).", i);
-            		bool isStillPlaying = AdvanceVirtualVoice(voice, frameCount);
-            		if (!isStillPlaying) FreeVoice(i);
-            		continue;
-            	}
-
-            	// Non-Virtual
             	DALIA_LOG_DEBUG(LOG_CTX_MIXER, "Mixing voice %d -> bus %d.", i, voice.parentBusIndex);
             	bool isStillPlaying = MixVoiceToBus(voice, voice.parentBusIndex, frameCount);
-            	if (!isStillPlaying) FreeVoice(i);
+            	if (!isStillPlaying) voice.state = VoiceState::Stopped;
 
             	voicesMixed++;
             }
@@ -225,99 +220,6 @@ namespace dalia {
             masterBuffer[i] = std::clamp(masterBuffer[i], -1.0f, 1.0f);
         }
         std::copy_n(masterBuffer.data(), sampleCount, output);
-    }
-
-	bool RtSystem::AdvanceVirtualVoice(Voice& voice, uint32_t frameCount) {
-        uint32_t framesProcessed = 0;
-
-        while (framesProcessed < frameCount) {
-        	uint32_t framesInSource = 0;
-        	uint32_t cursorInt = static_cast<uint32_t>(voice.cursor);
-
-			if (voice.soundType == SoundType::Resident) {
-				framesInSource = voice.data.resident.frameCount;
-			}
-			else if (voice.soundType == SoundType::Stream) {
-				StreamContext& stream = m_streamPool[voice.data.stream.streamContextIndex];
-				StreamState streamState = stream.state.load(std::memory_order_acquire);
-
-				if (streamState != StreamState::Streaming) {
-					// Stream could be preparing still, check if it has failed
-					if (streamState == StreamState::Error) {
-						voice.state = VoiceState::Stopped;
-						voice.exitCondition = PlaybackExitCondition::Error;
-						return false;
-					}
-
-					return true; // It's still preparing
-				}
-				if (!stream.bufferReady[voice.data.stream.frontBufferIndex].load(std::memory_order_acquire)) {
-					DALIA_LOG_ERR(LOG_CTX_MIXER, "Stream buffer underrun (virtual).");
-					return true;
-				}
-
-				// Determine the number of valid frames in the buffer
-				const uint32_t eofIndex = stream.eofIndex[voice.data.stream.frontBufferIndex];
-				if (!voice.isLooping && eofIndex != NO_EOF) {
-					uint32_t samplesInSource = eofIndex;
-					framesInSource = samplesInSource / stream.channels;
-				}
-				else {
-					framesInSource = DOUBLE_BUFFER_FRAMES;
-				}
-			}
-			else return false;
-
-			uint32_t remainingFramesInSource = framesInSource - cursorInt;
-        	if (cursorInt >= framesInSource) remainingFramesInSource = 0; // Safety clamp
-
-			uint32_t framesToProcessNow = std::min(frameCount - framesProcessed, remainingFramesInSource);
-
-        	if (framesToProcessNow > 0) {
-        		voice.cursor += static_cast<float>(framesToProcessNow);
-        		framesProcessed += framesToProcessNow;
-        	}
-
-			// Handle end of buffer
-			if (static_cast<uint32_t>(voice.cursor) >= framesInSource) {
-				if (voice.soundType == SoundType::Resident) {
-					if (voice.isLooping) {
-						voice.cursor = 0.0f; // Loop back to start
-					}
-					else {
-						voice.state = VoiceState::Stopped;
-						voice.exitCondition = PlaybackExitCondition::NaturalEnd;
-						return false;
-					}
-				}
-				else if (voice.soundType == SoundType::Stream) {
-					StreamContext& stream = m_streamPool[voice.data.stream.streamContextIndex];
-
-					// Did we hit EOF?
-					if (stream.eofIndex[voice.data.stream.frontBufferIndex] != NO_EOF && !voice.isLooping) {
-						voice.state = VoiceState::Stopped;
-						voice.exitCondition = PlaybackExitCondition::NaturalEnd;
-						return false;
-					}
-
-					stream.bufferReady[voice.data.stream.frontBufferIndex].store(false, std::memory_order_release);
-					const uint32_t gen = stream.generation.load(std::memory_order_relaxed);
-					IoStreamRequest req = IoStreamRequest::RefillStreamBuffer(
-						voice.data.stream.streamContextIndex,
-						gen,
-						voice.data.stream.frontBufferIndex
-					);
-					m_ioStreamRequests->Push(req);
-
-					// Swap buffers
-					voice.data.stream.frontBufferIndex = 1 - voice.data.stream.frontBufferIndex;
-					voice.cursor = 0.0f;
-				}
-				else return false;
-			}
-		}
-
-		return true;
     }
 
     bool RtSystem::MixVoiceToBus(Voice& voice, uint32_t bIndex, uint32_t frameCount) {
