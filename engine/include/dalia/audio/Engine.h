@@ -4,15 +4,14 @@
 #include "dalia/core/LogLevel.h"
 
 #include "dalia/audio/PlaybackControl.h"
-#include "dalia/audio/SoundHandle.h"
+#include "dalia/audio/SoundControl.h"
+#include "dalia/audio/EffectControl.h"
 
 namespace dalia {
 
 	class StringID;
 	struct EngineInternalState;
 
-	struct RtEvent;
-	struct IoLoadEvent;
 
 	struct EngineConfig {
 		LogLevel logLevel = LogLevel::Warning;

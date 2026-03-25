@@ -1,5 +1,5 @@
 #pragma once
-#include "dalia/audio/SoundHandle.h"
+#include "dalia/audio/SoundControl.h"
 #include "core/Constants.h"
 #include "core/SPSCRingBuffer.h"
 #include <cstdint>
