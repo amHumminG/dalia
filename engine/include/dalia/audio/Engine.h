@@ -25,6 +25,9 @@ namespace dalia {
 		uint32_t streamCapacity		= 32;
 		uint32_t busCapacity		= 64;
 
+		// Effects
+		uint32_t biquadCapacity		= 32;
+
 		size_t rtCommandQueueCapacity		= 1024;
 		size_t rtEventQueueCapacity			= 1024;
 		size_t ioStreamRequestQueueCapacity	= 256;
@@ -61,6 +64,17 @@ namespace dalia {
 		Result RouteBus(const char* identifier, const char* parentIdentifier);
 
 		Result SetBusVolumeDb(const char* identifier, float volumeDb);
+
+		// --- Effects ---
+
+		Result CreateBiquadFilter(EffectHandle& handle, BiquadFilterType type, const BiquadConfig& config);
+		// Result SetBiquadParams(EffectHandle, const BiquadConfig& config);
+		//
+		// Result AttachEffectToBus(const char* busIdentifier, EffectHandle effect, uint8_t slotIndex);
+		//
+		// Result DetachEffectFromBus(const char* busIdentifier, uint8_t slotIndex);
+		//
+		// Result DestroyEffect(EffectHandle effect);
 
 
 		// --- Soundbank Functionality ---

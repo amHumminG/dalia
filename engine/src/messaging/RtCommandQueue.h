@@ -1,5 +1,8 @@
 #pragma once
+
 #include "core/SPSCRingBuffer.h"
+#include "dalia/audio/EffectControl.h"
+
 #include <vector>
 
 namespace dalia {
@@ -33,6 +36,13 @@ namespace dalia {
 			// Bus Properties
 			SetBusParent,
 			SetBusVolume
+
+			// Effects
+			AllocateBiquad,
+			SetBiquadParams,
+
+			AttachEffect,
+			DetachEffect,
 		};
 
 		Type type = Type::None;
@@ -96,10 +106,17 @@ namespace dalia {
 				float value;
 			} busFloat;
 
+			struct {
+				uint32_t index;
+				uint32_t gen;
+				BiquadFilterType type;
+				BiquadConfig config;
+			} biquad;
+
 		} data = {};
 
 		static RtCommand SwapMixOrder(uint32_t* ptr, uint32_t nodeCount) {
-			RtCommand cmd;
+			RtCommand cmd{};
 			cmd.type = RtCommand::Type::SwapMixOrder;
 			cmd.data.mixOrder.ptr = ptr;
 			cmd.data.mixOrder.nodeCount = nodeCount;
@@ -108,7 +125,7 @@ namespace dalia {
 
 		static RtCommand PrepareVoiceResident(uint32_t index, uint32_t generation, const float* dataPtr,
 			uint32_t frameCount, uint32_t channels, uint32_t sampleRate) {
-			RtCommand cmd;
+			RtCommand cmd{};
 			cmd.type = Type::AllocateVoiceResident;
 			cmd.data.prepResident.voiceIndex = index;
 			cmd.data.prepResident.voiceGeneration = generation;
@@ -122,7 +139,7 @@ namespace dalia {
 
 		static RtCommand PrepareVoiceStreaming(uint32_t index, uint32_t generation, uint32_t streamIndex,
 			uint32_t channels, uint32_t sampleRate) {
-			RtCommand cmd;
+			RtCommand cmd{};
 			cmd.type = Type::AllocateVoiceStreaming;
 			cmd.data.prepStreaming.voiceIndex = index;
 			cmd.data.prepStreaming.voiceGeneration = generation;
@@ -134,7 +151,7 @@ namespace dalia {
 		}
 
 		static RtCommand PlayVoice(uint32_t index, uint32_t generation) {
-			RtCommand cmd;
+			RtCommand cmd{};
 			cmd.type = Type::PlayVoice;
 			cmd.data.voice.voiceIndex = index;
 			cmd.data.voice.voiceGeneration = generation;
@@ -142,7 +159,7 @@ namespace dalia {
 		}
 
 		static RtCommand PauseVoice(uint32_t index, uint32_t generation) {
-			RtCommand cmd;
+			RtCommand cmd{};
 			cmd.type = Type::PauseVoice;
 			cmd.data.voice.voiceIndex = index;
 			cmd.data.voice.voiceGeneration = generation;
@@ -150,7 +167,7 @@ namespace dalia {
 		}
 
 		static RtCommand StopVoice(uint32_t index, uint32_t generation) {
-			RtCommand cmd;
+			RtCommand cmd{};
 			cmd.type = Type::StopVoice;
 			cmd.data.voice.voiceIndex = index;
 			cmd.data.voice.voiceGeneration = generation;
@@ -158,7 +175,7 @@ namespace dalia {
 		}
 
 		static RtCommand SetVoiceParent(uint32_t index, uint32_t generation, uint32_t parentBusIndex) {
-			RtCommand cmd;
+			RtCommand cmd{};
 			cmd.type = Type::SetVoiceParent;
 			cmd.data.voiceParent.voiceIndex = index;
 			cmd.data.voiceParent.voiceGeneration = generation;
@@ -167,7 +184,7 @@ namespace dalia {
 		}
 
 		static RtCommand SetVoiceVolume(uint32_t index, uint32_t generation, float value) {
-			RtCommand cmd;
+			RtCommand cmd{};
 			cmd.type = Type::SetVoiceVolume;
 			cmd.data.voiceFloat.voiceIndex = index;
 			cmd.data.voiceFloat.voiceGeneration = generation;
@@ -176,7 +193,7 @@ namespace dalia {
 		}
 
 		static RtCommand AllocateBus(uint32_t index, uint32_t parentIndex) {
-			RtCommand cmd;
+			RtCommand cmd{};
 			cmd.type = Type::AllocateBus;
 			cmd.data.bus.busIndex = index;
 			cmd.data.bus.parentBusIndex = parentIndex;
@@ -184,14 +201,14 @@ namespace dalia {
 		}
 
 		static RtCommand DeallocateBus(uint32_t index) {
-			RtCommand cmd;
+			RtCommand cmd{};
 			cmd.type = Type::DeallocateBus;
 			cmd.data.bus.busIndex = index;
 			return cmd;
 		}
 
 		static RtCommand SetBusParent(uint32_t index, uint32_t parentIndex) {
-			RtCommand cmd;
+			RtCommand cmd{};
 			cmd.type = Type::SetBusParent;
 			cmd.data.bus.busIndex = index;
 			cmd.data.bus.parentBusIndex = parentIndex;
@@ -199,12 +216,34 @@ namespace dalia {
 		}
 
 		static RtCommand SetBusVolume(uint32_t index, float volume) {
-			RtCommand cmd;
+			RtCommand cmd{};
 			cmd.type = Type::SetBusVolume;
 			cmd.data.busFloat.busIndex = index;
 			cmd.data.busFloat.value = volume;
 			return cmd;
 		}
+
+		static RtCommand AllocateBiquad(uint32_t index, uint32_t gen, BiquadFilterType type, const BiquadConfig& config) {
+			RtCommand cmd{};
+			cmd.type = Type::AllocateBiquad;
+			cmd.data.biquad.index = index;
+			cmd.data.biquad.gen = gen;
+			cmd.data.biquad.type = type;
+			cmd.data.biquad.config = config;
+			return cmd;
+		}
+
+		static RtCommand SetBiquadParams(uint32_t index, uint32_t gen, const BiquadConfig& config) {
+			RtCommand cmd{};
+			cmd.type = Type::SetBiquadParams;
+			cmd.data.biquad.index = index;
+			cmd.data.biquad.gen = gen;
+			cmd.data.biquad.config = config;
+			return cmd;
+		}
+
+		static_assert(std::is_trivially_copyable_v<BiquadConfig>,
+			"BiquadConfig must remain trivially copyable for use in RtCommands");
 	};
 
 	class RtCommandQueue {

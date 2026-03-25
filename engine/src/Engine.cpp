@@ -1,6 +1,7 @@
 #include "dalia/audio/Engine.h"
 #include "dalia/audio/PlaybackControl.h"
 #include "dalia/audio/SoundControl.h"
+#include "dalia/audio/EffectControl.h"
 
 #include "core/Logger.h"
 #include "core/FixedStack.h"
@@ -8,6 +9,7 @@
 #include "core/Constants.h"
 #include "core/Types.h"
 #include "core/Math.h"
+#include "core/HandleManager.h"
 
 #include "messaging/RtCommandQueue.h"
 #include "messaging/RtEventQueue.h"
@@ -20,6 +22,7 @@
 #include "mixer/StreamContext.h"
 #include "mixer/Bus.h"
 #include "mixer/BusGraphCompiler.h"
+#include "mixer/effects/Biquad.h"
 
 #include "io/IoStreamSystem.h"
 #include "io/IoLoadSystem.h"
@@ -70,6 +73,8 @@ namespace dalia {
 		// Miniaudio
 		std::unique_ptr<ma_device> device;
 
+		uint32_t outputSampleRate = 0;
+
 		// --- Messaging Queues ---
 		std::unique_ptr<RtCommandQueue>			rtCommands;
 		std::unique_ptr<RtEventQueue>			rtEvents;
@@ -97,11 +102,15 @@ namespace dalia {
 		std::unordered_map<BusID, std::string> busDebugNames;
 #endif
 
-
 		// --- Availability Containers ---
 		std::unique_ptr<FixedStack<uint32_t>>		freeVoices;
 		std::unique_ptr<SPSCRingBuffer<uint32_t>>	freeStreams;
 		std::unique_ptr<FixedStack<uint32_t>>		freeBuses;
+
+		// --- Effects ---
+		std::unique_ptr<Biquad[]> biquadPool;
+
+		std::unique_ptr<HandleManager> biquadHM;
 
 		// -- Bus Execution Graph ---
 		std::unique_ptr<MixOrderBuffer>		mixOrderBuffer;
@@ -141,6 +150,11 @@ namespace dalia {
 			streamPool		= std::make_unique<StreamContext[]>(streamCapacity);
 			busPool			= std::make_unique<Bus[]>(busCapacity);
 			busPoolMirror	= std::make_unique<BusMirror[]>(busCapacity);
+
+			// Effects
+			biquadPool		= std::make_unique<Biquad[]>(config.biquadCapacity);
+
+			biquadHM		= std::make_unique<HandleManager>(config.biquadCapacity);
 
 			// Bus graph
 			mixOrderBuffer		= std::make_unique<MixOrderBuffer>(busCapacity);
@@ -190,7 +204,7 @@ namespace dalia {
 	}
 
 	static inline Result DispatchStreamPrepare(EngineInternalState* state, const char* filepath, uint32_t& streamIndex) {
-		if (!state->freeStreams->Pop(streamIndex)) return Result::StreamPoolExhausted;
+		if (!state->freeStreams->Pop(streamIndex)) return Result::PoolExhausted;
 
 		// Send I/O request to prepare stream
 		state->streamPool[streamIndex].state.store(StreamState::Preparing, std::memory_order_release);
@@ -433,35 +447,12 @@ namespace dalia {
 		m_state->isMixOrderDirty = true;
 		TryUpdateMixOrder(m_state);
 
-		// --- SYSTEMS SETUP ---
-		RtSystemConfig rtConfig;
-		rtConfig.rtCommands		= m_state->rtCommands.get();
-		rtConfig.rtEvents		= m_state->rtEvents.get();
-		rtConfig.ioStreamRequests = m_state->ioStreamRequests.get();
-		rtConfig.voicePool		= std::span<Voice>(m_state->voicePool.get(), m_state->voiceCapacity);
-		rtConfig.streamPool		= std::span<StreamContext>(m_state->streamPool.get(), m_state->streamCapacity);
-		rtConfig.busPool		= std::span<Bus>(m_state->busPool.get(), m_state->busCapacity);
-		rtConfig.masterBus		= &m_state->busPool[MASTER_BUS_INDEX];
-		m_state->rtSystem = std::make_unique<RtSystem>(rtConfig);
-
-		IoStreamSystemConfig ioStreamingConfig;
-		ioStreamingConfig.ioStreamRequests	= m_state->ioStreamRequests.get();
-		ioStreamingConfig.streamPool		= std::span<StreamContext>(m_state->streamPool.get(), m_state->streamCapacity);
-		ioStreamingConfig.freeStreams		= m_state->freeStreams.get();
-		m_state->ioStreamSystem				= std::make_unique<IoStreamSystem>(ioStreamingConfig);
-
-		IoLoadSystemConfig ioLoadSystemConfig;
-		ioLoadSystemConfig.ioLoadRequests = m_state->ioLoadRequests.get();
-		ioLoadSystemConfig.ioLoadEvents = m_state->ioLoadEvents.get();
-		ioLoadSystemConfig.assetRegistry = m_state->assetRegistry.get();
-		m_state->ioLoadSystem = std::make_unique<IoLoadSystem>(ioLoadSystemConfig);
-
 		// --- BACKEND SETUP ---
 		m_state->device					= std::make_unique<ma_device>();
 		ma_device_config deviceConfig	= ma_device_config_init(ma_device_type_playback);
 		deviceConfig.playback.format	= ma_format_f32;
 		deviceConfig.playback.channels	= CHANNELS_STEREO; // Stereo playback only
-		deviceConfig.sampleRate			= OUTPUT_SAMPLE_RATE; // Hz
+		deviceConfig.sampleRate			= TARGET_OUTPUT_SAMPLE_RATE; // Hz
 		deviceConfig.dataCallback		= data_callback;
 		deviceConfig.periodSizeInFrames = 480;
 		deviceConfig.pUserData			= m_state->rtSystem.get();
@@ -472,6 +463,32 @@ namespace dalia {
 			m_state = nullptr;
 			return Result::DeviceFailed;
 		}
+		m_state->outputSampleRate = m_state->device->sampleRate;
+
+		// --- SYSTEMS SETUP ---
+		RtSystemConfig rtConfig;
+		rtConfig.outputSampleRate = m_state->outputSampleRate;
+		rtConfig.rtCommands		= m_state->rtCommands.get();
+		rtConfig.rtEvents		= m_state->rtEvents.get();
+		rtConfig.ioStreamRequests = m_state->ioStreamRequests.get();
+		rtConfig.voicePool		= std::span(m_state->voicePool.get(), m_state->voiceCapacity);
+		rtConfig.streamPool		= std::span(m_state->streamPool.get(), m_state->streamCapacity);
+		rtConfig.busPool		= std::span(m_state->busPool.get(), m_state->busCapacity);
+		rtConfig.masterBus		= &m_state->busPool[MASTER_BUS_INDEX];
+		rtConfig.biquadPool		= std::span(m_state->biquadPool.get(), m_state->biquadHM->GetCapacity());
+		m_state->rtSystem = std::make_unique<RtSystem>(rtConfig);
+
+		IoStreamSystemConfig ioStreamingConfig;
+		ioStreamingConfig.ioStreamRequests	= m_state->ioStreamRequests.get();
+		ioStreamingConfig.streamPool		= std::span(m_state->streamPool.get(), m_state->streamCapacity);
+		ioStreamingConfig.freeStreams		= m_state->freeStreams.get();
+		m_state->ioStreamSystem	= std::make_unique<IoStreamSystem>(ioStreamingConfig);
+
+		IoLoadSystemConfig ioLoadSystemConfig;
+		ioLoadSystemConfig.ioLoadRequests = m_state->ioLoadRequests.get();
+		ioLoadSystemConfig.ioLoadEvents = m_state->ioLoadEvents.get();
+		ioLoadSystemConfig.assetRegistry = m_state->assetRegistry.get();
+		m_state->ioLoadSystem = std::make_unique<IoLoadSystem>(ioLoadSystemConfig);
 
 		// --- SYSTEMS START ---
 		// I/O Thread Start
@@ -697,7 +714,7 @@ namespace dalia {
 		// Bus does not exist yet
 		if (!m_state->freeBuses->Pop(bIndex)) {
 			DALIA_LOG_ERR(LOG_CTX_API, "Failed to create bus (%s). Bus pool exhausted.", identifier);
-			return Result::BusPoolExhausted;
+			return Result::PoolExhausted;
 		}
 
 		BusMirror& bMirror = m_state->busPoolMirror[bIndex];
@@ -857,6 +874,28 @@ namespace dalia {
 		return Result::Ok;
 	}
 
+	Result Engine::CreateBiquadFilter(EffectHandle& handle, BiquadFilterType type, const BiquadConfig& config) {
+		if (!IsInitialized(m_state)) return Result::NotInitialized;
+
+		uint32_t index, generation;
+		if (!m_state->biquadHM->Allocate(index, generation)) {
+			DALIA_LOG_ERR(LOG_CTX_API, "Failed to create biquad filter. Biquad pool exhausted.");
+			return Result::PoolExhausted;
+		}
+
+		handle = EffectHandle::Create(index, generation, EffectType::Biquad);
+
+		RtCommand cmd = RtCommand::AllocateBiquad(
+			index,
+			generation,
+			type,
+			config
+		);
+		m_state->rtCommands->Enqueue(cmd);
+
+		return Result::Ok;
+	}
+
 	Result Engine::CreatePlayback(PlaybackHandle& pbkHandle, SoundHandle soundHandle, AudioEventCallback callback) {
 		if (!IsInitialized(m_state)) return Result::NotInitialized;
 
@@ -884,7 +923,7 @@ namespace dalia {
 		uint32_t vIndex;
 		if (!m_state->freeVoices->Pop(vIndex)) {
 			DALIA_LOG_ERR(LOG_CTX_API, "Failed to create playback instance. Voice pool exhausted.");
-			return Result::VoicePoolExhausted;
+			return Result::PoolExhausted;
 		}
 
 		// Prime voice mirror
@@ -927,7 +966,7 @@ namespace dalia {
 				vMirror.Reset();
 				m_state->freeVoices->Push(vIndex);
 
-				if (streamRes == Result::StreamPoolExhausted) {
+				if (streamRes == Result::PoolExhausted) {
 					DALIA_LOG_ERR(LOG_CTX_API, "Failed to prepare stream instance. Stream pool exhausted.");
 				}
 				if (streamRes == Result::IoStreamRequestQueueFull) {

@@ -9,8 +9,11 @@ namespace dalia {
     struct Voice;
     struct StreamContext;
     class Bus;
+    struct Biquad;
 
     struct RtSystemConfig {
+        uint32_t outputSampleRate = 0;
+
         RtCommandQueue* rtCommands              = nullptr;
         RtEventQueue* rtEvents                  = nullptr;
         IoStreamRequestQueue* ioStreamRequests  = nullptr;
@@ -19,6 +22,8 @@ namespace dalia {
         std::span<StreamContext> streamPool;
         std::span<Bus> busPool;
         Bus* masterBus                          = nullptr;
+
+        std::span<Biquad> biquadPool;
     };
 
     class RtSystem {
@@ -33,6 +38,8 @@ namespace dalia {
         bool MixVoiceToBus(Voice& voice, uint32_t busIndex, uint32_t frameCount);
         void FreeVoice(uint32_t voiceIndex);
 
+        uint32_t m_outputSampleRate = 0;
+
         RtCommandQueue* m_rtCommands;
         RtEventQueue* m_rtEvents;
         IoStreamRequestQueue* m_ioStreamRequests;
@@ -41,6 +48,8 @@ namespace dalia {
         std::span<StreamContext> m_streamPool;
         std::span<Bus> m_busPool;
         Bus* m_masterBus;
+
+        std::span<Biquad> m_biquadPool;
 
         std::span<const uint32_t> m_activeMixOrder;
     };

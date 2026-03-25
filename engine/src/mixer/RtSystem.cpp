@@ -10,9 +10,11 @@
 #include "messaging/RtEventQueue.h"
 #include "messaging/IoStreamRequestQueue.h"
 
-#include "dalia/audio/SoundHandle.h"
+#include "dalia/audio/SoundControl.h"
 
 #include <cmath>
+
+#include "effects/Biquad.h"
 
 #ifndef M_PI_2
 #define M_PI_2 1.57079632679489661923
@@ -27,7 +29,8 @@ namespace dalia {
         m_masterBus(config.masterBus),
         m_rtCommands(config.rtCommands),
         m_rtEvents(config.rtEvents),
-        m_ioStreamRequests(config.ioStreamRequests) {
+        m_ioStreamRequests(config.ioStreamRequests),
+		m_biquadPool(config.biquadPool) {
         // Empty bus graph
         m_activeMixOrder = std::span<const uint32_t>();
     }
@@ -168,6 +171,30 @@ namespace dalia {
 	            	float newVolume = cmd.data.busFloat.value;
 
 	            	m_busPool[bIndex].m_volumeLinear = newVolume;
+	            	break;
+				}
+				case RtCommand::Type::AllocateBiquad: {
+	            	Biquad& biquad = m_biquadPool[cmd.data.biquad.index];
+	            	biquad.generation = cmd.data.biquad.gen;
+	            	biquad.type = cmd.data.biquad.type;
+
+					biquad.targetFrequency = cmd.data.biquad.config.frequency;
+					biquad.currentFrequency = cmd.data.biquad.config.frequency;
+	            	biquad.targetQ = cmd.data.biquad.config.q;
+	            	biquad.currentQ = cmd.data.biquad.config.q;
+
+	            	CalculateBiquadCoefficients(biquad, m_outputSampleRate);
+
+	            	break;
+				}
+				case RtCommand::Type::SetBiquadParams: {
+	            	Biquad& biquad = m_biquadPool[cmd.data.biquad.index];
+
+	            	if (biquad.generation != cmd.data.biquad.gen) break;
+
+	            	biquad.targetFrequency = cmd.data.biquad.config.frequency;
+	            	biquad.targetQ = cmd.data.biquad.config.q;
+
 	            	break;
 				}
                 default: break;

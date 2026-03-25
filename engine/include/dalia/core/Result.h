@@ -11,7 +11,8 @@ namespace dalia {
 		AlreadyInitialized			= -3,
 		InvalidHandle				= -4,
 		ExpiredHandle				= -5,
-		BusNotFound					= -6,
+		PoolExhausted				= -6,
+		BusNotFound					= -7,
 		InvalidRouting				= -8,
 
 		// Messaging Errors
@@ -21,9 +22,6 @@ namespace dalia {
 		IoLoadRequestQueueFull		= -103,
 
 		// Playback Errors
-		VoicePoolExhausted			= -200,
-		StreamPoolExhausted			= -201,
-		BusPoolExhausted			= -202,
 		PlaybackCorrupted			= -203,
 
 		// I/O Errors
