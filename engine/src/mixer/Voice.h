@@ -1,6 +1,6 @@
 #pragma once
 #include "dalia/audio/PlaybackControl.h"
-#include "dalia/audio/SoundHandle.h"
+#include "dalia/audio/SoundControl.h"
 #include "core/Constants.h"
 #include <cstdint>
 

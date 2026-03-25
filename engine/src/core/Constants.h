@@ -22,10 +22,11 @@ namespace dalia {
     static constexpr float MIN_VOLUME_DB = -96.0f;  // Minimum volume in decibels
     static constexpr float MAX_VOLUME_DB = 24.0f;   // Maximum volume in decibels
 
+    static constexpr uint32_t CHANNELS_MAX = 8;
     static constexpr uint32_t CHANNELS_MONO = 1;
     static constexpr uint32_t CHANNELS_STEREO = 2;
 
-    static constexpr uint32_t OUTPUT_SAMPLE_RATE = 48000;
+    static constexpr uint32_t TARGET_OUTPUT_SAMPLE_RATE = 48000; // Only to be used in engine init
 
     static constexpr size_t MAX_FRAMES_PER_RENDER = 1024; // Maximum frames that we can render per audio callback
 

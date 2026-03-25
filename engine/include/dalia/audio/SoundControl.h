@@ -1,9 +1,13 @@
 #pragma once
+
+#include "dalia/core/Result.h"
+
 #include <cstdint>
+#include <functional>
 
 namespace dalia {
 
-    class AssetRegistry;
+    class AssetRegistry; // TODO: Find a way to remove this from here (we don't want to expose it to the user)
 
     enum class SoundType : uint8_t {
         Resident = 0,
@@ -44,4 +48,7 @@ namespace dalia {
 
         uint64_t uuid = 0;
     };
+
+    constexpr uint32_t INVALID_REQUEST_ID = 0;
+    using AssetLoadCallback = std::function<void(uint32_t requestId, Result result)>;
 }

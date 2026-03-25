@@ -23,52 +23,61 @@ set(ENGINE_FILES
     include/dalia.h
     include/dalia/audio/Engine.h
     include/dalia/audio/PlaybackControl.h
+    include/dalia/audio/SoundControl.h
+    include/dalia/audio/EffectControl.h
     include/dalia/Core/LogLevel.h
     include/dalia/Core/Result.h
 
     # Internal headers and cpp-files
     src/Engine.cpp
+
     src/backend/miniaudio_impl.cpp
     src/backend/stb_vorbis_impl.cpp
+
+    src/core/Constants.h
+    src/core/Logger.h
+    src/core/Logger.cpp
+    src/core/FixedStack.h
+    src/core/SPSCRingBuffer.h
+    src/core/MPSCRingBuffer.h
+    src/core/ResourcePool.h
+    src/core/Utility.cpp
+    src/core/Utility.h
+    src/core/Types.h
+    src/core/Math.h
+
+    src/io/IoStreamSystem.cpp
+    src/io/IoStreamSystem.h
+    src/io/IoLoadSystem.cpp
+    src/io/IoLoadSystem.h
+
+
     src/messaging/RtCommandQueue.h
     src/messaging/RtCommandQueue.cpp
     src/messaging/RtEventQueue.h
     src/messaging/RtEventQueue.cpp
     src/messaging/IoStreamRequestQueue.cpp
     src/messaging/IoStreamRequestQueue.h
-    src/core/Logger.h
-    src/core/Logger.cpp
-    src/core/FixedStack.h
-    src/core/SPSCRingBuffer.h
-    src/core/MPSCRingBuffer.h
+    src/messaging/IoLoadRequestQueue.cpp
+    src/messaging/IoLoadRequestQueue.h
+    src/messaging/IoLoadEventQueue.cpp
+    src/messaging/IoLoadEventQueue.h
+
     src/mixer/Voice.h
     src/mixer/StreamContext.h
     src/mixer/Bus.cpp
     src/mixer/Bus.h
     src/mixer/RtSystem.cpp
     src/mixer/RtSystem.h
-    src/io/IoStreamSystem.cpp
-    src/io/IoStreamSystem.h
     src/mixer/BusGraphCompiler.cpp
     src/mixer/BusGraphCompiler.h
-    src/messaging/IoLoadRequestQueue.cpp
-    src/messaging/IoLoadRequestQueue.h
-    src/messaging/IoLoadEventQueue.cpp
-    src/messaging/IoLoadEventQueue.h
-    src/core/Constants.h
-    src/io/IoLoadSystem.cpp
-    src/io/IoLoadSystem.h
+    src/mixer/effects/Biquad.h
+    src/mixer/effects/Biquad.cpp
+
     src/resources/ResidentSound.h
-    include/dalia/audio/ResourceHandle.h
-    src/core/ResourcePool.h
     src/resources/AssetRegistry.cpp
     src/resources/AssetRegistry.h
     src/resources/StreamSound.h
-    src/core/Utility.cpp
-    src/core/Utility.h
-    include/dalia/audio/SoundHandle.h
-    src/core/Types.h
-    src/core/Math.h
 )
 
 add_library(dalia_engine STATIC ${ENGINE_FILES})

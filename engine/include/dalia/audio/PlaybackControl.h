@@ -1,5 +1,5 @@
 #pragma once
-#include "dalia/core/Result.h"
+
 #include <cstdint>
 #include <functional>
 
@@ -43,7 +43,4 @@ namespace dalia {
 		Error			= 3,
 	};
 	using AudioEventCallback = std::function<void(PlaybackHandle handle, PlaybackExitCondition exitCondition)>;
-
-	constexpr uint32_t INVALID_REQUEST_ID = 0;
-	using AssetLoadCallback = std::function<void(uint32_t requestId, Result result)>;
 }
