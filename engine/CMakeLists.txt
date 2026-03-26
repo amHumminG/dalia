@@ -65,7 +65,6 @@ set(ENGINE_FILES
 
     src/mixer/Voice.h
     src/mixer/StreamContext.h
-    src/mixer/Bus.cpp
     src/mixer/Bus.h
     src/mixer/RtSystem.cpp
     src/mixer/RtSystem.h

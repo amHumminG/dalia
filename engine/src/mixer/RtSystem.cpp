@@ -1,6 +1,8 @@
 #include "RtSystem.h"
 
 #include "core/Logger.h"
+#include "core/Constants.h"
+#include "core/Math.h"
 
 #include "mixer/Voice.h"
 #include "mixer/StreamContext.h"
@@ -13,19 +15,64 @@
 #include "dalia/audio/SoundControl.h"
 
 #include <cmath>
+#include <vcruntime_startup.h>
 
 #include "effects/Biquad.h"
 
-#ifndef M_PI_2
-#define M_PI_2 1.57079632679489661923
-#endif
 
 namespace dalia {
 
+	// --- Helpers ---
+
+	static inline void MixToBuffer(float* DALIA_RESTRICT targetBuffer, const float* DALIA_RESTRICT buffer,
+		uint32_t sampleCount) {
+		for (uint32_t i = 0; i < sampleCount; i++) {
+			targetBuffer[i] += buffer[i];
+		}
+	}
+
+	static inline float* GetBusBuffer(float* busBufferPool, uint32_t busIndex, uint32_t frameCount) {
+		return busBufferPool + (busIndex * frameCount * MAX_CHANNELS);
+	}
+
+	static inline void ApplyVolume(float* DALIA_RESTRICT buffer, uint32_t frameCount, uint32_t channels,
+		float& currentVolume, float targetVolume) {
+
+		// --- No volume movement ---
+		if (NearlyEqual(currentVolume, targetVolume, VOLUME_EPSILON)) {
+			currentVolume = targetVolume;
+
+			if (NearlyEqual(currentVolume, 1.0f, VOLUME_EPSILON)) return;
+
+			uint32_t sampleCount = frameCount * channels;
+			if (NearlyEqual(currentVolume, 0.0f, VOLUME_EPSILON)) {
+				std::memset(buffer, 0, sampleCount * sizeof(float));
+				return;
+			}
+
+			for (uint32_t i = 0; i < sampleCount; i++) buffer[i] *= currentVolume;
+			return;
+		}
+
+		// --- Smoothing current to target ---
+		for (uint32_t i = 0; i < frameCount; i++) {
+			currentVolume += (targetVolume - currentVolume) * SMOOTHING_COEFFICIENT;
+
+			for (uint32_t c = 0; c < channels; c++) {
+				buffer[(i * channels) + c] *= currentVolume;
+			}
+		}
+	}
+
+	// ------------
+
     RtSystem::RtSystem(const RtSystemConfig& config)
-        : m_voicePool(config.voicePool),
+        : m_outputChannels(config.outputChannels),
+		m_outputSampleRate(config.outputSampleRate),
+		m_voicePool(config.voicePool),
         m_streamPool(config.streamPool),
         m_busPool(config.busPool),
+		m_busBufferPool(config.busBufferPool),
         m_masterBus(config.masterBus),
         m_rtCommands(config.rtCommands),
         m_rtEvents(config.rtEvents),
@@ -150,7 +197,7 @@ namespace dalia {
 		            uint32_t bIndex = cmd.data.bus.busIndex;
 	            	uint32_t bIndexParent = cmd.data.bus.parentBusIndex;
 
-	            	m_busPool[bIndex].m_parentBusIndex = bIndexParent;
+	            	m_busPool[bIndex].parentBusIndex = bIndexParent;
 	            	break;
 	            }
 				case RtCommand::Type::DeallocateBus: {
@@ -163,14 +210,14 @@ namespace dalia {
 	            	uint32_t bIndex = cmd.data.bus.busIndex;
 	            	uint32_t bIndexParent = cmd.data.bus.parentBusIndex;
 
-	            	m_busPool[bIndex].m_parentBusIndex = bIndexParent;
+	            	m_busPool[bIndex].parentBusIndex = bIndexParent;
 		            break;
 	            }
 				case RtCommand::Type::SetBusVolume: {
 	            	uint32_t bIndex = cmd.data.busFloat.busIndex;
 	            	float newVolume = cmd.data.busFloat.value;
 
-	            	m_busPool[bIndex].m_volumeLinear = newVolume;
+	            	m_busPool[bIndex].targetVolumeLinear = newVolume;
 	            	break;
 				}
 				case RtCommand::Type::AllocateBiquad: {
@@ -180,10 +227,10 @@ namespace dalia {
 
 					biquad.targetFrequency = cmd.data.biquad.config.frequency;
 					biquad.currentFrequency = cmd.data.biquad.config.frequency;
-	            	biquad.targetQ = cmd.data.biquad.config.q;
-	            	biquad.currentQ = cmd.data.biquad.config.q;
+	            	biquad.targetResonance = cmd.data.biquad.config.resonance;
+	            	biquad.currentResonance = cmd.data.biquad.config.resonance;
 
-	            	CalculateBiquadCoefficients(biquad, m_outputSampleRate);
+	            	CalculateBiquadCoefficients(biquad, static_cast<float>(m_outputSampleRate));
 
 	            	break;
 				}
@@ -193,7 +240,51 @@ namespace dalia {
 	            	if (biquad.generation != cmd.data.biquad.gen) break;
 
 	            	biquad.targetFrequency = cmd.data.biquad.config.frequency;
-	            	biquad.targetQ = cmd.data.biquad.config.q;
+	            	biquad.targetResonance = cmd.data.biquad.config.resonance;
+
+	            	break;
+				}
+				case RtCommand::Type::AttachEffect: {
+					const uint32_t eIndex = cmd.data.effect.index;
+	            	const uint32_t eGen = cmd.data.effect.gen;
+	            	const EffectType eType = cmd.data.effect.type;
+	            	EffectHandle effect = EffectHandle::Create(eIndex, eGen, eType);
+
+	            	const uint32_t bIndex = cmd.data.effect.busIndex;
+	            	const uint32_t effectSlot = cmd.data.effect.effectSlot;
+					m_busPool[bIndex].effects[effectSlot] = effect;
+
+	            	break;
+				}
+				case RtCommand::Type::DetachEffect: {
+	            	const uint32_t eIndex = cmd.data.effect.index;
+	            	const uint32_t eGen = cmd.data.effect.gen;
+	            	const EffectType eType = cmd.data.effect.type;
+	            	EffectHandle effect = EffectHandle::Create(eIndex, eGen, eType);
+
+	            	Bus& bus = m_busPool[cmd.data.effect.busIndex];
+	            	const uint32_t effectSlot = cmd.data.effect.effectSlot;
+
+	            	if (bus.effects[effectSlot] == effect) bus.effects[effectSlot] = InvalidEffectHandle;
+
+	            	break;
+				}
+				case RtCommand::Type::DeallocateEffect: {
+	            	const uint32_t eIndex = cmd.data.effect.index;
+	            	const uint32_t eGen = cmd.data.effect.gen;
+	            	const EffectType eType = cmd.data.effect.type;
+
+	            	switch (eType) {
+	            		case EffectType::None: {
+	            			break;
+	            		}
+	            		case EffectType::Biquad: {
+	            			if (m_biquadPool[eIndex].generation == eGen) m_biquadPool[eIndex].Reset();
+	            			break;
+	            		}
+	            		default:
+	            			break;
+	            	}
 
 	            	break;
 				}
@@ -205,21 +296,22 @@ namespace dalia {
     void RtSystem::Render(float* output, uint32_t frameCount, uint32_t channels) {
         const uint32_t sampleCount = frameCount * channels;
 
-    	// Clear bus buffers
-        for (uint32_t bIndex : m_activeMixOrder) m_busPool[bIndex].Clear();
+    	// Clear all bus buffers
+        std::memset(m_busBufferPool.data(), 0, m_busBufferPool.size());
 
         // --- Voice Pass ---
     	uint32_t voicesMixed = 0;
-        for (uint32_t i = 0; i < m_voicePool.size(); i++) {
-            Voice& voice = m_voicePool[i];
-        	if (voice.state == VoiceState::Stopped)	FreeVoice(i);
+        for (uint32_t vIndex = 0; vIndex < m_voicePool.size(); vIndex++) {
+            Voice& voice = m_voicePool[vIndex];
+
+        	if (voice.state == VoiceState::Stopped)	FreeVoice(vIndex);
         	else if (voice.parentBusIndex == NO_PARENT) { // Maybe this check should happen on the API thread instead?
         		voice.exitCondition = PlaybackExitCondition::Evicted;
-        		FreeVoice(i);
+        		FreeVoice(vIndex);
         	}
             else if (voice.state == VoiceState::Playing) {
-            	DALIA_LOG_DEBUG(LOG_CTX_MIXER, "Mixing voice %d -> bus %d.", i, voice.parentBusIndex);
-            	bool isStillPlaying = MixVoiceToBus(voice, voice.parentBusIndex, frameCount);
+            	DALIA_LOG_DEBUG(LOG_CTX_MIXER, "Mixing voice %d -> bus %d.", vIndex, voice.parentBusIndex);
+            	bool isStillPlaying = ProcessVoice(vIndex, frameCount, channels);
             	if (!isStillPlaying) voice.state = VoiceState::Stopped;
 
             	voicesMixed++;
@@ -231,31 +323,29 @@ namespace dalia {
         // --- Bus Pass ---
         for (uint32_t bIndex : m_activeMixOrder) {
             Bus& bus = m_busPool[bIndex];
-            bus.ApplyDSP(sampleCount);
 
-            uint32_t bIndexParent = bus.m_parentBusIndex;
-            if (bIndexParent != NO_PARENT) {
-            	DALIA_LOG_DEBUG(LOG_CTX_MIXER, "Mixing bus %d -> bus %d.", bIndex, bIndexParent);
-                Bus& parentBus = m_busPool[bIndexParent];
-                parentBus.MixInBuffer(bus.GetBuffer(), sampleCount);
+            if (bus.parentBusIndex != NO_PARENT) {
+            	DALIA_LOG_DEBUG(LOG_CTX_MIXER, "Mixing bus %d -> bus %d.", bIndex, bus.parentBusIndex);
+            	ProcessBus(bIndex, frameCount, channels);
             }
         }
 
         // Final Output (clamped between -1.0f and 1.0f) We probably want a soft limiter for this in the future
-        auto masterBuffer = m_masterBus->GetBuffer();
+        float* masterBuffer = m_busBufferPool.data();
         for (uint32_t i = 0; i < sampleCount; i++) {
             masterBuffer[i] = std::clamp(masterBuffer[i], -1.0f, 1.0f);
         }
-        std::copy_n(masterBuffer.data(), sampleCount, output);
+        std::copy_n(masterBuffer, sampleCount, output);
     }
 
-    bool RtSystem::MixVoiceToBus(Voice& voice, uint32_t bIndex, uint32_t frameCount) {
-        std::span<float> busBuffer = m_busPool[bIndex].GetBuffer();
+    bool RtSystem::ProcessVoice(uint32_t voiceIndex, uint32_t frameCount, uint32_t channels) {
+		Voice& voice = m_voicePool[voiceIndex];
+        float* busBuffer = GetBusBuffer(m_busBufferPool.data(), voice.parentBusIndex, frameCount);
         uint32_t framesMixed = 0;
 
     	// --- Panning & DSP ---
     	const float panNormalized = (voice.pan + 1.0f) * 0.5f;
-    	const float angle = panNormalized * static_cast<float>(M_PI_2); // Angle between 0 and PI/2 radians
+    	const float angle = panNormalized * PI_2; // Angle between 0 and PI/2 radians
     	const float gainL = std::cos(angle) * voice.volumeLinear;
     	const float gainR = std::sin(angle) * voice.volumeLinear;
 
@@ -316,7 +406,7 @@ namespace dalia {
         			for (uint32_t i = 0; i < framesToMixNow; i++) {
         				float sample = sourceData[(cursorInt + i) * sourceStride];
 
-        				// Stereo mix
+        				// Stereo mix TODO: Adapt this for upmixing to more channels
         				outPtr[0] += sample * gainL;
         				outPtr[1] += sample * gainR;
 
@@ -328,7 +418,7 @@ namespace dalia {
         				float sampleL = sourceData[(cursorInt + i) * 2 + 0];
         				float sampleR = sourceData[(cursorInt + i) * 2 + 1];
 
-        				// Stereo mix
+        				// Stereo mix TODO: Adapt this for upmixing to more channels
         				outPtr[0] += sampleL * gainL;
         				outPtr[1] += sampleR * gainR;
 
@@ -409,5 +499,42 @@ namespace dalia {
 
     	m_rtEvents->Push(RtEvent::VoiceStopped(vIndex, voice.generation, voice.exitCondition));
     	voice.Reset();
+    }
+
+    void RtSystem::ProcessBus(uint32_t busIndex, uint32_t frameCount, uint32_t channels) {
+    	Bus& bus = m_busPool[busIndex];
+		float* buffer = GetBusBuffer(m_busBufferPool.data(), busIndex, frameCount);
+
+    	for (uint32_t i = 0; i < MAX_EFFECTS_PER_BUS; i++) {
+    		EffectHandle handle = bus.effects[i];
+
+    		if (handle.IsValid()) {
+				ApplyEffect(buffer, frameCount, channels, handle.GetType(), handle.GetIndex());
+    		}
+    	}
+
+    	// Apply volume
+		ApplyVolume(buffer, frameCount, channels, bus.currentVolumeLinear, bus.targetVolumeLinear);
+
+    	if (bus.parentBusIndex != NO_PARENT) {
+    		float* parentBuffer = m_busBufferPool.data() + (bus.parentBusIndex * frameCount * MAX_CHANNELS);
+    		MixToBuffer(parentBuffer, buffer, frameCount * channels);
+    	}
+    }
+
+    void RtSystem::ApplyEffect(float* buffer, uint32_t frameCount, uint32_t channels,
+    	EffectType type, uint32_t effectIndex) {
+    	switch (type) {
+    		case EffectType::None: {
+    			break;
+    		}
+    		case EffectType::Biquad: {
+    			Biquad& biquad = m_biquadPool[effectIndex];
+    			ProcessBiquad(buffer, frameCount, channels, biquad, m_outputSampleRate);
+				break;
+    		}
+    		default:
+    			break;
+    	}
     }
 }

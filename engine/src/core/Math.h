@@ -18,4 +18,8 @@ namespace dalia {
 
         return 20.0f * log10f(linear);
     }
+
+    inline bool NearlyEqual(float a, float b, float epsilon) {
+        return std::abs(a - b) < epsilon;
+    }
 }

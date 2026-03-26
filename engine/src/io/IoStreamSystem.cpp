@@ -88,7 +88,7 @@ namespace dalia {
                     }
 
                     // Sample rate
-                    if (info.sample_rate != OUTPUT_SAMPLE_RATE) {
+                    if (info.sample_rate != TARGET_OUTPUT_SAMPLE_RATE) {
                         DALIA_LOG_ERR(LOG_CTX_IO, "Failed to load file (%s). Unsupported sample rate (%d).",
                             filepath, info.sample_rate);
                         isSupported = false;

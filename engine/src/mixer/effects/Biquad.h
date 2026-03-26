@@ -13,8 +13,8 @@ namespace dalia {
         float targetFrequency = 20000.0f;
         float currentFrequency = 20000.0f;
 
-        float targetQ = 0.707f;
-        float currentQ = 0.707f;
+        float targetResonance = 0.707f;
+        float currentResonance = 0.707f;
 
         float b0 = 1.0f, b1 = 0.0f, b2 = 0.0f;
         float a1 = 0.0f, a2 = 0.0f;
@@ -29,8 +29,8 @@ namespace dalia {
             targetFrequency = 20000.0f;
             currentFrequency = 20000.0f;
 
-            targetQ = 0.707f;
-            currentQ = 0.707f;
+            targetResonance = 0.707f; // Resonance
+            currentResonance = 0.707f;
 
             b0 = 1.0f, b1 = 0.0f, b2 = 0.0f;
             a1 = 0.0f, a2 = 0.0f;
@@ -41,5 +41,5 @@ namespace dalia {
     };
 
     void CalculateBiquadCoefficients(Biquad& state, float sampleRate);
-    void ProcessBiquad(float* buffer, uint32_t sampleCount, uint32_t channels, Biquad& state);
+    void ProcessBiquad(float* buffer, uint32_t frameCount, uint32_t channels, Biquad& state, float sampleRate);
 }

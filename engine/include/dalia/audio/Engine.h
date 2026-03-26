@@ -50,7 +50,7 @@ namespace dalia {
 
 		// --- Loose File Functionality ---
 
-		Result LoadSoundAsync(SoundHandle& soundHandle, SoundType type, const char* filepath,
+		Result LoadSoundAsync(SoundHandle& sound, SoundType type, const char* filepath,
 			AssetLoadCallback callback = nullptr, uint32_t* outRequestId = nullptr);
 
 		Result UnloadSound(SoundHandle soundHandle);
@@ -68,13 +68,13 @@ namespace dalia {
 		// --- Effects ---
 
 		Result CreateBiquadFilter(EffectHandle& handle, BiquadFilterType type, const BiquadConfig& config);
-		// Result SetBiquadParams(EffectHandle, const BiquadConfig& config);
-		//
-		// Result AttachEffectToBus(const char* busIdentifier, EffectHandle effect, uint8_t slotIndex);
-		//
-		// Result DetachEffectFromBus(const char* busIdentifier, uint8_t slotIndex);
-		//
-		// Result DestroyEffect(EffectHandle effect);
+		Result SetBiquadParams(EffectHandle handle, const BiquadConfig& config);
+
+		Result AttachEffectToBus(EffectHandle effect, const char* busIdentifier, uint32_t effectSlot);
+
+		Result DetachEffectFromBus(const char* busIdentifier, uint32_t effectSlot);
+
+		Result DestroyEffect(EffectHandle effect);
 
 
 		// --- Soundbank Functionality ---
@@ -88,16 +88,16 @@ namespace dalia {
 
 		// --- Playback manipulation ---
 
-		Result CreatePlayback(PlaybackHandle& pbkHandle, SoundHandle soundHandle,
+		Result CreatePlayback(PlaybackHandle& playback, SoundHandle sound,
 			AudioEventCallback callback = nullptr);
 
-		Result RoutePlayback(PlaybackHandle handle, const char* busIdentifier);
+		Result RoutePlayback(PlaybackHandle playback, const char* busIdentifier);
 
-		Result Play(PlaybackHandle handle);
+		Result Play(PlaybackHandle playback);
 
-		Result Pause(PlaybackHandle handle);
+		Result Pause(PlaybackHandle playback);
 
-		Result Stop(PlaybackHandle handle);
+		Result Stop(PlaybackHandle playback);
 
 
 	private:

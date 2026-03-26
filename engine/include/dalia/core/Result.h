@@ -14,6 +14,7 @@ namespace dalia {
 		PoolExhausted				= -6,
 		BusNotFound					= -7,
 		InvalidRouting				= -8,
+		InvalidEffectSlot			= -9,
 
 		// Messaging Errors
 		RtCommandQueueFull			= -100,

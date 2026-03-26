@@ -18,17 +18,14 @@ namespace dalia {
         bool operator!=(const EffectHandle& other) const { return uuid != other.uuid; }
 
         EffectType GetType() const { return static_cast<EffectType>(uuid >> 56); }
+        uint32_t GetIndex() const { return static_cast<uint32_t>(uuid & 0xFFFFFFFF); }
+        uint32_t GetGeneration() const { return static_cast<uint32_t>((uuid >> 32) & 0xFFFFFF); }
 
         uint64_t GetUUID() const { return uuid; }
 
-        static EffectHandle FromUUID(uint64_t rawUuid) {
-            EffectHandle handle;
-            handle.uuid = rawUuid;
-            return handle;
-        }
-
     private:
         friend class Engine;
+        friend class RtSystem;
 
         static EffectHandle Create(uint32_t index, uint32_t generation, EffectType type) {
             EffectHandle handle;
@@ -40,11 +37,17 @@ namespace dalia {
             return handle;
         }
 
-        uint32_t GetIndex() const { return static_cast<uint32_t>(uuid & 0xFFFFFFFF); }
-        uint32_t GetGeneration() const { return static_cast<uint32_t>((uuid >> 32) & 0xFFFFFF); }
+        static EffectHandle FromUUID(uint64_t rawUuid) {
+            EffectHandle handle;
+            handle.uuid = rawUuid;
+            return handle;
+        }
 
         uint64_t uuid = 0;
     };
+
+    constexpr EffectHandle InvalidEffectHandle{};
+
 
 
     // --- Biquad Filter ---
@@ -56,7 +59,7 @@ namespace dalia {
 
     struct BiquadConfig {
         float frequency = 20000.0f; // Hz
-        float q = 0.707f;           // Resonance
+        float resonance = 0.707f;           // Resonance
     };
 
 

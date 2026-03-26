@@ -32,7 +32,7 @@ namespace dalia {
         float pan = 0.0f;
 
         uint32_t channels = CHANNELS_STEREO;
-        uint32_t sampleRate = OUTPUT_SAMPLE_RATE;
+        uint32_t sampleRate = TARGET_OUTPUT_SAMPLE_RATE;
         double cursor = 0.0f;
 
         SoundType soundType;
@@ -63,7 +63,7 @@ namespace dalia {
             pan = 0.0f;
 
             channels = CHANNELS_STEREO;
-            sampleRate = OUTPUT_SAMPLE_RATE;
+            sampleRate = TARGET_OUTPUT_SAMPLE_RATE;
             cursor = 0.0f;
         }
     };

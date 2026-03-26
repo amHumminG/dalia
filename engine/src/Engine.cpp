@@ -73,6 +73,7 @@ namespace dalia {
 		// Miniaudio
 		std::unique_ptr<ma_device> device;
 
+		uint32_t outputChannels = 0;
 		uint32_t outputSampleRate = 0;
 
 		// --- Messaging Queues ---
@@ -91,7 +92,7 @@ namespace dalia {
 		std::unique_ptr<Voice[]>				voicePool;
 		std::unique_ptr<StreamContext[]>		streamPool;
 		std::unique_ptr<Bus[]>					busPool;
-		std::unique_ptr<float[]>				busMemoryPool;
+		std::unique_ptr<float[]>				busBufferPool;
 
 		// --- Mirrors ---
 		std::unique_ptr<VoiceMirror[]>		voicePoolMirror;
@@ -173,8 +174,13 @@ namespace dalia {
 		}
 
 		uint32_t GenerateIoLoadRequestId() {return nextIoLoadRequestId++; }
+
 		PlaybackHandle ForgePlaybackHandle(uint32_t index, uint32_t generation) {
 			return PlaybackHandle::Create(index, generation);
+		}
+
+		SoundHandle ForgeSoundHandle(uint64_t uuid) {
+			return SoundHandle::FromUUID(uuid);
 		}
 	};
 
@@ -215,6 +221,27 @@ namespace dalia {
 			state->freeStreams->Push(streamIndex);
 
 			return Result::IoStreamRequestQueueFull;
+		}
+
+		return Result::Ok;
+	}
+
+	static inline Result ValidateEffectHandle(const EngineInternalState* state, EffectHandle effect) {
+		if (!effect.IsValid()) return Result::InvalidHandle;
+
+		const uint32_t index = effect.GetIndex();
+		const uint32_t gen = effect.GetGeneration();
+
+		switch (effect.GetType()) {
+			case EffectType::None: {
+				return Result::InvalidHandle;
+			}
+			case EffectType::Biquad: {
+				if (!state->biquadHM->IsValid(index, gen)) return Result::ExpiredHandle;
+				break;
+			}
+		default:
+			return Result::InvalidHandle;
 		}
 
 		return Result::Ok;
@@ -290,7 +317,7 @@ namespace dalia {
 						Result res = ResolveVoiceMirror(state, it->voiceIndex, it->voiceGeneration, vMirror);
 
 						if (res == Result::Ok && vMirror->pendingLoad) {
-							SoundHandle handle = SoundHandle::FromUUID(ev.assetUuid);
+							SoundHandle handle = state->ForgeSoundHandle(ev.assetUuid);
 							SoundType soundType = handle.GetType();
 
 							if (soundType == SoundType::Resident) {
@@ -412,7 +439,7 @@ namespace dalia {
 
 	Result Engine::Init(const EngineConfig& config) {
 		if (m_state != nullptr) {
-			DALIA_LOG_WARN(LOG_CTX_API, "Attempting to initailze engine that is already initialized.");
+			DALIA_LOG_WARN(LOG_CTX_API, "Attempting to initialize engine that is already initialized.");
 			return Result::AlreadyInitialized;
 		}
 
@@ -421,21 +448,10 @@ namespace dalia {
 		// --- INTERNAL STATE SETUP ---
 		m_state = new EngineInternalState(config);
 
-		// Bus buffer allocation and assignment
-		// Setup bus memory pool (Room for 1024 frames) maybe we should check this against m_periodSize?
-		constexpr uint32_t samplesPerBus = 1024 * CHANNELS_STEREO;
-		m_state->busMemoryPool = std::make_unique<float[]>(m_state->busCapacity * samplesPerBus);
-
-		// Bus buffer assigment
-		for (uint32_t i = 0; i < m_state->busCapacity; i++) {
-			float* busStart = &m_state->busMemoryPool[i * samplesPerBus];
-			m_state->busPool[i].SetBuffer(std::span<float>(busStart, samplesPerBus));
-		}
-
 		// --- Master Bus Setup ---
 		m_state->busPoolMirror[MASTER_BUS_INDEX].refCount = 1;
 
-		const BusID masterId("Master");
+		constexpr BusID masterId("Master");
 		m_state->busHashMap[masterId] = MASTER_BUS_INDEX;
 #if DALIA_DEBUG
 		m_state->busDebugNames[masterId] = "Master";
@@ -451,32 +467,42 @@ namespace dalia {
 		m_state->device					= std::make_unique<ma_device>();
 		ma_device_config deviceConfig	= ma_device_config_init(ma_device_type_playback);
 		deviceConfig.playback.format	= ma_format_f32;
-		deviceConfig.playback.channels	= CHANNELS_STEREO; // Stereo playback only
+		deviceConfig.playback.channels	= CHANNELS_STEREO; // Stereo playback only for now
 		deviceConfig.sampleRate			= TARGET_OUTPUT_SAMPLE_RATE; // Hz
 		deviceConfig.dataCallback		= data_callback;
 		deviceConfig.periodSizeInFrames = 480;
-		deviceConfig.pUserData			= m_state->rtSystem.get();
+		deviceConfig.pUserData			= nullptr; // We set this to rtSystem after its constructor has been called
 
 		if (ma_device_init(NULL, &deviceConfig, m_state->device.get()) != MA_SUCCESS) {
 			DALIA_LOG_CRIT(LOG_CTX_API, "Failed to initialize playback device.");
 			delete m_state;
 			m_state = nullptr;
+			DALIA_LOG_CRIT(LOG_CTX_API, "Failed to initialize engine. Device initialization failed.");
 			return Result::DeviceFailed;
 		}
+		m_state->outputChannels = m_state->device->playback.channels;
 		m_state->outputSampleRate = m_state->device->sampleRate;
+
+		// Bus buffer allocation based on period size
+		const uint32_t samplesPerBusBuffer = m_state->device->playback.internalPeriodSizeInFrames * MAX_CHANNELS;
+		const uint32_t totalFloats = m_state->busCapacity * samplesPerBusBuffer;
+		m_state->busBufferPool = std::make_unique<float[]>(totalFloats);
 
 		// --- SYSTEMS SETUP ---
 		RtSystemConfig rtConfig;
-		rtConfig.outputSampleRate = m_state->outputSampleRate;
-		rtConfig.rtCommands		= m_state->rtCommands.get();
-		rtConfig.rtEvents		= m_state->rtEvents.get();
-		rtConfig.ioStreamRequests = m_state->ioStreamRequests.get();
-		rtConfig.voicePool		= std::span(m_state->voicePool.get(), m_state->voiceCapacity);
-		rtConfig.streamPool		= std::span(m_state->streamPool.get(), m_state->streamCapacity);
-		rtConfig.busPool		= std::span(m_state->busPool.get(), m_state->busCapacity);
-		rtConfig.masterBus		= &m_state->busPool[MASTER_BUS_INDEX];
-		rtConfig.biquadPool		= std::span(m_state->biquadPool.get(), m_state->biquadHM->GetCapacity());
+		rtConfig.outputChannels		= m_state->outputChannels;
+		rtConfig.outputSampleRate	= m_state->outputSampleRate;
+		rtConfig.rtCommands			= m_state->rtCommands.get();
+		rtConfig.rtEvents			= m_state->rtEvents.get();
+		rtConfig.ioStreamRequests	= m_state->ioStreamRequests.get();
+		rtConfig.voicePool			= std::span(m_state->voicePool.get(), m_state->voiceCapacity);
+		rtConfig.streamPool			= std::span(m_state->streamPool.get(), m_state->streamCapacity);
+		rtConfig.busPool			= std::span(m_state->busPool.get(), m_state->busCapacity);
+		rtConfig.busBufferPool		= std::span(m_state->busBufferPool.get(), totalFloats);
+		rtConfig.masterBus			= &m_state->busPool[MASTER_BUS_INDEX];
+		rtConfig.biquadPool			= std::span(m_state->biquadPool.get(), m_state->biquadHM->GetCapacity());
 		m_state->rtSystem = std::make_unique<RtSystem>(rtConfig);
+		m_state->device->pUserData = m_state->rtSystem.get();
 
 		IoStreamSystemConfig ioStreamingConfig;
 		ioStreamingConfig.ioStreamRequests	= m_state->ioStreamRequests.get();
@@ -500,6 +526,7 @@ namespace dalia {
 			DALIA_LOG_CRIT(LOG_CTX_API, "Failed to start playback device.");
 			delete m_state;
 			m_state = nullptr;
+			DALIA_LOG_CRIT(LOG_CTX_API, "Failed to initialize engine. Device start failed.");
 			return Result::DeviceFailed;
 		}
 
@@ -874,7 +901,7 @@ namespace dalia {
 		return Result::Ok;
 	}
 
-	Result Engine::CreateBiquadFilter(EffectHandle& handle, BiquadFilterType type, const BiquadConfig& config) {
+	Result Engine::CreateBiquadFilter(EffectHandle& effect, BiquadFilterType type, const BiquadConfig& config) {
 		if (!IsInitialized(m_state)) return Result::NotInitialized;
 
 		uint32_t index, generation;
@@ -883,15 +910,127 @@ namespace dalia {
 			return Result::PoolExhausted;
 		}
 
-		handle = EffectHandle::Create(index, generation, EffectType::Biquad);
+		effect = EffectHandle::Create(index, generation, EffectType::Biquad);
+
+		// Sanitize config
+		BiquadConfig sanitizedConfig;
+		sanitizedConfig.frequency = std::clamp(config.frequency, FILTER_MIN_FREQUENCY, FILTER_MAX_FREQUENCY);
+		sanitizedConfig.resonance = std::clamp(config.frequency, FILTER_MIN_RESONANCE, FILTER_MAX_RESONANCE);
 
 		RtCommand cmd = RtCommand::AllocateBiquad(
 			index,
 			generation,
 			type,
-			config
+			sanitizedConfig
 		);
 		m_state->rtCommands->Enqueue(cmd);
+		DALIA_LOG_DEBUG(LOG_CTX_API, "Created biquad filter with handle uuid: 0x%016llx.", effect.GetUUID());
+
+		return Result::Ok;
+	}
+
+	Result Engine::SetBiquadParams(EffectHandle effect, const BiquadConfig& config) {
+		if (!IsInitialized(m_state)) return Result::NotInitialized;
+
+		if (!effect.IsValid()) {
+			DALIA_LOG_ERR(LOG_CTX_API, "Failed to set biquad filter parameters. Invalid effect handle.");
+			return Result::InvalidHandle;
+		}
+
+		if (effect.GetType() != EffectType::Biquad) {
+			DALIA_LOG_ERR(LOG_CTX_API, "Failed to set biquad filter parameters. Handle is not of type biquad filter.");
+			return Result::InvalidHandle;
+		}
+
+		const uint32_t index = effect.GetIndex();
+		const uint32_t gen = effect.GetGeneration();
+		if (!m_state->biquadHM->IsValid(index, gen)) {
+			DALIA_LOG_ERR(LOG_CTX_API, "Failed to set biquad filter parameters. Expired handle.");
+			return Result::ExpiredHandle;
+		}
+
+		// Sanitize config
+		BiquadConfig sanitizedConfig;
+		sanitizedConfig.frequency = std::clamp(config.frequency, FILTER_MIN_FREQUENCY, FILTER_MAX_FREQUENCY);
+		sanitizedConfig.resonance = std::clamp(config.frequency, FILTER_MIN_RESONANCE, FILTER_MAX_RESONANCE);
+
+		m_state->rtCommands->Enqueue(RtCommand::SetBiquadParams(index, gen, sanitizedConfig));
+		DALIA_LOG_DEBUG(LOG_CTX_API, "Updated biquad parameters for handle uuid: 0x%016llx.", effect.GetUUID());
+
+		return Result::Ok;
+	}
+
+	Result Engine::AttachEffectToBus(EffectHandle effect, const char* busIdentifier, uint32_t effectSlot) {
+		if (!IsInitialized(m_state)) return Result::NotInitialized;
+
+		// Verify handle
+		if (!effect.IsValid()) {
+			DALIA_LOG_ERR(LOG_CTX_API, "Failed to attach effect to bus %s (slot %d). Invalid effect handle.",
+				busIdentifier, effectSlot);
+			return Result::InvalidHandle;
+		}
+
+		Result res = ValidateEffectHandle(m_state, effect);
+		if (res != Result::Ok) {
+			if (res == Result::InvalidHandle) {
+				DALIA_LOG_ERR(LOG_CTX_API, "Failed to attach effect to bus %s (slot %d). Invalid effect handle.",
+					busIdentifier, effectSlot);
+			}
+			else if (res == Result::ExpiredHandle) {
+				DALIA_LOG_ERR(LOG_CTX_API, "Failed to attach effect to bus %s (slot %d). Expired handle.",
+					busIdentifier, effectSlot);
+			}
+
+			return res;
+		}
+
+		// Fetch bus
+		uint32_t bIndex;
+		Result resBus = ResolveBusIndex(m_state, busIdentifier, bIndex);
+		if (resBus != Result::Ok) {
+			DALIA_LOG_ERR(LOG_CTX_API, "Failed to attach effect to bus %s (slot %d). No bus with identifier %s exists.",
+				busIdentifier, effectSlot, busIdentifier);
+			return resBus;
+		}
+
+		if (effectSlot >= MAX_EFFECTS_PER_BUS) {
+			DALIA_LOG_ERR(LOG_CTX_API,
+				"Failed to attach effect to bus %s (slot %d). A bus has %d effect slots.",
+				busIdentifier, effectSlot, MAX_EFFECTS_PER_BUS);
+			return Result::InvalidEffectSlot;
+		}
+
+		// Check effect slot
+		BusMirror& bMirror = m_state->busPoolMirror[bIndex];
+		if (bMirror.effects[effectSlot].IsValid()) {
+			DALIA_LOG_WARN(LOG_CTX_API, "Detaching effect from bus %s (slot %d). Attaching new effect to slot.",
+				busIdentifier, effectSlot);
+
+			// Detach old effect
+			EffectHandle oldEffect = bMirror.effects[effectSlot];
+			RtCommand detachCmd = RtCommand::DetachEffect(
+				oldEffect.GetIndex(),
+				oldEffect.GetGeneration(),
+				oldEffect.GetType(),
+				bIndex,
+				effectSlot
+			);
+			m_state->rtCommands->Enqueue(detachCmd);
+		}
+
+		bMirror.effects[effectSlot] = effect;
+		const uint32_t eIndex = effect.GetIndex();
+		const uint32_t eGen = effect.GetGeneration();
+		RtCommand cmd = RtCommand::AttachEffect(
+			effect.GetIndex(),
+			effect.GetGeneration(),
+			effect.GetType(),
+			bIndex,
+			effectSlot
+		);
+		m_state->rtCommands->Enqueue(cmd);
+		DALIA_LOG_DEBUG(LOG_CTX_API, "Attached effect (handle uuid: 0x%016llx) to bus %s (slot %d).",
+			effect.GetUUID(), busIdentifier, effectSlot);
 
 		return Result::Ok;
 	}
@@ -988,7 +1127,6 @@ namespace dalia {
 
 		pbkHandle = PlaybackHandle::Create(vIndex, vMirror.generation);
 		DALIA_LOG_DEBUG(LOG_CTX_API, "Created playback instance using voice %d.", vIndex);
-
 
 		return Result::Ok;
 	}

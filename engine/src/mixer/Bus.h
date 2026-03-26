@@ -1,31 +1,33 @@
 #pragma once
 #include "core/Constants.h"
-#include <string>
-#include <span>
+#include "dalia/audio/EffectControl.h"
 
 namespace dalia {
 
-    class Bus {
-    public:
-        Bus() = default;
-        ~Bus() = default;
+    constexpr uint32_t MAX_EFFECTS_PER_BUS = 4;
 
-        void Reset();
-
-        void SetBuffer(std::span<float> buffer);
-        std::span<float> GetBuffer() const;
-        void Clear();
-        void ApplyDSP(uint32_t sampleCount);
-        void MixInBuffer(std::span<float> inBuffer, uint32_t sampleCount);
-
-        uint32_t m_parentBusIndex = NO_PARENT;
+    struct Bus {
+        uint32_t parentBusIndex = NO_PARENT;
 
         // Mixing Properties
-        float m_volumeLinear = DEFAULT_VOLUME_LINEAR; // Stored as linear amplitude
+        float targetVolumeLinear = DEFAULT_VOLUME_LINEAR; // Stored as linear amplitude
+        float currentVolumeLinear = DEFAULT_VOLUME_LINEAR;
+        EffectHandle effects[MAX_EFFECTS_PER_BUS] = {
+            InvalidEffectHandle,
+            InvalidEffectHandle,
+            InvalidEffectHandle,
+            InvalidEffectHandle,
+        };
 
-    private:
-        std::span<float> m_buffer;
+        void Reset() {
+            parentBusIndex = NO_PARENT;
 
+            targetVolumeLinear = DEFAULT_VOLUME_LINEAR;
+            currentVolumeLinear = DEFAULT_VOLUME_LINEAR;
+            for (int i = 0; i < MAX_EFFECTS_PER_BUS; i++) {
+                effects[i] = InvalidEffectHandle;
+            }
+        }
     };
 
     struct BusMirror {
@@ -34,12 +36,21 @@ namespace dalia {
 
         // Mixing Properties
         float volumeDb = DEFAULT_VOLUME_DB; // Stored in decibels
+        EffectHandle effects[MAX_EFFECTS_PER_BUS] = {
+            InvalidEffectHandle,
+            InvalidEffectHandle,
+            InvalidEffectHandle,
+            InvalidEffectHandle,
+        };
 
         void Reset() {
             refCount = 0;
             parentBusIndex = NO_PARENT;
 
             volumeDb = DEFAULT_VOLUME_DB;
+            for (int i = 0; i < MAX_EFFECTS_PER_BUS; i++) {
+                effects[i] = InvalidEffectHandle;
+            }
         }
     };
 }

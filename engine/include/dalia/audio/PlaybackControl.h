@@ -9,7 +9,9 @@ namespace dalia {
 	public:
 		bool IsValid() const { return uuid != 0; }
 
-		// Could add a hash function for this too?
+		uint32_t GetIndex() const { return static_cast<uint32_t>(uuid & 0xFFFFFFFF); }
+		uint32_t GetGeneration() const { return static_cast<uint32_t>(uuid >> 32); }
+
 		uint64_t GetUUID() const { return uuid; }
 
 		bool operator==(const PlaybackHandle& other) const { return uuid == other.uuid; }
@@ -23,14 +25,6 @@ namespace dalia {
 			PlaybackHandle handle;
 			handle.uuid = (static_cast<uint64_t>(generation) << 32) | index;
 			return handle;
-		}
-
-		uint32_t GetIndex() const {
-			return static_cast<uint32_t>(uuid & 0xFFFFFFFF);
-		}
-
-		uint32_t GetGeneration() const {
-			return static_cast<uint32_t>(uuid >> 32);
 		}
 
 		uint64_t uuid = 0;

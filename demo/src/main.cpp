@@ -209,7 +209,14 @@ int main() {
 
     // MUSIC
     engine.CreateBus("Music", "Master");
-    engine.SetBusVolumeDb("Music", -20.0f);
+    engine.SetBusVolumeDb("Music", -10.0f);
+
+    EffectHandle biquadFilter;
+    BiquadConfig biquadConfig;
+    biquadConfig.frequency = 400.0f;
+    // biquadConfig.q = 8.0f;
+    engine.CreateBiquadFilter(biquadFilter, BiquadFilterType::LowPass, biquadConfig);
+    engine.AttachEffectToBus(biquadFilter, "Music", 0);
 
     SoundHandle spidermanSound;
     engine.LoadSoundAsync(spidermanSound, SoundType::Resident, "assets/spiderman.ogg", SpidermanFinishedLoading);
@@ -221,17 +228,17 @@ int main() {
     engine.Play(spidermanPlayback);
 
     // SFX
-    engine.CreateBus("SFX");
-    engine.SetBusVolumeDb("SFX", 0.0f);
-
-    SoundHandle musicSound;
-    engine.LoadSoundAsync(musicSound, SoundType::Stream, "assets/Faouzia - UNETHICAL.ogg");
-
-    PlaybackHandle musicPlayback;
-    engine.CreatePlayback(musicPlayback, musicSound);
-    engine.RoutePlayback(musicPlayback, "SFX");
-
-    engine.Play(musicPlayback);
+    // engine.CreateBus("SFX", "Master");
+    // engine.SetBusVolumeDb("SFX", 0.0f);
+    //
+    // SoundHandle musicSound;
+    // engine.LoadSoundAsync(musicSound, SoundType::Stream, "assets/Faouzia - UNETHICAL.ogg");
+    //
+    // PlaybackHandle musicPlayback;
+    // engine.CreatePlayback(musicPlayback, musicSound);
+    // engine.RoutePlayback(musicPlayback, "SFX");
+    //
+    // engine.Play(musicPlayback);
 
     while (true) {
         engine.Update();

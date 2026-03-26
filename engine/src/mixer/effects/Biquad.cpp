@@ -5,15 +5,14 @@
 #include <cmath>
 #include <algorithm>
 
-namespace dalia {
+#include "core/Math.h"
 
-    static constexpr float PI = 3.14159265359f;
-    static constexpr uint32_t CONTROL_RATE = 32;
+namespace dalia {
 
     void CalculateBiquadCoefficients(Biquad& state, float sampleRate) {
         float nyquist = sampleRate * 0.5f; // Nyquist limit (sample rate cannot exceed half the sample rate
         float frequency = std::clamp(state.currentFrequency, 10.0f, nyquist - 10.0f);
-        float q = std::max(state.currentQ, 0.1f);
+        float q = std::max(state.currentResonance, 0.1f);
 
         // RBJ variables
         const float omega = 2.0f * PI * frequency / sampleRate;
@@ -66,12 +65,25 @@ namespace dalia {
             uint32_t framesThisChunk = std::min(CONTROL_RATE, frameCount - i);
 
             bool paramsChanged = false;
-            if (std::abs(state.currentFrequency - state.targetFrequency) > 0.01) {
+
+            // 1. Frequency Smoothing
+            if (!NearlyEqual(state.currentFrequency, state.targetFrequency, FREQUENCY_EPSILON)) {
+                // We are far away, smoothly interpolate
                 state.currentFrequency += (state.targetFrequency - state.currentFrequency) * 0.05f;
                 paramsChanged = true;
             }
-            if (std::abs(state.currentQ - state.targetQ) > 0.001) {
-                state.currentQ += (state.targetQ - state.currentQ) * 0.05f;
+            else if (state.currentFrequency != state.targetFrequency) {
+                state.currentFrequency = state.targetFrequency;
+                paramsChanged = true;
+            }
+
+            // 2. Resonance (Q) Smoothing
+            if (!NearlyEqual(state.currentResonance, state.targetResonance, RESONANCE_EPSILON)) {
+                state.currentResonance += (state.targetResonance - state.currentResonance) * 0.05f;
+                paramsChanged = true;
+            }
+            else if (state.currentResonance != state.targetResonance) {
+                state.currentResonance = state.targetResonance;
                 paramsChanged = true;
             }
 

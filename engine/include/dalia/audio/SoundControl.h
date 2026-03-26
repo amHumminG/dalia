@@ -7,8 +7,6 @@
 
 namespace dalia {
 
-    class AssetRegistry; // TODO: Find a way to remove this from here (we don't want to expose it to the user)
-
     enum class SoundType : uint8_t {
         Resident = 0,
         Stream   = 1
@@ -21,17 +19,15 @@ namespace dalia {
         bool operator!=(const SoundHandle& other) const { return uuid != other.uuid; }
 
         SoundType GetType() const { return static_cast<SoundType>(uuid >> 56); }
+        uint32_t GetIndex() const { return static_cast<uint32_t>(uuid & 0xFFFFFFFF); }
+        uint32_t GetGeneration() const { return static_cast<uint32_t>((uuid >> 32) & 0xFFFFFF); }
 
         uint64_t GetUUID() const { return uuid; }
 
-        static SoundHandle FromUUID(uint64_t rawUuid) {
-            SoundHandle handle;
-            handle.uuid = rawUuid;
-            return handle;
-        }
-
     private:
+        friend struct EngineInternalState;
         friend class AssetRegistry;
+        friend class IoLoadSystem;
 
         static SoundHandle Create(uint32_t index, uint32_t generation, SoundType type) {
             SoundHandle handle;
@@ -43,8 +39,11 @@ namespace dalia {
             return handle;
         }
 
-        uint32_t GetIndex() const { return static_cast<uint32_t>(uuid & 0xFFFFFFFF); }
-        uint32_t GetGeneration() const { return static_cast<uint32_t>((uuid >> 32) & 0xFFFFFF); }
+        static SoundHandle FromUUID(uint64_t rawUuid) {
+            SoundHandle handle;
+            handle.uuid = rawUuid;
+            return handle;
+        }
 
         uint64_t uuid = 0;
     };

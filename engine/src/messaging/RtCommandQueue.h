@@ -35,7 +35,7 @@ namespace dalia {
 
 			// Bus Properties
 			SetBusParent,
-			SetBusVolume
+			SetBusVolume,
 
 			// Effects
 			AllocateBiquad,
@@ -43,6 +43,7 @@ namespace dalia {
 
 			AttachEffect,
 			DetachEffect,
+			DeallocateEffect
 		};
 
 		Type type = Type::None;
@@ -113,11 +114,19 @@ namespace dalia {
 				BiquadConfig config;
 			} biquad;
 
+			struct {
+				uint32_t index;
+				uint32_t gen;
+				EffectType type;
+				uint32_t busIndex;
+				uint32_t effectSlot;
+			} effect;
+
 		} data = {};
 
 		static RtCommand SwapMixOrder(uint32_t* ptr, uint32_t nodeCount) {
 			RtCommand cmd{};
-			cmd.type = RtCommand::Type::SwapMixOrder;
+			cmd.type = Type::SwapMixOrder;
 			cmd.data.mixOrder.ptr = ptr;
 			cmd.data.mixOrder.nodeCount = nodeCount;
 			return cmd;
@@ -244,6 +253,39 @@ namespace dalia {
 
 		static_assert(std::is_trivially_copyable_v<BiquadConfig>,
 			"BiquadConfig must remain trivially copyable for use in RtCommands");
+
+		static RtCommand AttachEffect(uint32_t index, uint32_t gen, EffectType type, uint32_t busIndex,
+			uint32_t effectSlot) {
+			RtCommand cmd{};
+			cmd.type = Type::AttachEffect;
+			cmd.data.effect.index = index;
+			cmd.data.effect.gen = gen;
+			cmd.data.effect.type = type;
+			cmd.data.effect.busIndex = busIndex;
+			cmd.data.effect.effectSlot = effectSlot;
+			return cmd;
+		}
+
+		static RtCommand DetachEffect(uint32_t index, uint32_t gen, EffectType type, uint32_t busIndex,
+			uint32_t effectSlot) {
+			RtCommand cmd{};
+			cmd.type = Type::DetachEffect;
+			cmd.data.effect.index = index;
+			cmd.data.effect.gen = gen;
+			cmd.data.effect.type = type;
+			cmd.data.effect.busIndex = busIndex;
+			cmd.data.effect.effectSlot = effectSlot;
+			return cmd;
+		}
+
+		static RtCommand DeallocateEffect(uint32_t index, uint32_t gen, EffectType type) {
+			RtCommand cmd{};
+			cmd.type = Type::DeallocateEffect;
+			cmd.data.effect.index = index;
+			cmd.data.effect.gen = gen;
+			cmd.data.effect.type = type;
+			return cmd;
+		}
 	};
 
 	class RtCommandQueue {
