@@ -310,7 +310,7 @@ namespace dalia {
         		FreeVoice(vIndex);
         	}
             else if (voice.state == VoiceState::Playing) {
-            	DALIA_LOG_DEBUG(LOG_CTX_MIXER, "Mixing voice %d -> bus %d.", vIndex, voice.parentBusIndex);
+            	// DALIA_LOG_DEBUG(LOG_CTX_MIXER, "Mixing voice %d -> bus %d.", vIndex, voice.parentBusIndex);
             	bool isStillPlaying = ProcessVoice(vIndex, frameCount, channels);
             	if (!isStillPlaying) voice.state = VoiceState::Stopped;
 
@@ -325,7 +325,7 @@ namespace dalia {
             Bus& bus = m_busPool[bIndex];
 
             if (bus.parentBusIndex != NO_PARENT) {
-            	DALIA_LOG_DEBUG(LOG_CTX_MIXER, "Mixing bus %d -> bus %d.", bIndex, bus.parentBusIndex);
+            	// DALIA_LOG_DEBUG(LOG_CTX_MIXER, "Mixing bus %d -> bus %d.", bIndex, bus.parentBusIndex);
             	ProcessBus(bIndex, frameCount, channels);
             }
         }
