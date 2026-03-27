@@ -51,6 +51,8 @@ set(STUDIO_FILES
     src/main.cpp
     src/Transcoder.h
     src/Transcoder.cpp
+    src/SoundbankWriter.cpp
+    src/SoundbankWriter.h
     src/app/Application.cpp
     src/app/Application.h
     src/editor/Panel.h
@@ -69,6 +71,8 @@ set(STUDIO_FILES
     src/core/Logger.h
     src/editor/ConsolePanel.cpp
     src/editor/ConsolePanel.h
+    systems/FileSystem.cpp
+    systems/FileSystem.h
 )
 
 add_executable(dalia_studio ${STUDIO_FILES})
@@ -89,6 +93,8 @@ add_custom_command(TARGET dalia_studio POST_BUILD
     "${ffmpeg_SOURCE_DIR}/bin"
     "$<TARGET_FILE_DIR:dalia_studio>"
 )
+
+file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/cache")
 
 # Copy existing assets directory to .exe directory (maybe not great if the directory is big)
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/assets")

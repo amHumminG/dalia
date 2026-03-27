@@ -13,6 +13,7 @@ namespace dalia {
     };
     enum class AudioFormat : uint8_t {
         PCM_16 = 0,
+
     };
     struct TOCEntry
     {

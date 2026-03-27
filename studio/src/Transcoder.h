@@ -5,7 +5,7 @@
 #include "Soundbank.h"
 
 
-namespace  dalia {
+namespace  dalia::studio {
 
     struct AudioData {
         std::string name;
@@ -15,9 +15,15 @@ namespace  dalia {
         std::vector<uint8_t> bytes;
     };
 
+    //TODO: vet ej om detta är sättet man vill gör det på
+    enum data_type {
+        RAW_DATA = 0,
+        FILE_DATA = 1
+    };
+
     class Transcoder {
     public:
-        Transcoder(AudioFormat format);
+        Transcoder(AudioFormat format, data_type type);
         ~Transcoder() = default;
 
         AudioData Transcode(const char* path);

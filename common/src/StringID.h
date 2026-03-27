@@ -23,6 +23,8 @@ namespace dalia {
         // converts string to hash att compile time
         constexpr StringID(const char* str) : m_hash(Hash::FNV1a_32(str)) {}
 
+        constexpr StringID(const uint32_t hash) : m_hash(hash) {}
+
         constexpr uint32_t GetHash() const { return m_hash; }
 
         constexpr bool operator==(const StringID& other) const {

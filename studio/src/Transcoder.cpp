@@ -9,8 +9,8 @@ extern "C"{
 #include <libavutil/avutil.h>
 }
 
-namespace dalia {
-   Transcoder::Transcoder(AudioFormat format) {
+namespace dalia::studio {
+   Transcoder::Transcoder(AudioFormat format, data_type type) {
       m_Format = format;
    }
 
@@ -83,6 +83,7 @@ namespace dalia {
       if (m_Format == AudioFormat::PCM_16) {
          target_sample_fmt = AV_SAMPLE_FMT_S16; // 16-bit integer
       }
+      else if (m_Format == AudioFormat::V) {}
 
 
       SwrContext* swr_ctx = nullptr;

@@ -14,6 +14,7 @@ namespace dalia::studio {
         if (ImGui::Button("Import Sound")) {
             // TODO: Open file explorer window here
             m_project.ImportSound("assets/Zeri.ogg");
+            m_project.ImportSound("assets/Roadhog.ogg");
             Logger::Log(LogLevel::Info, "Browser", "Imported asset");
         }
 
