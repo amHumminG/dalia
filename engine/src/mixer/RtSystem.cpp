@@ -17,7 +17,7 @@
 #include <cmath>
 #include <vcruntime_startup.h>
 
-#include "effects/Biquad.h"
+#include "effects/BiquadFilter.h"
 
 
 namespace dalia {
@@ -77,7 +77,7 @@ namespace dalia {
         m_rtCommands(config.rtCommands),
         m_rtEvents(config.rtEvents),
         m_ioStreamRequests(config.ioStreamRequests),
-		m_biquadPool(config.biquadPool) {
+		m_biquadFilterPool(config.biquadFilterPool) {
         // Empty bus graph
         m_activeMixOrder = std::span<const uint32_t>();
     }
@@ -221,7 +221,7 @@ namespace dalia {
 	            	break;
 				}
 				case RtCommand::Type::AllocateBiquad: {
-	            	Biquad& biquad = m_biquadPool[cmd.data.biquad.index];
+	            	BiquadFilter& biquad = m_biquadFilterPool[cmd.data.biquad.index];
 	            	biquad.generation = cmd.data.biquad.gen;
 	            	biquad.type = cmd.data.biquad.type;
 
@@ -235,7 +235,7 @@ namespace dalia {
 	            	break;
 				}
 				case RtCommand::Type::SetBiquadParams: {
-	            	Biquad& biquad = m_biquadPool[cmd.data.biquad.index];
+	            	BiquadFilter& biquad = m_biquadFilterPool[cmd.data.biquad.index];
 
 	            	if (biquad.generation != cmd.data.biquad.gen) break;
 
@@ -245,10 +245,10 @@ namespace dalia {
 	            	break;
 				}
 				case RtCommand::Type::AttachEffect: {
-					const uint32_t eIndex = cmd.data.effect.index;
-	            	const uint32_t eGen = cmd.data.effect.gen;
-	            	const EffectType eType = cmd.data.effect.type;
-	            	EffectHandle effect = EffectHandle::Create(eIndex, eGen, eType);
+					const uint32_t efIndex = cmd.data.effect.index;
+	            	const uint32_t efGen = cmd.data.effect.gen;
+	            	const EffectType efType = cmd.data.effect.type;
+	            	EffectHandle effect = EffectHandle::Create(efIndex, efGen, efType);
 
 	            	const uint32_t bIndex = cmd.data.effect.busIndex;
 	            	const uint32_t effectSlot = cmd.data.effect.effectSlot;
@@ -257,10 +257,10 @@ namespace dalia {
 	            	break;
 				}
 				case RtCommand::Type::DetachEffect: {
-	            	const uint32_t eIndex = cmd.data.effect.index;
-	            	const uint32_t eGen = cmd.data.effect.gen;
-	            	const EffectType eType = cmd.data.effect.type;
-	            	EffectHandle effect = EffectHandle::Create(eIndex, eGen, eType);
+	            	const uint32_t efIndex = cmd.data.effect.index;
+	            	const uint32_t efGen = cmd.data.effect.gen;
+	            	const EffectType efType = cmd.data.effect.type;
+	            	EffectHandle effect = EffectHandle::Create(efIndex, efGen, efType);
 
 	            	Bus& bus = m_busPool[cmd.data.effect.busIndex];
 	            	const uint32_t effectSlot = cmd.data.effect.effectSlot;
@@ -270,16 +270,16 @@ namespace dalia {
 	            	break;
 				}
 				case RtCommand::Type::DeallocateEffect: {
-	            	const uint32_t eIndex = cmd.data.effect.index;
-	            	const uint32_t eGen = cmd.data.effect.gen;
-	            	const EffectType eType = cmd.data.effect.type;
+	            	const uint32_t efIndex = cmd.data.effect.index;
+	            	const uint32_t efGen = cmd.data.effect.gen;
+	            	const EffectType efType = cmd.data.effect.type;
 
-	            	switch (eType) {
+	            	switch (efType) {
 	            		case EffectType::None: {
 	            			break;
 	            		}
 	            		case EffectType::Biquad: {
-	            			if (m_biquadPool[eIndex].generation == eGen) m_biquadPool[eIndex].Reset();
+	            			if (m_biquadFilterPool[efIndex].generation == efGen) m_biquadFilterPool[efIndex].Reset();
 	            			break;
 	            		}
 	            		default:
@@ -529,7 +529,7 @@ namespace dalia {
     			break;
     		}
     		case EffectType::Biquad: {
-    			Biquad& biquad = m_biquadPool[effectIndex];
+    			BiquadFilter& biquad = m_biquadFilterPool[effectIndex];
     			ProcessBiquad(buffer, frameCount, channels, biquad, m_outputSampleRate);
 				break;
     		}

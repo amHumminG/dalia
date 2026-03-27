@@ -15,6 +15,7 @@ namespace dalia {
 		BusNotFound					= -7,
 		InvalidRouting				= -8,
 		InvalidEffectSlot			= -9,
+		EffectAlreadyAttached		= -10,
 
 		// Messaging Errors
 		RtCommandQueueFull			= -100,

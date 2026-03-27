@@ -70,8 +70,8 @@ set(ENGINE_FILES
     src/mixer/RtSystem.h
     src/mixer/BusGraphCompiler.cpp
     src/mixer/BusGraphCompiler.h
-    src/mixer/effects/Biquad.h
-    src/mixer/effects/Biquad.cpp
+    src/mixer/effects/BiquadFilter.h
+    src/mixer/effects/BiquadFilter.cpp
 
     src/resources/ResidentSound.h
     src/resources/AssetRegistry.cpp

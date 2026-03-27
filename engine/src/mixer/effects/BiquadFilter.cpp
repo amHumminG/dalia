@@ -1,4 +1,4 @@
-#include "mixer/effects/Biquad.h"
+#include "mixer/effects/BiquadFilter.h"
 
 #include "core/Constants.h"
 
@@ -9,7 +9,7 @@
 
 namespace dalia {
 
-    void CalculateBiquadCoefficients(Biquad& state, float sampleRate) {
+    void CalculateBiquadCoefficients(BiquadFilter& state, float sampleRate) {
         float nyquist = sampleRate * 0.5f; // Nyquist limit (sample rate cannot exceed half the sample rate
         float frequency = std::clamp(state.currentFrequency, 10.0f, nyquist - 10.0f);
         float q = std::max(state.currentResonance, 0.1f);
@@ -60,7 +60,7 @@ namespace dalia {
         state.a2 *= a0Inverse;
     }
 
-    void ProcessBiquad(float* buffer, uint32_t frameCount, uint32_t channels, Biquad& state, float sampleRate) {
+    void ProcessBiquad(float* buffer, uint32_t frameCount, uint32_t channels, BiquadFilter& state, float sampleRate) {
         for (uint32_t i = 0; i < frameCount; i += CONTROL_RATE) {
             uint32_t framesThisChunk = std::min(CONTROL_RATE, frameCount - i);
 

@@ -6,7 +6,7 @@
 
 namespace dalia {
 
-    struct Biquad {
+    struct BiquadFilter {
         uint32_t generation = START_GENERATION;
         BiquadFilterType type = BiquadFilterType::LowPass;
 
@@ -40,6 +40,6 @@ namespace dalia {
         }
     };
 
-    void CalculateBiquadCoefficients(Biquad& state, float sampleRate);
-    void ProcessBiquad(float* buffer, uint32_t frameCount, uint32_t channels, Biquad& state, float sampleRate);
+    void CalculateBiquadCoefficients(BiquadFilter& state, float sampleRate);
+    void ProcessBiquad(float* buffer, uint32_t frameCount, uint32_t channels, BiquadFilter& state, float sampleRate);
 }

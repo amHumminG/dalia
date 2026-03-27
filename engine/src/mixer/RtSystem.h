@@ -12,7 +12,7 @@ namespace dalia {
     struct Bus;
 
     enum class EffectType : uint8_t;
-    struct Biquad;
+    struct BiquadFilter;
 
     struct RtSystemConfig {
         // Maybe we should just inject the device pointer itself
@@ -29,7 +29,7 @@ namespace dalia {
         std::span<float> busBufferPool;
         Bus* masterBus                          = nullptr;
 
-        std::span<Biquad> biquadPool;
+        std::span<BiquadFilter> biquadFilterPool;
     };
 
     class RtSystem {
@@ -58,7 +58,7 @@ namespace dalia {
         std::span<float> m_busBufferPool;
         Bus* m_masterBus;
 
-        std::span<Biquad> m_biquadPool;
+        std::span<BiquadFilter> m_biquadFilterPool;
 
         std::span<const uint32_t> m_activeMixOrder;
     };
