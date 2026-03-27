@@ -852,9 +852,6 @@ namespace dalia {
 	Result Engine::RouteBus(const char* identifier, const char* parentIdentifier) {
 		if (!IsInitialized(m_state)) return Result::NotInitialized;
 
-		const BusID bId(identifier);
-		const BusID bParentId(parentIdentifier);
-
 		// Fetch bus
 		uint32_t bIndex;
 		Result res = ResolveBusIndex(m_state, identifier, bIndex);
@@ -864,7 +861,6 @@ namespace dalia {
 			return res;
 		}
 
-
 		if (bIndex == MASTER_BUS_INDEX) {
 			DALIA_LOG_ERR(LOG_CTX_API, "Failed to route bus (%s -> %s). Master cannot be routed.",
 				identifier, parentIdentifier);
@@ -873,7 +869,7 @@ namespace dalia {
 
 		// Fetch parent bus
 		uint32_t bIndexParent;
-		Result resParent = ResolveBusIndex(m_state, identifier, bIndexParent);
+		Result resParent = ResolveBusIndex(m_state, parentIdentifier, bIndexParent);
 		if (resParent != Result::Ok) {
 			DALIA_LOG_ERR(LOG_CTX_API, "Failed to route bus (%s -> %s). No bus with identifier %s exists.",
 				identifier, parentIdentifier, parentIdentifier);
