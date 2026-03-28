@@ -306,7 +306,7 @@ namespace dalia {
 
         	if (voice.state == VoiceState::Stopped)	FreeVoice(vIndex);
         	else if (voice.parentBusIndex == NO_PARENT) { // Maybe this check should happen on the API thread instead?
-        		voice.exitCondition = PlaybackExitCondition::Evicted;
+        		voice.exitCondition = PlaybackExitCondition::ExplicitStop;
         		FreeVoice(vIndex);
         	}
             else if (voice.state == VoiceState::Playing) {

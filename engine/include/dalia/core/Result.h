@@ -11,29 +11,35 @@ namespace dalia {
 		AlreadyInitialized			= -3,
 		InvalidHandle				= -4,
 		ExpiredHandle				= -5,
-		PoolExhausted				= -6,
-		BusNotFound					= -7,
-		InvalidRouting				= -8,
-		InvalidEffectSlot			= -9,
-		EffectAlreadyAttached		= -10,
+		BusNotFound					= -6,
+		InvalidRouting				= -7,
+		InvalidEffectSlot			= -8,
+		EffectAlreadyAttached		= -9,
+
+		// Pool Capacity Errors
+		// PoolExhausted				= -100,
+		ResidentSoundPoolExhausted	= -101,
+		StreamSoundPoolExhausted	= -102,
+		VoicePoolExhausted			= -103,
+		StreamPoolExhausted			= -104,
+		BusPoolExhausted			= -105,
+		BiquadFilterPoolExhausted	= -106,
 
 		// Messaging Errors
-		RtCommandQueueFull			= -100,
-		RtEventQueueFull			= -101,
-		IoStreamRequestQueueFull	= -102,
-		IoLoadRequestQueueFull		= -103,
+		RtCommandQueueFull			= -200,
+		RtEventQueueFull			= -201,
+		IoStreamRequestQueueFull	= -202,
+		IoLoadRequestQueueFull		= -203,
 
 		// Playback Errors
-		PlaybackCorrupted			= -203,
+		PlaybackCorrupted			= -303,
 
 		// I/O Errors
-		SoundLoadError				= -300,
-		ResidentSoundPoolExhausted	= -301,
-		StreamSoundPoolExhausted	= -302,
-		FileReadError				= -303,
+		SoundLoadError				= -400,
+		FileReadError				= -401,
 
 		// Backed Errors
-		DeviceFailed				= -400,
+		DeviceFailed				= -500,
 	};
 
 	constexpr const char* GetErrorString(const Result result) {
