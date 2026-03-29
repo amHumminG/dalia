@@ -911,6 +911,11 @@ namespace dalia {
 		}
 
 		BusMirror& bMirror = m_state->busPoolMirror[bIndex];
+		if (bMirror.parentBusIndex == bIndexParent) {
+			DALIA_LOG_WARN(LOG_CTX_API, "Attempting to route bus (%s -> %s). %s is already routed to %s.",
+				bIndex, bIndexParent, bIndex, bIndexParent);
+			return Result::Ok;
+		}
 		bMirror.parentBusIndex = bIndexParent;
 
 		DALIA_LOG_DEBUG(LOG_CTX_API, "Routed bus %s (index: %d) -> %s (index: %d).",
@@ -1303,9 +1308,14 @@ namespace dalia {
 			return resBus;
 		}
 
-		DALIA_LOG_DEBUG(LOG_CTX_API, "Routed voice %d to bus %s (index: %d).", vIndex, busIdentifier, bIndex);
+		if (vMirror->parentBusIndex == bIndex) {
+			DALIA_LOG_WARN(LOG_CTX_API, "Attempting to route playback to %s. Playback is already routed to %s.",
+				bIndex, bIndex);
+			return Result::Ok;
+		}
 		vMirror->parentBusIndex = bIndex;
 		m_state->rtCommands->Enqueue(RtCommand::SetVoiceParent(vIndex, vGeneration, bIndex));
+		DALIA_LOG_DEBUG(LOG_CTX_API, "Routed voice %d to bus %s (index: %d).", vIndex, busIdentifier, bIndex);
 
 		return Result::Ok;
 	}
