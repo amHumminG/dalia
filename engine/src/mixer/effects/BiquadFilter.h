@@ -22,6 +22,12 @@ namespace dalia {
         float z1[CHANNELS_MAX] = {0.0f};
         float z2[CHANNELS_MAX] = {0.0f};
 
+        // Clears the internal delay lines
+        void Flush() {
+            std::memset(z1, 0, sizeof(z1));
+            std::memset(z2, 0, sizeof(z2));
+        }
+
         void Reset() {
             generation++;
             type = BiquadFilterType::LowPass;
@@ -35,8 +41,7 @@ namespace dalia {
             b0 = 1.0f, b1 = 0.0f, b2 = 0.0f;
             a1 = 0.0f, a2 = 0.0f;
 
-            std::memset(z1, 0, sizeof(z1));
-            std::memset(z2, 0, sizeof(z2));
+            Flush();
         }
     };
 

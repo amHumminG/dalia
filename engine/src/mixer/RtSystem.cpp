@@ -245,34 +245,47 @@ namespace dalia {
 	            	break;
 				}
 				case RtCommand::Type::AttachEffect: {
-					const uint32_t efIndex = cmd.data.effect.index;
-	            	const uint32_t efGen = cmd.data.effect.gen;
-	            	const EffectType efType = cmd.data.effect.type;
+					uint32_t efIndex = cmd.data.effect.index;
+	            	uint32_t efGen = cmd.data.effect.gen;
+	            	EffectType efType = cmd.data.effect.type;
 	            	EffectHandle effect = EffectHandle::Create(efIndex, efGen, efType);
 
-	            	const uint32_t bIndex = cmd.data.effect.busIndex;
-	            	const uint32_t effectSlot = cmd.data.effect.effectSlot;
-					m_busPool[bIndex].effects[effectSlot] = effect;
+	            	uint32_t bIndex = cmd.data.effect.busIndex;
+	            	uint32_t efSlot = cmd.data.effect.effectSlot;
+					m_busPool[bIndex].effects[efSlot] = effect;
 
 	            	break;
 				}
 				case RtCommand::Type::DetachEffect: {
-	            	const uint32_t efIndex = cmd.data.effect.index;
-	            	const uint32_t efGen = cmd.data.effect.gen;
-	            	const EffectType efType = cmd.data.effect.type;
+	            	uint32_t efIndex = cmd.data.effect.index;
+	            	uint32_t efGen = cmd.data.effect.gen;
+	            	EffectType efType = cmd.data.effect.type;
+
+	            	// Detach from bus
 	            	EffectHandle effect = EffectHandle::Create(efIndex, efGen, efType);
-
 	            	Bus& bus = m_busPool[cmd.data.effect.busIndex];
-	            	const uint32_t effectSlot = cmd.data.effect.effectSlot;
+	            	uint32_t efSlot = cmd.data.effect.effectSlot;
+	            	if (bus.effects[efSlot] == effect) bus.effects[efSlot] = InvalidEffectHandle;
 
-	            	if (bus.effects[effectSlot] == effect) bus.effects[effectSlot] = InvalidEffectHandle;
+	            	// Flush effect history
+	            	switch (efType) {
+	            	case EffectType::None: {
+	            		break;
+	            	}
+	            	case EffectType::Biquad: {
+	            		if (m_biquadFilterPool[efIndex].generation == efGen) m_biquadFilterPool[efIndex].Flush();
+	            		break;
+	            	}
+	            	default:
+	            		break;
+	            	}
 
 	            	break;
 				}
 				case RtCommand::Type::DeallocateEffect: {
-	            	const uint32_t efIndex = cmd.data.effect.index;
-	            	const uint32_t efGen = cmd.data.effect.gen;
-	            	const EffectType efType = cmd.data.effect.type;
+	            	uint32_t efIndex = cmd.data.effect.index;
+	            	uint32_t efGen = cmd.data.effect.gen;
+	            	EffectType efType = cmd.data.effect.type;
 
 	            	switch (efType) {
 	            		case EffectType::None: {
