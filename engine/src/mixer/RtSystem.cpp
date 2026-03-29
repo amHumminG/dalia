@@ -324,10 +324,8 @@ namespace dalia {
         for (uint32_t bIndex : m_activeMixOrder) {
             Bus& bus = m_busPool[bIndex];
 
-            if (bus.parentBusIndex != NO_PARENT) {
-            	// DALIA_LOG_DEBUG(LOG_CTX_MIXER, "Mixing bus %d -> bus %d.", bIndex, bus.parentBusIndex);
-            	ProcessBus(bIndex, frameCount, channels);
-            }
+            // DALIA_LOG_DEBUG(LOG_CTX_MIXER, "Mixing bus %d -> bus %d.", bIndex, bus.parentBusIndex);
+            ProcessBus(bIndex, frameCount, channels);
         }
 
         // Final Output (clamped between -1.0f and 1.0f) We probably want a soft limiter for this in the future
