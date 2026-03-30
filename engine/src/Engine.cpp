@@ -917,7 +917,7 @@ namespace dalia {
 		BusMirror& bMirror = m_state->busPoolMirror[bIndex];
 		if (bMirror.parentBusIndex == bIndexParent) {
 			DALIA_LOG_WARN(LOG_CTX_API, "Attempting to route bus (%s -> %s). %s is already routed to %s.",
-				bIndex, bIndexParent, bIndex, bIndexParent);
+				identifier, parentIdentifier, identifier, parentIdentifier);
 			return Result::Ok;
 		}
 		bMirror.parentBusIndex = bIndexParent;
@@ -1314,7 +1314,7 @@ namespace dalia {
 
 		if (vMirror->parentBusIndex == bIndex) {
 			DALIA_LOG_WARN(LOG_CTX_API, "Attempting to route playback to %s. Playback is already routed to %s.",
-				bIndex, bIndex);
+				busIdentifier, busIdentifier);
 			return Result::Ok;
 		}
 		vMirror->parentBusIndex = bIndex;
