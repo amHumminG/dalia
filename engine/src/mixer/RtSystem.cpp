@@ -64,6 +64,30 @@ namespace dalia {
 		}
 	}
 
+	// Applies a cross-fade between a dry and wet buffer over a block of frames
+	static inline void ApplyBlockCrossFade(float* inOutDryBuffer, const float* inWetBuffer, uint32_t frameCount,
+		uint32_t channels, float& currentMix, float targetMix, float mixDelta) {
+		for (uint32_t frame = 0; frame < frameCount; frame++) {
+			// Increment mix coefficient
+			if (currentMix < targetMix) {
+				currentMix += mixDelta;
+				if (currentMix >= targetMix) currentMix = targetMix;
+			}
+			else if (currentMix > targetMix) {
+				currentMix -= mixDelta;
+				if (currentMix < targetMix) currentMix = targetMix;
+			}
+
+			for (uint32_t channel = 0; channel < channels; channel++) {
+				uint32_t index = (frame * channels) + channel;
+				float dry = inOutDryBuffer[index];
+				float wet = inWetBuffer[index];
+
+				inOutDryBuffer[index] = dry + currentMix * (wet - dry);
+			}
+		}
+	}
+
 	// ------------
 
     RtSystem::RtSystem(const RtSystemConfig& config)
@@ -77,17 +101,18 @@ namespace dalia {
         m_rtCommands(config.rtCommands),
         m_rtEvents(config.rtEvents),
         m_ioStreamRequests(config.ioStreamRequests),
+		m_dspScratchBuffer(config.dspScratchBuffer),
 		m_biquadFilterPool(config.biquadFilterPool) {
         // Empty bus graph
         m_activeMixOrder = std::span<const uint32_t>();
     }
 
-    void RtSystem::OnAudioCallback(float* output, uint32_t frameCount, uint32_t channels) {
+    void RtSystem::OnAudioCallback(float* output, uint32_t frameCount) {
         // Process incoming commands from the API thread
         ProcessCommands();
 
         // Render the audio frame
-        Render(output, frameCount, channels);
+        Render(output, frameCount);
     }
 
     void RtSystem::ProcessCommands() {
@@ -245,69 +270,50 @@ namespace dalia {
 	            	break;
 				}
 				case RtCommand::Type::AttachEffect: {
-					uint32_t efIndex = cmd.data.effect.index;
-	            	uint32_t efGen = cmd.data.effect.gen;
-	            	EffectType efType = cmd.data.effect.type;
-	            	EffectHandle effect = EffectHandle::Create(efIndex, efGen, efType);
+	            	EffectHandle effect = EffectHandle::Create(
+	            		cmd.data.effect.index,
+	            		cmd.data.effect.gen,
+	            		cmd.data.effect.type
+	            	);
 
-	            	uint32_t bIndex = cmd.data.effect.busIndex;
-	            	uint32_t efSlot = cmd.data.effect.effectSlot;
-					m_busPool[bIndex].effects[efSlot] = effect;
-
+					AttachEffect(effect, cmd.data.effect.busIndex, cmd.data.effect.effectSlot);
 	            	break;
 				}
 				case RtCommand::Type::DetachEffect: {
-	            	uint32_t efIndex = cmd.data.effect.index;
-	            	uint32_t efGen = cmd.data.effect.gen;
-	            	EffectType efType = cmd.data.effect.type;
+	            	EffectHandle effect = EffectHandle::Create(
+						cmd.data.effect.index,
+						cmd.data.effect.gen,
+						cmd.data.effect.type
+					);
 
-	            	// Detach from bus
-	            	EffectHandle effect = EffectHandle::Create(efIndex, efGen, efType);
-	            	Bus& bus = m_busPool[cmd.data.effect.busIndex];
-	            	uint32_t efSlot = cmd.data.effect.effectSlot;
-	            	if (bus.effects[efSlot] == effect) bus.effects[efSlot] = InvalidEffectHandle;
-
-	            	// Flush effect history
-	            	switch (efType) {
-	            	case EffectType::None: {
-	            		break;
-	            	}
-	            	case EffectType::Biquad: {
-	            		if (m_biquadFilterPool[efIndex].generation == efGen) m_biquadFilterPool[efIndex].Flush();
-	            		break;
-	            	}
-	            	default:
-	            		break;
-	            	}
-
+	            	FadeOutEffect(effect, cmd.data.effect.busIndex, cmd.data.effect.effectSlot);
 	            	break;
 				}
 				case RtCommand::Type::DeallocateEffect: {
 	            	uint32_t efIndex = cmd.data.effect.index;
 	            	uint32_t efGen = cmd.data.effect.gen;
 	            	EffectType efType = cmd.data.effect.type;
+	            	EffectHandle effect = EffectHandle::Create(efIndex, efGen, efType);
+
+	            	DetachEffectIfAttached(effect);
 
 	            	switch (efType) {
-	            		case EffectType::None: {
-	            			break;
-	            		}
-	            		case EffectType::Biquad: {
+	            		case EffectType::None: break;
+	            		case EffectType::Biquad:
 	            			if (m_biquadFilterPool[efIndex].generation == efGen) m_biquadFilterPool[efIndex].Reset();
 	            			break;
-	            		}
-	            		default:
-	            			break;
+	            		default: break;
 	            	}
-
 	            	break;
 				}
-                default: break;
+                default:
+            		break;
             }
         }
     }
 
-    void RtSystem::Render(float* output, uint32_t frameCount, uint32_t channels) {
-        const uint32_t sampleCount = frameCount * channels;
+    void RtSystem::Render(float* output, uint32_t frameCount) {
+        const uint32_t sampleCount = frameCount * m_outputChannels;
 
     	// Clear all bus buffers
         std::memset(m_busBufferPool.data(), 0, m_busBufferPool.size());
@@ -324,7 +330,7 @@ namespace dalia {
         	}
             else if (voice.state == VoiceState::Playing) {
             	// DALIA_LOG_DEBUG(LOG_CTX_MIXER, "Mixing voice %d -> bus %d.", vIndex, voice.parentBusIndex);
-            	bool isStillPlaying = ProcessVoice(vIndex, frameCount, channels);
+            	bool isStillPlaying = ProcessVoice(vIndex, frameCount);
             	if (!isStillPlaying) voice.state = VoiceState::Stopped;
 
             	voicesMixed++;
@@ -338,7 +344,7 @@ namespace dalia {
             Bus& bus = m_busPool[bIndex];
 
             // DALIA_LOG_DEBUG(LOG_CTX_MIXER, "Mixing bus %d -> bus %d.", bIndex, bus.parentBusIndex);
-            ProcessBus(bIndex, frameCount, channels);
+            ProcessBus(bIndex, frameCount);
         }
 
         // Final Output (clamped between -1.0f and 1.0f) We probably want a soft limiter for this in the future
@@ -349,7 +355,7 @@ namespace dalia {
         std::copy_n(masterBuffer, sampleCount, output);
     }
 
-    bool RtSystem::ProcessVoice(uint32_t voiceIndex, uint32_t frameCount, uint32_t channels) {
+    bool RtSystem::ProcessVoice(uint32_t voiceIndex, uint32_t frameCount) {
 		Voice& voice = m_voicePool[voiceIndex];
         float* busBuffer = GetBusBuffer(m_busBufferPool.data(), voice.parentBusIndex, frameCount);
         uint32_t framesMixed = 0;
@@ -512,40 +518,109 @@ namespace dalia {
     	voice.Reset();
     }
 
-    void RtSystem::ProcessBus(uint32_t busIndex, uint32_t frameCount, uint32_t channels) {
+    void RtSystem::ProcessBus(uint32_t busIndex, uint32_t frameCount) {
     	Bus& bus = m_busPool[busIndex];
 		float* buffer = GetBusBuffer(m_busBufferPool.data(), busIndex, frameCount);
 
-    	for (uint32_t i = 0; i < MAX_EFFECTS_PER_BUS; i++) {
-    		EffectHandle handle = bus.effects[i];
-
-    		if (handle.IsValid()) {
-				ApplyEffect(buffer, frameCount, channels, handle.GetType(), handle.GetIndex());
-    		}
-    	}
+		for (uint32_t i = 0; i < MAX_EFFECTS_PER_BUS; i++) {
+			EffectSlot& slot = bus.effectSlots[i];
+			if (slot.state == EffectSlotState::Empty) continue;
+			ApplyBusEffect(buffer, slot, frameCount);
+		}
 
     	// Apply volume
-		ApplyVolume(buffer, frameCount, channels, bus.currentVolumeLinear, bus.targetVolumeLinear);
+		ApplyVolume(buffer, frameCount, m_outputChannels, bus.currentVolumeLinear, bus.targetVolumeLinear);
 
     	if (bus.parentBusIndex != NO_PARENT) {
     		float* parentBuffer = m_busBufferPool.data() + (bus.parentBusIndex * frameCount * MAX_CHANNELS);
-    		MixToBuffer(parentBuffer, buffer, frameCount * channels);
+    		MixToBuffer(parentBuffer, buffer, frameCount * m_outputChannels);
     	}
     }
 
-    void RtSystem::ApplyEffect(float* buffer, uint32_t frameCount, uint32_t channels,
-    	EffectType type, uint32_t effectIndex) {
-    	switch (type) {
-    		case EffectType::None: {
-    			break;
-    		}
-    		case EffectType::Biquad: {
-    			BiquadFilter& biquad = m_biquadFilterPool[effectIndex];
-    			ProcessBiquad(buffer, frameCount, channels, biquad, m_outputSampleRate);
+    void RtSystem::ApplyBusEffect(float* busBuffer, EffectSlot& slot, uint32_t frameCount) {
+		float fadeDurationInSeconds = 0.01f;
+		float fadeDelta = 1.0f / (m_outputSampleRate * fadeDurationInSeconds);
+		uint32_t sampleCount = frameCount * m_outputChannels;
+
+		std::memcpy(m_dspScratchBuffer.data(), busBuffer, sampleCount * sizeof(float));
+		switch (slot.effect.GetType()) {
+			case EffectType::None: break;
+			case EffectType::Biquad:
+				BiquadFilter& biquad = m_biquadFilterPool[slot.effect.GetIndex()];
+				ProcessBiquad(m_dspScratchBuffer.data(), frameCount, m_outputChannels, biquad, m_outputSampleRate);
 				break;
-    		}
-    		default:
-    			break;
-    	}
+		}
+
+		if (slot.state == EffectSlotState::Active) {
+			std::memcpy(busBuffer, m_dspScratchBuffer.data(), sampleCount * sizeof(float));
+		}
+		else {
+			float targetMix = 0.0f;
+			if (slot.state == EffectSlotState::FadingIn) targetMix = 1.0f;
+			else if (slot.state == EffectSlotState::FadingOut) targetMix = 0.0f;
+
+			ApplyBlockCrossFade(
+				busBuffer,
+				m_dspScratchBuffer.data(),
+				frameCount,
+				m_outputChannels,
+				slot.currentMix,
+				targetMix,
+				fadeDelta
+			);
+
+			if (slot.state == EffectSlotState::FadingIn && slot.currentMix >= 1.0f) {
+				slot.state = EffectSlotState::Active;
+			}
+			else if (slot.state == EffectSlotState::FadingOut && slot.currentMix <= 0.0f) {
+				slot.Reset(); // Detach effect
+			}
+		}
+    }
+
+    void RtSystem::AttachEffect(EffectHandle effect, uint32_t busIndex, uint32_t effectSlot) {
+		DetachEffectIfAttached(effect);
+		FlushEffect(effect.GetType(), effect.GetIndex(), effect.GetGeneration()); // Remove history
+
+		EffectSlot& slot = m_busPool[busIndex].effectSlots[effectSlot];
+		slot.effect = effect;
+		slot.currentMix = 0.0f;
+		slot.state = EffectSlotState::FadingIn;
+    }
+
+    void RtSystem::DetachEffectIfAttached(EffectHandle effect) {
+		for (uint32_t bIndex = 0; bIndex < m_busPool.size(); bIndex++) {
+			for (uint32_t efSlot = 0; efSlot < MAX_EFFECTS_PER_BUS; efSlot++) {
+				EffectSlot& slot = m_busPool[bIndex].effectSlots[efSlot];
+
+				if (slot.effect == effect) {
+					slot.Reset();
+					return;
+				}
+			}
+		}
+    }
+
+    void RtSystem::FadeOutEffect(EffectHandle effect, uint32_t busIndex, uint32_t effectSlot) {
+		EffectSlot& slot = m_busPool[busIndex].effectSlots[effectSlot];
+
+		if (slot.effect == effect && slot.state != EffectSlotState::Empty) {
+			slot.state = EffectSlotState::FadingOut;
+		}
+    }
+
+    void RtSystem::FlushEffect(EffectType type, uint32_t index, uint32_t gen) {
+		// Flush effect history
+		switch (type) {
+		case EffectType::None: {
+			break;
+		}
+		case EffectType::Biquad: {
+			if (m_biquadFilterPool[index].generation == gen) m_biquadFilterPool[index].Flush();
+			break;
+		}
+		default:
+			break;
+		}
     }
 }

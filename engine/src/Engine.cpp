@@ -109,6 +109,8 @@ namespace dalia {
 		std::unique_ptr<FixedStack<uint32_t>>		freeBuses;
 
 		// --- Effects ---
+		std::unique_ptr<float[]> dspScratchBuffer;
+
 		std::unique_ptr<BiquadFilter[]> biquadFilterPool;
 
 		std::unique_ptr<HandleManager> biquadHM;
@@ -469,7 +471,7 @@ namespace dalia {
 
 	static void data_callback(ma_device* pDevice, void* pOutput, const void* pInput, uint32_t frameCount) {
 		RtSystem* rtSystem = static_cast<RtSystem*>(pDevice->pUserData);
-		rtSystem->OnAudioCallback(static_cast<float*>(pOutput), frameCount, pDevice->playback.channels);
+		rtSystem->OnAudioCallback(static_cast<float*>(pOutput), frameCount);
 	}
 
 	// ------------------------
@@ -523,10 +525,10 @@ namespace dalia {
 		m_state->outputChannels = m_state->device->playback.channels;
 		m_state->outputSampleRate = m_state->device->sampleRate;
 
-		// Bus buffer allocation based on period size
-		const uint32_t samplesPerBusBuffer = m_state->device->playback.internalPeriodSizeInFrames * MAX_CHANNELS;
-		const uint32_t totalFloats = m_state->busCapacity * samplesPerBusBuffer;
-		m_state->busBufferPool = std::make_unique<float[]>(totalFloats);
+		// Buffer allocations based on period size
+		const uint32_t samplesPerPeriod = m_state->device->playback.internalPeriodSizeInFrames * MAX_CHANNELS;
+		m_state->busBufferPool = std::make_unique<float[]>(m_state->busCapacity * samplesPerPeriod);
+		m_state->dspScratchBuffer = std::make_unique<float[]>(samplesPerPeriod);
 
 		// --- SYSTEMS SETUP ---
 		RtSystemConfig rtConfig;
@@ -538,11 +540,13 @@ namespace dalia {
 		rtConfig.voicePool			= std::span(m_state->voicePool.get(), m_state->voiceCapacity);
 		rtConfig.streamPool			= std::span(m_state->streamPool.get(), m_state->streamCapacity);
 		rtConfig.busPool			= std::span(m_state->busPool.get(), m_state->busCapacity);
-		rtConfig.busBufferPool		= std::span(m_state->busBufferPool.get(), totalFloats);
+		rtConfig.busBufferPool		= std::span(m_state->busBufferPool.get(), m_state->busCapacity * samplesPerPeriod);
 		rtConfig.masterBus			= &m_state->busPool[MASTER_BUS_INDEX];
+		rtConfig.dspScratchBuffer	= std::span(m_state->dspScratchBuffer.get(), samplesPerPeriod);
 		rtConfig.biquadFilterPool	= std::span(m_state->biquadFilterPool.get(), m_state->biquadHM->GetCapacity());
 		m_state->rtSystem = std::make_unique<RtSystem>(rtConfig);
-		m_state->device->pUserData = m_state->rtSystem.get();
+
+		m_state->device->pUserData = m_state->rtSystem.get(); // Hand it to device for use in callback
 
 		IoStreamSystemConfig ioStreamingConfig;
 		ioStreamingConfig.ioStreamRequests	= m_state->ioStreamRequests.get();
@@ -1027,7 +1031,7 @@ namespace dalia {
 			BusMirror& bMirror = m_state->busPoolMirror[bIndex];
 			if (bMirror.refCount > 0) { // If it is in use
 				for (uint32_t slot = 0; slot < MAX_EFFECTS_PER_BUS; slot++) {
-					if (bMirror.effects[slot] == effect) {
+					if (bMirror.effectSlots[slot] == effect) {
 						DALIA_LOG_ERR(LOG_CTX_API,
 							"Failed to attach effect to bus %s (slot %d). Effect is already attached to a bus.",
 							busIdentifier, effectSlot);
@@ -1056,12 +1060,12 @@ namespace dalia {
 
 		// Check effect slot
 		BusMirror& bMirror = m_state->busPoolMirror[bIndex];
-		if (bMirror.effects[effectSlot].IsValid()) {
+		if (bMirror.effectSlots[effectSlot].IsValid()) {
 			DALIA_LOG_WARN(LOG_CTX_API, "Detaching effect from bus %s (slot %d). Attaching new effect to slot.",
 				busIdentifier, effectSlot);
 
 			// Detach old effect
-			EffectHandle oldEffect = bMirror.effects[effectSlot];
+			EffectHandle oldEffect = bMirror.effectSlots[effectSlot];
 			RtCommand detachCmd = RtCommand::DetachEffect(
 				oldEffect.GetIndex(),
 				oldEffect.GetGeneration(),
@@ -1072,7 +1076,7 @@ namespace dalia {
 			m_state->rtCommands->Enqueue(detachCmd);
 		}
 
-		bMirror.effects[effectSlot] = effect;
+		bMirror.effectSlots[effectSlot] = effect;
 		RtCommand cmd = RtCommand::AttachEffect(
 			effect.GetIndex(),
 			effect.GetGeneration(),
@@ -1106,7 +1110,7 @@ namespace dalia {
 			BusMirror& bMirror = m_state->busPoolMirror[bIndex];
 			if (bMirror.refCount > 0) {
 				for (uint32_t slot = 0; slot < MAX_EFFECTS_PER_BUS; slot++) {
-					if (bMirror.effects[slot] == effect) {
+					if (bMirror.effectSlots[slot] == effect) {
 						// Found the effect -> Detach it
 
 						RtCommand detachCmd = RtCommand::DetachEffect(
@@ -1118,7 +1122,7 @@ namespace dalia {
 						);
 						m_state->rtCommands->Enqueue(detachCmd);
 
-						bMirror.effects[slot] = InvalidEffectHandle;
+						bMirror.effectSlots[slot] = InvalidEffectHandle;
 
 						DALIA_LOG_DEBUG(LOG_CTX_API,
 							"Detached effect (uuid: 0x%016llx) from bus (index: %d) (slot: %d).",
@@ -1159,7 +1163,7 @@ namespace dalia {
 			BusMirror& bMirror = m_state->busPoolMirror[bIndex];
 			if (bMirror.refCount > 0) { // If it is in use
 				for (uint32_t effectSlot = 0; effectSlot < MAX_EFFECTS_PER_BUS; effectSlot++) {
-					if (bMirror.effects[effectSlot] == effect) {
+					if (bMirror.effectSlots[effectSlot] == effect) {
 						// Found it -> Detach it
 						DALIA_LOG_DEBUG(LOG_CTX_API, "Detaching effect from bus (index: %d) (slot %d).",
 							bIndex, effectSlot);
@@ -1172,7 +1176,7 @@ namespace dalia {
 							effectSlot
 						);
 						m_state->rtCommands->Enqueue(detachCmd);
-						bMirror.effects[effectSlot] = InvalidEffectHandle;
+						bMirror.effectSlots[effectSlot] = InvalidEffectHandle;
 
 						detached = true;
 						break;

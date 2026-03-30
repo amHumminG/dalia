@@ -6,18 +6,32 @@ namespace dalia {
 
     constexpr uint32_t MAX_EFFECTS_PER_BUS = 4;
 
+    enum class EffectSlotState {
+        Empty,
+        FadingIn,
+        Active,
+        FadingOut
+    };
+
+    struct EffectSlot {
+        EffectHandle effect = InvalidEffectHandle;
+        EffectSlotState state = EffectSlotState::Empty;
+        float currentMix = 0.0f;
+
+        void Reset() {
+            effect = InvalidEffectHandle;
+            state = EffectSlotState::Empty;
+            currentMix = 0.0f;
+        }
+    };
+
     struct Bus {
         uint32_t parentBusIndex = NO_PARENT;
 
         // Mixing Properties
         float targetVolumeLinear = DEFAULT_VOLUME_LINEAR; // Stored as linear amplitude
         float currentVolumeLinear = DEFAULT_VOLUME_LINEAR;
-        EffectHandle effects[MAX_EFFECTS_PER_BUS] = {
-            InvalidEffectHandle,
-            InvalidEffectHandle,
-            InvalidEffectHandle,
-            InvalidEffectHandle,
-        };
+        EffectSlot effectSlots[MAX_EFFECTS_PER_BUS];
 
         void Reset() {
             parentBusIndex = NO_PARENT;
@@ -25,7 +39,7 @@ namespace dalia {
             targetVolumeLinear = DEFAULT_VOLUME_LINEAR;
             currentVolumeLinear = DEFAULT_VOLUME_LINEAR;
             for (int i = 0; i < MAX_EFFECTS_PER_BUS; i++) {
-                effects[i] = InvalidEffectHandle;
+                effectSlots[i].Reset();
             }
         }
     };
@@ -36,7 +50,7 @@ namespace dalia {
 
         // Mixing Properties
         float volumeDb = DEFAULT_VOLUME_DB; // Stored in decibels
-        EffectHandle effects[MAX_EFFECTS_PER_BUS] = {
+        EffectHandle effectSlots[MAX_EFFECTS_PER_BUS] = {
             InvalidEffectHandle,
             InvalidEffectHandle,
             InvalidEffectHandle,
@@ -49,7 +63,7 @@ namespace dalia {
 
             volumeDb = DEFAULT_VOLUME_DB;
             for (int i = 0; i < MAX_EFFECTS_PER_BUS; i++) {
-                effects[i] = InvalidEffectHandle;
+                effectSlots[i] = InvalidEffectHandle;
             }
         }
     };

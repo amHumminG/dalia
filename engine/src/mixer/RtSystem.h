@@ -10,6 +10,8 @@ namespace dalia {
     struct Voice;
     struct StreamContext;
     struct Bus;
+    class EffectHandle;
+    struct EffectSlot;
 
     enum class EffectType : uint8_t;
     struct BiquadFilter;
@@ -29,23 +31,28 @@ namespace dalia {
         std::span<float> busBufferPool;
         Bus* masterBus                          = nullptr;
 
+        std::span<float> dspScratchBuffer;
         std::span<BiquadFilter> biquadFilterPool;
     };
 
     class RtSystem {
     public:
         explicit RtSystem(const RtSystemConfig& config);
-        void OnAudioCallback(float* output, uint32_t frameCount, uint32_t channels);
+        void OnAudioCallback(float* output, uint32_t frameCount);
 
     private:
         void ProcessCommands();
-        void Render(float* output, uint32_t frameCount, uint32_t channels);
-        bool ProcessVoice(uint32_t voiceIndex, uint32_t frameCount, uint32_t channels);
+        void Render(float* output, uint32_t frameCount);
+        bool ProcessVoice(uint32_t voiceIndex, uint32_t frameCount);
         void FreeVoice(uint32_t voiceIndex);
-        void ProcessBus(uint32_t busIndex, uint32_t frameCount, uint32_t channels);
-        void ApplyEffect(float* buffer, uint32_t frameCount, uint32_t channels, EffectType type, uint32_t effectIndex);
+        void ProcessBus(uint32_t busIndex, uint32_t frameCount);
+        void ApplyBusEffect(float* busBuffer, EffectSlot& slot, uint32_t frameCount);
+        void AttachEffect(EffectHandle effect, uint32_t busIndex, uint32_t effectSlot);
+        void DetachEffectIfAttached(EffectHandle effect);
+        void FadeOutEffect(EffectHandle effect, uint32_t busIndex, uint32_t effectSlot);
+        void FlushEffect(EffectType type, uint32_t index, uint32_t gen);
 
-        uint32_t m_outputChannels = 0; // Not used right now
+        uint32_t m_outputChannels = 0;
         uint32_t m_outputSampleRate = 0;
 
         RtCommandQueue* m_rtCommands;
@@ -58,6 +65,7 @@ namespace dalia {
         std::span<float> m_busBufferPool;
         Bus* m_masterBus;
 
+        std::span<float> m_dspScratchBuffer;
         std::span<BiquadFilter> m_biquadFilterPool;
 
         std::span<const uint32_t> m_activeMixOrder;
