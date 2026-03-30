@@ -157,7 +157,7 @@ void TestInterface() {
         ImGui::BeginChild("PlaybackList", ImVec2(0, 200), true);
         for (int i = 0; i < playbacks.size(); i++) {
             char label[256];
-            snprintf(label, sizeof(label), "%s (0x%08X)", playbacks[i].name.c_str(), playbacks[i].handle.GetIndex());
+            snprintf(label, sizeof(label), "%s (0x%016llx)", playbacks[i].name.c_str(), playbacks[i].handle.GetUUID());
             if (ImGui::Selectable(label, selectedPlaybackIdx == i)) selectedPlaybackIdx = i;
         }
         ImGui::EndChild();
@@ -287,7 +287,7 @@ void TestInterface() {
         ImGui::BeginChild("EffectList", ImVec2(0, 120), true);
         for (int i = 0; i < loadedEffects.size(); i++) {
             char label[256];
-            snprintf(label, sizeof(label), "%s (0x%08X)", loadedEffects[i].name.c_str(), loadedEffects[i].handle.GetIndex());
+            snprintf(label, sizeof(label), "%s (0x%016llx)", loadedEffects[i].name.c_str(), loadedEffects[i].handle.GetUUID());
             if (ImGui::Selectable(label, selectedEffectIdx == i)) selectedEffectIdx = i;
         }
         ImGui::EndChild();
@@ -330,7 +330,7 @@ void TestInterface() {
             ImGui::SameLine();
             if (ImGui::Button("Detach", ImVec2(60, 30))) {
                 // We detach from the currently input text field
-                lastResult = engine.DetachEffectFromBus(targetBusInput, targetSlotIndex);
+                lastResult = engine.DetachEffect(currentEffect);
                 if (lastResult == Result::Ok) {
                     loadedEffects[selectedEffectIdx].attachedBus = "None";
                     loadedEffects[selectedEffectIdx].attachedSlot = -1;
