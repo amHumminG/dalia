@@ -321,7 +321,7 @@ void TestInterface() {
             ImGui::SliderInt("Slot", &targetSlotIndex, 0, 3);
 
             if (ImGui::Button("Attach", ImVec2(60, 30))) {
-                lastResult = engine.AttachEffectToBus(currentEffect, targetBusInput, targetSlotIndex);
+                lastResult = engine.AttachEffect(currentEffect, targetBusInput, targetSlotIndex);
                 if (lastResult == Result::Ok) {
                     loadedEffects[selectedEffectIdx].attachedBus = targetBusInput;
                     loadedEffects[selectedEffectIdx].attachedSlot = targetSlotIndex;
