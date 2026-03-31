@@ -22,6 +22,7 @@ struct PlaybackInstance {
     std::string name;
     PlaybackHandle handle;
     std::string targetBus = "Master"; // Default route
+    bool isLooping = false;
 };
 
 struct LoadedEffect {
@@ -171,6 +172,16 @@ void TestInterface() {
             if (ImGui::Button("Pause", ImVec2(60, 30))) lastResult = engine.Pause(currentHandle);
             ImGui::SameLine();
             if (ImGui::Button("Stop", ImVec2(60, 30))) lastResult = engine.Stop(currentHandle);
+
+            ImGui::Spacing();
+            bool currentLoopState = playbacks[selectedPlaybackIdx].isLooping;
+            if (ImGui::Checkbox("Loop Playback", &currentLoopState)) {
+                lastResult = engine.SetPlaybackLooping(currentHandle, currentLoopState);
+                if (lastResult == Result::Ok) {
+                    // Only update the UI state if the engine accepted the command
+                    playbacks[selectedPlaybackIdx].isLooping = currentLoopState;
+                }
+            }
 
             ImGui::Separator();
 
