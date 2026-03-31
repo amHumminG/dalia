@@ -244,11 +244,14 @@ namespace dalia {
 		/// A bus can hold up to four effects at a time. Attached effects are processed sequentially from
 		/// slot 0 to slot 3.
 		///
-		/// @note [Exclusive Routing] A single effect instance can only be attached to one bus at a time. Attempts to attach an effect
-		/// that is already attached to a bus will be rejected. An effect must be explicitly detached before
-		/// re-attachment.
+		/// @note [Exclusive Routing] A single effect instance can only be attached to one bus at a time.
+		/// Attaching an effect that is already attached to a bus will forcefully detach that effect from its old bus.
+		/// Doing so is generally not recommended if the bus is being played through as it can potentially cause a pop
+		/// in the audio output due to bypassing the built-in effect fade-out.
 		///
-		/// @note [Hot-Swap]
+		/// @note [Hot-Swap] If the specified slot on the target bus is already occupied by another effect, the
+		/// existing effect will be forcefully detached and replaced by the new effect. Doing so is generally not
+		/// recommended for the same reasons mentioned above.
 		///
 		/// @param[in] effect			The handle to the effect.
 		/// @param[in] busIdentifier	The unique string identifier of the target bus.
@@ -258,7 +261,6 @@ namespace dalia {
 		/// @retval Result::NotInitialized			The engine is not initialized.
 		/// @retval Result::InvalidHandle			The effect handle is not recognized.
 		/// @retval Result::ExpiredHandle			The effect handle points to an already destroyed effect.
-		/// @retval Result::EffectAlreadyAttached	The effect is already attached to a bus.
 		/// @retval Result::BusNotFound				The target bus does not exist.
 		/// @retval Result::InvalidEffectSlot		The requested slot exceeds the rack index limit.
 		Result AttachEffect(EffectHandle effect, const char* busIdentifier, uint32_t effectSlot);
@@ -278,6 +280,10 @@ namespace dalia {
 		/// @brief Destroys an effect.
 		///
 		/// If the effect is attached to a bus, the engine will automatically detach it before destroying it.
+		///
+		/// @note[Attached Effects] Destroying an effect that is attached to a bus that is being played through is
+		/// generally not recommended as it can cause a pop in the audio output due to bypassing the built-in effect
+		/// fade-out.
 		///
 		/// @param[in] effect The handle to the effect.
 		///
