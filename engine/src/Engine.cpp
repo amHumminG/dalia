@@ -1037,7 +1037,7 @@ namespace dalia {
 		return Result::Ok;
 	}
 
-	Result Engine::AttachEffectToBus(EffectHandle effect, const char* busIdentifier, uint32_t effectSlot) {
+	Result Engine::AttachEffect(EffectHandle effect, const char* busIdentifier, uint32_t effectSlot) {
 		if (!IsInitialized(m_state)) return Result::NotInitialized;
 
 		Result res = ValidateEffectHandle(m_state, effect);

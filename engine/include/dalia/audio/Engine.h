@@ -261,7 +261,7 @@ namespace dalia {
 		/// @retval Result::EffectAlreadyAttached	The effect is already attached to a bus.
 		/// @retval Result::BusNotFound				The target bus does not exist.
 		/// @retval Result::InvalidEffectSlot		The requested slot exceeds the rack index limit.
-		Result AttachEffectToBus(EffectHandle effect, const char* busIdentifier, uint32_t effectSlot);
+		Result AttachEffect(EffectHandle effect, const char* busIdentifier, uint32_t effectSlot);
 
 		/// @brief Removes an effect from the mix graph, regardless of which bus it is routed to.
 		///
