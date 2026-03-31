@@ -51,7 +51,7 @@ void TestInterface() {
     engine.Init(config);
 
     // --- 3. UI State Variables ---
-    char assetPathInput[256] = "assets/spiderman.ogg";
+    char assetPathInput[256] = "assets/Faouzia - UNETHICAL.ogg";
 
     std::vector<LoadedAsset> loadedAssets;
     std::vector<PlaybackInstance> playbacks;
