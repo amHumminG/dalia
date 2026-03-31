@@ -383,6 +383,19 @@ namespace dalia {
 		/// @retval Result::ExpiredHandle		The playback handle has already stopped playing.
 		Result Stop(PlaybackHandle playback);
 
+		/// @brief Sets the looping state of the specified playback instance.
+		///
+		/// This method updates whether a playback instance will automatically restart upon finishing.
+		///
+		/// @param[in] playback The handle to the playback instance.
+		/// @param[in] looping The looping state.
+		///
+		/// @retval Result::Ok					The playback instance looping state was successfully set.
+		/// @retval Result::NotInitialized		The engine is not initialized.
+		/// @retval Result::InvalidHandle		The playback handle is not recognized.
+		/// @retval Result::ExpiredHandle		The playback handle has already stopped playing.
+		Result SetPlaybackLooping(PlaybackHandle playback, bool looping);
+
 #pragma endregion PLAYBACK_MANAGEMENT
 
 	private:

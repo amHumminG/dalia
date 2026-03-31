@@ -6,8 +6,6 @@
 
 namespace dalia {
 
-    class Bus;
-
     enum class VoiceState : uint8_t {
         Free,
         Inactive,
@@ -18,7 +16,7 @@ namespace dalia {
     };
 
     struct Voice {
-        uint32_t generation = START_GENERATION;
+        uint32_t gen = START_GENERATION;
         VoiceState state = VoiceState::Free;
         PlaybackExitCondition exitCondition = PlaybackExitCondition::NaturalEnd;
 
@@ -50,8 +48,8 @@ namespace dalia {
 
         // Use this when releasing a voice
         void Reset() {
-            generation++;
-            if (generation == INVALID_GENERATION) generation = START_GENERATION;
+            gen++;
+            if (gen == INVALID_GENERATION) gen = START_GENERATION;
 
             parentBusIndex = MASTER_BUS_INDEX;
             state = VoiceState::Free;
@@ -75,7 +73,7 @@ namespace dalia {
         uint64_t assetUuid;
 
         // --- Voice Properties ---
-        uint32_t generation = START_GENERATION;
+        uint32_t gen = START_GENERATION;
         VoiceState state = VoiceState::Free;
 
         // Routing
@@ -95,8 +93,8 @@ namespace dalia {
             onStopCallback = nullptr;
             assetUuid = 0;
 
-            generation++;
-            if (generation == INVALID_GENERATION) generation = START_GENERATION;
+            gen++;
+            if (gen == INVALID_GENERATION) gen = START_GENERATION;
             state = VoiceState::Free;
 
             parentBusIndex = MASTER_BUS_INDEX;
