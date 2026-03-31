@@ -13,6 +13,10 @@ namespace dalia {
 
 			// Voice Lifecycle
 			VoiceStopped,
+
+			// Effects
+			EffectActive,
+			EffectDetached,
 		};
 
 		Type type = Type::None;
@@ -24,6 +28,10 @@ namespace dalia {
 				uint32_t generation;
 				PlaybackExitCondition exitCondition;
 			} voice;
+
+			struct {
+				uint64_t handleUUID;
+			} effect;
 
 		} data = {};
 
@@ -39,6 +47,20 @@ namespace dalia {
 			ev.data.voice.index = index;
 			ev.data.voice.generation = generation;
 			ev.data.voice.exitCondition = exitCondition;
+			return ev;
+		}
+
+		static RtEvent EffectActive(uint64_t handleUUID) {
+			RtEvent ev;
+			ev.type = Type::EffectActive;
+			ev.data.effect.handleUUID = handleUUID;
+			return ev;
+		}
+
+		static RtEvent EffectDetached(uint64_t handleUUID) {
+			RtEvent ev;
+			ev.type = Type::EffectDetached;
+			ev.data.effect.handleUUID = handleUUID;
 			return ev;
 		}
 	};

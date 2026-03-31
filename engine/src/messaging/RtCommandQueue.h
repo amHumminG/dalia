@@ -42,7 +42,8 @@ namespace dalia {
 			SetBiquadParams,
 
 			AttachEffect,
-			DetachEffect,
+			FadeDetachEffect,
+			ForceDetachEffect,
 			DeallocateEffect
 		};
 
@@ -266,10 +267,22 @@ namespace dalia {
 			return cmd;
 		}
 
-		static RtCommand DetachEffect(uint32_t index, uint32_t gen, EffectType type, uint32_t busIndex,
+		static RtCommand FadeDetachEffect(uint32_t index, uint32_t gen, EffectType type, uint32_t busIndex,
 			uint32_t effectSlot) {
 			RtCommand cmd{};
-			cmd.type = Type::DetachEffect;
+			cmd.type = Type::FadeDetachEffect;
+			cmd.data.effect.index = index;
+			cmd.data.effect.gen = gen;
+			cmd.data.effect.type = type;
+			cmd.data.effect.busIndex = busIndex;
+			cmd.data.effect.effectSlot = effectSlot;
+			return cmd;
+		}
+
+		static RtCommand ForceDetachEffect(uint32_t index, uint32_t gen, EffectType type, uint32_t busIndex,
+			uint32_t effectSlot) {
+			RtCommand cmd{};
+			cmd.type = Type::ForceDetachEffect;
 			cmd.data.effect.index = index;
 			cmd.data.effect.gen = gen;
 			cmd.data.effect.type = type;

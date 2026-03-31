@@ -6,8 +6,8 @@ namespace dalia {
 
     constexpr uint32_t MAX_EFFECTS_PER_BUS = 4;
 
-    enum class EffectSlotState {
-        Empty,
+    enum class EffectState {
+        None, // The slot is not used
         FadingIn,
         Active,
         FadingOut
@@ -15,12 +15,12 @@ namespace dalia {
 
     struct EffectSlot {
         EffectHandle effect = InvalidEffectHandle;
-        EffectSlotState state = EffectSlotState::Empty;
+        EffectState state = EffectState::None;
         float currentMix = 0.0f;
 
         void Reset() {
             effect = InvalidEffectHandle;
-            state = EffectSlotState::Empty;
+            state = EffectState::None;
             currentMix = 0.0f;
         }
     };

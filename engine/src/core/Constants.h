@@ -58,8 +58,11 @@ namespace dalia {
     static constexpr size_t MAX_FRAMES_PER_RENDER = 1024; // Maximum frames that we can render per audio callback
 
     // --- Handles, Indices & Generations ---
-    static constexpr uint32_t MASTER_BUS_INDEX = 0; // The index of the master bus within the bus pool
+    static constexpr uint64_t INVALID_UUID = 0;
+
+    static constexpr uint32_t MASTER_BUS_INDEX = 0;  // The index of the master bus within the bus pool
     static constexpr uint32_t NO_PARENT = INT32_MAX; // Indicator that a voice or bus has no parent
+    static constexpr uint32_t NO_INDEX = INT32_MAX;  // Default index value
 
     static constexpr uint32_t INVALID_GENERATION = 0;
     static constexpr uint32_t START_GENERATION = 1;

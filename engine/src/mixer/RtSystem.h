@@ -48,7 +48,7 @@ namespace dalia {
         void ProcessBus(uint32_t busIndex, uint32_t frameCount);
         void ApplyBusEffect(float* busBuffer, EffectSlot& slot, uint32_t frameCount);
         void AttachEffect(EffectHandle effect, uint32_t busIndex, uint32_t effectSlot);
-        void DetachEffectIfAttached(EffectHandle effect);
+        void DetachEffect(EffectHandle effect, uint32_t busIndex, uint32_t effectSlot);
         void FadeOutEffect(EffectHandle effect, uint32_t busIndex, uint32_t effectSlot);
         void FlushEffect(EffectType type, uint32_t index, uint32_t gen);
 

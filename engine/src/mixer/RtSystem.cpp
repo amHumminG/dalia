@@ -279,7 +279,7 @@ namespace dalia {
 					AttachEffect(effect, cmd.data.effect.busIndex, cmd.data.effect.effectSlot);
 	            	break;
 				}
-				case RtCommand::Type::DetachEffect: {
+				case RtCommand::Type::FadeDetachEffect: {
 	            	EffectHandle effect = EffectHandle::Create(
 						cmd.data.effect.index,
 						cmd.data.effect.gen,
@@ -289,13 +289,20 @@ namespace dalia {
 	            	FadeOutEffect(effect, cmd.data.effect.busIndex, cmd.data.effect.effectSlot);
 	            	break;
 				}
+				case RtCommand::Type::ForceDetachEffect: {
+	            	EffectHandle effect = EffectHandle::Create(
+						cmd.data.effect.index,
+						cmd.data.effect.gen,
+						cmd.data.effect.type
+					);
+
+	            	DetachEffect(effect, cmd.data.effect.busIndex, cmd.data.effect.effectSlot);
+	            	break;
+				}
 				case RtCommand::Type::DeallocateEffect: {
 	            	uint32_t efIndex = cmd.data.effect.index;
 	            	uint32_t efGen = cmd.data.effect.gen;
 	            	EffectType efType = cmd.data.effect.type;
-	            	EffectHandle effect = EffectHandle::Create(efIndex, efGen, efType);
-
-	            	DetachEffectIfAttached(effect);
 
 	            	switch (efType) {
 	            		case EffectType::None: break;
@@ -524,7 +531,7 @@ namespace dalia {
 
 		for (uint32_t i = 0; i < MAX_EFFECTS_PER_BUS; i++) {
 			EffectSlot& slot = bus.effectSlots[i];
-			if (slot.state == EffectSlotState::Empty) continue;
+			if (slot.state == EffectState::None) continue;
 			ApplyBusEffect(buffer, slot, frameCount);
 		}
 
@@ -551,13 +558,13 @@ namespace dalia {
 				break;
 		}
 
-		if (slot.state == EffectSlotState::Active) {
+		if (slot.state == EffectState::Active) {
 			std::memcpy(busBuffer, m_dspScratchBuffer.data(), sampleCount * sizeof(float));
 		}
 		else {
 			float targetMix = 0.0f;
-			if (slot.state == EffectSlotState::FadingIn) targetMix = 1.0f;
-			else if (slot.state == EffectSlotState::FadingOut) targetMix = 0.0f;
+			if (slot.state == EffectState::FadingIn) targetMix = 1.0f;
+			else if (slot.state == EffectState::FadingOut) targetMix = 0.0f;
 
 			ApplyBlockCrossFade(
 				busBuffer,
@@ -569,58 +576,44 @@ namespace dalia {
 				fadeDelta
 			);
 
-			if (slot.state == EffectSlotState::FadingIn && slot.currentMix >= 1.0f) {
-				slot.state = EffectSlotState::Active;
+			if (slot.state == EffectState::FadingIn && slot.currentMix >= 1.0f) {
+				slot.state = EffectState::Active;
+				m_rtEvents->Push(RtEvent::EffectActive(slot.effect.GetUUID()));
 			}
-			else if (slot.state == EffectSlotState::FadingOut && slot.currentMix <= 0.0f) {
+			else if (slot.state == EffectState::FadingOut && slot.currentMix <= 0.0f) {
 				slot.Reset(); // Detach effect
+				m_rtEvents->Push(RtEvent::EffectDetached(slot.effect.GetUUID()));
 			}
 		}
     }
 
     void RtSystem::AttachEffect(EffectHandle effect, uint32_t busIndex, uint32_t effectSlot) {
-		DetachEffectIfAttached(effect);
 		FlushEffect(effect.GetType(), effect.GetIndex(), effect.GetGeneration()); // Remove history
 
 		EffectSlot& slot = m_busPool[busIndex].effectSlots[effectSlot];
 		slot.effect = effect;
 		slot.currentMix = 0.0f;
-		slot.state = EffectSlotState::FadingIn;
+		slot.state = EffectState::FadingIn;
     }
 
-    void RtSystem::DetachEffectIfAttached(EffectHandle effect) {
-		for (uint32_t bIndex = 0; bIndex < m_busPool.size(); bIndex++) {
-			for (uint32_t efSlot = 0; efSlot < MAX_EFFECTS_PER_BUS; efSlot++) {
-				EffectSlot& slot = m_busPool[bIndex].effectSlots[efSlot];
-
-				if (slot.effect == effect) {
-					slot.Reset();
-					return;
-				}
-			}
-		}
+    void RtSystem::DetachEffect(EffectHandle effect, uint32_t busIndex,
+    	uint32_t effectSlot) {
+		EffectSlot& slot = m_busPool[busIndex].effectSlots[effectSlot];
+		if (slot.effect == effect) slot.Reset();
     }
 
     void RtSystem::FadeOutEffect(EffectHandle effect, uint32_t busIndex, uint32_t effectSlot) {
 		EffectSlot& slot = m_busPool[busIndex].effectSlots[effectSlot];
-
-		if (slot.effect == effect && slot.state != EffectSlotState::Empty) {
-			slot.state = EffectSlotState::FadingOut;
-		}
+		if (slot.effect == effect && slot.state != EffectState::None) slot.state = EffectState::FadingOut;
     }
 
     void RtSystem::FlushEffect(EffectType type, uint32_t index, uint32_t gen) {
-		// Flush effect history
 		switch (type) {
-		case EffectType::None: {
-			break;
-		}
-		case EffectType::Biquad: {
+		case EffectType::None: break;
+		case EffectType::Biquad:
 			if (m_biquadFilterPool[index].generation == gen) m_biquadFilterPool[index].Flush();
 			break;
-		}
-		default:
-			break;
+		default: break;
 		}
     }
 }

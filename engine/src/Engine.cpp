@@ -62,9 +62,15 @@ namespace dalia {
 	};
 
 	struct PendingPlayback {
-		uint32_t voiceIndex;
-		uint32_t voiceGeneration;
-		uint64_t assetUuid;
+		uint32_t voiceIndex = NO_INDEX;
+		uint32_t voiceGeneration = INVALID_GENERATION;
+		uint64_t assetUuid = INVALID_UUID;
+	};
+
+	struct EffectRouting {
+		uint32_t busIndex = NO_INDEX;
+		uint32_t effectSlot = NO_INDEX;
+		EffectState effectState = EffectState::None;
 	};
 
 	struct EngineInternalState {
@@ -111,8 +117,9 @@ namespace dalia {
 		// --- Effects ---
 		std::unique_ptr<float[]> dspScratchBuffer;
 
-		std::unique_ptr<BiquadFilter[]> biquadFilterPool;
+		std::unordered_map<uint64_t, EffectRouting> effectRoutingTable; // Maps effect handles to bus routing
 
+		std::unique_ptr<BiquadFilter[]> biquadFilterPool;
 		std::unique_ptr<HandleManager> biquadHM;
 
 		// -- Bus Execution Graph ---
@@ -157,7 +164,7 @@ namespace dalia {
 			// Effects
 			biquadFilterPool	= std::make_unique<BiquadFilter[]>(config.biquadCapacity);
 
-			biquadHM		= std::make_unique<HandleManager>(config.biquadCapacity);
+			biquadHM			= std::make_unique<HandleManager>(config.biquadCapacity);
 
 			// Bus graph
 			mixOrderBuffer		= std::make_unique<MixOrderBuffer>(busCapacity);
@@ -181,9 +188,8 @@ namespace dalia {
 			return PlaybackHandle::Create(index, generation);
 		}
 
-		SoundHandle ForgeSoundHandle(uint64_t uuid) {
-			return SoundHandle::FromUUID(uuid);
-		}
+		SoundHandle ForgeSoundHandle(uint64_t uuid) { return SoundHandle::FromUUID(uuid); }
+		EffectHandle ForgeEffectHandle(uint64_t uuid) { return EffectHandle::FromUUID(uuid); }
 	};
 
 	// --- INTERNAL HELPERS ---
@@ -315,6 +321,28 @@ namespace dalia {
 						}
 						else it++;
 					}
+				}
+				break;
+			}
+			case RtEvent::Type::EffectActive: {
+				auto it = state->effectRoutingTable.find(ev.data.effect.handleUUID);
+				if (it != state->effectRoutingTable.end()) {
+					EffectRouting& routing = it->second;
+					routing.effectState = EffectState::Active;
+				}
+				break;
+			}
+			case RtEvent::Type::EffectDetached: {
+				auto it = state->effectRoutingTable.find(ev.data.effect.handleUUID);
+				if (it != state->effectRoutingTable.end()) {
+					EffectRouting routing = it->second;
+					auto& mirroredHandle = state->busPoolMirror[routing.busIndex].effectSlots[routing.effectSlot];
+					if (mirroredHandle.GetUUID() == ev.data.effect.handleUUID) {
+						// Detach the handle if it's still in the same slot
+						mirroredHandle = InvalidEffectHandle;
+					}
+
+					state->effectRoutingTable.erase(it);
 				}
 				break;
 			}
@@ -1026,22 +1054,6 @@ namespace dalia {
 			return res;
 		}
 
-		// Look through all bus mirrors to see if its already attached
-		for (uint32_t bIndex = 0; bIndex < m_state->busCapacity; bIndex++) {
-			BusMirror& bMirror = m_state->busPoolMirror[bIndex];
-			if (bMirror.refCount > 0) { // If it is in use
-				for (uint32_t slot = 0; slot < MAX_EFFECTS_PER_BUS; slot++) {
-					if (bMirror.effectSlots[slot] == effect) {
-						DALIA_LOG_ERR(LOG_CTX_API,
-							"Failed to attach effect to bus %s (slot %d). Effect is already attached to a bus.",
-							busIdentifier, effectSlot);
-
-						return Result::EffectAlreadyAttached;
-					}
-				}
-			}
-		}
-
 		// Fetch bus
 		uint32_t bIndex;
 		Result resBus = ResolveBusIndex(m_state, busIdentifier, bIndex);
@@ -1058,6 +1070,29 @@ namespace dalia {
 			return Result::InvalidEffectSlot;
 		}
 
+		// Steal effect if already attached
+		auto it = m_state->effectRoutingTable.find(effect.GetUUID());
+		if (it != m_state->effectRoutingTable.end()) {
+			EffectRouting routing = it->second;
+			BusMirror& bMirror = m_state->busPoolMirror[routing.busIndex];
+			bMirror.effectSlots[routing.effectSlot] = InvalidEffectHandle;
+
+			RtCommand cmd = RtCommand::ForceDetachEffect(
+				effect.GetIndex(),
+				effect.GetGeneration(),
+				effect.GetType(),
+				routing.busIndex,
+				routing.effectSlot
+			);
+			m_state->rtCommands->Enqueue(cmd);
+
+			DALIA_LOG_DEBUG(LOG_CTX_API,
+				"Attaching effect to %s (index: %d) (slot: %d) but effect is already attached. Stealing effect.",
+				busIdentifier, bIndex, effectSlot);
+
+			m_state->effectRoutingTable.erase(it);
+		}
+
 		// Check effect slot
 		BusMirror& bMirror = m_state->busPoolMirror[bIndex];
 		if (bMirror.effectSlots[effectSlot].IsValid()) {
@@ -1066,7 +1101,9 @@ namespace dalia {
 
 			// Detach old effect
 			EffectHandle oldEffect = bMirror.effectSlots[effectSlot];
-			RtCommand detachCmd = RtCommand::DetachEffect(
+			m_state->effectRoutingTable.erase(oldEffect.GetUUID());
+
+			RtCommand detachCmd = RtCommand::ForceDetachEffect(
 				oldEffect.GetIndex(),
 				oldEffect.GetGeneration(),
 				oldEffect.GetType(),
@@ -1077,6 +1114,8 @@ namespace dalia {
 		}
 
 		bMirror.effectSlots[effectSlot] = effect;
+		m_state->effectRoutingTable[effect.GetUUID()] = EffectRouting(bIndex, effectSlot);
+
 		RtCommand cmd = RtCommand::AttachEffect(
 			effect.GetIndex(),
 			effect.GetGeneration(),
@@ -1085,6 +1124,7 @@ namespace dalia {
 			effectSlot
 		);
 		m_state->rtCommands->Enqueue(cmd);
+
 		DALIA_LOG_DEBUG(LOG_CTX_API, "Attached effect (handle uuid: 0x%016llx) to bus %s (slot %d).",
 			effect.GetUUID(), busIdentifier, effectSlot);
 
@@ -1106,32 +1146,26 @@ namespace dalia {
 			return res;
 		}
 
-		for (uint32_t bIndex = 0; bIndex < m_state->busCapacity; bIndex++) {
-			BusMirror& bMirror = m_state->busPoolMirror[bIndex];
-			if (bMirror.refCount > 0) {
-				for (uint32_t slot = 0; slot < MAX_EFFECTS_PER_BUS; slot++) {
-					if (bMirror.effectSlots[slot] == effect) {
-						// Found the effect -> Detach it
+		// Detach effect if attached (routed)
+		auto it = m_state->effectRoutingTable.find(effect.GetUUID());
+		if (it != m_state->effectRoutingTable.end()) {
+			EffectRouting& routing = it->second;
+			routing.effectState = EffectState::FadingOut;
 
-						RtCommand detachCmd = RtCommand::DetachEffect(
-							effect.GetIndex(),
-							effect.GetGeneration(),
-							effect.GetType(),
-							bIndex,
-							slot
-						);
-						m_state->rtCommands->Enqueue(detachCmd);
+			RtCommand cmd = RtCommand::FadeDetachEffect(
+				effect.GetIndex(),
+				effect.GetGeneration(),
+				effect.GetType(),
+				routing.busIndex,
+				routing.effectSlot
+			);
+			m_state->rtCommands->Enqueue(cmd);
 
-						bMirror.effectSlots[slot] = InvalidEffectHandle;
+			DALIA_LOG_DEBUG(LOG_CTX_API,
+				"Detached effect (uuid: 0x%016llx) from bus (index: %d) (slot: %d).",
+				effect.GetUUID(), routing.busIndex, routing.effectSlot);
 
-						DALIA_LOG_DEBUG(LOG_CTX_API,
-							"Detached effect (uuid: 0x%016llx) from bus (index: %d) (slot: %d).",
-							effect.GetUUID(), bIndex, slot);
-
-						return Result::Ok;
-					}
-				}
-			}
+			return Result::Ok;
 		}
 
 		DALIA_LOG_WARN(LOG_CTX_API, "Attempted to detach effect that is not attached.");
@@ -1141,7 +1175,7 @@ namespace dalia {
 	Result Engine::DestroyEffect(EffectHandle effect) {
 		if (!IsInitialized(m_state)) return Result::NotInitialized;
 
-		Result res = ValidateEffectHandle(m_state, effect);
+		Result res = FreeEffectHandle(m_state, effect);
 		if (res != Result::Ok) {
 			if (res == Result::InvalidHandle) {
 				DALIA_LOG_ERR(LOG_CTX_API, "Failed to destroy effect. Invalid handle.");
@@ -1153,45 +1187,29 @@ namespace dalia {
 			return res;
 		}
 
-		uint32_t efIndex = effect.GetIndex();
-		uint32_t efGen = effect.GetGeneration();
-		EffectType efType = effect.GetType();
+		auto it = m_state->effectRoutingTable.find(effect.GetUUID());
+		if (it != m_state->effectRoutingTable.end()) {
+			EffectRouting routing = it->second;
+			BusMirror& bMirror = m_state->busPoolMirror[routing.busIndex];
+			bMirror.effectSlots[routing.effectSlot] = InvalidEffectHandle;
 
-		// Look through all bus mirrors to see if its used
-		bool detached = false;
-		for (uint32_t bIndex = 0; bIndex < m_state->busCapacity && !detached; bIndex++) {
-			BusMirror& bMirror = m_state->busPoolMirror[bIndex];
-			if (bMirror.refCount > 0) { // If it is in use
-				for (uint32_t effectSlot = 0; effectSlot < MAX_EFFECTS_PER_BUS; effectSlot++) {
-					if (bMirror.effectSlots[effectSlot] == effect) {
-						// Found it -> Detach it
-						DALIA_LOG_DEBUG(LOG_CTX_API, "Detaching effect from bus (index: %d) (slot %d).",
-							bIndex, effectSlot);
+			RtCommand detachCmd = RtCommand::ForceDetachEffect(
+				effect.GetIndex(),
+				effect.GetGeneration(),
+				effect.GetType(),
+				routing.busIndex,
+				routing.effectSlot
+			);
+			m_state->rtCommands->Enqueue(detachCmd);
 
-						RtCommand detachCmd = RtCommand::DetachEffect(
-							efIndex,
-							efGen,
-							efType,
-							bIndex,
-							effectSlot
-						);
-						m_state->rtCommands->Enqueue(detachCmd);
-						bMirror.effectSlots[effectSlot] = InvalidEffectHandle;
+			DALIA_LOG_DEBUG(LOG_CTX_API, "Detaching effect from bus (index: %d) (slot %d).",
+				routing.busIndex, routing.effectSlot);
 
-						detached = true;
-						break;
-					}
-				}
-			}
+			m_state->effectRoutingTable.erase(it);
 		}
 
-		Result resFree = FreeEffectHandle(m_state, effect); // Should always go through (we already validated the handle)
-		if (resFree != Result::Ok) {
-
-			return resFree;
-		}
-
-		m_state->rtCommands->Enqueue(RtCommand::DeallocateEffect(efIndex, efGen, efType));
+		RtCommand cmd = RtCommand::DeallocateEffect(effect.GetIndex(), effect.GetGeneration(), effect.GetType());
+		m_state->rtCommands->Enqueue(cmd);
 		DALIA_LOG_DEBUG(LOG_CTX_API, "Destroyed effect (handle uuid: 0x%016llx).", effect.GetUUID());
 
 		return Result::Ok;
