@@ -31,7 +31,7 @@ namespace dalia {
     constexpr float RESONANCE_EPSILON = 1e-3f;
 
     constexpr float SMOOTHING_COEFFICIENT = 0.005f; // Used for volume smoothing (from current to target)
-    static constexpr float PI   = 3.14159265358979323846f;
+    static constexpr double dPI = 3.14159265358979323846f;
     static constexpr float PI_2 = 1.57079632679489661923f;
 
     static constexpr float DEFAULT_VOLUME_LINEAR = 1.0f;

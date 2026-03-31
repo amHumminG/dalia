@@ -16,11 +16,11 @@ namespace dalia {
         float targetResonance = 0.707f;
         float currentResonance = 0.707f;
 
-        float b0 = 1.0f, b1 = 0.0f, b2 = 0.0f;
-        float a1 = 0.0f, a2 = 0.0f;
+        double b0 = 1.0, b1 = 0.0, b2 = 0.0;
+        double a1 = 0.0, a2 = 0.0;
 
-        float z1[CHANNELS_MAX] = {0.0f};
-        float z2[CHANNELS_MAX] = {0.0f};
+        double z1[CHANNELS_MAX] = {0.0};
+        double z2[CHANNELS_MAX] = {0.0};
 
         // Clears the internal delay lines
         void Flush() {
@@ -38,8 +38,8 @@ namespace dalia {
             targetResonance = 0.707f; // Resonance
             currentResonance = 0.707f;
 
-            b0 = 1.0f, b1 = 0.0f, b2 = 0.0f;
-            a1 = 0.0f, a2 = 0.0f;
+            b0 = 1.0, b1 = 0.0, b2 = 0.0;
+            a1 = 0.0, a2 = 0.0;
 
             Flush();
         }

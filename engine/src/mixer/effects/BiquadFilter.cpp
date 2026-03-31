@@ -15,44 +15,44 @@ namespace dalia {
         float q = std::max(state.currentResonance, 0.1f);
 
         // RBJ variables
-        const float omega = 2.0f * PI * frequency / sampleRate;
-        const float sn = std::sin(omega);
-        const float cs = std::cos(omega);
-        const float alpha = sn / (2.0f * q);
+        double omega = 2.0 * dPI * frequency / sampleRate;
+        double sn = std::sin(omega);
+        double cs = std::cos(omega);
+        double alpha = sn / (2.0 * q);
 
-        float a0 = 1.0f;
+        double a0 = 1.0;
 
         switch (state.type) {
             case BiquadFilterType::LowPass: {
-                state.b0 = (1.0f - cs) * 0.5f;
-                state.b1 = 1.0f - cs;
-                state.b2 = (1.0f - cs) * 0.5f;
-                a0       = 1.0f + alpha;
-                state.a1 = -2.0f * cs;
-                state.a2 = 1.0f - alpha;
+                state.b0 = (1.0 - cs) * 0.5;
+                state.b1 = 1.0 - cs;
+                state.b2 = (1.0 - cs) * 0.5;
+                a0       = 1.0 + alpha;
+                state.a1 = -2.0 * cs;
+                state.a2 = 1.0 - alpha;
                 break;
             }
             case BiquadFilterType::HighPass: {
-                state.b0 = (1.0f + cs) * 0.5f;
-                state.b1 = -(1.0f - cs);
-                state.b2 = (1.0f + cs) * 0.5f;
-                a0       = 1.0f + alpha;
-                state.a1 = -2.0f * cs;
-                state.a2 = 1.0f - alpha;
+                state.b0 = (1.0 + cs) * 0.5;
+                state.b1 = -(1.0 + cs);
+                state.b2 = (1.0 + cs) * 0.5;
+                a0       = 1.0 + alpha;
+                state.a1 = -2.0 * cs;
+                state.a2 = 1.0 - alpha;
                 break;
             }
             case BiquadFilterType::BandPass: {
                 state.b0 = alpha;
-                state.b1 = 0.0f;
+                state.b1 = 0.0;
                 state.b2 = -alpha;
-                a0       = 1.0f + alpha;
-                state.a1 = -2.0f * cs;
-                state.a2 = 1.0f - alpha;
+                a0       = 1.0 + alpha;
+                state.a1 = -2.0 * cs;
+                state.a2 = 1.0 - alpha;
                 break;
             }
         }
 
-        const float a0Inverse = 1.0f / a0;
+        double a0Inverse = 1.0 / a0;
         state.b0 *= a0Inverse;
         state.b1 *= a0Inverse;
         state.b2 *= a0Inverse;
@@ -94,13 +94,13 @@ namespace dalia {
 
                 for (uint32_t channel = 0; channel < channels; channel++) {
                     uint32_t sampleIndex = (frameIndex * channels) + channel;
-                    float sample = buffer[sampleIndex];
+                    auto x = static_cast<double>(buffer[sampleIndex]); // Sample
 
-                    float y = (state.b0 * sample) + state.z1[channel];
-                    state.z1[channel] = (state.b1 * sample) - (state.a1 * y) + state.z2[channel];
-                    state.z2[channel] = (state.b2 * sample) - (state.a2 * y);
+                    double y = (state.b0 * x) + state.z1[channel];
+                    state.z1[channel] = (state.b1 * x) - (state.a1 * y) + state.z2[channel];
+                    state.z2[channel] = (state.b2 * x) - (state.a2 * y);
 
-                    buffer[sampleIndex] = y;
+                    buffer[sampleIndex] = static_cast<float>(y);
                 }
             }
         }
