@@ -23,6 +23,8 @@ struct PlaybackInstance {
     PlaybackHandle handle;
     std::string targetBus = "Master"; // Default route
     bool isLooping = false;
+    float volumeDb = 0.0f;
+    float pan = 0.0f;
 };
 
 struct LoadedEffect {
@@ -184,6 +186,24 @@ void TestInterface() {
             }
 
             ImGui::Separator();
+
+            ImGui::TextDisabled("Playback Parameters");
+
+            float currentVol = playbacks[selectedPlaybackIdx].volumeDb;
+            if (ImGui::SliderFloat("Volume (dB)##PB", &currentVol, -60.0f, 12.0f, "%.1f dB")) {
+                lastResult = engine.SetPlaybackVolumeDb(currentHandle, currentVol);
+                if (lastResult == Result::Ok) {
+                    playbacks[selectedPlaybackIdx].volumeDb = currentVol;
+                }
+            }
+
+            float currentPan = playbacks[selectedPlaybackIdx].pan;
+            if (ImGui::SliderFloat("Pan##PB", &currentPan, -1.0f, 1.0f, "%.2f")) {
+                lastResult = engine.SetPlaybackPan(currentHandle, currentPan);
+                if (lastResult == Result::Ok) {
+                    playbacks[selectedPlaybackIdx].pan = currentPan;
+                }
+            }
 
             // Playback Routing
             ImGui::TextDisabled("Playback Routing");
