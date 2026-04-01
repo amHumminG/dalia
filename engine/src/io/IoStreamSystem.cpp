@@ -141,7 +141,7 @@ namespace dalia {
                 StreamContext& stream = m_streamPool[sIndex];
 
                 if (stream.state.load(std::memory_order_acquire) != StreamState::Streaming) break;
-                if (stream.generation.load(std::memory_order_relaxed) != sGen) break;
+                if (stream.gen.load(std::memory_order_relaxed) != sGen) break;
 
                 FillBuffer(stream, bufferIndex);
                 DALIA_LOG_DEBUG(LOG_CTX_IO, "Refilled buffer %d, for stream %d.", bufferIndex, sIndex);

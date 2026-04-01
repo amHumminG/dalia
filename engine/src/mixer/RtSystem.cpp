@@ -32,11 +32,21 @@ namespace dalia {
 	}
 
 	static inline float* GetBusBuffer(float* busBufferPool, uint32_t busIndex, uint32_t frameCount) {
-		return busBufferPool + (busIndex * frameCount * MAX_CHANNELS);
+		return busBufferPool + (busIndex * frameCount * CHANNELS_MAX);
 	}
 
+	static inline void StepGains(float* DALIA_RESTRICT currentGains, const float* DALIA_RESTRICT targetGains,
+		uint32_t channels, float smoothingCoefficient) {
+		for (uint32_t c = 0; c < channels; c++) {
+			float diff = targetGains[c] - currentGains[c];
+
+			if (std::abs(diff) < GAIN_EPSILON) currentGains[c] = targetGains[c];
+			else currentGains[c] += diff * smoothingCoefficient;
+		}
+ 	}
+
 	static inline void ApplyVolume(float* DALIA_RESTRICT buffer, uint32_t frameCount, uint32_t channels,
-		float& currentVolume, float targetVolume) {
+		float& currentVolume, float targetVolume, float smoothingCoefficient) {
 
 		// --- No volume movement ---
 		if (NearlyEqual(currentVolume, targetVolume, VOLUME_EPSILON)) {
@@ -56,7 +66,7 @@ namespace dalia {
 
 		// --- Smoothing current to target ---
 		for (uint32_t i = 0; i < frameCount; i++) {
-			currentVolume += (targetVolume - currentVolume) * SMOOTHING_COEFFICIENT;
+			currentVolume += (targetVolume - currentVolume) * smoothingCoefficient;
 
 			for (uint32_t c = 0; c < channels; c++) {
 				buffer[(i * channels) + c] *= currentVolume;
@@ -89,7 +99,6 @@ namespace dalia {
 	}
 
 	// ------------
-
     RtSystem::RtSystem(const RtSystemConfig& config)
         : m_outputChannels(config.outputChannels),
 		m_outputSampleRate(config.outputSampleRate),
@@ -105,6 +114,7 @@ namespace dalia {
 		m_biquadFilterPool(config.biquadFilterPool) {
         // Empty bus graph
         m_activeMixOrder = std::span<const uint32_t>();
+		m_smoothingCoefficient = 1.0f - std::exp(-2.0f * PI * SMOOTHING_CUTOFF_HZ / config.outputSampleRate);
     }
 
     void RtSystem::OnAudioCallback(float* output, uint32_t frameCount) {
@@ -207,6 +217,15 @@ namespace dalia {
 	            	voice.isLooping = cmd.data.voiceBool.value;
 	            	break;
 				}
+				case RtCommand::Type::SetVoiceGains: {
+	            	Voice& voice = m_voicePool[cmd.data.voiceGains.voiceIndex];
+	            	if (voice.gen != cmd.data.voiceGains.voiceGen) break; // Check for outdated command
+
+	            	for (uint32_t i = 0; i < CHANNELS_MAX; i++) {
+	            		voice.targetGains[i] = cmd.data.voiceGains.gains[i];
+	            	}
+					break;
+	            }
 				case RtCommand::Type::AllocateBus: {
 		            uint32_t bIndex = cmd.data.bus.busIndex;
 	            	uint32_t bIndexParent = cmd.data.bus.parentBusIndex;
@@ -352,12 +371,6 @@ namespace dalia {
         float* busBuffer = GetBusBuffer(m_busBufferPool.data(), voice.parentBusIndex, frameCount);
         uint32_t framesMixed = 0;
 
-    	// --- Panning & DSP ---
-    	const float panNormalized = (voice.pan + 1.0f) * 0.5f;
-    	const float angle = panNormalized * PI_2; // Angle between 0 and PI/2 radians
-    	const float gainL = std::cos(angle) * voice.volumeLinear;
-    	const float gainR = std::sin(angle) * voice.volumeLinear;
-
         while (framesMixed < frameCount) {
 			const float* sourceData = nullptr;
         	uint32_t framesInSource = 0;
@@ -409,29 +422,42 @@ namespace dalia {
 			uint32_t framesToMixNow = std::min(frameCount - framesMixed, remainingFramesInSource);
 
         	if (framesToMixNow > 0) {
-        		float* outPtr = &busBuffer[framesMixed * 2]; // 2 for stereo bus
-        		uint32_t sourceStride = sourceChannels; // TODO: This is where we have to resample in the future
-        		if (sourceChannels == 1) {
+        		float* outPtr = &busBuffer[framesMixed * m_outputChannels];
+        		uint32_t sourceStride = sourceChannels;
+        		if (sourceChannels == m_outputChannels) {
         			for (uint32_t i = 0; i < framesToMixNow; i++) {
-        				float sample = sourceData[(cursorInt + i) * sourceStride];
+        				StepGains(voice.currentGains, voice.targetGains, m_outputChannels, m_smoothingCoefficient);
 
-        				// Stereo mix TODO: Adapt this for upmixing to more channels
-        				outPtr[0] += sample * gainL;
-        				outPtr[1] += sample * gainR;
+        				for (uint32_t c = 0; c < m_outputChannels; c++) {
+        					float sample = sourceData[(cursorInt + i) * sourceStride + c];
+        					outPtr[c] += sample * voice.currentGains[c];
+        				}
+        				outPtr += m_outputChannels;
+        			}
+        		}
+        		else if (sourceChannels == 1) {
+        			for (uint32_t i = 0; i < framesToMixNow; i++) {
+        				StepGains(voice.currentGains, voice.targetGains, m_outputChannels, m_smoothingCoefficient);
 
-        				outPtr += 2; // 2 for stereo bus
+        				float sample = sourceData[cursorInt + i];
+        				for (uint32_t c = 0; c < m_outputChannels; c++) {
+        					outPtr[c] += sample * voice.currentGains[c];
+        				}
+        				outPtr += m_outputChannels;
         			}
         		}
         		else if (sourceChannels == 2) {
         			for (uint32_t i = 0; i < framesToMixNow; i++) {
+        				StepGains(voice.currentGains, voice.targetGains, m_outputChannels, m_smoothingCoefficient);
+
         				float sampleL = sourceData[(cursorInt + i) * 2 + 0];
         				float sampleR = sourceData[(cursorInt + i) * 2 + 1];
+        				float sampleMono = (sampleL + sampleR) * 0.5f;
 
-        				// Stereo mix TODO: Adapt this for upmixing to more channels
-        				outPtr[0] += sampleL * gainL;
-        				outPtr[1] += sampleR * gainR;
-
-        				outPtr += 2; // 2 for stereo bus
+        				for (uint32_t c = 0; c < m_outputChannels; c++) {
+        					outPtr[c] += sampleMono * voice.currentGains[c];
+        				}
+        				outPtr += m_outputChannels;
         			}
         		}
         		else {
@@ -466,7 +492,7 @@ namespace dalia {
 					}
 
 					stream.bufferReady[voice.data.stream.frontBufferIndex].store(false, std::memory_order_release);
-					const uint32_t gen = stream.generation.load(std::memory_order_relaxed);
+					const uint32_t gen = stream.gen.load(std::memory_order_relaxed);
 					IoStreamRequest req = IoStreamRequest::RefillStreamBuffer(
 						voice.data.stream.streamContextIndex,
 						gen,
@@ -521,10 +547,11 @@ namespace dalia {
 		}
 
     	// Apply volume
-		ApplyVolume(buffer, frameCount, m_outputChannels, bus.currentVolumeLinear, bus.targetVolumeLinear);
+		ApplyVolume(buffer, frameCount, m_outputChannels, bus.currentVolumeLinear, bus.targetVolumeLinear,
+			m_smoothingCoefficient);
 
     	if (bus.parentBusIndex != NO_PARENT) {
-    		float* parentBuffer = m_busBufferPool.data() + (bus.parentBusIndex * frameCount * MAX_CHANNELS);
+    		float* parentBuffer = m_busBufferPool.data() + (bus.parentBusIndex * frameCount * CHANNELS_MAX);
     		MixToBuffer(parentBuffer, buffer, frameCount * m_outputChannels);
     	}
     }

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "core/Constants.h"
 #include "core/SPSCRingBuffer.h"
 #include "dalia/audio/EffectControl.h"
 
@@ -26,11 +27,8 @@ namespace dalia {
 			// Voice Properties
 			SetVoiceParent,
 			SetVoiceLooping,
-			SetVoiceVolume,
+			SetVoiceGains,
 			SetVoicePitch,
-			SetVoicePan,
-			SetVoicePosition,
-			SetVoiceVelocity,
 
 			// Bus Lifecycle
 			AllocateBus,
@@ -104,8 +102,8 @@ namespace dalia {
 			struct {
 				uint32_t voiceIndex;
 				uint32_t voiceGen;
-				float x, y, z;
-			} voiceVector3;
+				float gains[CHANNELS_MAX];
+			} voiceGains;
 
 			struct {
 				uint32_t busIndex;
@@ -227,12 +225,16 @@ namespace dalia {
 			return cmd;
 		}
 
-		static RtCommand SetVoiceVolume(uint32_t index, uint32_t gen, float value) {
+		static RtCommand SetVoiceGains(uint32_t index, uint32_t gen, float* gains) {
 			RtCommand cmd{};
-			cmd.type = Type::SetVoiceVolume;
-			cmd.data.voiceBool.voiceIndex = index;
-			cmd.data.voiceFloat.voiceGen = gen;
-			cmd.data.voiceFloat.value = value;
+			cmd.type = Type::SetVoiceGains;
+			cmd.data.voiceGains.voiceIndex = index;
+			cmd.data.voiceGains.voiceGen = gen;
+
+			for (uint32_t i = 0; i < CHANNELS_MAX; i++) {
+				cmd.data.voiceGains.gains[i] = gains[i];
+			}
+
 			return cmd;
 		}
 

@@ -4,13 +4,14 @@
 #include "core/Constants.h"
 #include <cstdint>
 
+#include "StreamContext.h"
+
 namespace dalia {
 
     enum class VoiceState : uint8_t {
         Free,
         Inactive,
         Playing,
-        Virtual, // Should probably not be a state
         Paused,
         Stopped
     };
@@ -25,15 +26,33 @@ namespace dalia {
 
         // Mixing Properties
         bool isLooping = false;
-        float volumeLinear = DEFAULT_VOLUME_LINEAR;
+        float targetGains[CHANNELS_MAX] = {
+            DEFAULT_GAIN,
+            DEFAULT_GAIN,
+            DEFAULT_GAIN,
+            DEFAULT_GAIN,
+            DEFAULT_GAIN,
+            DEFAULT_GAIN,
+            DEFAULT_GAIN,
+            DEFAULT_GAIN,
+        };
+        float currentGains[CHANNELS_MAX] = {
+            DEFAULT_GAIN,
+            DEFAULT_GAIN,
+            DEFAULT_GAIN,
+            DEFAULT_GAIN,
+            DEFAULT_GAIN,
+            DEFAULT_GAIN,
+            DEFAULT_GAIN,
+            DEFAULT_GAIN,
+        };
         float pitch = 1.0f;
-        float pan = 0.0f;
 
         uint32_t channels = CHANNELS_STEREO;
         uint32_t sampleRate = TARGET_OUTPUT_SAMPLE_RATE;
         double cursor = 0.0f;
 
-        SoundType soundType;
+        SoundType soundType = SoundType::None;
         union {
             struct {
                 const float* pcmData;
@@ -42,27 +61,31 @@ namespace dalia {
 
             struct {
                 uint32_t streamContextIndex;
-                uint8_t frontBufferIndex;
+                uint32_t frontBufferIndex;
             } stream;
         } data = {};
 
         // Use this when releasing a voice
         void Reset() {
             gen++;
-            if (gen == INVALID_GENERATION) gen = START_GENERATION;
+            if (gen == NO_GENERATION) gen = START_GENERATION;
 
             parentBusIndex = MASTER_BUS_INDEX;
             state = VoiceState::Free;
             exitCondition = PlaybackExitCondition::NaturalEnd;
 
             isLooping = false;
-            volumeLinear = DEFAULT_VOLUME_LINEAR;
-            pitch = 1.0f;
-            pan = 0.0f;
+            for (uint32_t i = 0; i < CHANNELS_MAX; i++) {
+                targetGains[i] = DEFAULT_GAIN;
+                currentGains[i] = DEFAULT_GAIN;
+            }
 
-            channels = CHANNELS_STEREO;
-            sampleRate = TARGET_OUTPUT_SAMPLE_RATE;
+            channels = 0;
+            sampleRate = 0;
             cursor = 0.0f;
+
+            soundType = SoundType::None;
+            data = {};
         }
     };
 
@@ -71,6 +94,14 @@ namespace dalia {
         bool pendingLoad = false; // Pending playback due to asset loading
         AudioEventCallback onStopCallback = nullptr;
         uint64_t assetUuid;
+
+        bool isGainDirty = true;
+        float volumeDb = DEFAULT_VOLUME_DB;
+        float pan = 0.0f;
+
+        bool isSpatial = false;
+        // Vector3 position
+        // Vector3 velocity
 
         // --- Voice Properties ---
         uint32_t gen = START_GENERATION;
@@ -81,9 +112,7 @@ namespace dalia {
 
         // Mixing Properties
         bool isLooping = false;
-        float volumeDb = DEFAULT_VOLUME_DB;
         float pitch = 1.0f;
-        float pan = 0.0f;
 
         // Asset
         SoundType soundType;
@@ -93,16 +122,18 @@ namespace dalia {
             onStopCallback = nullptr;
             assetUuid = 0;
 
+            isGainDirty = true;
+            volumeDb = DEFAULT_VOLUME_DB;
+            pan = 0.0f;
+
             gen++;
-            if (gen == INVALID_GENERATION) gen = START_GENERATION;
+            if (gen == NO_GENERATION) gen = START_GENERATION;
             state = VoiceState::Free;
 
             parentBusIndex = MASTER_BUS_INDEX;
 
             isLooping = false;
-            volumeDb = DEFAULT_VOLUME_DB;
             pitch = 1.0f;
-            pan = 0.0f;
         }
     };
 }

@@ -8,8 +8,9 @@
 namespace dalia {
 
     enum class SoundType : uint8_t {
-        Resident = 0,
-        Stream   = 1
+        None     = 0,
+        Resident = 1,
+        Stream   = 2
     };
 
     struct SoundHandle {

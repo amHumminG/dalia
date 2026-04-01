@@ -63,7 +63,7 @@ namespace dalia {
 
 	struct PendingPlayback {
 		uint32_t voiceIndex = NO_INDEX;
-		uint32_t voiceGen = INVALID_GENERATION;
+		uint32_t voiceGen = NO_GENERATION;
 		uint64_t assetUuid = INVALID_UUID;
 	};
 
@@ -502,6 +502,34 @@ namespace dalia {
 		}
 	}
 
+	static inline void ResolveAndFlushGains(EngineInternalState* state, uint32_t vIndex) {
+		VoiceMirror& vMirror = state->voicePoolMirror[vIndex];
+
+		float volumeLinear = DbToLinear(vMirror.volumeDb);
+		float finalGains[CHANNELS_MAX] = {0};
+
+		if (vMirror.isSpatial) {
+			// 3D spatial
+			// Calculate distance attenuation & VBAP
+		}
+		else {
+			// 2D manual
+			float panNormalized = (vMirror.pan + 1.0f) * 0.5f;
+			float angle = panNormalized * PI * 0.5f;
+
+			finalGains[0] = std::cos(angle) * volumeLinear; // Left
+			finalGains[1] = std::sin(angle) * volumeLinear; // Right
+
+			// If we ever add a panY to voice for front/back 2D panning, this is where we calculate the surround matrix
+
+			// Write silence the rest of the gains
+			for (uint32_t c = 2; c < state->outputChannels; c++) finalGains[c] = 0.0f;
+		}
+
+		state->rtCommands->Enqueue(RtCommand::SetVoiceGains(vIndex, vMirror.gen, finalGains));
+		vMirror.isGainDirty = false;
+	}
+
 	static void data_callback(ma_device* pDevice, void* pOutput, const void* pInput, uint32_t frameCount) {
 		RtSystem* rtSystem = static_cast<RtSystem*>(pDevice->pUserData);
 		rtSystem->OnAudioCallback(static_cast<float*>(pOutput), frameCount);
@@ -559,9 +587,9 @@ namespace dalia {
 		m_state->outputSampleRate = m_state->device->sampleRate;
 
 		// Buffer allocations based on period size
-		const uint32_t samplesPerPeriod = m_state->device->playback.internalPeriodSizeInFrames * MAX_CHANNELS;
-		m_state->busBufferPool = std::make_unique<float[]>(m_state->busCapacity * samplesPerPeriod);
-		m_state->dspScratchBuffer = std::make_unique<float[]>(samplesPerPeriod);
+		const uint32_t maxSamplesPerPeriod = m_state->device->playback.internalPeriodSizeInFrames * CHANNELS_MAX;
+		m_state->busBufferPool = std::make_unique<float[]>(m_state->busCapacity * maxSamplesPerPeriod);
+		m_state->dspScratchBuffer = std::make_unique<float[]>(maxSamplesPerPeriod);
 
 		// --- SYSTEMS SETUP ---
 		RtSystemConfig rtConfig;
@@ -573,9 +601,9 @@ namespace dalia {
 		rtConfig.voicePool			= std::span(m_state->voicePool.get(), m_state->voiceCapacity);
 		rtConfig.streamPool			= std::span(m_state->streamPool.get(), m_state->streamCapacity);
 		rtConfig.busPool			= std::span(m_state->busPool.get(), m_state->busCapacity);
-		rtConfig.busBufferPool		= std::span(m_state->busBufferPool.get(), m_state->busCapacity * samplesPerPeriod);
+		rtConfig.busBufferPool		= std::span(m_state->busBufferPool.get(), m_state->busCapacity * maxSamplesPerPeriod);
 		rtConfig.masterBus			= &m_state->busPool[MASTER_BUS_INDEX];
-		rtConfig.dspScratchBuffer	= std::span(m_state->dspScratchBuffer.get(), samplesPerPeriod);
+		rtConfig.dspScratchBuffer	= std::span(m_state->dspScratchBuffer.get(), maxSamplesPerPeriod);
 		rtConfig.biquadFilterPool	= std::span(m_state->biquadFilterPool.get(), m_state->biquadHM->GetCapacity());
 		m_state->rtSystem = std::make_unique<RtSystem>(rtConfig);
 
@@ -652,7 +680,15 @@ namespace dalia {
 			ProcessIoLoadEvent(m_state, loadEv);
 		}
 
-		TryUpdateMixOrder(m_state);
+		// Update voice gains if necessary
+		for (uint32_t vIndex = 0; vIndex < m_state->voiceCapacity; vIndex++) {
+			VoiceMirror& vMirror = m_state->voicePoolMirror[vIndex];
+			if (vMirror.state == VoiceState::Free || !vMirror.isGainDirty) continue;
+
+			ResolveAndFlushGains(m_state, vIndex);
+		}
+
+		TryUpdateMixOrder(m_state); // Update mix order if buses have been manipulated
 
 		m_state->rtCommands->Dispatch(); // Send all commands accumulated from this frame to the audio thread
 		Logger::ProcessLogs(); // Print all logs accumulated from this frame

@@ -36,7 +36,7 @@ namespace dalia {
             if (index >= m_capacity) return;
             if (m_slots[index].generation == generation) {
                 m_slots[index].generation++;
-                if (m_slots[index].generation == INVALID_GENERATION) m_slots[index].generation = START_GENERATION;
+                if (m_slots[index].generation == NO_GENERATION) m_slots[index].generation = START_GENERATION;
                 m_freeSlotsIndices.Push(index);
             }
         }

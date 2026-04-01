@@ -55,6 +55,8 @@ namespace dalia {
         uint32_t m_outputChannels = 0;
         uint32_t m_outputSampleRate = 0;
 
+        float m_smoothingCoefficient = 0; // Used for volume and gain smoothing
+
         RtCommandQueue* m_rtCommands;
         RtEventQueue* m_rtEvents;
         IoStreamRequestQueue* m_ioStreamRequests;

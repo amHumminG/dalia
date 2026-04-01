@@ -9,8 +9,7 @@ typedef struct stb_vorbis stb_vorbis;
 namespace dalia {
 
     static constexpr size_t DOUBLE_BUFFER_FRAMES = 16384;
-    static constexpr size_t MAX_CHANNELS = 2;
-    static constexpr size_t DOUBLE_BUFFER_SIZE = DOUBLE_BUFFER_FRAMES * MAX_CHANNELS;
+    static constexpr size_t DOUBLE_BUFFER_SIZE = DOUBLE_BUFFER_FRAMES * CHANNELS_MAX;
 
     static constexpr uint32_t NO_EOF = UINT32_MAX;
 
@@ -24,7 +23,7 @@ namespace dalia {
 
     // Is this really thread safe?
     struct StreamContext {
-        std::atomic<uint32_t> generation{0};
+        std::atomic<uint32_t> gen{0};
         std::atomic<StreamState> state = StreamState::Free;
 
         alignas(64) float buffers[2][DOUBLE_BUFFER_SIZE];
@@ -34,13 +33,16 @@ namespace dalia {
         std::array<uint32_t, 2> eofIndex = {NO_EOF, NO_EOF};
 
         stb_vorbis* decoder = nullptr;
-        uint8_t channels = 0;
+        uint32_t channels = 0;
         uint32_t sampleRate = 0;
 
         // Called by the io-thread on request by the audio thread upon voice finish
         void Reset() {
+            gen.fetch_add(1, std::memory_order_release);
+            if (gen.load(std::memory_order_acquire) == NO_GENERATION) {
+                gen.store(START_GENERATION, std::memory_order_release);
+            }
             state.store(StreamState::Free, std::memory_order_release);
-            generation.fetch_add(1, std::memory_order_release);
 
             std::fill_n(&buffers[0][0], (2 * DOUBLE_BUFFER_SIZE), 0.0f);
             readCursor = 0;
