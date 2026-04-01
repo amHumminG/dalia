@@ -1510,4 +1510,42 @@ namespace dalia {
 
 		return Result::Ok;
 	}
+
+	Result Engine::SetPlaybackVolumeDb(PlaybackHandle playback, float volumeDb) {
+		if (!IsInitialized(m_state)) return Result::NotInitialized;
+
+		if (!playback.IsValid()) return Result::InvalidHandle;
+		uint32_t vIndex = playback.GetIndex();
+		uint32_t vGeneration = playback.GetGeneration();
+
+		VoiceMirror* vMirror = nullptr;
+		Result res = ResolveVoiceMirror(m_state, vIndex, vGeneration, vMirror);
+		if (res != Result::Ok) return res;
+
+		float clampedVolumeDb = std::clamp(volumeDb, MIN_VOLUME_DB, MAX_VOLUME_DB);
+		if (NearlyEqual(vMirror->volumeDb, clampedVolumeDb, VOLUME_EPSILON)) return Result::Ok;
+		vMirror->volumeDb = clampedVolumeDb;
+		vMirror->isGainDirty = true;
+
+		return Result::Ok;
+	}
+
+	Result Engine::SetPlaybackStereoPan(PlaybackHandle playback, float pan) {
+		if (!IsInitialized(m_state)) return Result::NotInitialized;
+
+		if (!playback.IsValid()) return Result::InvalidHandle;
+		uint32_t vIndex = playback.GetIndex();
+		uint32_t vGeneration = playback.GetGeneration();
+
+		VoiceMirror* vMirror = nullptr;
+		Result res = ResolveVoiceMirror(m_state, vIndex, vGeneration, vMirror);
+		if (res != Result::Ok) return res;
+
+		float clampedPan = std::clamp(pan, MIN_PAN, MAX_PAN);
+		if (NearlyEqual(vMirror->pan, clampedPan, PAN_EPSILON)) return Result::Ok;
+		vMirror->pan = clampedPan;
+		vMirror->isGainDirty = true;
+
+		return Result::Ok;
+	}
 }

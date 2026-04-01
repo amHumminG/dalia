@@ -28,6 +28,7 @@ namespace dalia {
     // --- Mixing ---
     constexpr float VOLUME_EPSILON = 1e-5f;
     constexpr float GAIN_EPSILON = 1e-5f;
+    constexpr float PAN_EPSILON = 1e-5f;
     constexpr float FREQUENCY_EPSILON = 1e-1f;
     constexpr float RESONANCE_EPSILON = 1e-3f;
 
@@ -46,6 +47,9 @@ namespace dalia {
     static constexpr float DEFAULT_VOLUME_DB = 0.0f;
     static constexpr float MIN_VOLUME_DB = -96.0f;  // Minimum volume in decibels
     static constexpr float MAX_VOLUME_DB = 24.0f;   // Maximum volume in decibels
+
+    static constexpr float MIN_PAN = -1.0f;
+    static constexpr float MAX_PAN = 1.0f;
 
     static constexpr uint32_t CHANNELS_MAX = 8;
     static constexpr uint32_t CHANNELS_MONO = 1;
