@@ -15,7 +15,6 @@
 #include "dalia/audio/SoundControl.h"
 
 #include <cmath>
-#include <vcruntime_startup.h>
 
 #include "effects/BiquadFilter.h"
 
@@ -104,7 +103,26 @@ namespace dalia {
 		}
 	}
 
+	static inline void ApplySoftClipper(float* DALIA_RESTRICT buffer, uint32_t sampleCount) {
+		constexpr float THRESHOLD = 0.8f;
+		constexpr float CEILING = 1.0f;
+		constexpr float HEADROOM = CEILING - THRESHOLD;
+
+		for (uint32_t i = 0; i < sampleCount; i++) {
+			float sample = buffer[i];
+			float sampleAbs = std::abs(sample);
+
+			if (sampleAbs > THRESHOLD) {
+				float sign = (sample > 0.0f) ? 1.0f : -1.0f;
+				float over = sampleAbs - THRESHOLD;
+				float compressed = THRESHOLD + (over / (1.0f + (over / HEADROOM)));
+				buffer[i] = sign * compressed;
+			}
+		}
+	}
+
 	// ------------
+
     RtSystem::RtSystem(const RtSystemConfig& config)
         : m_outputChannels(config.outputChannels),
 		m_outputSampleRate(config.outputSampleRate),
@@ -363,11 +381,8 @@ namespace dalia {
             ProcessBus(bIndex, frameCount);
         }
 
-        // Final Output (clamped between -1.0f and 1.0f) We probably want a soft limiter for this in the future
         float* masterBuffer = m_busBufferPool.data();
-        for (uint32_t i = 0; i < sampleCount; i++) {
-            masterBuffer[i] = std::clamp(masterBuffer[i], -1.0f, 1.0f);
-        }
+		ApplySoftClipper(masterBuffer, sampleCount);
         std::copy_n(masterBuffer, sampleCount, output);
     }
 
