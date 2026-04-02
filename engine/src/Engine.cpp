@@ -371,6 +371,9 @@ namespace dalia {
 						if (res == Result::Ok && vMirror->pendingLoad) {
 							SoundHandle handle = state->ForgeSoundHandle(ev.assetUuid);
 							SoundType soundType = handle.GetType();
+							uint32_t frameCount = 0;
+							uint32_t channels = 0;
+							uint32_t sampleRate = 0;
 
 							if (soundType == SoundType::Resident) {
 								ResidentSound* sound = state->assetRegistry->GetResidentSound(handle);
@@ -384,6 +387,10 @@ namespace dalia {
 									sound->sampleRate
 								);
 								state->rtCommands->Enqueue(cmd);
+
+								frameCount = sound->frameCount;
+								channels = sound->channels;
+								sampleRate = sound->sampleRate;
 							}
 							else if (soundType == SoundType::Stream) {
 								StreamSound* sound = state->assetRegistry->GetStreamSound(handle);
@@ -417,9 +424,16 @@ namespace dalia {
 									sound->sampleRate
 								);
 								state->rtCommands->Enqueue(cmd);
+
+								frameCount = sound->frameCount;
+								channels = sound->channels;
+								sampleRate = sound->sampleRate;
 							}
 
 							vMirror->pendingLoad = false;
+							vMirror->frameCount = frameCount;
+							vMirror->channels = channels;
+							vMirror->sampleRate = sampleRate;
 
 							// Send voice commands based on current vMirror state
 							if (vMirror->state == VoiceState::Playing) {
@@ -1275,19 +1289,25 @@ namespace dalia {
 		ResidentSound* residentSound = nullptr;
 		StreamSound* streamSound = nullptr;
 		LoadState soundLoadState;
+		uint32_t frameCount = 0;
 		uint32_t channels = 0;
+		uint32_t sampleRate = 0;
 
 		if (soundType == SoundType::Resident) {
 			residentSound = m_state->assetRegistry->GetResidentSound(soundHandle);
 			if (!residentSound) return Result::InvalidHandle;
 			soundLoadState = residentSound->state.load(std::memory_order_acquire);
+			frameCount = residentSound->frameCount;
 			channels = residentSound->channels;
+			sampleRate = residentSound->sampleRate;
 		}
 		else {
 			streamSound = m_state->assetRegistry->GetStreamSound(soundHandle);
 			if (!streamSound) return Result::InvalidHandle;
 			soundLoadState = streamSound->state.load(std::memory_order_acquire);
+			frameCount = streamSound->frameCount;
 			channels = streamSound->channels;
+			sampleRate = streamSound->sampleRate;
 		}
 
 		if (soundLoadState == LoadState::Error) {
@@ -1305,7 +1325,9 @@ namespace dalia {
 		VoiceMirror& vMirror = m_state->voicePoolMirror[vIndex];
 		vMirror.state = VoiceState::Inactive;
 		vMirror.assetUuid = soundHandle.GetUUID();
+		vMirror.frameCount = frameCount;
 		vMirror.channels = channels;
+		vMirror.sampleRate = sampleRate;
 		vMirror.soundType = soundType;
 		if (callback) vMirror.onStopCallback = callback;
 
@@ -1498,6 +1520,34 @@ namespace dalia {
 
 		m_state->rtCommands->Enqueue(RtCommand::StopVoice(vIndex, voiceGeneration));
 		DALIA_LOG_DEBUG(LOG_CTX_API, "Setting voice %d to stop.", vIndex);
+
+		return Result::Ok;
+	}
+
+	Result Engine::SeekPlayback(PlaybackHandle playback, double timeInSeconds) {
+		if (!IsInitialized(m_state)) return Result::NotInitialized;
+
+		if (!playback.IsValid()) return Result::InvalidHandle;
+		uint32_t vIndex = playback.GetIndex();
+		uint32_t vGen = playback.GetGeneration();
+
+		VoiceMirror* vMirror = nullptr;
+		Result res = ResolveVoiceMirror(m_state, vIndex, vGen, vMirror);
+		if (res != Result::Ok) return res;
+
+		if (timeInSeconds < 0.0) timeInSeconds = 0.0;
+
+		uint64_t seekFrame64 = static_cast<uint64_t>(timeInSeconds * vMirror->sampleRate);
+
+		// Safety clamps TODO: Log warnings for these
+		if (seekFrame64 >= vMirror->frameCount) {
+			if (vMirror->frameCount > 0) seekFrame64 = vMirror->frameCount - 1;
+			else seekFrame64 = 0;
+		}
+
+		uint32_t seekFrame = static_cast<uint32_t>(seekFrame64);
+		m_state->rtCommands->Enqueue(RtCommand::SeekVoice(vIndex, vGen, seekFrame));
+		DALIA_LOG_DEBUG(LOG_CTX_API, "Seeking voice %d to frame %d.", vIndex, seekFrame);
 
 		return Result::Ok;
 	}

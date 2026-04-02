@@ -383,6 +383,18 @@ namespace dalia {
 		/// @retval Result::ExpiredHandle		The playback handle has already stopped playing.
 		Result Stop(PlaybackHandle playback);
 
+		/// @brief Seeks a playback instance to a specified time offset.
+		///
+		/// @param playback			The handle to the playback instance.
+		/// @param timeInSeconds	The time offset from the start of the sound (in seconds). This value is
+		///							automatically clamped between 0.0 and the length of the sound.
+		///
+		/// @retval Result::Ok					The seek was successfully performed.
+		/// @retval Result::NotInitialized		The engine is not initialized.
+		/// @retval Result::InvalidHandle		The playback handle is not recognized.
+		/// @retval Result::ExpiredHandle		The playback handle has already stopped playing.
+		Result SeekPlayback(PlaybackHandle playback, double timeInSeconds);
+
 		/// @brief Sets the looping state a playback instance.
 		///
 		/// This method updates whether a playback instance will automatically restart upon finishing.

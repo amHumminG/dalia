@@ -202,6 +202,34 @@ namespace dalia {
 	            	voice.data.stream.frontBufferIndex = 0;
 	            	break;
 	            }
+				case RtCommand::Type::SeekVoice: {
+	            	Voice& voice = m_voicePool[cmd.data.prepStreaming.voiceIndex];
+	            	if (voice.gen != cmd.data.prepStreaming.voiceGen) break;
+
+					if (voice.soundType == SoundType::Resident) {
+						voice.cursor = static_cast<double>(cmd.data.voiceSeek.seekFrame);
+					}
+	            	else if (voice.soundType == SoundType::Stream) {
+	            		StreamContext& stream = m_streamPool[voice.data.stream.streamContextIndex];
+
+	            		StreamState expected = StreamState::Streaming;
+	            		if (stream.state.compare_exchange_strong(expected, StreamState::Seeking,
+	            			std::memory_order_release)) {
+	            			m_ioStreamRequests->Push(IoStreamRequest::SeekStream(
+	            				voice.data.stream.streamContextIndex,
+	            				stream.gen,
+	            				cmd.data.voiceSeek.seekFrame
+	            			));
+	            			voice.data.stream.frontBufferIndex = 0; // Ready for seek is finished
+	            		}
+	            		else {
+	            			// Stream cannot seek immediately -> Store the pending seek
+	            			voice.data.stream.pendingSeek = true;
+	            			voice.data.stream.seekFrame = cmd.data.voiceSeek.seekFrame;
+	            		}
+	            	}
+					break;
+	            }
 				case RtCommand::Type::PlayVoice: {
 	            	Voice& voice = m_voicePool[cmd.data.voice.voiceIndex];
 	            	if (voice.gen != cmd.data.voice.voiceGen) break; // Check for outdated command
@@ -413,9 +441,25 @@ namespace dalia {
 						return false;
 					}
 
-					// It's still preparing
+					// It's preparing or seeking
 					return true;
 				}
+
+				// Handle voice seeking
+				if (voice.data.stream.pendingSeek == true) {
+					stream.state.store(StreamState::Seeking);
+
+					m_ioStreamRequests->Push(IoStreamRequest::SeekStream(
+						voice.data.stream.streamContextIndex,
+						stream.gen,
+						voice.data.stream.seekFrame
+					));
+					voice.data.stream.seekFrame = 0;
+					voice.data.stream.frontBufferIndex = 0; // Ready for seek is finished
+
+					return true;
+				}
+
 				if (!stream.bufferReady[voice.data.stream.frontBufferIndex].load(std::memory_order_acquire)) {
 					DALIA_LOG_ERR(LOG_CTX_MIXER, "Stream buffer underrun.");
 					return true;

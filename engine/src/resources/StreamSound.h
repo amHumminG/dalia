@@ -16,14 +16,14 @@ namespace dalia {
 
         char filepath[MAX_IO_PATH_SIZE];
 
-        // Used if inside a soundbank
+        // Will be used if inside a soundbank
         size_t byteOffset = 0;
         size_t byteLenght = 0;
 
         // Format
+        uint32_t frameCount = 0;
         uint32_t channels = 0;
         uint32_t sampleRate = 0;
-        uint32_t frameCount = 0;
 
         void Reset() {
             state.store(LoadState::Unloaded, std::memory_order_relaxed);
@@ -35,9 +35,9 @@ namespace dalia {
             byteOffset = 0;
             byteLenght = 0;
 
+            frameCount = 0;
             channels = 0;
             sampleRate = 0;
-            frameCount = 0;
         }
     };
 }

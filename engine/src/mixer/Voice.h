@@ -43,6 +43,8 @@ namespace dalia {
 
             struct {
                 uint32_t streamContextIndex;
+                bool pendingSeek = false;
+                uint32_t seekFrame = 0; // Stores the target seek frame if a seek is pending
                 uint32_t frontBufferIndex;
             } stream;
         } data = {};
@@ -95,7 +97,9 @@ namespace dalia {
         float pitch = 1.0f;
 
         // Asset
+        uint32_t frameCount = 0;
         uint32_t channels = 0;
+        uint32_t sampleRate = 0;
         SoundType soundType;
 
         void Reset() {

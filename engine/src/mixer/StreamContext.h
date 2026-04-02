@@ -17,6 +17,7 @@ namespace dalia {
         Free,           // Not used by any voice
         Preparing,      // I/O thread is preparing the stream
         Streaming,      // Streaming from double buffer
+        Seeking,        // I/O thread is performing a seek and filling both buffers with new data
         Finished,       // Waiting to be freed by I/O thread
         Error           // Stream state is corrupted (something failed, probably on the I/O thread)
     };

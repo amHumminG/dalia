@@ -20,6 +20,7 @@ namespace dalia {
 			DeallocateVoice,
 			PrepareVoiceStreaming,
 			PrepareVoiceResident,
+			SeekVoice,
 			PlayVoice,
 			PauseVoice,
 			StopVoice,
@@ -86,6 +87,12 @@ namespace dalia {
 				uint32_t channels;
 				uint32_t sampleRate;
 			} prepStreaming;
+
+			struct {
+				uint32_t voiceIndex;
+				uint32_t voiceGen;
+				uint32_t seekFrame;
+			} voiceSeek;
 
 			struct {
 				uint32_t voiceIndex;
@@ -180,6 +187,15 @@ namespace dalia {
 
 			cmd.data.prepStreaming.channels = channels;
 			cmd.data.prepStreaming.sampleRate = sampleRate;
+			return cmd;
+		}
+
+		static RtCommand SeekVoice(uint32_t index, uint32_t gen, uint32_t seekFrame) {
+			RtCommand cmd{};
+			cmd.type = Type::SeekVoice;
+			cmd.data.voiceSeek.voiceIndex = index;
+			cmd.data.voiceSeek.voiceGen = gen;
+			cmd.data.voiceSeek.seekFrame = seekFrame;
 			return cmd;
 		}
 
