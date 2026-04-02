@@ -54,7 +54,7 @@ void TestInterface() {
     engine.Init(config);
 
     // --- 3. UI State Variables ---
-    char assetPathInput[256] = "assets/Faouzia - UNETHICAL.ogg";
+    char assetPathInput[256] = "assets/unethical stereo 48kHz.ogg";
 
     std::vector<LoadedAsset> loadedAssets;
     std::vector<PlaybackInstance> playbacks;
@@ -199,7 +199,7 @@ void TestInterface() {
 
             float currentPan = playbacks[selectedPlaybackIdx].pan;
             if (ImGui::SliderFloat("Pan##PB", &currentPan, -1.0f, 1.0f, "%.2f")) {
-                lastResult = engine.SetPlaybackPan(currentHandle, currentPan);
+                lastResult = engine.SetPlaybackStereoPan(currentHandle, currentPan);
                 if (lastResult == Result::Ok) {
                     playbacks[selectedPlaybackIdx].pan = currentPan;
                 }
