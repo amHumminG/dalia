@@ -58,10 +58,9 @@ namespace dalia {
     void IoStreamSystem::ProcessRequest(const IoStreamRequest& req) {
         switch (req.type) {
             case IoStreamRequest::Type::PrepareStream: {
-                uint32_t sIndex = req.data.stream.poolIndex;
-                uint32_t sGen = req.data.stream.generation;
-                uint32_t bufferIndex = req.data.stream.bufferIndex;
-                const char* filepath = req.data.stream.filepath;
+                uint32_t sIndex = req.data.streamPrep.streamIndex;
+                uint32_t sGen = req.data.streamPrep.streamGen; // FIXME: This is not used and it holds a trash value?
+                const char* filepath = req.data.streamPrep.filepath;
 
                 StreamContext& stream = m_streamPool[sIndex];
                 if (stream.state.load(std::memory_order_acquire) != StreamState::Preparing) break;
@@ -105,9 +104,9 @@ namespace dalia {
                     stream.sampleRate = info.sample_rate;
                     FillBuffer(stream, 0);
                     FillBuffer(stream, 1);
-                    stream.state.store(StreamState::Streaming);
+                    stream.state.store(StreamState::Streaming, std::memory_order_release);
 
-                    DALIA_LOG_DEBUG(LOG_CTX_IO, "Finished preparing stream %d fro file: %s.", sIndex, filepath);
+                    DALIA_LOG_DEBUG(LOG_CTX_IO, "Finished preparing stream %d from file: %s.", sIndex, filepath);
                     break;
                 }
                 else {
@@ -119,7 +118,7 @@ namespace dalia {
                 break;
             }
             case IoStreamRequest::Type::ReleaseStream: {
-                uint32_t sIndex = req.data.stream.poolIndex;
+                uint32_t sIndex = req.data.streamRefill.streamIndex;
 
                 StreamContext& stream = m_streamPool[sIndex];
                 if (stream.decoder) {
@@ -128,23 +127,41 @@ namespace dalia {
                 }
 
                 stream.Reset();
-                stream.state = StreamState::Free;
                 m_freeStreams->Push(sIndex);
                 DALIA_LOG_DEBUG(LOG_CTX_IO, "Freed stream %d.", sIndex);
                 break;
             }
             case IoStreamRequest::Type::RefillStreamBuffer: {
-                uint32_t sIndex = req.data.stream.poolIndex;
-                uint32_t sGen = req.data.stream.generation;
-                uint32_t bufferIndex = req.data.stream.bufferIndex;
+                uint32_t sIndex = req.data.streamRefill.streamIndex;
+                uint32_t sGen = req.data.streamRefill.streamGen;
+                uint32_t bufferIndex = req.data.streamRefill.bufferIndex;
 
                 StreamContext& stream = m_streamPool[sIndex];
-
+                if (stream.gen.load(std::memory_order_relaxed) != sGen) break;
                 if (stream.state.load(std::memory_order_acquire) != StreamState::Streaming) break;
-                if (stream.generation.load(std::memory_order_relaxed) != sGen) break;
 
                 FillBuffer(stream, bufferIndex);
-                DALIA_LOG_DEBUG(LOG_CTX_IO, "Refilled buffer %d, for stream %d.", bufferIndex, sIndex);
+                // DALIA_LOG_DEBUG(LOG_CTX_IO, "Refilled buffer %d, for stream %d.", bufferIndex, sIndex);
+                break;
+            }
+            case IoStreamRequest::Type::SeekStream: {
+                uint32_t sIndex = req.data.streamSeek.streamIndex;
+                uint32_t sGen = req.data.streamSeek.streamGen;
+                uint32_t seekFrame = req.data.streamSeek.seekFrame;
+
+                StreamContext& stream = m_streamPool[sIndex];
+                if (stream.gen.load(std::memory_order_relaxed) != sGen) break;
+                if (stream.state.load(std::memory_order_acquire) != StreamState::Seeking) break;
+
+                stb_vorbis_seek_frame(stream.decoder, seekFrame);
+                stream.readCursor = 0;
+
+                FillBuffer(stream, 0);
+                FillBuffer(stream, 1);
+
+                stream.state.store(StreamState::Streaming, std::memory_order_release);
+
+                DALIA_LOG_DEBUG(LOG_CTX_IO, "Finished seeking stream %d to frame %d.", sIndex, seekFrame);
                 break;
             }
             default:
@@ -161,7 +178,7 @@ namespace dalia {
 
         float* bufferPtr = stream.buffers[bufferIndex];
 
-        int framesNeeded = dalia::DOUBLE_BUFFER_FRAMES;
+        int framesNeeded = DOUBLE_BUFFER_FRAMES;
         int framesWritten = 0;
         bool justLooped = false;
         bool foundEOF = false;

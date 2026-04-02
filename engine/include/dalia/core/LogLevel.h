@@ -3,6 +3,7 @@
 
 namespace dalia {
 
+	// TODO: Add descriptive comments to explain what these mean
 	enum class LogLevel : int {
 		Debug		= 0,
 		Info		= 1,

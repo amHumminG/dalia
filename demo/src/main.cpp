@@ -22,6 +22,11 @@ struct PlaybackInstance {
     std::string name;
     PlaybackHandle handle;
     std::string targetBus = "Master"; // Default route
+    bool isLooping = false;
+    float volumeDb = 0.0f;
+    float pan = 0.0f;
+
+    float seekTargetSeconds = 0.0f;
 };
 
 struct LoadedEffect {
@@ -51,7 +56,7 @@ void TestInterface() {
     engine.Init(config);
 
     // --- 3. UI State Variables ---
-    char assetPathInput[256] = "assets/Faouzia - UNETHICAL.ogg";
+    char assetPathInput[256] = "assets/unethical stereo 48kHz.ogg";
 
     std::vector<LoadedAsset> loadedAssets;
     std::vector<PlaybackInstance> playbacks;
@@ -172,7 +177,54 @@ void TestInterface() {
             ImGui::SameLine();
             if (ImGui::Button("Stop", ImVec2(60, 30))) lastResult = engine.Stop(currentHandle);
 
+            ImGui::Spacing();
+            bool currentLoopState = playbacks[selectedPlaybackIdx].isLooping;
+            if (ImGui::Checkbox("Loop Playback", &currentLoopState)) {
+                lastResult = engine.SetPlaybackLooping(currentHandle, currentLoopState);
+                if (lastResult == Result::Ok) {
+                    // Only update the UI state if the engine accepted the command
+                    playbacks[selectedPlaybackIdx].isLooping = currentLoopState;
+                }
+            }
+
             ImGui::Separator();
+
+            ImGui::TextDisabled("Timeline / Seeking");
+
+            float currentSeekTarget = playbacks[selectedPlaybackIdx].seekTargetSeconds;
+
+            // Allow stepping by 0.5s or 5.0s
+            ImGui::SetNextItemWidth(120);
+            if (ImGui::InputFloat("Seconds##Seek", &currentSeekTarget, 0.5f, 5.0f, "%.3f")) {
+                if (currentSeekTarget < 0.0f) currentSeekTarget = 0.0f;
+                playbacks[selectedPlaybackIdx].seekTargetSeconds = currentSeekTarget;
+            }
+
+            ImGui::SameLine();
+            if (ImGui::Button("Execute Seek", ImVec2(100, 0))) {
+                // Cast the float to double at the API boundary just like we designed
+                lastResult = engine.SeekPlayback(currentHandle, static_cast<double>(currentSeekTarget));
+            }
+
+            ImGui::Separator();
+
+            ImGui::TextDisabled("Playback Parameters");
+
+            float currentVol = playbacks[selectedPlaybackIdx].volumeDb;
+            if (ImGui::SliderFloat("Volume (dB)##PB", &currentVol, -60.0f, 12.0f, "%.1f dB")) {
+                lastResult = engine.SetPlaybackVolumeDb(currentHandle, currentVol);
+                if (lastResult == Result::Ok) {
+                    playbacks[selectedPlaybackIdx].volumeDb = currentVol;
+                }
+            }
+
+            float currentPan = playbacks[selectedPlaybackIdx].pan;
+            if (ImGui::SliderFloat("Pan##PB", &currentPan, -1.0f, 1.0f, "%.2f")) {
+                lastResult = engine.SetPlaybackStereoPan(currentHandle, currentPan);
+                if (lastResult == Result::Ok) {
+                    playbacks[selectedPlaybackIdx].pan = currentPan;
+                }
+            }
 
             // Playback Routing
             ImGui::TextDisabled("Playback Routing");

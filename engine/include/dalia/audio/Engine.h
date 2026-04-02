@@ -340,7 +340,7 @@ namespace dalia {
 		/// @retval Result::BusNotFound		The target bus does not exist.
 		Result RoutePlayback(PlaybackHandle playback, const char* busIdentifier);
 
-		/// @brief Starts or resumes the specified playback instance.
+		/// @brief Starts or resumes a playback instance.
 		///
 		/// If the playback instance is paused, calling this function will resume it from the current position. If
 		/// it is inactive, it will play from the start.
@@ -357,7 +357,7 @@ namespace dalia {
 		/// @retval Result::PlaybackCorrupted	The internal state of the playback instance has been corrupted.
 		Result Play(PlaybackHandle playback);
 
-		/// @brief Pauses the specified playback instance.
+		/// @brief Pauses a playback instance.
 		///
 		/// @param[in] playback The handle to the playback instance.
 		///
@@ -367,7 +367,7 @@ namespace dalia {
 		/// @retval Result::ExpiredHandle		The playback handle has already stopped playing.
 		Result Pause(PlaybackHandle playback);
 
-		/// @brief Stops the specified playback instance.
+		/// @brief Stops a playback instance.
 		///
 		/// If a callback function was provided when creating the playback instance, it will be called with the exit
 		/// condition ExplicitStop once the playback has been stopped.
@@ -382,6 +382,56 @@ namespace dalia {
 		/// @retval Result::InvalidHandle		The playback handle is not recognized.
 		/// @retval Result::ExpiredHandle		The playback handle has already stopped playing.
 		Result Stop(PlaybackHandle playback);
+
+		/// @brief Seeks a playback instance to a specified time offset.
+		///
+		/// @param playback			The handle to the playback instance.
+		/// @param timeInSeconds	The time offset from the start of the sound (in seconds). This value is
+		///							automatically clamped between 0.0 and the length of the sound.
+		///
+		/// @retval Result::Ok					The seek was successfully performed.
+		/// @retval Result::NotInitialized		The engine is not initialized.
+		/// @retval Result::InvalidHandle		The playback handle is not recognized.
+		/// @retval Result::ExpiredHandle		The playback handle has already stopped playing.
+		Result SeekPlayback(PlaybackHandle playback, double timeInSeconds);
+
+		/// @brief Sets the looping state a playback instance.
+		///
+		/// This method updates whether a playback instance will automatically restart upon finishing.
+		///
+		/// @param[in] playback The handle to the playback instance.
+		/// @param[in] looping The looping state.
+		///
+		/// @retval Result::Ok					The playback instance looping state was successfully set.
+		/// @retval Result::NotInitialized		The engine is not initialized.
+		/// @retval Result::InvalidHandle		The playback handle is not recognized.
+		/// @retval Result::ExpiredHandle		The playback handle has already stopped playing.
+		Result SetPlaybackLooping(PlaybackHandle playback, bool looping);
+
+		/// @brief Sets the mixing volume of a playback instance in decibels (dB).
+		///
+		/// @param[in] playback The handle to the playback instance.
+		/// @param[in] volumeDb The new volume in decibels (dB). A value of 0.0 represents unity gain. The volume
+		///						is automatically clamped to the engine's safe operating range
+		///						(between -60.0dB and +12.0dB).
+		///
+		/// @retval Result::Ok					The mixing volume of the playback instance was successfully set.
+		/// @retval Result::NotInitialized		The engine is not initialized.
+		/// @retval Result::InvalidHandle		The playback handle is not recognized.
+		/// @retval Result::ExpiredHandle		The playback handle has already stopped playing.
+		Result SetPlaybackVolumeDb(PlaybackHandle playback, float volumeDb);
+
+		/// @brief Sets the stereo pan of a playback instance.
+		///
+		/// @param[in] playback The handle to the playback instance.
+		/// @param[in] pan		The normalized pan position. A value of 0.0 represents an equal distribution between
+		///						L and R, -1.0 is full L and 1.0 is full R.
+		///
+		/// @retval Result::Ok					The pan of the playback instance was successfully set.
+		/// @retval Result::NotInitialized		The engine is not initialized.
+		/// @retval Result::InvalidHandle		The playback handle is not recognized.
+		/// @retval Result::ExpiredHandle		The playback handle has already stopped playing.
+		Result SetPlaybackStereoPan(PlaybackHandle playback, float pan);
 
 #pragma endregion PLAYBACK_MANAGEMENT
 

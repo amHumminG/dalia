@@ -1,5 +1,6 @@
 #pragma once
 
+#include "core/Constants.h"
 #include "core/SPSCRingBuffer.h"
 #include "dalia/audio/EffectControl.h"
 
@@ -15,19 +16,20 @@ namespace dalia {
 			SwapMixOrder,
 
 			// Voice Lifecycle
-			AllocateVoiceStreaming,
-			AllocateVoiceResident,
+			AllocateVoice,
+			DeallocateVoice,
+			PrepareVoiceStreaming,
+			PrepareVoiceResident,
+			SeekVoice,
 			PlayVoice,
 			PauseVoice,
 			StopVoice,
 
 			// Voice Properties
 			SetVoiceParent,
-			SetVoiceVolume,
+			SetVoiceLooping,
+			SetVoiceGainMatrix,
 			SetVoicePitch,
-			SetVoicePan,
-			SetVoicePosition,
-			SetVoiceVelocity,
 
 			// Bus Lifecycle
 			AllocateBus,
@@ -58,18 +60,18 @@ namespace dalia {
 
 			struct {
 				uint32_t voiceIndex;
-				uint32_t voiceGeneration;
+				uint32_t voiceGen;
 			} voice;
 
 			struct {
 				uint32_t voiceIndex;
-				uint32_t voiceGeneration;
+				uint32_t voiceGen;
 				uint32_t parentBusIndex;
 			} voiceParent;
 
 			struct {
 				uint32_t voiceIndex;
-				uint32_t voiceGeneration;
+				uint32_t voiceGen;
 
 				const float* pcmData;
 				uint32_t frameCount;
@@ -79,7 +81,7 @@ namespace dalia {
 
 			struct {
 				uint32_t voiceIndex;
-				uint32_t voiceGeneration;
+				uint32_t voiceGen;
 
 				uint32_t streamIndex;
 				uint32_t channels;
@@ -88,15 +90,27 @@ namespace dalia {
 
 			struct {
 				uint32_t voiceIndex;
-				uint32_t voiceGeneration;
+				uint32_t voiceGen;
+				uint32_t seekFrame;
+			} voiceSeek;
+
+			struct {
+				uint32_t voiceIndex;
+				uint32_t voiceGen;
+				bool value;
+			} voiceBool;
+
+			struct {
+				uint32_t voiceIndex;
+				uint32_t voiceGen;
 				float value;
 			} voiceFloat;
 
 			struct {
 				uint32_t voiceIndex;
-				uint32_t voiceGeneration;
-				float x, y, z;
-			} voiceVector3;
+				uint32_t voiceGen;
+				float gainMatrix[CHANNELS_MAX][CHANNELS_MAX];
+			} voiceGain;
 
 			struct {
 				uint32_t busIndex;
@@ -133,12 +147,28 @@ namespace dalia {
 			return cmd;
 		}
 
-		static RtCommand PrepareVoiceResident(uint32_t index, uint32_t generation, const float* dataPtr,
+		static RtCommand AllocateVoice(uint32_t index, uint32_t gen) {
+			RtCommand cmd;
+			cmd.type = Type::AllocateVoice;
+			cmd.data.voice.voiceIndex = index;
+			cmd.data.voice.voiceGen = gen;
+			return cmd;
+		}
+
+		static RtCommand DeallocateVoice(uint32_t index, uint32_t gen) {
+			RtCommand cmd;
+			cmd.type = Type::DeallocateVoice;
+			cmd.data.voice.voiceIndex = index;
+			cmd.data.voice.voiceGen = gen;
+			return cmd;
+		}
+
+		static RtCommand PrepareVoiceResident(uint32_t index, uint32_t gen, const float* dataPtr,
 			uint32_t frameCount, uint32_t channels, uint32_t sampleRate) {
 			RtCommand cmd{};
-			cmd.type = Type::AllocateVoiceResident;
+			cmd.type = Type::PrepareVoiceResident;
 			cmd.data.prepResident.voiceIndex = index;
-			cmd.data.prepResident.voiceGeneration = generation;
+			cmd.data.prepResident.voiceGen = gen;
 
 			cmd.data.prepResident.pcmData = dataPtr;
 			cmd.data.prepResident.frameCount = frameCount;
@@ -147,12 +177,12 @@ namespace dalia {
 			return cmd;
 		}
 
-		static RtCommand PrepareVoiceStreaming(uint32_t index, uint32_t generation, uint32_t streamIndex,
+		static RtCommand PrepareVoiceStreaming(uint32_t index, uint32_t gen, uint32_t streamIndex,
 			uint32_t channels, uint32_t sampleRate) {
 			RtCommand cmd{};
-			cmd.type = Type::AllocateVoiceStreaming;
+			cmd.type = Type::PrepareVoiceStreaming;
 			cmd.data.prepStreaming.voiceIndex = index;
-			cmd.data.prepStreaming.voiceGeneration = generation;
+			cmd.data.prepStreaming.voiceGen = gen;
 			cmd.data.prepStreaming.streamIndex = streamIndex;
 
 			cmd.data.prepStreaming.channels = channels;
@@ -160,45 +190,64 @@ namespace dalia {
 			return cmd;
 		}
 
-		static RtCommand PlayVoice(uint32_t index, uint32_t generation) {
+		static RtCommand SeekVoice(uint32_t index, uint32_t gen, uint32_t seekFrame) {
+			RtCommand cmd{};
+			cmd.type = Type::SeekVoice;
+			cmd.data.voiceSeek.voiceIndex = index;
+			cmd.data.voiceSeek.voiceGen = gen;
+			cmd.data.voiceSeek.seekFrame = seekFrame;
+			return cmd;
+		}
+
+		static RtCommand PlayVoice(uint32_t index, uint32_t gen) {
 			RtCommand cmd{};
 			cmd.type = Type::PlayVoice;
 			cmd.data.voice.voiceIndex = index;
-			cmd.data.voice.voiceGeneration = generation;
+			cmd.data.voice.voiceGen = gen;
 			return cmd;
 		}
 
-		static RtCommand PauseVoice(uint32_t index, uint32_t generation) {
+		static RtCommand PauseVoice(uint32_t index, uint32_t gen) {
 			RtCommand cmd{};
 			cmd.type = Type::PauseVoice;
 			cmd.data.voice.voiceIndex = index;
-			cmd.data.voice.voiceGeneration = generation;
+			cmd.data.voice.voiceGen = gen;
 			return cmd;
 		}
 
-		static RtCommand StopVoice(uint32_t index, uint32_t generation) {
+		static RtCommand StopVoice(uint32_t index, uint32_t gen) {
 			RtCommand cmd{};
 			cmd.type = Type::StopVoice;
 			cmd.data.voice.voiceIndex = index;
-			cmd.data.voice.voiceGeneration = generation;
+			cmd.data.voice.voiceGen = gen;
 			return cmd;
 		}
 
-		static RtCommand SetVoiceParent(uint32_t index, uint32_t generation, uint32_t parentBusIndex) {
+		static RtCommand SetVoiceParent(uint32_t index, uint32_t gen, uint32_t parentBusIndex) {
 			RtCommand cmd{};
 			cmd.type = Type::SetVoiceParent;
 			cmd.data.voiceParent.voiceIndex = index;
-			cmd.data.voiceParent.voiceGeneration = generation;
+			cmd.data.voiceParent.voiceGen = gen;
 			cmd.data.voiceParent.parentBusIndex = parentBusIndex;
 			return cmd;
 		}
 
-		static RtCommand SetVoiceVolume(uint32_t index, uint32_t generation, float value) {
+		static RtCommand SetVoiceLooping(uint32_t index, uint32_t gen, bool looping) {
 			RtCommand cmd{};
-			cmd.type = Type::SetVoiceVolume;
-			cmd.data.voiceFloat.voiceIndex = index;
-			cmd.data.voiceFloat.voiceGeneration = generation;
-			cmd.data.voiceFloat.value = value;
+			cmd.type = Type::SetVoiceLooping;
+			cmd.data.voiceBool.voiceIndex = index;
+			cmd.data.voiceBool.voiceGen = gen;
+			cmd.data.voiceBool.value = looping;
+			return cmd;
+		}
+
+		static RtCommand SetVoiceGainMatrix(uint32_t index, uint32_t gen,
+			const float gainMatrix[CHANNELS_MAX][CHANNELS_MAX]) {
+			RtCommand cmd{};
+			cmd.type = Type::SetVoiceGainMatrix;
+			cmd.data.voiceGain.voiceIndex = index;
+			cmd.data.voiceGain.voiceGen = gen;
+			std::memcpy(cmd.data.voiceGain.gainMatrix, gainMatrix, sizeof(cmd.data.voiceGain.gainMatrix));
 			return cmd;
 		}
 

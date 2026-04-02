@@ -15,7 +15,6 @@
 #include "dalia/audio/SoundControl.h"
 
 #include <cmath>
-#include <vcruntime_startup.h>
 
 #include "effects/BiquadFilter.h"
 
@@ -32,11 +31,27 @@ namespace dalia {
 	}
 
 	static inline float* GetBusBuffer(float* busBufferPool, uint32_t busIndex, uint32_t frameCount) {
-		return busBufferPool + (busIndex * frameCount * MAX_CHANNELS);
+		return busBufferPool + (busIndex * frameCount * CHANNELS_MAX);
 	}
 
+	static inline void StepMatrixGains(
+		float (* DALIA_RESTRICT current)[CHANNELS_MAX],
+		const float (* DALIA_RESTRICT target)[CHANNELS_MAX],
+		uint32_t inChannels,
+		uint32_t outChannels,
+		float smoothingCoefficient) {
+		for (uint32_t inC = 0; inC < inChannels; inC++) {
+			for (uint32_t outC = 0; outC < outChannels; outC++) {
+				float diff = target[inC][outC] - current[inC][outC];
+
+				if (std::abs(diff) < GAIN_EPSILON) current[inC][outC] = target[inC][outC];
+				else current[inC][outC] += diff * smoothingCoefficient;
+			}
+		}
+ 	}
+
 	static inline void ApplyVolume(float* DALIA_RESTRICT buffer, uint32_t frameCount, uint32_t channels,
-		float& currentVolume, float targetVolume) {
+		float& currentVolume, float targetVolume, float smoothingCoefficient) {
 
 		// --- No volume movement ---
 		if (NearlyEqual(currentVolume, targetVolume, VOLUME_EPSILON)) {
@@ -56,7 +71,7 @@ namespace dalia {
 
 		// --- Smoothing current to target ---
 		for (uint32_t i = 0; i < frameCount; i++) {
-			currentVolume += (targetVolume - currentVolume) * SMOOTHING_COEFFICIENT;
+			currentVolume += (targetVolume - currentVolume) * smoothingCoefficient;
 
 			for (uint32_t c = 0; c < channels; c++) {
 				buffer[(i * channels) + c] *= currentVolume;
@@ -88,6 +103,24 @@ namespace dalia {
 		}
 	}
 
+	static inline void ApplySoftClipper(float* DALIA_RESTRICT buffer, uint32_t sampleCount) {
+		constexpr float THRESHOLD = 0.8f;
+		constexpr float CEILING = 1.0f;
+		constexpr float HEADROOM = CEILING - THRESHOLD;
+
+		for (uint32_t i = 0; i < sampleCount; i++) {
+			float sample = buffer[i];
+			float sampleAbs = std::abs(sample);
+
+			if (sampleAbs > THRESHOLD) {
+				float sign = (sample > 0.0f) ? 1.0f : -1.0f;
+				float over = sampleAbs - THRESHOLD;
+				float compressed = THRESHOLD + (over / (1.0f + (over / HEADROOM)));
+				buffer[i] = sign * compressed;
+			}
+		}
+	}
+
 	// ------------
 
     RtSystem::RtSystem(const RtSystemConfig& config)
@@ -105,6 +138,7 @@ namespace dalia {
 		m_biquadFilterPool(config.biquadFilterPool) {
         // Empty bus graph
         m_activeMixOrder = std::span<const uint32_t>();
+		m_smoothingCoefficient = 1.0f - std::exp(-2.0f * PI * SMOOTHING_CUTOFF_HZ / config.outputSampleRate);
     }
 
     void RtSystem::OnAudioCallback(float* output, uint32_t frameCount) {
@@ -117,7 +151,6 @@ namespace dalia {
 
     void RtSystem::ProcessCommands() {
         RtCommand cmd;
-        // TODO: We should probably set a limit on the amount of commands we process in one audio frame
         while (m_rtCommands->Pop(cmd)) {
             switch (cmd.type) {
 	            case RtCommand::Type::SwapMixOrder: {
@@ -130,94 +163,120 @@ namespace dalia {
             		m_rtEvents->Push(RtEvent::MixOrderSwapped());
 	            	break;
 	            }
-	            case RtCommand::Type::AllocateVoiceResident: {
-	            	uint32_t vIndex = cmd.data.prepResident.voiceIndex;
-	            	Voice& voice = m_voicePool[vIndex];
+				case RtCommand::Type::AllocateVoice: {
+	            	Voice& voice = m_voicePool[cmd.data.voice.voiceIndex];
+
+	            	voice.gen = cmd.data.voice.voiceGen;
+	            	voice.state = VoiceState::Inactive;
+		            break;
+	            }
+				case RtCommand::Type::DeallocateVoice: {
+	            	Voice& voice = m_voicePool[cmd.data.voice.voiceIndex];
+	            	if (voice.gen != cmd.data.voice.voiceGen) break;
+
+	            	voice.Reset();
+	            	break;
+				}
+	            case RtCommand::Type::PrepareVoiceResident: {
+	            	Voice& voice = m_voicePool[cmd.data.prepResident.voiceIndex];
+	            	if (voice.gen != cmd.data.prepResident.voiceGen) break;
 
 	            	// Voice setup
 	            	voice.soundType = SoundType::Resident;
-	            	voice.state = VoiceState::Inactive;
-	            	voice.generation = cmd.data.prepResident.voiceGeneration;
 
 	            	voice.data.resident.pcmData = cmd.data.prepResident.pcmData;
 	            	voice.data.resident.frameCount = cmd.data.prepResident.frameCount;
 
 	            	voice.channels = cmd.data.prepResident.channels;
 	            	voice.sampleRate = cmd.data.prepResident.sampleRate;
-
-	            	DALIA_LOG_DEBUG(LOG_CTX_MIXER, "Prepared resident voice %d with %d frames",
-	            		vIndex, cmd.data.prepResident.frameCount);
-
 	            	break;
 	            }
-				case RtCommand::Type::AllocateVoiceStreaming: {
-	            	uint32_t vIndex = cmd.data.prepStreaming.voiceIndex;
-	            	Voice& voice = m_voicePool[vIndex];
+				case RtCommand::Type::PrepareVoiceStreaming: {
+	            	Voice& voice = m_voicePool[cmd.data.prepStreaming.voiceIndex];
+	            	if (voice.gen != cmd.data.prepStreaming.voiceGen) break;
 
 	            	// Voice setup
 	            	voice.soundType = SoundType::Stream;
-	            	voice.state = VoiceState::Inactive;
-	            	voice.generation = cmd.data.prepStreaming.voiceGeneration;
 
 	            	voice.data.stream.streamContextIndex = cmd.data.prepStreaming.streamIndex;
 	            	voice.data.stream.frontBufferIndex = 0;
-
 	            	break;
 	            }
-				case RtCommand::Type::SetVoiceParent: {
-	            	uint32_t vIndex = cmd.data.voiceParent.voiceIndex;
-	            	uint32_t vGen = cmd.data.voiceParent.voiceGeneration;
-	            	uint32_t bIndexParent = cmd.data.voiceParent.parentBusIndex;
-	            	Voice& voice = m_voicePool[vIndex];
+				case RtCommand::Type::SeekVoice: {
+	            	Voice& voice = m_voicePool[cmd.data.prepStreaming.voiceIndex];
+	            	if (voice.gen != cmd.data.prepStreaming.voiceGen) break;
 
-	            	// Check for outdated command
-	            	if (voice.generation != vGen) break;
+					if (voice.soundType == SoundType::Resident) {
+						voice.cursor = static_cast<double>(cmd.data.voiceSeek.seekFrame);
+					}
+	            	else if (voice.soundType == SoundType::Stream) {
+	            		StreamContext& stream = m_streamPool[voice.data.stream.streamContextIndex];
 
-	            	voice.parentBusIndex = bIndexParent;
-	            	break;
-				}
+	            		StreamState expected = StreamState::Streaming;
+	            		if (stream.state.compare_exchange_strong(expected, StreamState::Seeking,
+	            			std::memory_order_release)) {
+	            			m_ioStreamRequests->Push(IoStreamRequest::SeekStream(
+	            				voice.data.stream.streamContextIndex,
+	            				stream.gen,
+	            				cmd.data.voiceSeek.seekFrame
+	            			));
+	            			voice.data.stream.frontBufferIndex = 0; // Ready for seek is finished
+	            		}
+	            		else {
+	            			// Stream cannot seek immediately -> Store the pending seek
+	            			voice.data.stream.pendingSeek = true;
+	            			voice.data.stream.seekFrame = cmd.data.voiceSeek.seekFrame;
+	            		}
+	            	}
+					break;
+	            }
 				case RtCommand::Type::PlayVoice: {
-	            	uint32_t vIndex = cmd.data.voice.voiceIndex;
-	            	uint32_t vGen = cmd.data.voice.voiceGeneration;
-	            	Voice& voice = m_voicePool[vIndex];
-
-	            	// Check for outdated command
-	            	if (voice.generation != vGen) break;
+	            	Voice& voice = m_voicePool[cmd.data.voice.voiceIndex];
+	            	if (voice.gen != cmd.data.voice.voiceGen) break; // Check for outdated command
 
 	            	if (voice.state == VoiceState::Inactive || voice.state == VoiceState::Paused) {
-	            		DALIA_LOG_DEBUG(LOG_CTX_MIXER, "Voice %d set to playing", vIndex);
 	            		voice.state = VoiceState::Playing;
 	            	}
 
 	            	break;
 				}
                 case RtCommand::Type::PauseVoice: {
-	            	uint32_t vIndex = cmd.data.voice.voiceIndex;
-	            	uint32_t vGen = cmd.data.voice.voiceGeneration;
-	            	Voice& voice = m_voicePool[vIndex];
+	            	Voice& voice = m_voicePool[cmd.data.voice.voiceIndex];
+	            	if (voice.gen != cmd.data.voice.voiceGen) break; // Check for outdated command
 
-	            	// Check for outdated command
-	            	if (voice.generation != vGen) break;
-
-	            	if (voice.state == VoiceState::Playing) {
-	            		DALIA_LOG_DEBUG(LOG_CTX_MIXER, "Voice %d set to paused", vIndex);
-	            		voice.state = VoiceState::Paused;
-	            	}
-
+	            	if (voice.state == VoiceState::Playing) voice.state = VoiceState::Paused;
 	            	break;
                 }
                 case RtCommand::Type::StopVoice: {
-	            	uint32_t vIndex = cmd.data.voice.voiceIndex;
-	            	uint32_t vGen = cmd.data.voice.voiceGeneration;
-	            	Voice& voice = m_voicePool[vIndex];
-
-	            	// Check for outdated command
-	            	if (voice.generation != vGen) break;
+	            	Voice& voice = m_voicePool[cmd.data.voice.voiceIndex];
+	            	if (voice.gen != cmd.data.voice.voiceGen) break; // Check for outdated command
 
 	            	voice.state = VoiceState::Stopped;
 	            	voice.exitCondition = PlaybackExitCondition::ExplicitStop;
 	            	break;
                 }
+				case RtCommand::Type::SetVoiceParent: {
+	            	Voice& voice = m_voicePool[cmd.data.voiceParent.voiceIndex];
+	            	if (voice.gen != cmd.data.voiceParent.voiceGen) break; // Check for outdated command
+
+	            	voice.parentBusIndex = cmd.data.voiceParent.parentBusIndex;
+	            	break;
+				}
+				case RtCommand::Type::SetVoiceLooping: {
+	            	Voice& voice = m_voicePool[cmd.data.voiceBool.voiceIndex];
+	            	if (voice.gen != cmd.data.voiceBool.voiceGen) break; // Check for outdated command
+
+	            	voice.isLooping = cmd.data.voiceBool.value;
+	            	break;
+				}
+				case RtCommand::Type::SetVoiceGainMatrix: {
+	            	Voice& voice = m_voicePool[cmd.data.voiceGain.voiceIndex];
+	            	if (voice.gen != cmd.data.voiceGain.voiceGen) break; // Check for outdated command
+
+					std::memcpy(voice.targetGainMatrix, cmd.data.voiceGain.gainMatrix,
+						sizeof(voice.targetGainMatrix));
+					break;
+	            }
 				case RtCommand::Type::AllocateBus: {
 		            uint32_t bIndex = cmd.data.bus.busIndex;
 	            	uint32_t bIndexParent = cmd.data.bus.parentBusIndex;
@@ -254,19 +313,15 @@ namespace dalia {
 					biquad.currentFrequency = cmd.data.biquad.config.frequency;
 	            	biquad.targetResonance = cmd.data.biquad.config.resonance;
 	            	biquad.currentResonance = cmd.data.biquad.config.resonance;
-
 	            	CalculateBiquadCoefficients(biquad, static_cast<float>(m_outputSampleRate));
-
 	            	break;
 				}
 				case RtCommand::Type::SetBiquadParams: {
 	            	BiquadFilter& biquad = m_biquadFilterPool[cmd.data.biquad.index];
-
 	            	if (biquad.generation != cmd.data.biquad.gen) break;
 
 	            	biquad.targetFrequency = cmd.data.biquad.config.frequency;
 	            	biquad.targetResonance = cmd.data.biquad.config.resonance;
-
 	            	break;
 				}
 				case RtCommand::Type::AttachEffect: {
@@ -354,11 +409,8 @@ namespace dalia {
             ProcessBus(bIndex, frameCount);
         }
 
-        // Final Output (clamped between -1.0f and 1.0f) We probably want a soft limiter for this in the future
         float* masterBuffer = m_busBufferPool.data();
-        for (uint32_t i = 0; i < sampleCount; i++) {
-            masterBuffer[i] = std::clamp(masterBuffer[i], -1.0f, 1.0f);
-        }
+		ApplySoftClipper(masterBuffer, sampleCount);
         std::copy_n(masterBuffer, sampleCount, output);
     }
 
@@ -366,12 +418,6 @@ namespace dalia {
 		Voice& voice = m_voicePool[voiceIndex];
         float* busBuffer = GetBusBuffer(m_busBufferPool.data(), voice.parentBusIndex, frameCount);
         uint32_t framesMixed = 0;
-
-    	// --- Panning & DSP ---
-    	const float panNormalized = (voice.pan + 1.0f) * 0.5f;
-    	const float angle = panNormalized * PI_2; // Angle between 0 and PI/2 radians
-    	const float gainL = std::cos(angle) * voice.volumeLinear;
-    	const float gainR = std::sin(angle) * voice.volumeLinear;
 
         while (framesMixed < frameCount) {
 			const float* sourceData = nullptr;
@@ -395,9 +441,25 @@ namespace dalia {
 						return false;
 					}
 
-					// It's still preparing
+					// It's preparing or seeking
 					return true;
 				}
+
+				// Handle voice seeking
+				if (voice.data.stream.pendingSeek == true) {
+					stream.state.store(StreamState::Seeking);
+
+					m_ioStreamRequests->Push(IoStreamRequest::SeekStream(
+						voice.data.stream.streamContextIndex,
+						stream.gen,
+						voice.data.stream.seekFrame
+					));
+					voice.data.stream.seekFrame = 0;
+					voice.data.stream.frontBufferIndex = 0; // Ready for seek is finished
+
+					return true;
+				}
+
 				if (!stream.bufferReady[voice.data.stream.frontBufferIndex].load(std::memory_order_acquire)) {
 					DALIA_LOG_ERR(LOG_CTX_MIXER, "Stream buffer underrun.");
 					return true;
@@ -424,36 +486,66 @@ namespace dalia {
 			uint32_t framesToMixNow = std::min(frameCount - framesMixed, remainingFramesInSource);
 
         	if (framesToMixNow > 0) {
-        		float* outPtr = &busBuffer[framesMixed * 2]; // 2 for stereo bus
-        		uint32_t sourceStride = sourceChannels; // TODO: This is where we have to resample in the future
-        		if (sourceChannels == 1) {
-        			for (uint32_t i = 0; i < framesToMixNow; i++) {
-        				float sample = sourceData[(cursorInt + i) * sourceStride];
+        		const float* DALIA_RESTRICT inPtr = &sourceData[cursorInt * sourceChannels];
+        		float* DALIA_RESTRICT outPtr = &busBuffer[framesMixed * m_outputChannels];
 
-        				// Stereo mix TODO: Adapt this for upmixing to more channels
-        				outPtr[0] += sample * gainL;
-        				outPtr[1] += sample * gainR;
+        		for (uint32_t i = 0; i < framesToMixNow; i++) {
+        			StepMatrixGains(voice.currentGainMatrix, voice.targetGainMatrix, sourceChannels,
+        				m_outputChannels, m_smoothingCoefficient);
 
-        				outPtr += 2; // 2 for stereo bus
+        			for (uint32_t inC = 0; inC < sourceChannels; inC++) {
+        				float sample = inPtr[inC];
+
+        				for (uint32_t outC = 0; outC < m_outputChannels; outC++) {
+        					outPtr[outC] += sample * voice.currentGainMatrix[inC][outC];
+        				}
         			}
-        		}
-        		else if (sourceChannels == 2) {
-        			for (uint32_t i = 0; i < framesToMixNow; i++) {
-        				float sampleL = sourceData[(cursorInt + i) * 2 + 0];
-        				float sampleR = sourceData[(cursorInt + i) * 2 + 1];
 
-        				// Stereo mix TODO: Adapt this for upmixing to more channels
-        				outPtr[0] += sampleL * gainL;
-        				outPtr[1] += sampleR * gainR;
-
-        				outPtr += 2; // 2 for stereo bus
-        			}
-        		}
-        		else {
-        			DALIA_LOG_WARN(LOG_CTX_MIXER, "Failed to mix voice with invalid channel count (%d).",
-        				sourceChannels);
+        			inPtr += sourceChannels;
+        			outPtr += m_outputChannels;
         		}
         	}
+
+        		// if (sourceChannels == m_outputChannels) {
+        		// 	for (uint32_t i = 0; i < framesToMixNow; i++) {
+        		// 		StepGains(voice.currentGainMatrix, voice.targetGains, m_outputChannels, m_smoothingCoefficient);
+		        //
+        		// 		for (uint32_t c = 0; c < m_outputChannels; c++) {
+        		// 			float sample = sourceData[(cursorInt + i) * sourceStride + c];
+        		// 			outPtr[c] += sample * voice.currentGainMatrix[c];
+        		// 		}
+        		// 		outPtr += m_outputChannels;
+        		// 	}
+        		// }
+        		// else if (sourceChannels == 1) {
+        		// 	for (uint32_t i = 0; i < framesToMixNow; i++) {
+        		// 		StepGains(voice.currentGainMatrix, voice.targetGains, m_outputChannels, m_smoothingCoefficient);
+		        //
+        		// 		float sample = sourceData[cursorInt + i];
+        		// 		for (uint32_t c = 0; c < m_outputChannels; c++) {
+        		// 			outPtr[c] += sample * voice.currentGainMatrix[c];
+        		// 		}
+        		// 		outPtr += m_outputChannels;
+        		// 	}
+        		// }
+        		// else if (sourceChannels == 2) {
+        		// 	for (uint32_t i = 0; i < framesToMixNow; i++) {
+        		// 		StepGains(voice.currentGainMatrix, voice.targetGains, m_outputChannels, m_smoothingCoefficient);
+		        //
+        		// 		float sampleL = sourceData[(cursorInt + i) * 2 + 0];
+        		// 		float sampleR = sourceData[(cursorInt + i) * 2 + 1];
+        		// 		float sampleMono = (sampleL + sampleR) * 0.5f;
+		        //
+        		// 		for (uint32_t c = 0; c < m_outputChannels; c++) {
+        		// 			outPtr[c] += sampleMono * voice.currentGainMatrix[c];
+        		// 		}
+        		// 		outPtr += m_outputChannels;
+        		// 	}
+        		// }
+        		// else {
+        		// 	DALIA_LOG_WARN(LOG_CTX_MIXER, "Failed to mix voice with invalid channel count (%d).",
+        		// 		sourceChannels);
+        		// }
 
         	voice.cursor += static_cast<float>(framesToMixNow);
 			framesMixed += framesToMixNow;
@@ -481,7 +573,7 @@ namespace dalia {
 					}
 
 					stream.bufferReady[voice.data.stream.frontBufferIndex].store(false, std::memory_order_release);
-					const uint32_t gen = stream.generation.load(std::memory_order_relaxed);
+					const uint32_t gen = stream.gen.load(std::memory_order_relaxed);
 					IoStreamRequest req = IoStreamRequest::RefillStreamBuffer(
 						voice.data.stream.streamContextIndex,
 						gen,
@@ -521,7 +613,7 @@ namespace dalia {
     		DALIA_LOG_DEBUG(LOG_CTX_MIXER, "Voice %d stopped by error.", vIndex);
     	}
 
-    	m_rtEvents->Push(RtEvent::VoiceStopped(vIndex, voice.generation, voice.exitCondition));
+    	m_rtEvents->Push(RtEvent::VoiceStopped(vIndex, voice.gen, voice.exitCondition));
     	voice.Reset();
     }
 
@@ -536,10 +628,11 @@ namespace dalia {
 		}
 
     	// Apply volume
-		ApplyVolume(buffer, frameCount, m_outputChannels, bus.currentVolumeLinear, bus.targetVolumeLinear);
+		ApplyVolume(buffer, frameCount, m_outputChannels, bus.currentVolumeLinear, bus.targetVolumeLinear,
+			m_smoothingCoefficient);
 
     	if (bus.parentBusIndex != NO_PARENT) {
-    		float* parentBuffer = m_busBufferPool.data() + (bus.parentBusIndex * frameCount * MAX_CHANNELS);
+    		float* parentBuffer = m_busBufferPool.data() + (bus.parentBusIndex * frameCount * CHANNELS_MAX);
     		MixToBuffer(parentBuffer, buffer, frameCount * m_outputChannels);
     	}
     }

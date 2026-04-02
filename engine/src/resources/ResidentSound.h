@@ -15,13 +15,13 @@ namespace dalia {
         uint32_t pathHash = 0;
 
         std::vector<float> pcmData;
+
+        // Format
+        uint32_t frameCount = 0;
         uint32_t channels = 0;
         uint32_t sampleRate = 0;
-        uint32_t frameCount = 0; // Do we even care about this? probably not
 
-        std::span<float> GetBuffer() {
-            return std::span<float>(pcmData.data(), pcmData.size());
-        }
+        std::span<float> GetBuffer() { return std::span(pcmData.data(), pcmData.size()); }
 
         void Reset() {
             state.store(LoadState::Unloaded, std::memory_order_relaxed);
@@ -30,9 +30,9 @@ namespace dalia {
             pathHash = 0;
 
             pcmData.clear();
+            frameCount = 0;
             channels = 0;
             sampleRate = 0;
-            frameCount = 0;
         }
     };
 }

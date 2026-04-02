@@ -27,12 +27,18 @@ namespace dalia {
 
     // --- Mixing ---
     constexpr float VOLUME_EPSILON = 1e-5f;
+    constexpr float GAIN_EPSILON = 1e-5f;
+    constexpr float PAN_EPSILON = 1e-5f;
     constexpr float FREQUENCY_EPSILON = 1e-1f;
     constexpr float RESONANCE_EPSILON = 1e-3f;
 
-    constexpr float SMOOTHING_COEFFICIENT = 0.005f; // Used for volume smoothing (from current to target)
+    // constexpr float SMOOTHING_COEFFICIENT = 0.005f; // Used for volume smoothing (from current to target)
+    constexpr float SMOOTHING_CUTOFF_HZ = 15.0f;    // Determines the smoothing time for volume changes
     static constexpr double dPI = 3.14159265358979323846f;
+    static constexpr float PI = 3.14159265358979323846f;
     static constexpr float PI_2 = 1.57079632679489661923f;
+
+    static constexpr float DEFAULT_GAIN = 1.0f;
 
     static constexpr float DEFAULT_VOLUME_LINEAR = 1.0f;
     static constexpr float MIN_VOLUME_LINEAR = 0.0f;
@@ -41,6 +47,9 @@ namespace dalia {
     static constexpr float DEFAULT_VOLUME_DB = 0.0f;
     static constexpr float MIN_VOLUME_DB = -96.0f;  // Minimum volume in decibels
     static constexpr float MAX_VOLUME_DB = 24.0f;   // Maximum volume in decibels
+
+    static constexpr float MIN_PAN = -1.0f;
+    static constexpr float MAX_PAN = 1.0f;
 
     static constexpr uint32_t CHANNELS_MAX = 8;
     static constexpr uint32_t CHANNELS_MONO = 1;
@@ -64,7 +73,7 @@ namespace dalia {
     static constexpr uint32_t NO_PARENT = INT32_MAX; // Indicator that a voice or bus has no parent
     static constexpr uint32_t NO_INDEX = INT32_MAX;  // Default index value
 
-    static constexpr uint32_t INVALID_GENERATION = 0;
+    static constexpr uint32_t NO_GENERATION = 0;
     static constexpr uint32_t START_GENERATION = 1;
 
 }

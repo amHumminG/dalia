@@ -31,7 +31,7 @@ namespace dalia {
         if (!IsValid(index, generation)) return false;
 
         m_generations[index]++;
-        if (m_generations[index] == INVALID_GENERATION) m_generations[index] = START_GENERATION;
+        if (m_generations[index] == NO_GENERATION) m_generations[index] = START_GENERATION;
         m_freeIndices.Push(index);
         m_isUsed[index] = false;
 

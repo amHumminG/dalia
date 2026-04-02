@@ -31,7 +31,7 @@
 #include "resources/ResidentSound.h"
 #include "resources/StreamSound.h"
 
-#include "common/StringID.h" // From common
+#include "common/StringID.h"
 
 #include "miniaudio.h"
 
@@ -49,10 +49,10 @@ namespace dalia {
 
 	struct VoiceID {
 		uint32_t index;
-		uint32_t generation;
+		uint32_t gen;
 
 		bool operator==(const VoiceID& other) const {
-			return index == other.index && generation == other.generation;
+			return index == other.index && gen == other.gen;
 		}
 	};
 
@@ -63,7 +63,7 @@ namespace dalia {
 
 	struct PendingPlayback {
 		uint32_t voiceIndex = NO_INDEX;
-		uint32_t voiceGeneration = INVALID_GENERATION;
+		uint32_t voiceGen = NO_GENERATION;
 		uint64_t assetUuid = INVALID_UUID;
 	};
 
@@ -201,7 +201,7 @@ namespace dalia {
 		if (index >= state->voiceCapacity) return Result::InvalidHandle;
 
 		VoiceMirror* mirror = &state->voicePoolMirror[index];
-		if (mirror->generation != generation) return Result::ExpiredHandle;
+		if (mirror->gen != generation) return Result::ExpiredHandle;
 
 		outMirror = mirror;
 		return Result::Ok;
@@ -364,25 +364,33 @@ namespace dalia {
 				// Process deferred playbacks
 				for (auto it = state->pendingPlaybacks.begin(); it != state->pendingPlaybacks.end(); ) {
 					if (it->assetUuid == ev.assetUuid) {
+						uint32_t vIndex = it->voiceIndex, vGen = it->voiceGen;
 						VoiceMirror* vMirror = nullptr;
-						Result res = ResolveVoiceMirror(state, it->voiceIndex, it->voiceGeneration, vMirror);
+						Result res = ResolveVoiceMirror(state, vIndex, vGen, vMirror);
 
 						if (res == Result::Ok && vMirror->pendingLoad) {
 							SoundHandle handle = state->ForgeSoundHandle(ev.assetUuid);
 							SoundType soundType = handle.GetType();
+							uint32_t frameCount = 0;
+							uint32_t channels = 0;
+							uint32_t sampleRate = 0;
 
 							if (soundType == SoundType::Resident) {
 								ResidentSound* sound = state->assetRegistry->GetResidentSound(handle);
 
 								RtCommand cmd = RtCommand::PrepareVoiceResident(
-									it->voiceIndex,
-									it->voiceGeneration,
+									vIndex,
+									vGen,
 									sound->pcmData.data(),
 									sound->frameCount,
 									sound->channels,
 									sound->sampleRate
 								);
 								state->rtCommands->Enqueue(cmd);
+
+								frameCount = sound->frameCount;
+								channels = sound->channels;
+								sampleRate = sound->sampleRate;
 							}
 							else if (soundType == SoundType::Stream) {
 								StreamSound* sound = state->assetRegistry->GetStreamSound(handle);
@@ -395,38 +403,47 @@ namespace dalia {
 
 									if (vMirror->onStopCallback) {
 										PlaybackHandle playback = state->ForgePlaybackHandle(
-											it->voiceIndex,
-											it->voiceGeneration
+											vIndex,
+											vGen
 										);
 										vMirror->onStopCallback(playback, PlaybackExitCondition::Error);
 									}
 
 									vMirror->Reset();
-									state->freeVoices->Push(it->voiceIndex);
+									state->freeVoices->Push(vIndex);
 									it = state->pendingPlaybacks.erase(it);
 
 									continue;
 								}
 
 								RtCommand cmd = RtCommand::PrepareVoiceStreaming(
-									it->voiceIndex,
-									vMirror->generation,
+									vIndex,
+									vGen,
 									streamIndex,
 									sound->channels,
 									sound->sampleRate
 								);
 								state->rtCommands->Enqueue(cmd);
+
+								frameCount = sound->frameCount;
+								channels = sound->channels;
+								sampleRate = sound->sampleRate;
 							}
 
 							vMirror->pendingLoad = false;
+							vMirror->frameCount = frameCount;
+							vMirror->channels = channels;
+							vMirror->sampleRate = sampleRate;
+
+							// Send voice commands based on current vMirror state
 							if (vMirror->state == VoiceState::Playing) {
-								state->rtCommands->Enqueue(RtCommand::PlayVoice(it->voiceIndex, it->voiceGeneration));
+								state->rtCommands->Enqueue(RtCommand::PlayVoice(vIndex, vGen));
 							}
 							else if (vMirror->state == VoiceState::Paused) {
-								state->rtCommands->Enqueue(RtCommand::PauseVoice(it->voiceIndex, it->voiceGeneration));
+								state->rtCommands->Enqueue(RtCommand::PauseVoice(vIndex, vGen));
 							}
 							else if (vMirror->state == VoiceState::Stopped) {
-								state->rtCommands->Enqueue(RtCommand::StopVoice(it->voiceIndex, it->voiceGeneration));
+								state->rtCommands->Enqueue(RtCommand::StopVoice(vIndex, vGen));
 							}
 						}
 
@@ -441,22 +458,24 @@ namespace dalia {
 			case IoLoadEvent::Type::SoundLoadFailed: {
 				for (auto it = state->pendingPlaybacks.begin(); it != state->pendingPlaybacks.end(); ) {
 					if (it->assetUuid == ev.assetUuid) {
+						uint32_t vIndex = it->voiceIndex, vGen = it->voiceGen;
 						VoiceMirror* vMirror = nullptr;
-						Result res = ResolveVoiceMirror(state, it->voiceIndex, it->voiceGeneration, vMirror);
+						Result res = ResolveVoiceMirror(state, vIndex, vGen, vMirror);
 
 						if (res == Result::Ok) {
 							DALIA_LOG_ERR(LOG_CTX_CORE, "Aborting deferred playback. Sound failed to load.");
 
 							if (vMirror->onStopCallback) {
 								PlaybackHandle playback = state->ForgePlaybackHandle(
-									it->voiceIndex,
-									it->voiceGeneration
+									vIndex,
+									vGen
 								);
 								vMirror->onStopCallback(playback, PlaybackExitCondition::Error);
 							}
 
+							state->rtCommands->Enqueue(RtCommand::DeallocateVoice(vIndex, vGen));
 							vMirror->Reset();
-							state->freeVoices->Push(it->voiceIndex);
+							state->freeVoices->Push(vIndex);
 						}
 
 						it = state->pendingPlaybacks.erase(it);
@@ -495,6 +514,46 @@ namespace dalia {
 			DALIA_LOG_CRIT(LOG_CTX_CORE, "Failed to compile mix order. Cycle detected.");
 			state->isMixOrderDirty = false;
 		}
+	}
+
+	static inline void ResolveAndFlushGains(EngineInternalState* state, uint32_t vIndex) {
+		VoiceMirror& vMirror = state->voicePoolMirror[vIndex];
+
+		float volumeLinear = DbToLinear(vMirror.volumeDb);
+		float finalGainMatrix[CHANNELS_MAX][CHANNELS_MAX] = {0};
+
+		if (vMirror.isSpatial) {
+			// 3D spatial
+			// Calculate distance attenuation & VBAP
+		}
+		else {
+			if (vMirror.channels == CHANNELS_MONO) {
+				// Constant power panning
+				float panNormalized = (vMirror.stereoPan + 1.0f) * 0.5f;
+				float angle = panNormalized * PI * 0.5f;
+
+				finalGainMatrix[0][0] = std::cos(angle) * volumeLinear; // Left
+				finalGainMatrix[0][1] = std::sin(angle) * volumeLinear; // Right
+
+				DALIA_LOG_DEBUG(LOG_CTX_CORE,
+					"Updated gain matrix for voice %d (MONO). Gain[0][0] = %.2f, Gain[0][1] = %.2f.",
+					vIndex, finalGainMatrix[0][0], finalGainMatrix[1][1]);
+			}
+			else { // CHANNELS_STEREO
+				float gainL = std::clamp(1.0f - vMirror.stereoPan, 0.0f, 1.0f);
+				float gainR = std::clamp(1.0f + vMirror.stereoPan, 0.0f, 1.0f);
+
+				finalGainMatrix[0][0] = gainL * volumeLinear;
+				finalGainMatrix[1][1] = gainR * volumeLinear;
+
+				DALIA_LOG_DEBUG(LOG_CTX_CORE,
+					"Updated gain matrix for voice %d (STEREO). Gain[0][0] = %.2f, Gain[1][1] = %.2f.",
+					vIndex, finalGainMatrix[0][0], finalGainMatrix[1][1]);
+			}
+		}
+
+		state->rtCommands->Enqueue(RtCommand::SetVoiceGainMatrix(vIndex, vMirror.gen, finalGainMatrix));
+		vMirror.isGainDirty = false;
 	}
 
 	static void data_callback(ma_device* pDevice, void* pOutput, const void* pInput, uint32_t frameCount) {
@@ -554,9 +613,9 @@ namespace dalia {
 		m_state->outputSampleRate = m_state->device->sampleRate;
 
 		// Buffer allocations based on period size
-		const uint32_t samplesPerPeriod = m_state->device->playback.internalPeriodSizeInFrames * MAX_CHANNELS;
-		m_state->busBufferPool = std::make_unique<float[]>(m_state->busCapacity * samplesPerPeriod);
-		m_state->dspScratchBuffer = std::make_unique<float[]>(samplesPerPeriod);
+		const uint32_t maxSamplesPerPeriod = m_state->device->playback.internalPeriodSizeInFrames * CHANNELS_MAX;
+		m_state->busBufferPool = std::make_unique<float[]>(m_state->busCapacity * maxSamplesPerPeriod);
+		m_state->dspScratchBuffer = std::make_unique<float[]>(maxSamplesPerPeriod);
 
 		// --- SYSTEMS SETUP ---
 		RtSystemConfig rtConfig;
@@ -568,9 +627,9 @@ namespace dalia {
 		rtConfig.voicePool			= std::span(m_state->voicePool.get(), m_state->voiceCapacity);
 		rtConfig.streamPool			= std::span(m_state->streamPool.get(), m_state->streamCapacity);
 		rtConfig.busPool			= std::span(m_state->busPool.get(), m_state->busCapacity);
-		rtConfig.busBufferPool		= std::span(m_state->busBufferPool.get(), m_state->busCapacity * samplesPerPeriod);
+		rtConfig.busBufferPool		= std::span(m_state->busBufferPool.get(), m_state->busCapacity * maxSamplesPerPeriod);
 		rtConfig.masterBus			= &m_state->busPool[MASTER_BUS_INDEX];
-		rtConfig.dspScratchBuffer	= std::span(m_state->dspScratchBuffer.get(), samplesPerPeriod);
+		rtConfig.dspScratchBuffer	= std::span(m_state->dspScratchBuffer.get(), maxSamplesPerPeriod);
 		rtConfig.biquadFilterPool	= std::span(m_state->biquadFilterPool.get(), m_state->biquadHM->GetCapacity());
 		m_state->rtSystem = std::make_unique<RtSystem>(rtConfig);
 
@@ -647,7 +706,15 @@ namespace dalia {
 			ProcessIoLoadEvent(m_state, loadEv);
 		}
 
-		TryUpdateMixOrder(m_state);
+		// Update voice gains if necessary
+		for (uint32_t vIndex = 0; vIndex < m_state->voiceCapacity; vIndex++) {
+			VoiceMirror& vMirror = m_state->voicePoolMirror[vIndex];
+			if (vMirror.state == VoiceState::Free || !vMirror.isGainDirty) continue;
+
+			ResolveAndFlushGains(m_state, vIndex);
+		}
+
+		TryUpdateMixOrder(m_state); // Update mix order if buses have been manipulated
 
 		m_state->rtCommands->Dispatch(); // Send all commands accumulated from this frame to the audio thread
 		Logger::ProcessLogs(); // Print all logs accumulated from this frame
@@ -746,7 +813,7 @@ namespace dalia {
 					VoiceMirror& vMirror = m_state->voicePoolMirror[it->voiceIndex];
 
 					if (vMirror.onStopCallback) {
-						PlaybackHandle playback = PlaybackHandle::Create(it->voiceIndex, it->voiceGeneration);
+						PlaybackHandle playback = PlaybackHandle::Create(it->voiceIndex, it->voiceGen);
 						vMirror.onStopCallback(playback, PlaybackExitCondition::ExplicitStop);
 					}
 
@@ -765,9 +832,9 @@ namespace dalia {
 				VoiceMirror& vMirror = m_state->voicePoolMirror[i];
 
 				if (vMirror.state != VoiceState::Free && vMirror.assetUuid == soundHandle.GetUUID()) {
-					pendingUnload.voicesToStop.push_back(VoiceID(i, vMirror.generation));
+					pendingUnload.voicesToStop.push_back(VoiceID(i, vMirror.gen));
 
-					m_state->rtCommands->Enqueue(RtCommand::StopVoice(i, vMirror.generation));
+					m_state->rtCommands->Enqueue(RtCommand::StopVoice(i, vMirror.gen));
 					DALIA_LOG_DEBUG(LOG_CTX_API, "Commanded to stop voice %d.", i);
 				}
 			}
@@ -881,7 +948,7 @@ namespace dalia {
 			VoiceMirror& vMirrorChild = m_state->voicePoolMirror[i];
 			if (vMirrorChild.parentBusIndex == bIndex) {
 				vMirrorChild.parentBusIndex = NO_PARENT;
-				m_state->rtCommands->Enqueue(RtCommand::SetVoiceParent(i, vMirrorChild.generation, NO_PARENT));
+				m_state->rtCommands->Enqueue(RtCommand::SetVoiceParent(i, vMirrorChild.gen, NO_PARENT));
 				orphanedPlaybacks++;
 				DALIA_LOG_DEBUG(LOG_CTX_API, "Orphaned voice (index: %d).", i);
 			}
@@ -1222,16 +1289,25 @@ namespace dalia {
 		ResidentSound* residentSound = nullptr;
 		StreamSound* streamSound = nullptr;
 		LoadState soundLoadState;
+		uint32_t frameCount = 0;
+		uint32_t channels = 0;
+		uint32_t sampleRate = 0;
 
 		if (soundType == SoundType::Resident) {
 			residentSound = m_state->assetRegistry->GetResidentSound(soundHandle);
 			if (!residentSound) return Result::InvalidHandle;
 			soundLoadState = residentSound->state.load(std::memory_order_acquire);
+			frameCount = residentSound->frameCount;
+			channels = residentSound->channels;
+			sampleRate = residentSound->sampleRate;
 		}
 		else {
 			streamSound = m_state->assetRegistry->GetStreamSound(soundHandle);
 			if (!streamSound) return Result::InvalidHandle;
 			soundLoadState = streamSound->state.load(std::memory_order_acquire);
+			frameCount = streamSound->frameCount;
+			channels = streamSound->channels;
+			sampleRate = streamSound->sampleRate;
 		}
 
 		if (soundLoadState == LoadState::Error) {
@@ -1248,28 +1324,33 @@ namespace dalia {
 		// Prime voice mirror
 		VoiceMirror& vMirror = m_state->voicePoolMirror[vIndex];
 		vMirror.state = VoiceState::Inactive;
-		vMirror.soundType = soundType;
 		vMirror.assetUuid = soundHandle.GetUUID();
+		vMirror.frameCount = frameCount;
+		vMirror.channels = channels;
+		vMirror.sampleRate = sampleRate;
+		vMirror.soundType = soundType;
 		if (callback) vMirror.onStopCallback = callback;
 
 		// Deferred playback
 		if (soundLoadState == LoadState::Loading) {
 			m_state->pendingPlaybacks.push_back({
 				vIndex,
-				vMirror.generation,
+				vMirror.gen,
 				soundHandle.GetUUID()
 			});
 			vMirror.pendingLoad = true;
 			DALIA_LOG_DEBUG(LOG_CTX_API, "Deferring playback for voice %d. Sound not yet loaded.", vIndex);
 
-			pbkHandle = PlaybackHandle::Create(vIndex, vMirror.generation);
+			pbkHandle = PlaybackHandle::Create(vIndex, vMirror.gen);
+			m_state->rtCommands->Enqueue(RtCommand::AllocateVoice(vIndex, vMirror.gen));
 			return Result::Ok;
 		}
 
 		if (soundType == SoundType::Resident) {
+			m_state->rtCommands->Enqueue(RtCommand::AllocateVoice(vIndex, vMirror.gen));
 			RtCommand cmd = RtCommand::PrepareVoiceResident(
 				vIndex,
-				vMirror.generation,
+				vMirror.gen,
 				residentSound->pcmData.data(),
 				residentSound->frameCount,
 				residentSound->channels,
@@ -1278,7 +1359,6 @@ namespace dalia {
 			m_state->rtCommands->Enqueue(cmd);
 		}
 		else if (soundType == SoundType::Stream) {
-
 			uint32_t streamIndex;
 			Result streamRes = DispatchStreamPrepare(m_state, streamSound->filepath, streamIndex);
 			if (streamRes != Result::Ok) {
@@ -1295,9 +1375,10 @@ namespace dalia {
 				return streamRes;
 			}
 
+			m_state->rtCommands->Enqueue(RtCommand::AllocateVoice(vIndex, vMirror.gen));
 			RtCommand cmd = RtCommand::PrepareVoiceStreaming(
 				vIndex,
-				vMirror.generation,
+				vMirror.gen,
 				streamIndex,
 				streamSound->channels,
 				streamSound->sampleRate
@@ -1305,7 +1386,7 @@ namespace dalia {
 			m_state->rtCommands->Enqueue(cmd);
 		}
 
-		pbkHandle = PlaybackHandle::Create(vIndex, vMirror.generation);
+		pbkHandle = PlaybackHandle::Create(vIndex, vMirror.gen);
 		DALIA_LOG_DEBUG(LOG_CTX_API, "Created playback instance using voice %d.", vIndex);
 
 		return Result::Ok;
@@ -1439,6 +1520,97 @@ namespace dalia {
 
 		m_state->rtCommands->Enqueue(RtCommand::StopVoice(vIndex, voiceGeneration));
 		DALIA_LOG_DEBUG(LOG_CTX_API, "Setting voice %d to stop.", vIndex);
+
+		return Result::Ok;
+	}
+
+	Result Engine::SeekPlayback(PlaybackHandle playback, double timeInSeconds) {
+		if (!IsInitialized(m_state)) return Result::NotInitialized;
+
+		if (!playback.IsValid()) return Result::InvalidHandle;
+		uint32_t vIndex = playback.GetIndex();
+		uint32_t vGen = playback.GetGeneration();
+
+		VoiceMirror* vMirror = nullptr;
+		Result res = ResolveVoiceMirror(m_state, vIndex, vGen, vMirror);
+		if (res != Result::Ok) return res;
+
+		if (timeInSeconds < 0.0) timeInSeconds = 0.0;
+
+		uint64_t seekFrame64 = static_cast<uint64_t>(timeInSeconds * vMirror->sampleRate);
+
+		// Safety clamps TODO: Log warnings for these
+		if (seekFrame64 >= vMirror->frameCount) {
+			if (vMirror->frameCount > 0) seekFrame64 = vMirror->frameCount - 1;
+			else seekFrame64 = 0;
+		}
+
+		uint32_t seekFrame = static_cast<uint32_t>(seekFrame64);
+		m_state->rtCommands->Enqueue(RtCommand::SeekVoice(vIndex, vGen, seekFrame));
+		DALIA_LOG_DEBUG(LOG_CTX_API, "Seeking voice %d to frame %d.", vIndex, seekFrame);
+
+		return Result::Ok;
+	}
+
+	Result Engine::SetPlaybackLooping(PlaybackHandle playback, bool looping) {
+		if (!IsInitialized(m_state)) return Result::NotInitialized;
+
+		if (!playback.IsValid()) return Result::InvalidHandle;
+		uint32_t vIndex = playback.GetIndex();
+		uint32_t vGeneration = playback.GetGeneration();
+
+		VoiceMirror* vMirror = nullptr;
+		Result res = ResolveVoiceMirror(m_state, vIndex, vGeneration, vMirror);
+		if (res != Result::Ok) return res;
+
+		if (vMirror->isLooping == looping) {
+			if (looping) DALIA_LOG_WARN(LOG_CTX_API, "Setting playback to loop. Playback is already set to loop");
+			else DALIA_LOG_WARN(LOG_CTX_API, "Setting playback to not loop. Playback is already set to not loop");
+			return Result::Ok;
+		}
+
+		vMirror->isLooping = looping;
+		m_state->rtCommands->Enqueue(RtCommand::SetVoiceLooping(vIndex, vGeneration, looping));
+		if (looping) DALIA_LOG_DEBUG(LOG_CTX_API, "Setting voice %d to loop.", vIndex);
+		else DALIA_LOG_DEBUG(LOG_CTX_API, "Setting voice %d to not loop.", vIndex);
+
+		return Result::Ok;
+	}
+
+	Result Engine::SetPlaybackVolumeDb(PlaybackHandle playback, float volumeDb) {
+		if (!IsInitialized(m_state)) return Result::NotInitialized;
+
+		if (!playback.IsValid()) return Result::InvalidHandle;
+		uint32_t vIndex = playback.GetIndex();
+		uint32_t vGeneration = playback.GetGeneration();
+
+		VoiceMirror* vMirror = nullptr;
+		Result res = ResolveVoiceMirror(m_state, vIndex, vGeneration, vMirror);
+		if (res != Result::Ok) return res;
+
+		float clampedVolumeDb = std::clamp(volumeDb, MIN_VOLUME_DB, MAX_VOLUME_DB);
+		if (NearlyEqual(vMirror->volumeDb, clampedVolumeDb, VOLUME_EPSILON)) return Result::Ok;
+		vMirror->volumeDb = clampedVolumeDb;
+		vMirror->isGainDirty = true;
+
+		return Result::Ok;
+	}
+
+	Result Engine::SetPlaybackStereoPan(PlaybackHandle playback, float pan) {
+		if (!IsInitialized(m_state)) return Result::NotInitialized;
+
+		if (!playback.IsValid()) return Result::InvalidHandle;
+		uint32_t vIndex = playback.GetIndex();
+		uint32_t vGeneration = playback.GetGeneration();
+
+		VoiceMirror* vMirror = nullptr;
+		Result res = ResolveVoiceMirror(m_state, vIndex, vGeneration, vMirror);
+		if (res != Result::Ok) return res;
+
+		float clampedPan = std::clamp(pan, MIN_PAN, MAX_PAN);
+		if (NearlyEqual(vMirror->stereoPan, clampedPan, PAN_EPSILON)) return Result::Ok;
+		vMirror->stereoPan = clampedPan;
+		vMirror->isGainDirty = true;
 
 		return Result::Ok;
 	}

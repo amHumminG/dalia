@@ -4,21 +4,20 @@
 #include "core/Constants.h"
 #include <cstdint>
 
-namespace dalia {
+#include "StreamContext.h"
 
-    class Bus;
+namespace dalia {
 
     enum class VoiceState : uint8_t {
         Free,
         Inactive,
         Playing,
-        Virtual, // Should probably not be a state
         Paused,
         Stopped
     };
 
     struct Voice {
-        uint32_t generation = START_GENERATION;
+        uint32_t gen = START_GENERATION;
         VoiceState state = VoiceState::Free;
         PlaybackExitCondition exitCondition = PlaybackExitCondition::NaturalEnd;
 
@@ -27,15 +26,15 @@ namespace dalia {
 
         // Mixing Properties
         bool isLooping = false;
-        float volumeLinear = DEFAULT_VOLUME_LINEAR;
+        float targetGainMatrix[CHANNELS_MAX][CHANNELS_MAX];
+        float currentGainMatrix[CHANNELS_MAX][CHANNELS_MAX];
         float pitch = 1.0f;
-        float pan = 0.0f;
 
         uint32_t channels = CHANNELS_STEREO;
         uint32_t sampleRate = TARGET_OUTPUT_SAMPLE_RATE;
         double cursor = 0.0f;
 
-        SoundType soundType;
+        SoundType soundType = SoundType::None;
         union {
             struct {
                 const float* pcmData;
@@ -44,27 +43,31 @@ namespace dalia {
 
             struct {
                 uint32_t streamContextIndex;
-                uint8_t frontBufferIndex;
+                bool pendingSeek = false;
+                uint32_t seekFrame = 0; // Stores the target seek frame if a seek is pending
+                uint32_t frontBufferIndex;
             } stream;
         } data = {};
 
         // Use this when releasing a voice
         void Reset() {
-            generation++;
-            if (generation == INVALID_GENERATION) generation = START_GENERATION;
+            gen++;
+            if (gen == NO_GENERATION) gen = START_GENERATION;
 
             parentBusIndex = MASTER_BUS_INDEX;
             state = VoiceState::Free;
             exitCondition = PlaybackExitCondition::NaturalEnd;
 
             isLooping = false;
-            volumeLinear = DEFAULT_VOLUME_LINEAR;
-            pitch = 1.0f;
-            pan = 0.0f;
+            std::memset(targetGainMatrix, 0.0f, sizeof(targetGainMatrix));
+            std::memset(currentGainMatrix, 0.0f, sizeof(currentGainMatrix));
 
-            channels = CHANNELS_STEREO;
-            sampleRate = TARGET_OUTPUT_SAMPLE_RATE;
+            channels = 0;
+            sampleRate = 0;
             cursor = 0.0f;
+
+            soundType = SoundType::None;
+            data = {};
         }
     };
 
@@ -74,8 +77,16 @@ namespace dalia {
         AudioEventCallback onStopCallback = nullptr;
         uint64_t assetUuid;
 
+        bool isGainDirty = true;
+        float volumeDb = DEFAULT_VOLUME_DB;
+        float stereoPan = 0.0f;
+
+        bool isSpatial = false;
+        // Vector3 position
+        // Vector3 velocity
+
         // --- Voice Properties ---
-        uint32_t generation = START_GENERATION;
+        uint32_t gen = START_GENERATION;
         VoiceState state = VoiceState::Free;
 
         // Routing
@@ -83,11 +94,12 @@ namespace dalia {
 
         // Mixing Properties
         bool isLooping = false;
-        float volumeDb = DEFAULT_VOLUME_DB;
         float pitch = 1.0f;
-        float pan = 0.0f;
 
         // Asset
+        uint32_t frameCount = 0;
+        uint32_t channels = 0;
+        uint32_t sampleRate = 0;
         SoundType soundType;
 
         void Reset() {
@@ -95,16 +107,21 @@ namespace dalia {
             onStopCallback = nullptr;
             assetUuid = 0;
 
-            generation++;
-            if (generation == INVALID_GENERATION) generation = START_GENERATION;
+            isGainDirty = true;
+            volumeDb = DEFAULT_VOLUME_DB;
+            stereoPan = 0.0f;
+
+            gen++;
+            if (gen == NO_GENERATION) gen = START_GENERATION;
             state = VoiceState::Free;
 
             parentBusIndex = MASTER_BUS_INDEX;
 
             isLooping = false;
-            volumeDb = DEFAULT_VOLUME_DB;
             pitch = 1.0f;
-            pan = 0.0f;
+
+            channels = 0;
+            soundType = SoundType::None;
         }
     };
 }
