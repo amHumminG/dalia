@@ -506,27 +506,39 @@ namespace dalia {
 		VoiceMirror& vMirror = state->voicePoolMirror[vIndex];
 
 		float volumeLinear = DbToLinear(vMirror.volumeDb);
-		float finalGains[CHANNELS_MAX] = {0};
+		float finalGainMatrix[CHANNELS_MAX][CHANNELS_MAX] = {0};
 
 		if (vMirror.isSpatial) {
 			// 3D spatial
 			// Calculate distance attenuation & VBAP
 		}
 		else {
-			// 2D manual
-			float panNormalized = (vMirror.pan + 1.0f) * 0.5f;
-			float angle = panNormalized * PI * 0.5f;
+			if (vMirror.channels == CHANNELS_MONO) {
+				// Constant power panning
+				float panNormalized = (vMirror.stereoPan + 1.0f) * 0.5f;
+				float angle = panNormalized * PI * 0.5f;
 
-			finalGains[0] = std::cos(angle) * volumeLinear; // Left
-			finalGains[1] = std::sin(angle) * volumeLinear; // Right
+				finalGainMatrix[0][0] = std::cos(angle) * volumeLinear; // Left
+				finalGainMatrix[0][1] = std::sin(angle) * volumeLinear; // Right
 
-			// If we ever add a panY to voice for front/back 2D panning, this is where we calculate the surround matrix
+				DALIA_LOG_DEBUG(LOG_CTX_CORE,
+					"Updated gain matrix for voice %d (MONO). Gain[0][0] = %.2f, Gain[0][1] = %.2f.",
+					vIndex, finalGainMatrix[0][0], finalGainMatrix[1][1]);
+			}
+			else { // CHANNELS_STEREO
+				float gainL = std::clamp(1.0f - vMirror.stereoPan, 0.0f, 1.0f);
+				float gainR = std::clamp(1.0f + vMirror.stereoPan, 0.0f, 1.0f);
 
-			// Write silence the rest of the gains
-			for (uint32_t c = 2; c < state->outputChannels; c++) finalGains[c] = 0.0f;
+				finalGainMatrix[0][0] = gainL * volumeLinear;
+				finalGainMatrix[1][1] = gainR * volumeLinear;
+
+				DALIA_LOG_DEBUG(LOG_CTX_CORE,
+					"Updated gain matrix for voice %d (STEREO). Gain[0][0] = %.2f, Gain[1][1] = %.2f.",
+					vIndex, finalGainMatrix[0][0], finalGainMatrix[1][1]);
+			}
 		}
 
-		state->rtCommands->Enqueue(RtCommand::SetVoiceGains(vIndex, vMirror.gen, finalGains));
+		state->rtCommands->Enqueue(RtCommand::SetVoiceGainMatrix(vIndex, vMirror.gen, finalGainMatrix));
 		vMirror.isGainDirty = false;
 	}
 
@@ -1263,16 +1275,19 @@ namespace dalia {
 		ResidentSound* residentSound = nullptr;
 		StreamSound* streamSound = nullptr;
 		LoadState soundLoadState;
+		uint32_t channels = 0;
 
 		if (soundType == SoundType::Resident) {
 			residentSound = m_state->assetRegistry->GetResidentSound(soundHandle);
 			if (!residentSound) return Result::InvalidHandle;
 			soundLoadState = residentSound->state.load(std::memory_order_acquire);
+			channels = residentSound->channels;
 		}
 		else {
 			streamSound = m_state->assetRegistry->GetStreamSound(soundHandle);
 			if (!streamSound) return Result::InvalidHandle;
 			soundLoadState = streamSound->state.load(std::memory_order_acquire);
+			channels = streamSound->channels;
 		}
 
 		if (soundLoadState == LoadState::Error) {
@@ -1289,8 +1304,9 @@ namespace dalia {
 		// Prime voice mirror
 		VoiceMirror& vMirror = m_state->voicePoolMirror[vIndex];
 		vMirror.state = VoiceState::Inactive;
-		vMirror.soundType = soundType;
 		vMirror.assetUuid = soundHandle.GetUUID();
+		vMirror.channels = channels;
+		vMirror.soundType = soundType;
 		if (callback) vMirror.onStopCallback = callback;
 
 		// Deferred playback
@@ -1542,8 +1558,8 @@ namespace dalia {
 		if (res != Result::Ok) return res;
 
 		float clampedPan = std::clamp(pan, MIN_PAN, MAX_PAN);
-		if (NearlyEqual(vMirror->pan, clampedPan, PAN_EPSILON)) return Result::Ok;
-		vMirror->pan = clampedPan;
+		if (NearlyEqual(vMirror->stereoPan, clampedPan, PAN_EPSILON)) return Result::Ok;
+		vMirror->stereoPan = clampedPan;
 		vMirror->isGainDirty = true;
 
 		return Result::Ok;

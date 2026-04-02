@@ -35,13 +35,19 @@ namespace dalia {
 		return busBufferPool + (busIndex * frameCount * CHANNELS_MAX);
 	}
 
-	static inline void StepGains(float* DALIA_RESTRICT currentGains, const float* DALIA_RESTRICT targetGains,
-		uint32_t channels, float smoothingCoefficient) {
-		for (uint32_t c = 0; c < channels; c++) {
-			float diff = targetGains[c] - currentGains[c];
+	static inline void StepMatrixGains(
+		float (* DALIA_RESTRICT current)[CHANNELS_MAX],
+		const float (* DALIA_RESTRICT target)[CHANNELS_MAX],
+		uint32_t inChannels,
+		uint32_t outChannels,
+		float smoothingCoefficient) {
+		for (uint32_t inC = 0; inC < inChannels; inC++) {
+			for (uint32_t outC = 0; outC < outChannels; outC++) {
+				float diff = target[inC][outC] - current[inC][outC];
 
-			if (std::abs(diff) < GAIN_EPSILON) currentGains[c] = targetGains[c];
-			else currentGains[c] += diff * smoothingCoefficient;
+				if (std::abs(diff) < GAIN_EPSILON) current[inC][outC] = target[inC][outC];
+				else current[inC][outC] += diff * smoothingCoefficient;
+			}
 		}
  	}
 
@@ -217,13 +223,12 @@ namespace dalia {
 	            	voice.isLooping = cmd.data.voiceBool.value;
 	            	break;
 				}
-				case RtCommand::Type::SetVoiceGains: {
-	            	Voice& voice = m_voicePool[cmd.data.voiceGains.voiceIndex];
-	            	if (voice.gen != cmd.data.voiceGains.voiceGen) break; // Check for outdated command
+				case RtCommand::Type::SetVoiceGainMatrix: {
+	            	Voice& voice = m_voicePool[cmd.data.voiceGain.voiceIndex];
+	            	if (voice.gen != cmd.data.voiceGain.voiceGen) break; // Check for outdated command
 
-	            	for (uint32_t i = 0; i < CHANNELS_MAX; i++) {
-	            		voice.targetGains[i] = cmd.data.voiceGains.gains[i];
-	            	}
+					std::memcpy(voice.targetGainMatrix, cmd.data.voiceGain.gainMatrix,
+						sizeof(voice.targetGainMatrix));
 					break;
 	            }
 				case RtCommand::Type::AllocateBus: {
@@ -422,49 +427,66 @@ namespace dalia {
 			uint32_t framesToMixNow = std::min(frameCount - framesMixed, remainingFramesInSource);
 
         	if (framesToMixNow > 0) {
-        		float* outPtr = &busBuffer[framesMixed * m_outputChannels];
-        		uint32_t sourceStride = sourceChannels;
-        		if (sourceChannels == m_outputChannels) {
-        			for (uint32_t i = 0; i < framesToMixNow; i++) {
-        				StepGains(voice.currentGains, voice.targetGains, m_outputChannels, m_smoothingCoefficient);
+        		const float* DALIA_RESTRICT inPtr = &sourceData[cursorInt * sourceChannels];
+        		float* DALIA_RESTRICT outPtr = &busBuffer[framesMixed * m_outputChannels];
 
-        				for (uint32_t c = 0; c < m_outputChannels; c++) {
-        					float sample = sourceData[(cursorInt + i) * sourceStride + c];
-        					outPtr[c] += sample * voice.currentGains[c];
+        		for (uint32_t i = 0; i < framesToMixNow; i++) {
+        			StepMatrixGains(voice.currentGainMatrix, voice.targetGainMatrix, sourceChannels,
+        				m_outputChannels, m_smoothingCoefficient);
+
+        			for (uint32_t inC = 0; inC < sourceChannels; inC++) {
+        				float sample = inPtr[inC];
+
+        				for (uint32_t outC = 0; outC < m_outputChannels; outC++) {
+        					outPtr[outC] += sample * voice.currentGainMatrix[inC][outC];
         				}
-        				outPtr += m_outputChannels;
         			}
-        		}
-        		else if (sourceChannels == 1) {
-        			for (uint32_t i = 0; i < framesToMixNow; i++) {
-        				StepGains(voice.currentGains, voice.targetGains, m_outputChannels, m_smoothingCoefficient);
 
-        				float sample = sourceData[cursorInt + i];
-        				for (uint32_t c = 0; c < m_outputChannels; c++) {
-        					outPtr[c] += sample * voice.currentGains[c];
-        				}
-        				outPtr += m_outputChannels;
-        			}
-        		}
-        		else if (sourceChannels == 2) {
-        			for (uint32_t i = 0; i < framesToMixNow; i++) {
-        				StepGains(voice.currentGains, voice.targetGains, m_outputChannels, m_smoothingCoefficient);
-
-        				float sampleL = sourceData[(cursorInt + i) * 2 + 0];
-        				float sampleR = sourceData[(cursorInt + i) * 2 + 1];
-        				float sampleMono = (sampleL + sampleR) * 0.5f;
-
-        				for (uint32_t c = 0; c < m_outputChannels; c++) {
-        					outPtr[c] += sampleMono * voice.currentGains[c];
-        				}
-        				outPtr += m_outputChannels;
-        			}
-        		}
-        		else {
-        			DALIA_LOG_WARN(LOG_CTX_MIXER, "Failed to mix voice with invalid channel count (%d).",
-        				sourceChannels);
+        			inPtr += sourceChannels;
+        			outPtr += m_outputChannels;
         		}
         	}
+
+        		// if (sourceChannels == m_outputChannels) {
+        		// 	for (uint32_t i = 0; i < framesToMixNow; i++) {
+        		// 		StepGains(voice.currentGainMatrix, voice.targetGains, m_outputChannels, m_smoothingCoefficient);
+		        //
+        		// 		for (uint32_t c = 0; c < m_outputChannels; c++) {
+        		// 			float sample = sourceData[(cursorInt + i) * sourceStride + c];
+        		// 			outPtr[c] += sample * voice.currentGainMatrix[c];
+        		// 		}
+        		// 		outPtr += m_outputChannels;
+        		// 	}
+        		// }
+        		// else if (sourceChannels == 1) {
+        		// 	for (uint32_t i = 0; i < framesToMixNow; i++) {
+        		// 		StepGains(voice.currentGainMatrix, voice.targetGains, m_outputChannels, m_smoothingCoefficient);
+		        //
+        		// 		float sample = sourceData[cursorInt + i];
+        		// 		for (uint32_t c = 0; c < m_outputChannels; c++) {
+        		// 			outPtr[c] += sample * voice.currentGainMatrix[c];
+        		// 		}
+        		// 		outPtr += m_outputChannels;
+        		// 	}
+        		// }
+        		// else if (sourceChannels == 2) {
+        		// 	for (uint32_t i = 0; i < framesToMixNow; i++) {
+        		// 		StepGains(voice.currentGainMatrix, voice.targetGains, m_outputChannels, m_smoothingCoefficient);
+		        //
+        		// 		float sampleL = sourceData[(cursorInt + i) * 2 + 0];
+        		// 		float sampleR = sourceData[(cursorInt + i) * 2 + 1];
+        		// 		float sampleMono = (sampleL + sampleR) * 0.5f;
+		        //
+        		// 		for (uint32_t c = 0; c < m_outputChannels; c++) {
+        		// 			outPtr[c] += sampleMono * voice.currentGainMatrix[c];
+        		// 		}
+        		// 		outPtr += m_outputChannels;
+        		// 	}
+        		// }
+        		// else {
+        		// 	DALIA_LOG_WARN(LOG_CTX_MIXER, "Failed to mix voice with invalid channel count (%d).",
+        		// 		sourceChannels);
+        		// }
 
         	voice.cursor += static_cast<float>(framesToMixNow);
 			framesMixed += framesToMixNow;

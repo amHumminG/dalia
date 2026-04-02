@@ -144,7 +144,7 @@ namespace dalia {
                 if (stream.gen.load(std::memory_order_relaxed) != sGen) break;
 
                 FillBuffer(stream, bufferIndex);
-                DALIA_LOG_DEBUG(LOG_CTX_IO, "Refilled buffer %d, for stream %d.", bufferIndex, sIndex);
+                // DALIA_LOG_DEBUG(LOG_CTX_IO, "Refilled buffer %d, for stream %d.", bufferIndex, sIndex);
                 break;
             }
             default:

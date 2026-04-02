@@ -26,26 +26,8 @@ namespace dalia {
 
         // Mixing Properties
         bool isLooping = false;
-        float targetGains[CHANNELS_MAX] = {
-            DEFAULT_GAIN,
-            DEFAULT_GAIN,
-            DEFAULT_GAIN,
-            DEFAULT_GAIN,
-            DEFAULT_GAIN,
-            DEFAULT_GAIN,
-            DEFAULT_GAIN,
-            DEFAULT_GAIN,
-        };
-        float currentGains[CHANNELS_MAX] = {
-            DEFAULT_GAIN,
-            DEFAULT_GAIN,
-            DEFAULT_GAIN,
-            DEFAULT_GAIN,
-            DEFAULT_GAIN,
-            DEFAULT_GAIN,
-            DEFAULT_GAIN,
-            DEFAULT_GAIN,
-        };
+        float targetGainMatrix[CHANNELS_MAX][CHANNELS_MAX];
+        float currentGainMatrix[CHANNELS_MAX][CHANNELS_MAX];
         float pitch = 1.0f;
 
         uint32_t channels = CHANNELS_STEREO;
@@ -75,10 +57,8 @@ namespace dalia {
             exitCondition = PlaybackExitCondition::NaturalEnd;
 
             isLooping = false;
-            for (uint32_t i = 0; i < CHANNELS_MAX; i++) {
-                targetGains[i] = DEFAULT_GAIN;
-                currentGains[i] = DEFAULT_GAIN;
-            }
+            std::memset(targetGainMatrix, 0.0f, sizeof(targetGainMatrix));
+            std::memset(currentGainMatrix, 0.0f, sizeof(currentGainMatrix));
 
             channels = 0;
             sampleRate = 0;
@@ -97,7 +77,7 @@ namespace dalia {
 
         bool isGainDirty = true;
         float volumeDb = DEFAULT_VOLUME_DB;
-        float pan = 0.0f;
+        float stereoPan = 0.0f;
 
         bool isSpatial = false;
         // Vector3 position
@@ -115,6 +95,7 @@ namespace dalia {
         float pitch = 1.0f;
 
         // Asset
+        uint32_t channels = 0;
         SoundType soundType;
 
         void Reset() {
@@ -124,7 +105,7 @@ namespace dalia {
 
             isGainDirty = true;
             volumeDb = DEFAULT_VOLUME_DB;
-            pan = 0.0f;
+            stereoPan = 0.0f;
 
             gen++;
             if (gen == NO_GENERATION) gen = START_GENERATION;
@@ -134,6 +115,9 @@ namespace dalia {
 
             isLooping = false;
             pitch = 1.0f;
+
+            channels = 0;
+            soundType = SoundType::None;
         }
     };
 }

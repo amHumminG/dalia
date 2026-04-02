@@ -27,7 +27,7 @@ namespace dalia {
 			// Voice Properties
 			SetVoiceParent,
 			SetVoiceLooping,
-			SetVoiceGains,
+			SetVoiceGainMatrix,
 			SetVoicePitch,
 
 			// Bus Lifecycle
@@ -102,8 +102,8 @@ namespace dalia {
 			struct {
 				uint32_t voiceIndex;
 				uint32_t voiceGen;
-				float gains[CHANNELS_MAX];
-			} voiceGains;
+				float gainMatrix[CHANNELS_MAX][CHANNELS_MAX];
+			} voiceGain;
 
 			struct {
 				uint32_t busIndex;
@@ -225,16 +225,13 @@ namespace dalia {
 			return cmd;
 		}
 
-		static RtCommand SetVoiceGains(uint32_t index, uint32_t gen, float* gains) {
+		static RtCommand SetVoiceGainMatrix(uint32_t index, uint32_t gen,
+			const float gainMatrix[CHANNELS_MAX][CHANNELS_MAX]) {
 			RtCommand cmd{};
-			cmd.type = Type::SetVoiceGains;
-			cmd.data.voiceGains.voiceIndex = index;
-			cmd.data.voiceGains.voiceGen = gen;
-
-			for (uint32_t i = 0; i < CHANNELS_MAX; i++) {
-				cmd.data.voiceGains.gains[i] = gains[i];
-			}
-
+			cmd.type = Type::SetVoiceGainMatrix;
+			cmd.data.voiceGain.voiceIndex = index;
+			cmd.data.voiceGain.voiceGen = gen;
+			std::memcpy(cmd.data.voiceGain.gainMatrix, gainMatrix, sizeof(cmd.data.voiceGain.gainMatrix));
 			return cmd;
 		}
 
