@@ -2,7 +2,7 @@
 #include <string>
 #include <vector>
 
-#include "Soundbank.h"
+#include "common/Soundbank.h"
 
 
 namespace  dalia {
