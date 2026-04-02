@@ -25,6 +25,8 @@ struct PlaybackInstance {
     bool isLooping = false;
     float volumeDb = 0.0f;
     float pan = 0.0f;
+
+    float seekTargetSeconds = 0.0f;
 };
 
 struct LoadedEffect {
@@ -183,6 +185,25 @@ void TestInterface() {
                     // Only update the UI state if the engine accepted the command
                     playbacks[selectedPlaybackIdx].isLooping = currentLoopState;
                 }
+            }
+
+            ImGui::Separator();
+
+            ImGui::TextDisabled("Timeline / Seeking");
+
+            float currentSeekTarget = playbacks[selectedPlaybackIdx].seekTargetSeconds;
+
+            // Allow stepping by 0.5s or 5.0s
+            ImGui::SetNextItemWidth(120);
+            if (ImGui::InputFloat("Seconds##Seek", &currentSeekTarget, 0.5f, 5.0f, "%.3f")) {
+                if (currentSeekTarget < 0.0f) currentSeekTarget = 0.0f;
+                playbacks[selectedPlaybackIdx].seekTargetSeconds = currentSeekTarget;
+            }
+
+            ImGui::SameLine();
+            if (ImGui::Button("Execute Seek", ImVec2(100, 0))) {
+                // Cast the float to double at the API boundary just like we designed
+                lastResult = engine.SeekPlayback(currentHandle, static_cast<double>(currentSeekTarget));
             }
 
             ImGui::Separator();
