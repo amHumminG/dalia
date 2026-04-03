@@ -32,9 +32,16 @@ namespace dalia::studio {
             std::string directory = fileName;
             char* currentFile = fileName + directory.length() + 1;
 
-            while (*currentFile) {
-                filePaths.push_back(directory + "\\" + currentFile);
-                currentFile += strlen(currentFile) + 1;
+            if (*currentFile == '\0') {
+                // Only one file selected
+                filePaths.push_back(directory);
+            }
+            else {
+                // Multiple files selected
+                while (*currentFile) {
+                    filePaths.push_back(directory + "\\" + currentFile);
+                    currentFile += strlen(currentFile) + 1;
+                }
             }
 
             return filePaths;
