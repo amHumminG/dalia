@@ -29,7 +29,9 @@ namespace dalia::studio {
         SoundAsset* ImportSound(const std::string& filePath);
         SoundAsset* GetAsset(uint32_t assetId);
 
-       const std::vector<std::unique_ptr<SoundAsset>>& GetAllAssets() const;
+        const std::vector<std::unique_ptr<SoundAsset>>& GetAllAssets() const;
+
+        void RemoveAsset(uint32_t assetId);
 
     private:
         static std::string ExtractNameFromPath(const std::string& path);

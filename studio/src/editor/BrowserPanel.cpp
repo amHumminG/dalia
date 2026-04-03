@@ -31,11 +31,19 @@ namespace dalia::studio {
 
         ImGui::BeginChild("Asset List");
         for (const auto& assetPtr : m_project.GetAllAssets()) {
+            // X button
+            std::string label = std::string("X##" + std::to_string(assetPtr->id));
+            if (ImGui::Button(label.c_str(), ImVec2(20, 20))) {
+                m_project.RemoveAsset(assetPtr->id);
+                break;
+            }
+
+            // Selectable asset
             ImGuiSelectableFlags flags = ImGuiSelectableFlags_SpanAvailWidth;
-
             bool isSelected = m_selectionContext.IsSelected(assetPtr->id);
-
-            if (ImGui::Selectable(assetPtr->name.c_str(), isSelected, flags)) {
+            label = std::string(assetPtr->name + "##" + std::to_string(assetPtr->id));
+            ImGui::SameLine();
+            if (ImGui::Selectable(label.c_str(), isSelected, flags)) {
                 m_selectionContext.Select(assetPtr->id);
             }
         }

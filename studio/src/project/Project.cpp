@@ -26,6 +26,14 @@ namespace dalia::studio {
         return m_assets;
     }
 
+    void Project::RemoveAsset(uint32_t assetId) {
+        auto it = std::ranges::find_if(m_assets,
+        [assetId](const auto& asset) { return asset->id == assetId; });
+        if (it != m_assets.end()) {
+            m_assets.erase(it);
+        }
+    }
+
     std::string Project::ExtractNameFromPath(const std::string& path) {
         auto filePath = std::filesystem::path(path);
         return filePath.filename().stem().generic_string();
