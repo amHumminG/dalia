@@ -512,7 +512,7 @@ namespace dalia {
 
 	static void data_callback(ma_device* pDevice, void* pOutput, const void* pInput, uint32_t frameCount) {
 		RtSystem* rtSystem = static_cast<RtSystem*>(pDevice->pUserData);
-		rtSystem->OnAudioCallback(static_cast<float*>(pOutput), frameCount);
+		rtSystem->Tick(static_cast<float*>(pOutput), frameCount);
 	}
 
 	// ------------------------

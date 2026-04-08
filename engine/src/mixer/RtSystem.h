@@ -44,7 +44,7 @@ namespace dalia {
     class RtSystem {
     public:
         explicit RtSystem(const RtSystemConfig& config);
-        void OnAudioCallback(float* output, uint32_t frameCount);
+        void Tick(float* output, uint32_t frameCount);
 
     private:
         void ProcessCommands();

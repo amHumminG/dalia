@@ -168,7 +168,7 @@ namespace dalia {
 		m_fadeStep = CalculateLinearFadeStep(FADE_TIME_GAIN, m_outSampleRate);
     }
 
-    void RtSystem::OnAudioCallback(float* output, uint32_t frameCount) {
+    void RtSystem::Tick(float* output, uint32_t frameCount) {
         // Process incoming commands from the API thread
         ProcessCommands();
 

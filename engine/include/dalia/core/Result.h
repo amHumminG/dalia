@@ -40,7 +40,11 @@ namespace dalia {
 		UnsupportedFormat			= -402,
 
 		// Backed Errors
-		DeviceFailed				= -500,
+		SystemError					= -500,
+		DeviceNotFound				= -501,
+		DeviceFailed				= -502,
+		ClientFailed				= -503,
+
 	};
 
 	constexpr const char* GetErrorString(const Result result) {

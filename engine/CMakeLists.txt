@@ -79,6 +79,8 @@ set(ENGINE_FILES
     src/resources/StreamSound.h
     src/core/HandleManager.h
     src/core/HandleManager.cpp
+    src/backend/WasapiBackend.cpp
+    src/backend/WasapiBackend.h
 )
 
 add_library(dalia_engine STATIC ${ENGINE_FILES})
