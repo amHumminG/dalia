@@ -18,13 +18,25 @@ namespace dalia {
 
     struct Voice {
         uint32_t gen = START_GENERATION;
-        VoiceState state = VoiceState::Free;
+
+        VoiceState currentState = VoiceState::Free;
+    	VoiceState targetState = VoiceState::Free;
+
         PlaybackExitCondition exitCondition = PlaybackExitCondition::NaturalEnd;
+    	bool isExiting = false;
 
         // Routing
-        uint32_t parentBusIndex = MASTER_BUS_INDEX;
+        uint32_t currentBusIndex = MASTER_BUS_INDEX;
+    	uint32_t targetBusIndex = MASTER_BUS_INDEX;
+
+    	// Seeking
+    	bool hasPendingSeek = false;
+    	uint32_t pendingSeekFrame = 0;
 
         // Mixing Properties
+    	float currentFadeGain = 1.0f; // Owned by the voice
+    	float targetFadeGain = 1.0f;  // Owned by the reconciler
+
         bool isLooping = false;
         float targetGainMatrix[CHANNELS_MAX][CHANNELS_MAX];
         float currentGainMatrix[CHANNELS_MAX][CHANNELS_MAX];
@@ -43,8 +55,6 @@ namespace dalia {
 
             struct {
                 uint32_t streamContextIndex;
-                bool pendingSeek = false;
-                uint32_t seekFrame = 0; // Stores the target seek frame if a seek is pending
                 uint32_t frontBufferIndex;
             } stream;
         } data = {};
@@ -54,9 +64,20 @@ namespace dalia {
             gen++;
             if (gen == NO_GENERATION) gen = START_GENERATION;
 
-            parentBusIndex = MASTER_BUS_INDEX;
-            state = VoiceState::Free;
-            exitCondition = PlaybackExitCondition::NaturalEnd;
+        	currentState = VoiceState::Free;
+        	targetState = VoiceState::Free;
+
+        	exitCondition = PlaybackExitCondition::NaturalEnd;
+        	isExiting = false;
+
+            currentBusIndex = MASTER_BUS_INDEX;
+        	targetBusIndex = MASTER_BUS_INDEX;
+
+        	hasPendingSeek = false;
+			pendingSeekFrame = 0;
+
+        	currentFadeGain = 1.0f;
+        	targetFadeGain = 1.0f;
 
             isLooping = false;
             std::memset(targetGainMatrix, 0.0f, sizeof(targetGainMatrix));

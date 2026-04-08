@@ -44,6 +44,7 @@ namespace dalia {
         void ProcessCommands();
         void Render(float* output, uint32_t frameCount);
         bool ProcessVoice(uint32_t voiceIndex, uint32_t frameCount);
+    	void ReconcileVoice(Voice& voice);
         void FreeVoice(uint32_t voiceIndex);
         void ProcessBus(uint32_t busIndex, uint32_t frameCount);
         void ApplyBusEffect(float* busBuffer, EffectSlot& slot, uint32_t frameCount);
@@ -55,7 +56,8 @@ namespace dalia {
         uint32_t m_outputChannels = 0;
         uint32_t m_outputSampleRate = 0;
 
-        float m_smoothingCoefficient = 0; // Used for volume and gain smoothing
+        float m_smoothingCoefficient = 0.0f; // Used for volume and gain smoothing
+    	float m_fadeStep = 0.0f; // Per sample step for gain fading
 
         RtCommandQueue* m_rtCommands;
         RtEventQueue* m_rtEvents;

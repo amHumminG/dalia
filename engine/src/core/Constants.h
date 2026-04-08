@@ -32,7 +32,7 @@ namespace dalia {
     constexpr float FREQUENCY_EPSILON = 1e-1f;
     constexpr float RESONANCE_EPSILON = 1e-3f;
 
-    // constexpr float SMOOTHING_COEFFICIENT = 0.005f; // Used for volume smoothing (from current to target)
+    constexpr float GAIN_FADE_TIME = 0.02f;		// Time (in ms) to fade gain from 0.0 to 1.0
     constexpr float SMOOTHING_CUTOFF_HZ = 15.0f;    // Determines the smoothing time for volume changes
     static constexpr double dPI = 3.14159265358979323846f;
     static constexpr float PI = 3.14159265358979323846f;
@@ -65,6 +65,9 @@ namespace dalia {
     static constexpr uint32_t TARGET_OUTPUT_SAMPLE_RATE = 48000; // Only to be used in engine init
 
     static constexpr size_t MAX_FRAMES_PER_RENDER = 1024; // Maximum frames that we can render per audio callback
+
+	// --- Voice Specific ---
+	static constexpr uint32_t VOICE_SEQUENCE_SIZE = 4;
 
     // --- Handles, Indices & Generations ---
     static constexpr uint64_t INVALID_UUID = 0;
