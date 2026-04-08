@@ -440,10 +440,10 @@ void SpidermanFinishedPlaying(PlaybackHandle handle, PlaybackExitCondition exitC
 
 int main() {
 
-    Engine engine;
-    EngineConfig config;
-    config.logLevel = LogLevel::Debug;
-    engine.Init(config);
+    // Engine engine;
+    // EngineConfig config;
+    // config.logLevel = LogLevel::Debug;
+    // engine.Init(config);
 
 
     // SFX
