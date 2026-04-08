@@ -5,16 +5,16 @@
 
 namespace dalia {
 
-    inline float DbToLinear(float db) {
-        if (db <= MIN_VOLUME_DB) return MIN_VOLUME_LINEAR;
-        if (db >= MAX_VOLUME_DB) return MAX_VOLUME_LINEAR;
+    inline float DbToGain(float db) {
+        if (db <= VOLUME_DB_MIN) return GAIN_MIN;
+        if (db >= VOLUME_DB_MAX) return GAIN_MAX;
 
         return powf(10.0f, db / 20.0f);
     }
 
-    inline float LinearToDb(float linear) {
-        if (linear <= MIN_VOLUME_LINEAR) return MIN_VOLUME_DB;
-        if (linear >= MAX_VOLUME_LINEAR) return MAX_VOLUME_DB;
+    inline float GainToDb(float linear) {
+        if (linear <= GAIN_MIN) return VOLUME_DB_MIN;
+        if (linear >= GAIN_MAX) return VOLUME_DB_MAX;
 
         return 20.0f * log10f(linear);
     }

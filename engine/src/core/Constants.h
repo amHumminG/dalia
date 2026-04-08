@@ -26,30 +26,29 @@ namespace dalia {
     static constexpr size_t MAX_IO_PATH_SIZE = 256; // The maximum length of a filepath string
 
     // --- Mixing ---
-    constexpr float VOLUME_EPSILON = 1e-5f;
-    constexpr float GAIN_EPSILON = 1e-5f;
-    constexpr float PAN_EPSILON = 1e-5f;
-    constexpr float FREQUENCY_EPSILON = 1e-1f;
-    constexpr float RESONANCE_EPSILON = 1e-3f;
+    constexpr float EPSILON_VOLUME = 1e-5f;
+    constexpr float EPSILON_GAIN = 1e-5f;
+    constexpr float EPSILON_PAN = 1e-5f;
+    constexpr float EPSILON_FREQUENCY = 1e-1f;
+    constexpr float EPSILON_RESONANCE = 1e-3f;
 
-    constexpr float GAIN_FADE_TIME = 0.02f;		// Time (in ms) to fade gain from 0.0 to 1.0
-    constexpr float SMOOTHING_CUTOFF_HZ = 15.0f;    // Determines the smoothing time for volume changes
+    constexpr float FADE_TIME_GAIN = 0.02f;			// Time (in seconds) to fade gain from 0.0 to 1.0
+    constexpr float SMOOTHING_CUTOFF_HZ = 15.0f;    // Determines the smoothing time for some gain changes
     static constexpr double dPI = 3.14159265358979323846f;
-    static constexpr float PI = 3.14159265358979323846f;
+    static constexpr float PI	= 3.14159265358979323846f;
     static constexpr float PI_2 = 1.57079632679489661923f;
 
-    static constexpr float DEFAULT_GAIN = 1.0f;
+    static constexpr float GAIN_DEFAULT = 1.0f;
+	static constexpr float GAIN_MIN = 0.0f;
+	static constexpr float GAIN_SILENCE = 0.0f;
+	static constexpr float GAIN_MAX = 15.8489f;
 
-    static constexpr float DEFAULT_VOLUME_LINEAR = 1.0f;
-    static constexpr float MIN_VOLUME_LINEAR = 0.0f;
-    static constexpr float MAX_VOLUME_LINEAR = 15.8489f;
+    static constexpr float VOLUME_DB_DEFAULT = 0.0f;
+    static constexpr float VOLUME_DB_MIN = -96.0f;  // Minimum volume in decibels
+    static constexpr float VOLUME_DB_MAX = 24.0f;   // Maximum volume in decibels
 
-    static constexpr float DEFAULT_VOLUME_DB = 0.0f;
-    static constexpr float MIN_VOLUME_DB = -96.0f;  // Minimum volume in decibels
-    static constexpr float MAX_VOLUME_DB = 24.0f;   // Maximum volume in decibels
-
-    static constexpr float MIN_PAN = -1.0f;
-    static constexpr float MAX_PAN = 1.0f;
+    static constexpr float PAN_MIN = -1.0f;
+    static constexpr float PAN_MAX = 1.0f;
 
     static constexpr uint32_t CHANNELS_MAX = 8;
     static constexpr uint32_t CHANNELS_MONO = 1;
@@ -57,17 +56,13 @@ namespace dalia {
 
     static constexpr uint32_t CONTROL_RATE = 32; // Number of frames between effect recalculations
 
-    static constexpr float FILTER_MIN_FREQUENCY = 20.0f;
-    static constexpr float FILTER_MAX_FREQUENCY = 20000.0f;
-    constexpr float FILTER_MIN_RESONANCE = 0.1f;
-    constexpr float FILTER_MAX_RESONANCE = 10.0f;
+    static constexpr float FILTER_FREQUENCY_MIN = 20.0f;
+    static constexpr float FILTER_FREQUENCY_MAX = 20000.0f;
+    constexpr float FILTER_RESONANCE_MIN = 0.1f;
+    constexpr float FILTER_RESONANCE_MAX = 10.0f;
 
     static constexpr uint32_t TARGET_OUTPUT_SAMPLE_RATE = 48000; // Only to be used in engine init
-
     static constexpr size_t MAX_FRAMES_PER_RENDER = 1024; // Maximum frames that we can render per audio callback
-
-	// --- Voice Specific ---
-	static constexpr uint32_t VOICE_SEQUENCE_SIZE = 4;
 
     // --- Handles, Indices & Generations ---
     static constexpr uint64_t INVALID_UUID = 0;

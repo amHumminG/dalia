@@ -67,7 +67,7 @@ namespace dalia {
             bool paramsChanged = false;
 
             // 1. Frequency Smoothing
-            if (!NearlyEqual(state.currentFrequency, state.targetFrequency, FREQUENCY_EPSILON)) {
+            if (!NearlyEqual(state.currentFrequency, state.targetFrequency, EPSILON_FREQUENCY)) {
                 // We are far away, smoothly interpolate
                 state.currentFrequency += (state.targetFrequency - state.currentFrequency) * 0.05f;
                 paramsChanged = true;
@@ -78,7 +78,7 @@ namespace dalia {
             }
 
             // 2. Resonance (Q) Smoothing
-            if (!NearlyEqual(state.currentResonance, state.targetResonance, RESONANCE_EPSILON)) {
+            if (!NearlyEqual(state.currentResonance, state.targetResonance, EPSILON_RESONANCE)) {
                 state.currentResonance += (state.targetResonance - state.currentResonance) * 0.05f;
                 paramsChanged = true;
             }

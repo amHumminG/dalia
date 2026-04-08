@@ -1,5 +1,7 @@
 #pragma once
+
 #include <span>
+#include <memory>
 
 namespace dalia {
 
@@ -12,6 +14,8 @@ namespace dalia {
     struct Bus;
     class EffectHandle;
     struct EffectSlot;
+
+	class MixGraphCompiler;
 
     enum class EffectType : uint8_t;
     struct BiquadFilter;
@@ -29,7 +33,9 @@ namespace dalia {
         std::span<StreamContext> streamPool;
         std::span<Bus> busPool;
         std::span<float> busBufferPool;
-        Bus* masterBus                          = nullptr;
+
+    	MixGraphCompiler* mixGraphCompiler		= nullptr;
+    	std::span<uint32_t> mixOrder;
 
         std::span<float> dspScratchBuffer;
         std::span<BiquadFilter> biquadFilterPool;
@@ -43,9 +49,10 @@ namespace dalia {
     private:
         void ProcessCommands();
         void Render(float* output, uint32_t frameCount);
+    	void ResolveVoice(Voice& voice);
         bool ProcessVoice(uint32_t voiceIndex, uint32_t frameCount);
-    	void ReconcileVoice(Voice& voice);
         void FreeVoice(uint32_t voiceIndex);
+    	bool ResolveBus(Bus& bus);
         void ProcessBus(uint32_t busIndex, uint32_t frameCount);
         void ApplyBusEffect(float* busBuffer, EffectSlot& slot, uint32_t frameCount);
         void AttachEffect(EffectHandle effect, uint32_t busIndex, uint32_t effectSlot);
@@ -59,19 +66,21 @@ namespace dalia {
         float m_smoothingCoefficient = 0.0f; // Used for volume and gain smoothing
     	float m_fadeStep = 0.0f; // Per sample step for gain fading
 
-        RtCommandQueue* m_rtCommands;
-        RtEventQueue* m_rtEvents;
-        IoStreamRequestQueue* m_ioStreamRequests;
+        RtCommandQueue* m_rtCommands				= nullptr;
+        RtEventQueue* m_rtEvents					= nullptr;
+        IoStreamRequestQueue* m_ioStreamRequests	= nullptr;
 
         std::span<Voice> m_voicePool;
         std::span<StreamContext> m_streamPool;
         std::span<Bus> m_busPool;
         std::span<float> m_busBufferPool;
-        Bus* m_masterBus;
 
         std::span<float> m_dspScratchBuffer;
         std::span<BiquadFilter> m_biquadFilterPool;
 
-        std::span<const uint32_t> m_activeMixOrder;
+		MixGraphCompiler* m_mixGraphCompiler = nullptr;
+		std::span<uint32_t>	m_mixOrder;
+    	uint32_t m_mixOrderSize = 0;
+    	bool m_isMixOrderDirty = true;
     };
 }

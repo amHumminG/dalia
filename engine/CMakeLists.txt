@@ -68,8 +68,8 @@ set(ENGINE_FILES
     src/mixer/Bus.h
     src/mixer/RtSystem.cpp
     src/mixer/RtSystem.h
-    src/mixer/BusGraphCompiler.cpp
-    src/mixer/BusGraphCompiler.h
+    src/mixer/MixGraphCompiler.cpp
+    src/mixer/MixGraphCompiler.h
     src/mixer/effects/BiquadFilter.h
     src/mixer/effects/BiquadFilter.cpp
 

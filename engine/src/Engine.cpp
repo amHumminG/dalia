@@ -21,7 +21,7 @@
 #include "mixer/Voice.h"
 #include "mixer/StreamContext.h"
 #include "mixer/Bus.h"
-#include "mixer/BusGraphCompiler.h"
+#include "mixer/MixGraphCompiler.h"
 #include "mixer/effects/BiquadFilter.h"
 
 #include "io/IoStreamSystem.h"
@@ -36,16 +36,6 @@
 #include "miniaudio.h"
 
 namespace dalia {
-
-	struct MixOrderBuffer {
-		std::unique_ptr<uint32_t[]> listA;
-		std::unique_ptr<uint32_t[]> listB;
-
-		explicit MixOrderBuffer(uint32_t capacity) {
-			listA = std::make_unique<uint32_t[]>(capacity);
-			listB = std::make_unique<uint32_t[]>(capacity);
-		}
-	};
 
 	struct VoiceID {
 		uint32_t index;
@@ -122,17 +112,8 @@ namespace dalia {
 		std::unique_ptr<BiquadFilter[]> biquadFilterPool;
 		std::unique_ptr<HandleManager> biquadHM;
 
-		// -- Bus Execution Graph ---
-		std::unique_ptr<MixOrderBuffer>		mixOrderBuffer;
-		std::unique_ptr<BusGraphCompiler>	busGraphCompiler;
-
-		bool isUsingMixOrderA		= true;
-		bool isMixOrderDirty		= false;
-		bool isMixOrderSwapPending	= false;
-
-		std::unique_ptr<RtSystem> rtSystem;
-		std::unique_ptr<IoStreamSystem> ioStreamSystem;
-		std::unique_ptr<IoLoadSystem> ioLoadSystem;
+		std::unique_ptr<MixGraphCompiler> mixGraphCompiler;
+		std::unique_ptr<uint32_t[]> mixOrder;
 
 		// --- Resources ---
 		std::unique_ptr<AssetRegistry> assetRegistry;
@@ -145,6 +126,10 @@ namespace dalia {
 		// Deferred playback
 		std::vector<PendingPlayback> pendingPlaybacks;
 
+		std::unique_ptr<RtSystem> rtSystem;
+		std::unique_ptr<IoStreamSystem> ioStreamSystem;
+		std::unique_ptr<IoLoadSystem> ioLoadSystem;
+
 		EngineInternalState(const EngineConfig& config)
 			: voiceCapacity(config.voiceCapacity), streamCapacity(config.streamCapacity), busCapacity(config.busCapacity) {
 			// Message Queues
@@ -155,20 +140,22 @@ namespace dalia {
 			ioLoadEvents		= std::make_unique<IoLoadEventQueue>(config.ioLoadEventQueueCapacity);
 
 			// Pools
-			voicePool		= std::make_unique<Voice[]>(voiceCapacity);
-			voicePoolMirror	= std::make_unique<VoiceMirror[]>(voiceCapacity);
-			streamPool		= std::make_unique<StreamContext[]>(streamCapacity);
-			busPool			= std::make_unique<Bus[]>(busCapacity);
-			busPoolMirror	= std::make_unique<BusMirror[]>(busCapacity);
+			voicePool			= std::make_unique<Voice[]>(voiceCapacity);
+			voicePoolMirror		= std::make_unique<VoiceMirror[]>(voiceCapacity);
+			streamPool			= std::make_unique<StreamContext[]>(streamCapacity);
+			busPool				= std::make_unique<Bus[]>(busCapacity);
+			busPoolMirror		= std::make_unique<BusMirror[]>(busCapacity);
 
 			// Effects
 			biquadFilterPool	= std::make_unique<BiquadFilter[]>(config.biquadCapacity);
 
 			biquadHM			= std::make_unique<HandleManager>(config.biquadCapacity);
 
-			// Bus graph
-			mixOrderBuffer		= std::make_unique<MixOrderBuffer>(busCapacity);
-			busGraphCompiler	= std::make_unique<BusGraphCompiler>(busCapacity);
+			mixGraphCompiler	= std::make_unique<MixGraphCompiler>(config.busCapacity);
+			mixOrder			= std::make_unique<uint32_t[]>(config.busCapacity);
+
+			// Resources
+			assetRegistry	= std::make_unique<AssetRegistry>(config.residentSoundCapacity, config.streamSoundCapacity);
 
 			// Availability Containers
 			freeVoices	= std::make_unique<FixedStack<uint32_t>>(voiceCapacity);
@@ -177,9 +164,6 @@ namespace dalia {
 			for (int i = voiceCapacity - 1; i >= 0; i--)	freeVoices->Push(i);
 			for (int i = 0; i < streamCapacity; i++)	freeStreams->Push(i);     // Queue, dont push in reverse
 			for (int i = busCapacity - 1; i >= 1; i--)		freeBuses->Push(i);   // Skip Master (index 0)
-
-			// Resources
-			assetRegistry = std::make_unique<AssetRegistry>(config.residentSoundCapacity, config.streamSoundCapacity);
 		}
 
 		uint32_t GenerateIoLoadRequestId() {return nextIoLoadRequestId++; }
@@ -278,11 +262,6 @@ namespace dalia {
 
 	static void ProcessRtEvent(EngineInternalState* state,  RtEvent& ev) {
 		switch (ev.type) {
-			case RtEvent::Type::MixOrderSwapped: {
-				state->isUsingMixOrderA = !state->isUsingMixOrderA;
-				state->isMixOrderSwapPending = false;
-				break;
-			}
 			case RtEvent::Type::VoiceStopped: {
 				uint32_t index = ev.data.voice.index;
 				uint32_t generation = ev.data.voice.generation;
@@ -491,35 +470,10 @@ namespace dalia {
 		}
 	}
 
-	static void TryUpdateMixOrder(EngineInternalState* state) {
-		if (!state->isMixOrderDirty || state->isMixOrderSwapPending) return;
-
-		uint32_t* backBufferPtr = state->isUsingMixOrderA
-		? state->mixOrderBuffer->listB.get()
-		: state->mixOrderBuffer->listA.get();
-
-		std::span<uint32_t> backBufferSpan(backBufferPtr, state->busCapacity);
-		std::span<const BusMirror> busMirror(state->busPoolMirror.get(), state->busCapacity);
-
-		uint32_t sortedCount = state->busGraphCompiler->Compile(busMirror, backBufferSpan);
-		if (sortedCount > 0) {
-			state->rtCommands->Enqueue(RtCommand::SwapMixOrder(backBufferPtr, sortedCount));
-
-			state->isMixOrderSwapPending = true;
-			state->isMixOrderDirty = false;
-
-			DALIA_LOG_DEBUG(LOG_CTX_CORE, "Recompiled mix order (%d buses).", sortedCount);
-		}
-		else {
-			DALIA_LOG_CRIT(LOG_CTX_CORE, "Failed to compile mix order. Cycle detected.");
-			state->isMixOrderDirty = false;
-		}
-	}
-
 	static inline void ResolveAndFlushGains(EngineInternalState* state, uint32_t vIndex) {
 		VoiceMirror& vMirror = state->voicePoolMirror[vIndex];
 
-		float volumeLinear = DbToLinear(vMirror.volumeDb);
+		float volumeLinear = DbToGain(vMirror.volumeDb);
 		float finalGainMatrix[CHANNELS_MAX][CHANNELS_MAX] = {0};
 
 		if (vMirror.isSpatial) {
@@ -586,11 +540,8 @@ namespace dalia {
 		m_state->busDebugNames[masterId] = "Master";
 #endif
 
-		m_state->rtCommands->Enqueue(RtCommand::AllocateBus(MASTER_BUS_INDEX, NO_PARENT));
-
-		// --- Mix Order Setup ---
-		m_state->isMixOrderDirty = true;
-		TryUpdateMixOrder(m_state);
+		Bus& master = m_state->busPool[MASTER_BUS_INDEX];
+		master.isActive = true;
 
 		// --- BACKEND SETUP ---
 		m_state->device					= std::make_unique<ma_device>();
@@ -628,7 +579,8 @@ namespace dalia {
 		rtConfig.streamPool			= std::span(m_state->streamPool.get(), m_state->streamCapacity);
 		rtConfig.busPool			= std::span(m_state->busPool.get(), m_state->busCapacity);
 		rtConfig.busBufferPool		= std::span(m_state->busBufferPool.get(), m_state->busCapacity * maxSamplesPerPeriod);
-		rtConfig.masterBus			= &m_state->busPool[MASTER_BUS_INDEX];
+		rtConfig.mixGraphCompiler	= m_state->mixGraphCompiler.get();
+		rtConfig.mixOrder			= std::span(m_state->mixOrder.get(), m_state->busCapacity);
 		rtConfig.dspScratchBuffer	= std::span(m_state->dspScratchBuffer.get(), maxSamplesPerPeriod);
 		rtConfig.biquadFilterPool	= std::span(m_state->biquadFilterPool.get(), m_state->biquadHM->GetCapacity());
 		m_state->rtSystem = std::make_unique<RtSystem>(rtConfig);
@@ -713,8 +665,6 @@ namespace dalia {
 
 			ResolveAndFlushGains(m_state, vIndex);
 		}
-
-		TryUpdateMixOrder(m_state); // Update mix order if buses have been manipulated
 
 		m_state->rtCommands->Dispatch(); // Send all commands accumulated from this frame to the audio thread
 		Logger::ProcessLogs(); // Print all logs accumulated from this frame
@@ -900,7 +850,6 @@ namespace dalia {
 		DALIA_LOG_DEBUG(LOG_CTX_API, "Created bus with routing: %s (index: %d) -> %s (index: %d).",
 			identifier, bIndex, parentIdentifier, bIndexParent);
 		m_state->rtCommands->Enqueue(RtCommand::AllocateBus(bIndex, bIndexParent));
-		m_state->isMixOrderDirty = true;
 
 		return Result::Ok;
 	}
@@ -966,7 +915,6 @@ namespace dalia {
 
 		DALIA_LOG_DEBUG(LOG_CTX_API, "Destroyed bus %s (index: %d).", identifier, bIndex);
 		m_state->rtCommands->Enqueue(RtCommand::DeallocateBus(bIndex));
-		m_state->isMixOrderDirty = true;
 
 		return Result::Ok;
 	}
@@ -1020,7 +968,6 @@ namespace dalia {
 		DALIA_LOG_DEBUG(LOG_CTX_API, "Routed bus %s (index: %d) -> %s (index: %d).",
 			identifier, bIndex, parentIdentifier, bIndexParent);
 		m_state->rtCommands->Enqueue(RtCommand::SetBusParent(bIndex, bIndexParent));
-		m_state->isMixOrderDirty = true;
 
 		return Result::Ok;
 	}
@@ -1036,10 +983,10 @@ namespace dalia {
 			return res;
 		}
 
-		float clampedVolumeDb = std::clamp(volumeDb, MIN_VOLUME_DB, MAX_VOLUME_DB);
+		float clampedVolumeDb = std::clamp(volumeDb, VOLUME_DB_MIN, VOLUME_DB_MAX);
 		m_state->busPoolMirror[bIndex].volumeDb = clampedVolumeDb;
 
-		m_state->rtCommands->Enqueue(RtCommand::SetBusVolume(bIndex, DbToLinear(clampedVolumeDb)));
+		m_state->rtCommands->Enqueue(RtCommand::SetBusGain(bIndex, DbToGain(clampedVolumeDb)));
 		DALIA_LOG_DEBUG(LOG_CTX_API, "Set bus (%s) volume to %.2f dB.", identifier, clampedVolumeDb);
 
 		return Result::Ok;
@@ -1058,8 +1005,8 @@ namespace dalia {
 
 		// Sanitize config
 		BiquadConfig sanitizedConfig;
-		sanitizedConfig.frequency = std::clamp(config.frequency, FILTER_MIN_FREQUENCY, FILTER_MAX_FREQUENCY);
-		sanitizedConfig.resonance = std::clamp(config.resonance, FILTER_MIN_RESONANCE, FILTER_MAX_RESONANCE);
+		sanitizedConfig.frequency = std::clamp(config.frequency, FILTER_FREQUENCY_MIN, FILTER_FREQUENCY_MAX);
+		sanitizedConfig.resonance = std::clamp(config.resonance, FILTER_RESONANCE_MIN, FILTER_RESONANCE_MAX);
 
 		RtCommand cmd = RtCommand::AllocateBiquad(
 			index,
@@ -1095,8 +1042,8 @@ namespace dalia {
 
 		// Sanitize config
 		BiquadConfig sanitizedConfig;
-		sanitizedConfig.frequency = std::clamp(config.frequency, FILTER_MIN_FREQUENCY, FILTER_MAX_FREQUENCY);
-		sanitizedConfig.resonance = std::clamp(config.resonance, FILTER_MIN_RESONANCE, FILTER_MAX_RESONANCE);
+		sanitizedConfig.frequency = std::clamp(config.frequency, FILTER_FREQUENCY_MIN, FILTER_FREQUENCY_MAX);
+		sanitizedConfig.resonance = std::clamp(config.resonance, FILTER_RESONANCE_MIN, FILTER_RESONANCE_MAX);
 
 		m_state->rtCommands->Enqueue(RtCommand::SetBiquadParams(index, gen, sanitizedConfig));
 		DALIA_LOG_DEBUG(LOG_CTX_API, "Updated biquad parameters for handle uuid: 0x%016llx.", effect.GetUUID());
@@ -1588,8 +1535,8 @@ namespace dalia {
 		Result res = ResolveVoiceMirror(m_state, vIndex, vGeneration, vMirror);
 		if (res != Result::Ok) return res;
 
-		float clampedVolumeDb = std::clamp(volumeDb, MIN_VOLUME_DB, MAX_VOLUME_DB);
-		if (NearlyEqual(vMirror->volumeDb, clampedVolumeDb, VOLUME_EPSILON)) return Result::Ok;
+		float clampedVolumeDb = std::clamp(volumeDb, VOLUME_DB_MIN, VOLUME_DB_MAX);
+		if (NearlyEqual(vMirror->volumeDb, clampedVolumeDb, EPSILON_VOLUME)) return Result::Ok;
 		vMirror->volumeDb = clampedVolumeDb;
 		vMirror->isGainDirty = true;
 
@@ -1607,8 +1554,8 @@ namespace dalia {
 		Result res = ResolveVoiceMirror(m_state, vIndex, vGeneration, vMirror);
 		if (res != Result::Ok) return res;
 
-		float clampedPan = std::clamp(pan, MIN_PAN, MAX_PAN);
-		if (NearlyEqual(vMirror->stereoPan, clampedPan, PAN_EPSILON)) return Result::Ok;
+		float clampedPan = std::clamp(pan, PAN_MIN, PAN_MAX);
+		if (NearlyEqual(vMirror->stereoPan, clampedPan, EPSILON_PAN)) return Result::Ok;
 		vMirror->stereoPan = clampedPan;
 		vMirror->isGainDirty = true;
 

@@ -1,38 +1,44 @@
-#include "mixer/BusGraphCompiler.h"
+#include "mixer/MixGraphCompiler.h"
 #include "core/FixedStack.h"
 #include "mixer/Bus.h"
 
+#include <cassert>
+
 namespace dalia {
 
-    BusGraphCompiler::BusGraphCompiler(uint32_t busCapacity)
+    MixGraphCompiler::MixGraphCompiler(uint32_t busCapacity)
 	    : m_busCapacity(busCapacity) {
         m_pendingChildrenCount	= std::make_unique<uint32_t[]>(busCapacity);
         m_leaves		        = std::make_unique<FixedStack<uint32_t>>(busCapacity);
     }
 
-    BusGraphCompiler::~BusGraphCompiler() = default;
+    MixGraphCompiler::~MixGraphCompiler() = default;
 
-    uint32_t BusGraphCompiler::Compile(std::span<const BusMirror> busPoolMirror, std::span<uint32_t> outputMixOrder) {
+    uint32_t MixGraphCompiler::Compile(std::span<const Bus> busPool, std::span<uint32_t> outputMixOrder) {
+    	assert(busPool.size() <= m_busCapacity && "Bus pool size exceeds compiler capacity!");
+    	assert(outputMixOrder.size() >= busPool.size() && "Output span is too small to hold the mix order!");
+
 		uint32_t activeBusCount = 0; // For cycle detection
+    	uint32_t poolSize = static_cast<uint32_t>(busPool.size());
 
 		// Clear pre-allocated containers
 		std::fill_n(m_pendingChildrenCount.get(), m_busCapacity, 0);
 		m_leaves->Clear();
 
 		// Calculate the number of children each bus has
-		for (uint32_t i = 0; i < m_busCapacity; i++) {
-			if (busPoolMirror[i].refCount > 0) {
+		for (uint32_t i = 0; i < poolSize; i++) {
+			if (busPool[i].isActive) {
 				activeBusCount++;
-				uint32_t parentIndex = busPoolMirror[i].parentBusIndex;
-				if (parentIndex != NO_PARENT && busPoolMirror[parentIndex].refCount > 0) {
+				uint32_t parentIndex = busPool[i].currentParentIndex;
+				if (parentIndex != NO_PARENT && parentIndex < poolSize && busPool[parentIndex].isActive) {
 					m_pendingChildrenCount[parentIndex]++;
 				}
 			}
 		}
 
 		// Find the buses with no children (leaves)
-		for (uint32_t i = 0; i < m_busCapacity; i++) {
-			if (busPoolMirror[i].refCount > 0 && m_pendingChildrenCount[i] == 0) {
+		for (uint32_t i = 0; i < poolSize; i++) {
+			if (busPool[i].isActive && m_pendingChildrenCount[i] == 0) {
 				m_leaves->Push(i);
 			}
 		}
@@ -48,8 +54,8 @@ namespace dalia {
 			sortedIndex++;
 
 			// Tell the parent that one of its children is sorted
-			uint32_t parentIndex = busPoolMirror[currentBusIndex].parentBusIndex;
-			if (parentIndex != NO_PARENT && busPoolMirror[parentIndex].refCount > 0) {
+			uint32_t parentIndex = busPool[currentBusIndex].currentParentIndex;
+			if (parentIndex != NO_PARENT && parentIndex < poolSize && busPool[parentIndex].isActive) {
 				m_pendingChildrenCount[parentIndex]--;
 
 				// If the parent has no more pending children, it is ready to be processed

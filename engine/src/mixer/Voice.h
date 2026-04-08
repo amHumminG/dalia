@@ -99,7 +99,7 @@ namespace dalia {
         uint64_t assetUuid;
 
         bool isGainDirty = true;
-        float volumeDb = DEFAULT_VOLUME_DB;
+        float volumeDb = VOLUME_DB_DEFAULT;
         float stereoPan = 0.0f;
 
         bool isSpatial = false;
@@ -129,7 +129,7 @@ namespace dalia {
             assetUuid = 0;
 
             isGainDirty = true;
-            volumeDb = DEFAULT_VOLUME_DB;
+            volumeDb = VOLUME_DB_DEFAULT;
             stereoPan = 0.0f;
 
             gen++;

@@ -6,17 +6,17 @@
 
 namespace dalia {
 
-    struct BusMirror;
+	struct Bus;
     template <typename T> class FixedStack;
 
-    class BusGraphCompiler {
+    class MixGraphCompiler {
     public:
-        explicit BusGraphCompiler(uint32_t busCapacity);
-        ~BusGraphCompiler();
+        explicit MixGraphCompiler(uint32_t busCapacity);
+        ~MixGraphCompiler();
 
         uint32_t Compile(
-            std::span<const BusMirror> busPoolMirror,
-            std::span<uint32_t> outputMixOrder
+            std::span<const Bus> busPool,
+            std::span<uint32_t> outMixOrder
         );
 
     private:

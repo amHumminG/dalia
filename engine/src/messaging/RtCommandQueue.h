@@ -37,7 +37,7 @@ namespace dalia {
 
 			// Bus Properties
 			SetBusParent,
-			SetBusVolume,
+			SetBusGain,
 
 			// Effects
 			AllocateBiquad,
@@ -242,11 +242,11 @@ namespace dalia {
 			return cmd;
 		}
 
-		static RtCommand SetBusVolume(uint32_t index, float volume) {
+		static RtCommand SetBusGain(uint32_t index, float gain) {
 			RtCommand cmd{};
-			cmd.type = Type::SetBusVolume;
+			cmd.type = Type::SetBusGain;
 			cmd.targetIndex = index;
-			cmd.data.floatVal.value = volume;
+			cmd.data.floatVal.value = gain;
 			return cmd;
 		}
 

@@ -16,6 +16,7 @@
 
 #include <cmath>
 
+#include "MixGraphCompiler.h"
 #include "effects/BiquadFilter.h"
 
 
@@ -48,7 +49,7 @@ namespace dalia {
 			for (uint32_t outC = 0; outC < outChannels; outC++) {
 				float diff = target[inC][outC] - current[inC][outC];
 
-				if (std::abs(diff) < GAIN_EPSILON) current[inC][outC] = target[inC][outC];
+				if (std::abs(diff) < EPSILON_GAIN) current[inC][outC] = target[inC][outC];
 				else current[inC][outC] += diff * smoothingCoefficient;
 			}
 		}
@@ -69,32 +70,39 @@ namespace dalia {
 		}
 	}
 
-	static inline void ApplyVolume(float* DALIA_RESTRICT buffer, uint32_t frameCount, uint32_t channels,
-		float& currentVolume, float targetVolume, float smoothingCoefficient) {
+	static inline void ApplyGainAndFade(float* DALIA_RESTRICT buffer, uint32_t frameCount, uint32_t channels,
+		float& currentGain, float targetGain, float smoothingCoefficient,
+		float& currentFade, float targetFade, float fadeStep) {
 
-		// --- No volume movement ---
-		if (NearlyEqual(currentVolume, targetVolume, VOLUME_EPSILON)) {
-			currentVolume = targetVolume;
+		bool gainStable = NearlyEqual(currentGain, targetGain, EPSILON_GAIN);
+		bool fadeStable = NearlyEqual(currentFade, targetFade, EPSILON_GAIN);
 
-			if (NearlyEqual(currentVolume, 1.0f, VOLUME_EPSILON)) return;
+		// Fast path
+		if (gainStable && fadeStable) {
+			currentGain = targetGain;
+			currentFade = targetFade;
+
+			float combinedGain = currentGain * currentFade;
+
+			if (NearlyEqual(combinedGain, 1.0f, EPSILON_GAIN)) return;
 
 			uint32_t sampleCount = frameCount * channels;
-			if (NearlyEqual(currentVolume, 0.0f, VOLUME_EPSILON)) {
+			if (NearlyEqual(combinedGain, 0.0f, EPSILON_GAIN)) {
 				std::memset(buffer, 0, sampleCount * sizeof(float));
 				return;
 			}
 
-			for (uint32_t i = 0; i < sampleCount; i++) buffer[i] *= currentVolume;
+			for (uint32_t s = 0; s < sampleCount; s++) buffer[s] *= combinedGain;
 			return;
 		}
 
-		// --- Smoothing current to target ---
-		for (uint32_t i = 0; i < frameCount; i++) {
-			currentVolume += (targetVolume - currentVolume) * smoothingCoefficient;
+		// Slow path
+		for (uint32_t f = 0; f < frameCount; f++) {
+			if (!gainStable) currentGain += (targetGain - currentGain) * smoothingCoefficient;
+			if (!fadeStable) StepFadeGain(currentFade, targetFade, fadeStep);
 
-			for (uint32_t c = 0; c < channels; c++) {
-				buffer[(i * channels) + c] *= currentVolume;
-			}
+			float combinedGain = currentGain * currentFade;
+			for (uint32_t c = 0; c < channels; c++) buffer[(f * channels) + c] *= combinedGain;
 		}
 	}
 
@@ -149,16 +157,15 @@ namespace dalia {
         m_streamPool(config.streamPool),
         m_busPool(config.busPool),
 		m_busBufferPool(config.busBufferPool),
-        m_masterBus(config.masterBus),
         m_rtCommands(config.rtCommands),
         m_rtEvents(config.rtEvents),
         m_ioStreamRequests(config.ioStreamRequests),
+		m_mixGraphCompiler(config.mixGraphCompiler),
+		m_mixOrder(config.mixOrder),
 		m_dspScratchBuffer(config.dspScratchBuffer),
 		m_biquadFilterPool(config.biquadFilterPool) {
-        // Empty bus graph
-        m_activeMixOrder = std::span<const uint32_t>();
 		m_smoothingCoefficient = 1.0f - std::exp(-2.0f * PI * SMOOTHING_CUTOFF_HZ / config.outputSampleRate);
-		m_fadeStep = CalculateLinearFadeStep(GAIN_FADE_TIME, m_outputSampleRate);
+		m_fadeStep = CalculateLinearFadeStep(FADE_TIME_GAIN, m_outputSampleRate);
     }
 
     void RtSystem::OnAudioCallback(float* output, uint32_t frameCount) {
@@ -173,16 +180,6 @@ namespace dalia {
         RtCommand cmd;
         while (m_rtCommands->Pop(cmd)) {
             switch (cmd.type) {
-	            case RtCommand::Type::SwapMixOrder: {
-            		m_activeMixOrder = std::span<const uint32_t>(
-						cmd.data.mixOrder.ptr,
-						cmd.data.mixOrder.nodeCount
-					);
-
-            		// Send event to acknowledge the swap
-            		m_rtEvents->Push(RtEvent::MixOrderSwapped());
-	            	break;
-	            }
 				case RtCommand::Type::AllocateVoice: {
 	            	Voice& voice = m_voicePool[cmd.targetIndex];
 
@@ -276,30 +273,35 @@ namespace dalia {
 					break;
 	            }
 				case RtCommand::Type::AllocateBus: {
-		            uint32_t bIndex = cmd.targetIndex;
-	            	uint32_t bIndexParent = cmd.data.setParent.parentIndex;
+		            Bus& bus = m_busPool[cmd.targetIndex];
 
-	            	m_busPool[bIndex].parentBusIndex = bIndexParent;
+	            	bus.currentParentIndex = cmd.data.setParent.parentIndex;
+					bus.targetParentIndex = cmd.data.setParent.parentIndex;
+					bus.isActive = true;
+
+					m_isMixOrderDirty = true;
 	            	break;
 	            }
 				case RtCommand::Type::DeallocateBus: {
 	            	uint32_t bIndex = cmd.targetIndex;
 
 	            	m_busPool[bIndex].Reset();
+
+					m_isMixOrderDirty = true;
 	            	break;
 				}
 				case RtCommand::Type::SetBusParent: {
 	            	uint32_t bIndex = cmd.targetIndex;
 	            	uint32_t bIndexParent = cmd.data.setParent.parentIndex;
 
-	            	m_busPool[bIndex].parentBusIndex = bIndexParent;
+	            	m_busPool[bIndex].targetParentIndex = bIndexParent;
 		            break;
 	            }
-				case RtCommand::Type::SetBusVolume: {
+				case RtCommand::Type::SetBusGain: {
 	            	uint32_t bIndex = cmd.targetIndex;
-	            	float newVolume = cmd.data.floatVal.value;
+	            	float newGain = cmd.data.floatVal.value;
 
-	            	m_busPool[bIndex].targetVolumeLinear = newVolume;
+	            	m_busPool[bIndex].targetGain = newGain;
 	            	break;
 				}
 				case RtCommand::Type::AllocateBiquad: {
@@ -375,8 +377,26 @@ namespace dalia {
     void RtSystem::Render(float* output, uint32_t frameCount) {
         const uint32_t sampleCount = frameCount * m_outputChannels;
 
-    	// Clear all bus buffers
-        std::memset(m_busBufferPool.data(), 0, m_busBufferPool.size());
+    	// Bus preprocessing
+        std::ranges::fill(m_busBufferPool, 0.0f);
+		for (uint32_t bIndex = 0; bIndex < m_busPool.size(); bIndex++) {
+			Bus& bus = m_busPool[bIndex];
+			if (bus.isActive) m_isMixOrderDirty |= ResolveBus(bus);
+		}
+
+		if (m_isMixOrderDirty) {
+			m_mixOrderSize = m_mixGraphCompiler->Compile( m_busPool, m_mixOrder);
+			m_isMixOrderDirty = false;
+			DALIA_LOG_DEBUG(LOG_CTX_MIXER, "Recompiled bus graph.");
+		}
+
+		if (m_mixOrderSize == 0) {
+			// TODO: Send an RtEvent back to API thread to log cycle detection
+			DALIA_LOG_ERR(LOG_CTX_MIXER, "Mix graph cycle detected!"); // TODO: remove this log
+
+			std::memset(output, 0, sampleCount * sizeof(float));
+			return;
+		}
 
         // --- Voice Pass ---
     	uint32_t voicesMixed = 0;
@@ -394,7 +414,7 @@ namespace dalia {
         		continue;
         	}
 
-        	ReconcileVoice(voice);
+        	ResolveVoice(voice);
 
         	if (voice.currentState == VoiceState::Playing) {
             	bool isStillPlaying = ProcessVoice(vIndex, frameCount);
@@ -404,23 +424,74 @@ namespace dalia {
             }
         }
 
-    	if (voicesMixed == 0) return; // Early return to save compute power
-
         // --- Bus Pass ---
-        for (uint32_t bIndex : m_activeMixOrder) {
-            Bus& bus = m_busPool[bIndex];
-
-            // DALIA_LOG_DEBUG(LOG_CTX_MIXER, "Mixing bus %d -> bus %d.", bIndex, bus.parentBusIndex);
+		std::span activeMixOrder = m_mixOrder.subspan(0, m_mixOrderSize);
+        for (uint32_t bIndex : activeMixOrder) {
             ProcessBus(bIndex, frameCount);
         }
 
         float* masterBuffer = m_busBufferPool.data();
 		ApplySoftClipper(masterBuffer, sampleCount);
         std::copy_n(masterBuffer, sampleCount, output);
+	}
+
+	void RtSystem::ResolveVoice(Voice& voice) {
+		bool requiresSilence = false;
+
+		if (voice.currentState != voice.targetState && voice.targetState != VoiceState::Playing) requiresSilence = true;
+		if (voice.currentBusIndex != voice.targetBusIndex) requiresSilence = true;
+		if (voice.hasPendingSeek) requiresSilence = true;
+
+		// Do we need to duck?
+		if (requiresSilence) voice.targetFadeGain = 0.0f;
+
+		if (NearlyEqual(voice.currentFadeGain, 0.0f, EPSILON_GAIN) || voice.currentState != VoiceState::Playing) {
+			// Voice is silent
+
+			// Handle Routing swap
+			if (voice.currentBusIndex != voice.targetBusIndex) voice.currentBusIndex = voice.targetBusIndex;
+
+			// Handle seek request
+			if (voice.hasPendingSeek) {
+				if (voice.soundType == SoundType::Resident) {
+					voice.cursor = static_cast<double>(voice.pendingSeekFrame);
+					voice.hasPendingSeek = false;
+					voice.pendingSeekFrame = 0;
+				}
+				else if (voice.soundType == SoundType::Stream) {
+					StreamContext& stream = m_streamPool[voice.data.stream.streamContextIndex];
+					StreamState expectedState = StreamState::Streaming;
+					if (stream.state.compare_exchange_strong(expectedState, StreamState::Seeking,
+						std::memory_order_release)) {
+						// If streaming we can push the request
+
+						m_ioStreamRequests->Push(IoStreamRequest::SeekStream(
+							voice.data.stream.streamContextIndex,
+							stream.gen,
+							voice.pendingSeekFrame
+						));
+
+						voice.data.stream.frontBufferIndex = 0;
+						voice.hasPendingSeek = false;
+						voice.pendingSeekFrame = 0;
+					}
+				}
+			}
+
+			// Check if we are waiting for and I/O operation
+			if (voice.soundType == SoundType::Stream) {
+				StreamContext& stream = m_streamPool[voice.data.stream.streamContextIndex];
+				if (stream.state.load(std::memory_order_acquire) != StreamState::Streaming) return;
+			}
+
+			// Handle state change
+			if (voice.currentState != voice.targetState) voice.currentState = voice.targetState;
+		}
+
+		if (!requiresSilence && voice.currentState == VoiceState::Playing) voice.targetFadeGain = 1.0f;
     }
 
     bool RtSystem::ProcessVoice(uint32_t voiceIndex, uint32_t frameCount) {
-		DALIA_LOG_DEBUG(LOG_CTX_MIXER, "Processing voice %d.", voiceIndex);
 		Voice& voice = m_voicePool[voiceIndex];
 
         float* busBuffer = GetBusBuffer(m_busBufferPool.data(), voice.currentBusIndex, frameCount);
@@ -453,6 +524,7 @@ namespace dalia {
 				}
 
 				if (!stream.bufferReady[voice.data.stream.frontBufferIndex].load(std::memory_order_acquire)) {
+					// TODO: Send this as an event to the API thread for logging there
 					DALIA_LOG_ERR(LOG_CTX_MIXER, "Stream buffer underrun.");
 					return true;
 				}
@@ -549,61 +621,6 @@ namespace dalia {
 		return true;
     }
 
-    void RtSystem::ReconcileVoice(Voice& voice) {
-		bool requiresSilence = false;
-
-		if (voice.currentState != voice.targetState && voice.targetState != VoiceState::Playing) requiresSilence = true;
-		if (voice.currentBusIndex != voice.targetBusIndex) requiresSilence = true;
-		if (voice.hasPendingSeek) requiresSilence = true;
-
-		if (requiresSilence) voice.targetFadeGain = 0.0f;
-
-		if (NearlyEqual(voice.currentFadeGain, 0.0f, GAIN_EPSILON) || voice.currentState != VoiceState::Playing) {
-			// Voice is silent
-
-			// Handle Routing swap
-			if (voice.currentBusIndex != voice.targetBusIndex) voice.currentBusIndex = voice.targetBusIndex;
-
-			// Handle seek request
-			if (voice.hasPendingSeek) {
-				if (voice.soundType == SoundType::Resident) {
-					voice.cursor = static_cast<double>(voice.pendingSeekFrame);
-					voice.hasPendingSeek = false;
-					voice.pendingSeekFrame = 0;
-				}
-				else if (voice.soundType == SoundType::Stream) {
-					StreamContext& stream = m_streamPool[voice.data.stream.streamContextIndex];
-					StreamState expectedState = StreamState::Streaming;
-					if (stream.state.compare_exchange_strong(expectedState, StreamState::Seeking,
-						std::memory_order_release)) {
-						// If streaming we can push the request
-
-						m_ioStreamRequests->Push(IoStreamRequest::SeekStream(
-							voice.data.stream.streamContextIndex,
-							stream.gen,
-							voice.pendingSeekFrame
-						));
-
-						voice.data.stream.frontBufferIndex = 0;
-						voice.hasPendingSeek = false;
-						voice.pendingSeekFrame = 0;
-					}
-				}
-			}
-
-			// Check if we are waiting for and I/O operation
-			if (voice.soundType == SoundType::Stream) {
-				StreamContext& stream = m_streamPool[voice.data.stream.streamContextIndex];
-				if (stream.state.load(std::memory_order_acquire) != StreamState::Streaming) return;
-			}
-
-			// Handle state change
-			if (voice.currentState != voice.targetState) voice.currentState = voice.targetState;
-		}
-
-		if (!requiresSilence && voice.currentState == VoiceState::Playing) voice.targetFadeGain = 1.0f;
-    }
-
     void RtSystem::FreeVoice(uint32_t vIndex) {
     	Voice& voice = m_voicePool[vIndex];
 
@@ -612,6 +629,7 @@ namespace dalia {
     		m_ioStreamRequests->Push(IoStreamRequest::ReleaseStream(voice.data.stream.streamContextIndex));
     	}
 
+		// TODO: Remove these logs some time
     	if (voice.exitCondition == PlaybackExitCondition::NaturalEnd) {
     		DALIA_LOG_DEBUG(LOG_CTX_MIXER, "Voice %d finished naturally.", vIndex);
     	}
@@ -629,6 +647,30 @@ namespace dalia {
     	voice.Reset();
     }
 
+    bool RtSystem::ResolveBus(Bus& bus) {
+		bool requiresSilence = false;
+		bool topologyChanged = false;
+
+		// Do we need to duck?
+		if (bus.currentParentIndex != bus.targetParentIndex) requiresSilence = true;
+
+		if (requiresSilence) bus.targetFadeGain = GAIN_SILENCE;
+
+		if (NearlyEqual(bus.currentFadeGain, 0.0f, EPSILON_GAIN)) {
+			// Bus is silent
+
+			if (bus.currentParentIndex != bus.targetParentIndex) {
+				bus.currentParentIndex = bus.targetParentIndex;
+				DALIA_LOG_DEBUG(LOG_CTX_MIXER, "Re-routed bus to target");
+				topologyChanged = true;
+			}
+		}
+
+		if (!requiresSilence) bus.targetFadeGain = GAIN_DEFAULT;
+
+		return topologyChanged;
+    }
+
     void RtSystem::ProcessBus(uint32_t busIndex, uint32_t frameCount) {
     	Bus& bus = m_busPool[busIndex];
 		float* buffer = GetBusBuffer(m_busBufferPool.data(), busIndex, frameCount);
@@ -639,12 +681,14 @@ namespace dalia {
 			ApplyBusEffect(buffer, slot, frameCount);
 		}
 
-    	// Apply volume
-		ApplyVolume(buffer, frameCount, m_outputChannels, bus.currentVolumeLinear, bus.targetVolumeLinear,
-			m_smoothingCoefficient);
+		ApplyGainAndFade(
+			buffer, frameCount, m_outputChannels,
+			bus.currentGain, bus.targetGain, m_smoothingCoefficient,
+			bus.currentFadeGain, bus.targetFadeGain, m_fadeStep
+		);
 
-    	if (bus.parentBusIndex != NO_PARENT) {
-    		float* parentBuffer = m_busBufferPool.data() + (bus.parentBusIndex * frameCount * CHANNELS_MAX);
+    	if (bus.currentParentIndex != NO_PARENT) {
+    		float* parentBuffer = m_busBufferPool.data() + (bus.currentParentIndex * frameCount * CHANNELS_MAX);
     		MixToBuffer(parentBuffer, buffer, frameCount * m_outputChannels);
     	}
     }
