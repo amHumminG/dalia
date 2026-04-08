@@ -16,7 +16,8 @@
 namespace dalia {
 
     IoLoadSystem::IoLoadSystem(const IoLoadSystemConfig& config)
-        : m_ioLoadRequests(config.ioLoadRequests),
+        : m_outSampleRate(config.outSampleRate),
+		m_ioLoadRequests(config.ioLoadRequests),
         m_ioLoadEvents(config.ioLoadEvents),
         m_assetRegistry(config.assetRegistry) {
     }
@@ -97,7 +98,17 @@ namespace dalia {
                 }
 
                 stb_vorbis_info info = stb_vorbis_get_info(decoder);
-                uint32_t totalFrames = stb_vorbis_stream_length_in_samples(decoder); // Does this really return what we want?
+                uint32_t totalFrames = stb_vorbis_stream_length_in_samples(decoder);
+
+            	if (info.sample_rate != m_outSampleRate) {
+            		soundLoadStatePtr->store(LoadState::Error, std::memory_order_release);
+
+            		m_ioLoadEvents->Push(IoLoadEvent::SoundLoadFailed(req.requestId, Result::UnsupportedFormat));
+            		DALIA_LOG_ERR(LOG_CTX_IO, "Failed to load sound from file (%s). Sample rate not supported (%d).",
+						req.data.soundFromFile.filepath, info.sample_rate);
+
+            		return;
+            	}
 
                 if (soundType == SoundType::Resident) {
                     uint32_t totalSamples = totalFrames * info.channels;
@@ -108,14 +119,14 @@ namespace dalia {
                     residentSound->frameCount = totalFrames;
 
                     // Decode file into sound data vector
-                    int floatsDecoded = stb_vorbis_get_samples_float_interleaved(
+                    int framesDecoded = stb_vorbis_get_samples_float_interleaved(
                         decoder,
                         info.channels,
                         residentSound->pcmData.data(),
                         static_cast<int>(totalSamples)
                     );
 
-                    if (floatsDecoded == 0) {
+                    if (framesDecoded == 0) {
                         soundLoadStatePtr->store(LoadState::Error, std::memory_order_release);
 
                         m_ioLoadEvents->Push(IoLoadEvent::SoundLoadFailed(req.requestId, Result::FileReadError));
@@ -124,6 +135,12 @@ namespace dalia {
                         stb_vorbis_close(decoder);
                         return;
                     }
+
+                	// Resize data container if it was not filled completely
+                	if (framesDecoded != static_cast<int>(totalFrames)) {
+                		residentSound->frameCount = totalFrames;
+                		residentSound->pcmData.resize(framesDecoded * info.channels);
+                	}
                 }
                 else if (soundType == SoundType::Stream) {
                     streamSound->channels = info.channels;

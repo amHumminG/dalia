@@ -10,6 +10,8 @@ namespace dalia {
     class AssetRegistry;
 
     struct IoLoadSystemConfig {
+    	uint32_t outSampleRate;
+
         IoLoadRequestQueue* ioLoadRequests = nullptr;
         IoLoadEventQueue* ioLoadEvents = nullptr;
 
@@ -27,6 +29,8 @@ namespace dalia {
     private:
         void ThreadMain();
         void ProcessRequest(const IoLoadRequest& request);
+
+    	uint32_t m_outSampleRate = 0;
 
         IoLoadRequestQueue* m_ioLoadRequests;
         IoLoadEventQueue* m_ioLoadEvents;

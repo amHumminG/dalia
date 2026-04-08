@@ -37,6 +37,7 @@ namespace dalia {
 		// I/O Errors
 		SoundLoadError				= -400,
 		FileReadError				= -401,
+		UnsupportedFormat			= -402,
 
 		// Backed Errors
 		DeviceFailed				= -500,

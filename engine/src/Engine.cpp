@@ -571,7 +571,7 @@ namespace dalia {
 		// --- SYSTEMS SETUP ---
 		RtSystemConfig rtConfig;
 		rtConfig.outChannels		= m_state->outChannels;
-		rtConfig.outSampleRate	= m_state->outSampleRate;
+		rtConfig.outSampleRate		= m_state->outSampleRate;
 		rtConfig.rtCommands			= m_state->rtCommands.get();
 		rtConfig.rtEvents			= m_state->rtEvents.get();
 		rtConfig.ioStreamRequests	= m_state->ioStreamRequests.get();
@@ -595,9 +595,10 @@ namespace dalia {
 		m_state->ioStreamSystem	= std::make_unique<IoStreamSystem>(ioStreamingConfig);
 
 		IoLoadSystemConfig ioLoadSystemConfig;
-		ioLoadSystemConfig.ioLoadRequests = m_state->ioLoadRequests.get();
-		ioLoadSystemConfig.ioLoadEvents = m_state->ioLoadEvents.get();
-		ioLoadSystemConfig.assetRegistry = m_state->assetRegistry.get();
+		ioLoadSystemConfig.outSampleRate	= m_state->outSampleRate;
+		ioLoadSystemConfig.ioLoadRequests	= m_state->ioLoadRequests.get();
+		ioLoadSystemConfig.ioLoadEvents		= m_state->ioLoadEvents.get();
+		ioLoadSystemConfig.assetRegistry	= m_state->assetRegistry.get();
 		m_state->ioLoadSystem = std::make_unique<IoLoadSystem>(ioLoadSystemConfig);
 
 		// --- SYSTEMS START ---
