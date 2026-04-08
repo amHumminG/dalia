@@ -69,8 +69,8 @@ namespace dalia {
 		// Miniaudio
 		std::unique_ptr<ma_device> device;
 
-		uint32_t outputChannels = 0;
-		uint32_t outputSampleRate = 0;
+		uint32_t outChannels = 0;
+		uint32_t outSampleRate = 0;
 
 		// --- Messaging Queues ---
 		std::unique_ptr<RtCommandQueue>			rtCommands;
@@ -206,7 +206,7 @@ namespace dalia {
 
 		// Send I/O request to prepare stream
 		state->streamPool[streamIndex].state.store(StreamState::Preparing, std::memory_order_release);
-		IoStreamRequest req = IoStreamRequest::PrepareStream(streamIndex, filepath);
+		IoStreamRequest req = IoStreamRequest::PrepareStream(streamIndex,state->streamPool[streamIndex].gen ,filepath);
 		if (!state->ioStreamRequests->Push(req)) {
 			// Rollback
 			state->streamPool[streamIndex].state.store(StreamState::Free, std::memory_order_release);
@@ -560,8 +560,8 @@ namespace dalia {
 			DALIA_LOG_CRIT(LOG_CTX_API, "Failed to initialize engine. Device initialization failed.");
 			return Result::DeviceFailed;
 		}
-		m_state->outputChannels = m_state->device->playback.channels;
-		m_state->outputSampleRate = m_state->device->sampleRate;
+		m_state->outChannels = m_state->device->playback.channels;
+		m_state->outSampleRate = m_state->device->sampleRate;
 
 		// Buffer allocations based on period size
 		const uint32_t maxSamplesPerPeriod = m_state->device->playback.internalPeriodSizeInFrames * CHANNELS_MAX;
@@ -570,8 +570,8 @@ namespace dalia {
 
 		// --- SYSTEMS SETUP ---
 		RtSystemConfig rtConfig;
-		rtConfig.outputChannels		= m_state->outputChannels;
-		rtConfig.outputSampleRate	= m_state->outputSampleRate;
+		rtConfig.outChannels		= m_state->outChannels;
+		rtConfig.outSampleRate	= m_state->outSampleRate;
 		rtConfig.rtCommands			= m_state->rtCommands.get();
 		rtConfig.rtEvents			= m_state->rtEvents.get();
 		rtConfig.ioStreamRequests	= m_state->ioStreamRequests.get();
@@ -588,6 +588,7 @@ namespace dalia {
 		m_state->device->pUserData = m_state->rtSystem.get(); // Hand it to device for use in callback
 
 		IoStreamSystemConfig ioStreamingConfig;
+		ioStreamingConfig.outSampleRate		= m_state->outSampleRate;
 		ioStreamingConfig.ioStreamRequests	= m_state->ioStreamRequests.get();
 		ioStreamingConfig.streamPool		= std::span(m_state->streamPool.get(), m_state->streamCapacity);
 		ioStreamingConfig.freeStreams		= m_state->freeStreams.get();

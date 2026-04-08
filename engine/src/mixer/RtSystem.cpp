@@ -151,8 +151,8 @@ namespace dalia {
 	// ------------
 
     RtSystem::RtSystem(const RtSystemConfig& config)
-        : m_outputChannels(config.outputChannels),
-		m_outputSampleRate(config.outputSampleRate),
+        : m_outChannels(config.outChannels),
+		m_outSampleRate(config.outSampleRate),
 		m_voicePool(config.voicePool),
         m_streamPool(config.streamPool),
         m_busPool(config.busPool),
@@ -164,8 +164,8 @@ namespace dalia {
 		m_mixOrder(config.mixOrder),
 		m_dspScratchBuffer(config.dspScratchBuffer),
 		m_biquadFilterPool(config.biquadFilterPool) {
-		m_smoothingCoefficient = 1.0f - std::exp(-2.0f * PI * SMOOTHING_CUTOFF_HZ / config.outputSampleRate);
-		m_fadeStep = CalculateLinearFadeStep(FADE_TIME_GAIN, m_outputSampleRate);
+		m_smoothingCoefficient = 1.0f - std::exp(-2.0f * PI * SMOOTHING_CUTOFF_HZ / config.outSampleRate);
+		m_fadeStep = CalculateLinearFadeStep(FADE_TIME_GAIN, m_outSampleRate);
     }
 
     void RtSystem::OnAudioCallback(float* output, uint32_t frameCount) {
@@ -190,7 +190,7 @@ namespace dalia {
 	            }
 				case RtCommand::Type::DeallocateVoice: {
 	            	Voice& voice = m_voicePool[cmd.targetIndex];
-	            	if (voice.gen != cmd.targetGen) break; // TODO: Should we really check generation here?
+	            	if (voice.gen != cmd.targetGen) break;
 
 	            	voice.Reset();
 	            	break;
@@ -313,7 +313,7 @@ namespace dalia {
 					biquad.currentFrequency = cmd.data.biquad.config.frequency;
 	            	biquad.targetResonance = cmd.data.biquad.config.resonance;
 	            	biquad.currentResonance = cmd.data.biquad.config.resonance;
-	            	CalculateBiquadCoefficients(biquad, static_cast<float>(m_outputSampleRate));
+	            	CalculateBiquadCoefficients(biquad, static_cast<float>(m_outSampleRate));
 	            	break;
 				}
 				case RtCommand::Type::SetBiquadParams: {
@@ -375,7 +375,7 @@ namespace dalia {
     }
 
     void RtSystem::Render(float* output, uint32_t frameCount) {
-        const uint32_t sampleCount = frameCount * m_outputChannels;
+        const uint32_t sampleCount = frameCount * m_outChannels;
 
     	// Bus preprocessing
         std::ranges::fill(m_busBufferPool, 0.0f);
@@ -550,7 +550,7 @@ namespace dalia {
 
         	if (framesToMixNow > 0) {
         		const float* DALIA_RESTRICT inPtr = &sourceData[cursorInt * sourceChannels];
-        		float* DALIA_RESTRICT outPtr = &busBuffer[framesMixed * m_outputChannels];
+        		float* DALIA_RESTRICT outPtr = &busBuffer[framesMixed * m_outChannels];
 
         		float localFadeGain = voice.currentFadeGain;
         		float localFadeTarget = voice.targetFadeGain;
@@ -559,18 +559,18 @@ namespace dalia {
         			StepFadeGain(localFadeGain, localFadeTarget, m_fadeStep);
 
         			StepMatrixGains(voice.currentGainMatrix, voice.targetGainMatrix, sourceChannels,
-        				m_outputChannels, m_smoothingCoefficient);
+        				m_outChannels, m_smoothingCoefficient);
 
         			for (uint32_t inC = 0; inC < sourceChannels; inC++) {
         				float sample = inPtr[inC] * localFadeGain; // Applying fade gain first
 
-        				for (uint32_t outC = 0; outC < m_outputChannels; outC++) {
+        				for (uint32_t outC = 0; outC < m_outChannels; outC++) {
         					outPtr[outC] += sample * voice.currentGainMatrix[inC][outC];
         				}
         			}
 
         			inPtr += sourceChannels;
-        			outPtr += m_outputChannels;
+        			outPtr += m_outChannels;
         		}
 
         		voice.currentFadeGain = localFadeGain;
@@ -626,7 +626,10 @@ namespace dalia {
 
 
     	if (voice.soundType == SoundType::Stream) {
-    		m_ioStreamRequests->Push(IoStreamRequest::ReleaseStream(voice.data.stream.streamContextIndex));
+    		m_ioStreamRequests->Push(IoStreamRequest::ReleaseStream(
+    			voice.data.stream.streamContextIndex,
+    			m_streamPool[voice.data.stream.streamContextIndex].gen
+    		));
     	}
 
 		// TODO: Remove these logs some time
@@ -682,28 +685,28 @@ namespace dalia {
 		}
 
 		ApplyGainAndFade(
-			buffer, frameCount, m_outputChannels,
+			buffer, frameCount, m_outChannels,
 			bus.currentGain, bus.targetGain, m_smoothingCoefficient,
 			bus.currentFadeGain, bus.targetFadeGain, m_fadeStep
 		);
 
     	if (bus.currentParentIndex != NO_PARENT) {
     		float* parentBuffer = m_busBufferPool.data() + (bus.currentParentIndex * frameCount * CHANNELS_MAX);
-    		MixToBuffer(parentBuffer, buffer, frameCount * m_outputChannels);
+    		MixToBuffer(parentBuffer, buffer, frameCount * m_outChannels);
     	}
     }
 
     void RtSystem::ApplyBusEffect(float* busBuffer, EffectSlot& slot, uint32_t frameCount) {
 		float fadeDurationInSeconds = 0.01f;
-		float fadeDelta = 1.0f / (m_outputSampleRate * fadeDurationInSeconds);
-		uint32_t sampleCount = frameCount * m_outputChannels;
+		float fadeDelta = 1.0f / (m_outSampleRate * fadeDurationInSeconds);
+		uint32_t sampleCount = frameCount * m_outChannels;
 
 		std::memcpy(m_dspScratchBuffer.data(), busBuffer, sampleCount * sizeof(float));
 		switch (slot.effect.GetType()) {
 			case EffectType::None: break;
 			case EffectType::Biquad:
 				BiquadFilter& biquad = m_biquadFilterPool[slot.effect.GetIndex()];
-				ProcessBiquad(m_dspScratchBuffer.data(), frameCount, m_outputChannels, biquad, m_outputSampleRate);
+				ProcessBiquad(m_dspScratchBuffer.data(), frameCount, m_outChannels, biquad, m_outSampleRate);
 				break;
 		}
 
@@ -719,7 +722,7 @@ namespace dalia {
 				busBuffer,
 				m_dspScratchBuffer.data(),
 				frameCount,
-				m_outputChannels,
+				m_outChannels,
 				slot.currentMix,
 				targetMix,
 				fadeDelta

@@ -22,8 +22,8 @@ namespace dalia {
 
     struct RtSystemConfig {
         // Maybe we should just inject the device pointer itself
-        uint32_t outputChannels = 0;
-        uint32_t outputSampleRate = 0;
+        uint32_t outChannels = 0;
+        uint32_t outSampleRate = 0;
 
         RtCommandQueue* rtCommands              = nullptr;
         RtEventQueue* rtEvents                  = nullptr;
@@ -60,8 +60,8 @@ namespace dalia {
         void FadeOutEffect(EffectHandle effect, uint32_t busIndex, uint32_t effectSlot);
         void FlushEffect(EffectType type, uint32_t index, uint32_t gen);
 
-        uint32_t m_outputChannels = 0;
-        uint32_t m_outputSampleRate = 0;
+        uint32_t m_outChannels = 0;
+        uint32_t m_outSampleRate = 0;
 
         float m_smoothingCoefficient = 0.0f; // Used for volume and gain smoothing
     	float m_fadeStep = 0.0f; // Per sample step for gain fading

@@ -16,7 +16,8 @@
 namespace dalia {
 
     IoStreamSystem::IoStreamSystem(const IoStreamSystemConfig& config)
-        : m_ioStreamRequests(config.ioStreamRequests),
+        : m_outSampleRate(config.outSampleRate),
+		m_ioStreamRequests(config.ioStreamRequests),
         m_streamPool(config.streamPool),
         m_freeStreams(config.freeStreams) {
     }
@@ -58,11 +59,13 @@ namespace dalia {
     void IoStreamSystem::ProcessRequest(const IoStreamRequest& req) {
         switch (req.type) {
             case IoStreamRequest::Type::PrepareStream: {
-                uint32_t sIndex = req.data.streamPrep.streamIndex;
-                uint32_t sGen = req.data.streamPrep.streamGen; // FIXME: This is not used and it holds a trash value?
+                uint32_t sIndex = req.index;
+                uint32_t sGen = req.gen;
                 const char* filepath = req.data.streamPrep.filepath;
 
                 StreamContext& stream = m_streamPool[sIndex];
+
+            	if (stream.gen.load(std::memory_order_relaxed) != sGen) break;
                 if (stream.state.load(std::memory_order_acquire) != StreamState::Preparing) break;
 
                 if (stream.decoder) {
@@ -87,7 +90,7 @@ namespace dalia {
                     }
 
                     // Sample rate
-                    if (info.sample_rate != TARGET_OUTPUT_SAMPLE_RATE) {
+                    if (info.sample_rate != m_outSampleRate) {
                         DALIA_LOG_ERR(LOG_CTX_IO, "Failed to load file (%s). Unsupported sample rate (%d).",
                             filepath, info.sample_rate);
                         isSupported = false;
@@ -118,9 +121,12 @@ namespace dalia {
                 break;
             }
             case IoStreamRequest::Type::ReleaseStream: {
-                uint32_t sIndex = req.data.streamRefill.streamIndex;
+                uint32_t sIndex = req.index;
+            	uint32_t sGen = req.gen;
 
                 StreamContext& stream = m_streamPool[sIndex];
+            	if (stream.gen.load(std::memory_order_relaxed) != sGen) break;
+
                 if (stream.decoder) {
                     stb_vorbis_close(stream.decoder);
                     stream.decoder = nullptr;
@@ -132,8 +138,8 @@ namespace dalia {
                 break;
             }
             case IoStreamRequest::Type::RefillStreamBuffer: {
-                uint32_t sIndex = req.data.streamRefill.streamIndex;
-                uint32_t sGen = req.data.streamRefill.streamGen;
+                uint32_t sIndex = req.index;
+                uint32_t sGen = req.gen;
                 uint32_t bufferIndex = req.data.streamRefill.bufferIndex;
 
                 StreamContext& stream = m_streamPool[sIndex];
@@ -145,8 +151,8 @@ namespace dalia {
                 break;
             }
             case IoStreamRequest::Type::SeekStream: {
-                uint32_t sIndex = req.data.streamSeek.streamIndex;
-                uint32_t sGen = req.data.streamSeek.streamGen;
+                uint32_t sIndex = req.index;
+                uint32_t sGen = req.gen;
                 uint32_t seekFrame = req.data.streamSeek.seekFrame;
 
                 StreamContext& stream = m_streamPool[sIndex];
