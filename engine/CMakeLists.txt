@@ -1,14 +1,5 @@
 include(FetchContent)
 
-# miniaudio
-FetchContent_Declare(
-    miniaudio
-    URL "https://raw.githubusercontent.com/mackron/miniaudio/master/miniaudio.h"
-    DOWNLOAD_NO_EXTRACT TRUE
-)
-FetchContent_MakeAvailable(miniaudio)
-set(MINIAUDIO_INCLUDE_DIR ${miniaudio_SOURCE_DIR})
-
 # stb_vorbis
 FetchContent_Declare(
     stb_vorbis
@@ -31,8 +22,9 @@ set(ENGINE_FILES
     # Internal headers and cpp-files
     src/Engine.cpp
 
-    src/backend/miniaudio_impl.cpp
-    src/backend/stb_vorbis_impl.cpp
+    src/backend/WasapiBackend.cpp
+    src/backend/WasapiBackend.h
+    src/backend/IAudioBackend.h
 
     src/core/Constants.h
     src/core/Logger.h
@@ -45,12 +37,14 @@ set(ENGINE_FILES
     src/core/Utility.h
     src/core/Types.h
     src/core/Math.h
+    src/core/HandleManager.h
+    src/core/HandleManager.cpp
 
     src/io/IoStreamSystem.cpp
     src/io/IoStreamSystem.h
     src/io/IoLoadSystem.cpp
     src/io/IoLoadSystem.h
-
+    src/io/stb_vorbis_impl.cpp
 
     src/messaging/RtCommandQueue.h
     src/messaging/RtCommandQueue.cpp
@@ -77,11 +71,6 @@ set(ENGINE_FILES
     src/resources/AssetRegistry.cpp
     src/resources/AssetRegistry.h
     src/resources/StreamSound.h
-    src/core/HandleManager.h
-    src/core/HandleManager.cpp
-    src/backend/WasapiBackend.cpp
-    src/backend/WasapiBackend.h
-    src/backend/IAudioBackend.h
 )
 
 add_library(dalia_engine STATIC ${ENGINE_FILES})
@@ -89,7 +78,6 @@ add_library(dalia_engine STATIC ${ENGINE_FILES})
 target_include_directories(dalia_engine 
     PUBLIC include
     PRIVATE src
-    SYSTEM PRIVATE ${MINIAUDIO_INCLUDE_DIR}
     SYSTEM PRIVATE ${STB_VORBIS_INCLUDE_DIR}
 )
 

@@ -35,8 +35,6 @@
 
 #include "common/StringID.h"
 
-#include "miniaudio.h"
-
 namespace dalia {
 
 	struct VoiceID {
@@ -509,11 +507,6 @@ namespace dalia {
 
 		state->rtCommands->Enqueue(RtCommand::SetVoiceGainMatrix(vIndex, vMirror.gen, finalGainMatrix));
 		vMirror.isGainDirty = false;
-	}
-
-	static void data_callback(ma_device* pDevice, void* pOutput, const void* pInput, uint32_t frameCount) {
-		RtSystem* rtSystem = static_cast<RtSystem*>(pDevice->pUserData);
-		rtSystem->Tick(static_cast<float*>(pOutput), frameCount);
 	}
 
 	// ------------------------
