@@ -436,6 +436,8 @@ namespace dalia {
 #pragma endregion PLAYBACK_MANAGEMENT
 
 	private:
+		void TeardownInternal();
+
 		EngineInternalState* m_state = nullptr;
 
 	};

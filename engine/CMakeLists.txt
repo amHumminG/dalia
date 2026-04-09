@@ -81,6 +81,7 @@ set(ENGINE_FILES
     src/core/HandleManager.cpp
     src/backend/WasapiBackend.cpp
     src/backend/WasapiBackend.h
+    src/backend/IAudioBackend.h
 )
 
 add_library(dalia_engine STATIC ${ENGINE_FILES})
@@ -94,5 +95,7 @@ target_include_directories(dalia_engine
 
 target_link_libraries(dalia_engine
     PRIVATE dalia_common
+    PRIVATE ole32 # Backend: COM initialization
+    PRIVATE avrt  # Backend: MMCSS
 )
 

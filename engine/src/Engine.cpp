@@ -3,6 +3,8 @@
 #include "dalia/audio/SoundControl.h"
 #include "dalia/audio/EffectControl.h"
 
+#include "backend/WasapiBackend.h"
+
 #include "core/Logger.h"
 #include "core/FixedStack.h"
 #include "core/SPSCRingBuffer.h"
@@ -66,8 +68,7 @@ namespace dalia {
 	struct EngineInternalState {
 		bool initialized = false;
 
-		// Miniaudio
-		std::unique_ptr<ma_device> device;
+		std::unique_ptr<IAudioBackend> backend; // HAL
 
 		uint32_t outChannels = 0;
 		uint32_t outSampleRate = 0;
@@ -518,7 +519,7 @@ namespace dalia {
 	// ------------------------
 
 	Engine::Engine() = default;
-	Engine::~Engine() { if (m_state) delete m_state; };
+	Engine::~Engine() { TeardownInternal(); };
 
 	Result Engine::Init(const EngineConfig& config) {
 		if (m_state != nullptr) {
@@ -543,28 +544,28 @@ namespace dalia {
 		Bus& master = m_state->busPool[MASTER_BUS_INDEX];
 		master.isActive = true;
 
-		// --- BACKEND SETUP ---
-		m_state->device					= std::make_unique<ma_device>();
-		ma_device_config deviceConfig	= ma_device_config_init(ma_device_type_playback);
-		deviceConfig.playback.format	= ma_format_f32;
-		deviceConfig.playback.channels	= CHANNELS_STEREO; // Stereo playback only for now
-		deviceConfig.sampleRate			= TARGET_OUTPUT_SAMPLE_RATE; // Hz
-		deviceConfig.dataCallback		= data_callback;
-		deviceConfig.periodSizeInFrames = 480;
-		deviceConfig.pUserData			= nullptr; // We set this to rtSystem after its constructor has been called
+		// --- BACKEND (HAL) SETUP ---
+#ifdef _WIN32
+		m_state->backend = std::make_unique<WasapiBackend>();
+#else
+		DALIA_LOG_CRIT(LOG_CTX_API, "Failed to initialize engine. Unsupported OS.");
+		TeardownInternal();
+		return Result::SystemError;
+#endif
 
-		if (ma_device_init(NULL, &deviceConfig, m_state->device.get()) != MA_SUCCESS) {
-			DALIA_LOG_CRIT(LOG_CTX_API, "Failed to initialize playback device.");
-			delete m_state;
-			m_state = nullptr;
-			DALIA_LOG_CRIT(LOG_CTX_API, "Failed to initialize engine. Device initialization failed.");
-			return Result::DeviceFailed;
+		Result res = m_state->backend->Init();
+		if (res != Result::Ok) {
+			DALIA_LOG_CRIT(LOG_CTX_API, "Failed to initialize engine. Backend initialization failed.");
+			TeardownInternal();
+			return res;
 		}
-		m_state->outChannels = m_state->device->playback.channels;
-		m_state->outSampleRate = m_state->device->sampleRate;
+
+		m_state->outChannels		= m_state->backend->GetChannelCount();
+		m_state->outSampleRate		= m_state->backend->GetSampleRate();
+		uint32_t periodSizeInFrames = m_state->backend->GetPeriodSizeInFrames();
 
 		// Buffer allocations based on period size
-		const uint32_t maxSamplesPerPeriod = m_state->device->playback.internalPeriodSizeInFrames * CHANNELS_MAX;
+		const uint32_t maxSamplesPerPeriod = periodSizeInFrames * CHANNELS_MAX;
 		m_state->busBufferPool = std::make_unique<float[]>(m_state->busCapacity * maxSamplesPerPeriod);
 		m_state->dspScratchBuffer = std::make_unique<float[]>(maxSamplesPerPeriod);
 
@@ -585,7 +586,7 @@ namespace dalia {
 		rtConfig.biquadFilterPool	= std::span(m_state->biquadFilterPool.get(), m_state->biquadHM->GetCapacity());
 		m_state->rtSystem = std::make_unique<RtSystem>(rtConfig);
 
-		m_state->device->pUserData = m_state->rtSystem.get(); // Hand it to device for use in callback
+		m_state->backend->AttachSystem(m_state->rtSystem.get()); // Hand it to backend for ticking
 
 		IoStreamSystemConfig ioStreamingConfig;
 		ioStreamingConfig.outSampleRate		= m_state->outSampleRate;
@@ -607,12 +608,11 @@ namespace dalia {
 		m_state->ioLoadSystem->Start();
 
 		// Audio Thread Start
-		if (ma_device_start(m_state->device.get()) != MA_SUCCESS) {
-			DALIA_LOG_CRIT(LOG_CTX_API, "Failed to start playback device.");
-			delete m_state;
-			m_state = nullptr;
-			DALIA_LOG_CRIT(LOG_CTX_API, "Failed to initialize engine. Device start failed.");
-			return Result::DeviceFailed;
+		res = m_state->backend->Start();
+		if (res != Result::Ok) {
+			DALIA_LOG_CRIT(LOG_CTX_API, "Failed to initialize engine. Failed to start audio thread.");
+			TeardownInternal();
+			return res;
 		}
 
 		m_state->initialized = true;
@@ -626,22 +626,8 @@ namespace dalia {
 			return Result::NotInitialized;
 		}
 
-		// --- Audio Thread Stop ---
-		if (ma_device_stop(m_state->device.get()) != MA_SUCCESS) {
-			DALIA_LOG_CRIT(LOG_CTX_API, "Failed to stop playback device.");
-			return Result::DeviceFailed;
-		}
-		ma_device_uninit(m_state->device.get());
-
-		// --- I/O Thread Stop ---
-		m_state->ioLoadSystem->Stop();
-		m_state->ioStreamSystem->Stop();
-
-		delete m_state;
-		m_state = nullptr;
-
-		DALIA_LOG_INFO(LOG_CTX_API, "Shutdown engine.");
-		Logger::Deinit();
+		DALIA_LOG_INFO(LOG_CTX_API, "Engine shutdown.");
+		TeardownInternal();
 
 		return Result::Ok;
 	}
@@ -1562,5 +1548,18 @@ namespace dalia {
 		vMirror->isGainDirty = true;
 
 		return Result::Ok;
+	}
+
+	void Engine::TeardownInternal() {
+		if (!m_state) return;
+
+		if (m_state->backend)			m_state->backend->Stop();
+		if (m_state->ioLoadSystem)		m_state->ioLoadSystem->Stop();
+		if (m_state->ioStreamSystem)	m_state->ioStreamSystem->Stop();
+
+		delete m_state;
+		m_state = nullptr;
+
+		Logger::Deinit();
 	}
 }

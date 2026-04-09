@@ -3,7 +3,7 @@
 #include "core/Logger.h"
 #include "mixer/RtSystem.h"
 
-#include <corecrt_malloc.h>
+#include <avrt.h>
 
 #ifndef AUDCLNT_STREAMFLAGS_AUTOCONVERTPCM
 #define AUDCLNT_STREAMFLAGS_AUTOCONVERTPCM 0x80000000
@@ -11,8 +11,7 @@
 
 namespace dalia {
 
-	WasapiBackend::WasapiBackend(RtSystem* rtSystem)
-		: m_rtSystem(rtSystem) {
+	WasapiBackend::WasapiBackend() {
 		m_bufferEvent = CreateEvent(nullptr, FALSE, FALSE, nullptr);
 		m_shutdownEvent = CreateEvent(nullptr, TRUE, FALSE, nullptr);
 	}

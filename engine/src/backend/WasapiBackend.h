@@ -1,12 +1,13 @@
 #pragma once
 
+#include "backend/IAudioBackend.h"
+
 #include "dalia/core/Result.h"
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <mmdeviceapi.h>
 #include <audioclient.h>
-#include <avrt.h>
 
 #include <atomic>
 #include <thread>
@@ -16,20 +17,20 @@ namespace dalia {
 
 	class RtSystem;
 
-	class WasapiBackend {
+	class WasapiBackend : public IAudioBackend {
 	public:
-		WasapiBackend(RtSystem* rtSystem);
+		WasapiBackend();
 		~WasapiBackend();
 
-		Result Init();
+		Result Init() override;
+		Result Start() override;
+		void Stop() override;
 
-		Result Start();
+		void AttachSystem(RtSystem* system) override { m_rtSystem = system; }
 
-		void Stop();
-
-		uint32_t GetSampleRate() const { return m_sampleRate; }
-		uint32_t GetChannelCount() const { return m_channelCount; }
-		uint32_t GetPeriodSizeInFrames() const { return m_periodSizeInFrames; }
+		uint32_t GetSampleRate() const override { return m_sampleRate; }
+		uint32_t GetChannelCount() const override { return m_channelCount; }
+		uint32_t GetPeriodSizeInFrames() const override { return m_periodSizeInFrames; }
 
 	private:
 		void AudioThreadMain();
@@ -51,4 +52,3 @@ namespace dalia {
 		uint32_t m_periodSizeInFrames = 0;
 	};
 }
-
