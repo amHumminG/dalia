@@ -21,5 +21,6 @@ namespace dalia {
 		virtual uint32_t GetSampleRate() const = 0;
 		virtual uint32_t GetChannelCount() const = 0;
 		virtual uint32_t GetPeriodSizeInFrames() const = 0;
+		virtual uint32_t GetBufferCapacityInFrames() const = 0;
 	};
 }

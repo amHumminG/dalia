@@ -31,6 +31,7 @@ namespace dalia {
 		uint32_t GetSampleRate() const override { return m_sampleRate; }
 		uint32_t GetChannelCount() const override { return m_channelCount; }
 		uint32_t GetPeriodSizeInFrames() const override { return m_periodSizeInFrames; }
+		uint32_t GetBufferCapacityInFrames() const override { return m_bufferCapacityInFrames; }
 
 	private:
 		void AudioThreadMain();
@@ -50,5 +51,6 @@ namespace dalia {
 		uint32_t m_sampleRate = 0;
 		uint32_t m_channelCount = 0;
 		uint32_t m_periodSizeInFrames = 0;
+		uint32_t m_bufferCapacityInFrames = 0;
 	};
 }

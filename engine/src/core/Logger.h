@@ -4,6 +4,7 @@
 namespace dalia {
 
 	static constexpr const char* LOG_CTX_API       = "API";
+	static constexpr const char* LOG_CTX_BACKEND   = "Backend";
 	static constexpr const char* LOG_CTX_CORE      = "Core";
 	static constexpr const char* LOG_CTX_IO        = "I/O";
 	static constexpr const char* LOG_CTX_MESSAGING = "Messaging";

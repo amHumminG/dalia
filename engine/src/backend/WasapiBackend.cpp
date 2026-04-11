@@ -3,6 +3,7 @@
 #include "core/Logger.h"
 #include "mixer/RtSystem.h"
 
+#include <algorithm>
 #include <avrt.h>
 
 #ifndef AUDCLNT_STREAMFLAGS_AUTOCONVERTPCM
@@ -58,15 +59,95 @@ namespace dalia {
 		m_channelCount = mixFormat->nChannels;
 
 		// Initialize WASAPI in shared mode
-		DWORD streamFlags = AUDCLNT_STREAMFLAGS_EVENTCALLBACK | AUDCLNT_STREAMFLAGS_AUTOCONVERTPCM;
-		hr = m_audioClient->Initialize(
-			AUDCLNT_SHAREMODE_SHARED,
-			streamFlags,
-			0,
-			0,
-			mixFormat,
-			nullptr
-		);
+		bool initializedLowLatency = false;
+
+		// Attempt to initialize client with low latency period
+		Microsoft::WRL::ComPtr<IAudioClient3> audioClient3;
+		hr = m_audioClient->QueryInterface(IID_PPV_ARGS(&audioClient3));
+
+		if (SUCCEEDED(hr)) {
+			// Set client properties
+			AudioClientProperties props = {0};
+			props.cbSize = sizeof(AudioClientProperties);
+			props.eCategory = AudioCategory_GameEffects; // Set games priority
+			props.Options = AUDCLNT_STREAMOPTIONS_NONE;
+
+			audioClient3->SetClientProperties(&props); // This can fail silently on older systems
+
+			UINT32 defaultPeriod, fundamentalPeriod, minPeriod, maxPeriod;
+			hr = audioClient3->GetSharedModeEnginePeriod(mixFormat, &defaultPeriod, &fundamentalPeriod,
+				&minPeriod, &maxPeriod);
+
+			if (SUCCEEDED(hr)) {
+				// Snap to grid
+				UINT32 targetPeriod = minPeriod;
+				if (fundamentalPeriod > 0) targetPeriod = (targetPeriod / fundamentalPeriod) * fundamentalPeriod;
+				targetPeriod = std::clamp(targetPeriod, minPeriod, maxPeriod);
+				DALIA_LOG_DEBUG(LOG_CTX_BACKEND, "Target period: %d.", targetPeriod);
+
+				// Attempt low-latency initialization
+				hr = audioClient3->InitializeSharedAudioStream(
+					AUDCLNT_STREAMFLAGS_EVENTCALLBACK,
+					targetPeriod,
+					mixFormat,
+					nullptr
+				);
+
+				// Handle locked scenario
+				if (hr == AUDCLNT_E_ENGINE_PERIODICITY_LOCKED) {
+					DALIA_LOG_WARN(LOG_CTX_BACKEND, "Engine periodicity is locked by another application.");
+
+					hr = audioClient3->InitializeSharedAudioStream(
+						AUDCLNT_STREAMFLAGS_EVENTCALLBACK,
+						defaultPeriod,
+						mixFormat,
+						nullptr
+					);
+
+					if (SUCCEEDED(hr)) {
+						initializedLowLatency = true;
+						m_periodSizeInFrames = defaultPeriod;
+						DALIA_LOG_DEBUG(LOG_CTX_BACKEND, "Low-latency fallback to default period succeeded (%u frames).",
+							defaultPeriod);
+					}
+				}
+				else if (SUCCEEDED(hr)) {
+					initializedLowLatency = true;
+					m_periodSizeInFrames = targetPeriod;
+					DALIA_LOG_DEBUG(LOG_CTX_BACKEND, "Low-latency initialization succeeded (%u frames).", targetPeriod);
+				}
+			}
+		}
+
+		if (!initializedLowLatency) {
+			// Fallback if low latency negotiation failed (likely on an older Windows version)
+			DALIA_LOG_WARN(LOG_CTX_BACKEND, "Low-latency initialization failed. Falling back to legacy audio client.");
+
+			DWORD legacyFlags = AUDCLNT_STREAMFLAGS_EVENTCALLBACK | AUDCLNT_STREAMFLAGS_AUTOCONVERTPCM;
+			hr = m_audioClient->Initialize(
+				AUDCLNT_SHAREMODE_SHARED,
+				legacyFlags,
+				0,
+				0,
+				mixFormat,
+				nullptr
+			);
+
+			if (FAILED(hr)) {
+				DALIA_LOG_CRIT(LOG_CTX_BACKEND, "Failed to initialize audio client.");
+				return Result::ClientFailed;
+			}
+
+			REFERENCE_TIME defaultDevicePeriod = 0;
+			REFERENCE_TIME minDevicePeriod = 0;
+			if (FAILED(m_audioClient->GetDevicePeriod(&defaultDevicePeriod, &minDevicePeriod))) {
+				DALIA_LOG_CRIT(LOG_CTX_BACKEND, "Failed to query device period.");
+				return Result::ClientFailed;
+			}
+
+			m_periodSizeInFrames = static_cast<UINT32>((defaultDevicePeriod * m_sampleRate) / 10000000);
+			DALIA_LOG_DEBUG(LOG_CTX_BACKEND, "Legacy client initialization succeeded (%u frames).", m_periodSizeInFrames);
+		}
 
 		// Free mixFormat pointer
 		CoTaskMemFree(mixFormat);
@@ -81,11 +162,12 @@ namespace dalia {
 		hr = m_audioClient->GetService(IID_PPV_ARGS(&m_renderClient));
 		if (FAILED(hr)) return Result::ClientFailed;
 
-		UINT32 bufferSize = 0;
-		hr = m_audioClient->GetBufferSize(&bufferSize);
+		UINT32 bufferCapacity = 0;
+		hr = m_audioClient->GetBufferSize(&bufferCapacity);
 		if (FAILED(hr)) return Result::ClientFailed;
 
-		m_periodSizeInFrames = bufferSize;
+		m_bufferCapacityInFrames = bufferCapacity;
+		DALIA_LOG_DEBUG(LOG_CTX_BACKEND, "Buffer capacity: %d.", bufferCapacity);
 
 		return Result::Ok;
 	}
@@ -143,7 +225,7 @@ namespace dalia {
 				HRESULT hr = m_audioClient->GetCurrentPadding(&padding);
 				if (FAILED(hr)) continue;
 
-				UINT32 framesToWrite = m_periodSizeInFrames - padding;
+				UINT32 framesToWrite = m_bufferCapacityInFrames - padding;
 				if (framesToWrite == 0) continue;
 
 				// Ask OS for buffer pointer

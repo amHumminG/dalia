@@ -555,10 +555,14 @@ namespace dalia {
 
 		m_state->outChannels		= m_state->backend->GetChannelCount();
 		m_state->outSampleRate		= m_state->backend->GetSampleRate();
-		uint32_t periodSizeInFrames = m_state->backend->GetPeriodSizeInFrames();
+		uint32_t bufferSizeInFrames = m_state->backend->GetBufferCapacityInFrames();
+
+
+		DALIA_LOG_DEBUG(LOG_CTX_API, "Backend period size: %d.", m_state->backend->GetPeriodSizeInFrames());
+		DALIA_LOG_DEBUG(LOG_CTX_API, "Backend buffer size: %d.", bufferSizeInFrames);
 
 		// Buffer allocations based on period size
-		const uint32_t maxSamplesPerPeriod = periodSizeInFrames * CHANNELS_MAX;
+		const uint32_t maxSamplesPerPeriod = bufferSizeInFrames * CHANNELS_MAX;
 		m_state->busBufferPool = std::make_unique<float[]>(m_state->busCapacity * maxSamplesPerPeriod);
 		m_state->dspScratchBuffer = std::make_unique<float[]>(maxSamplesPerPeriod);
 
