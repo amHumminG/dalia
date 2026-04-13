@@ -149,12 +149,40 @@ namespace dalia {
 		}
 	}
 
+	static float GetDistanceAttenuationGain(float distance, float minDistance, float maxDistance, AttenuationModel model) {
+		if (maxDistance <= minDistance) {
+			if (distance <= minDistance) return 1.0f;
+			if (distance > minDistance)  return 0.0f;
+		}
+
+		if (distance <= minDistance) return 1.0f;
+		if (distance >= maxDistance) return 0.0f;
+
+		float distanceFactor = (distance - minDistance) / (maxDistance - minDistance); // Factor between 0 and 1
+
+		switch (model) {
+			case AttenuationModel::InverseSquare: {
+				float inverseFactor = minDistance / distance;
+				return inverseFactor * (1.0f - distanceFactor);
+			}
+			case AttenuationModel::Linear: {
+				return 1.0f - distanceFactor;
+			}
+			case AttenuationModel::Exponential: {
+				float inverseFactor = 1.0f - distanceFactor;
+				return inverseFactor * inverseFactor;
+			}
+			default: return 0.0f;
+		}
+	}
+
 	// ------------
 
     RtSystem::RtSystem(const RtSystemConfig& config)
         : m_outChannels(config.outChannels),
 		m_outSampleRate(config.outSampleRate),
 		m_voicePool(config.voicePool),
+		m_voiceParamBridges(config.voiceParamBridges),
         m_streamPool(config.streamPool),
         m_busPool(config.busPool),
 		m_busBufferPool(config.busBufferPool),
