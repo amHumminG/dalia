@@ -37,4 +37,10 @@ namespace dalia {
 		Error			= 3,
 	};
 	using AudioEventCallback = std::function<void(PlaybackHandle handle, PlaybackExitCondition exitCondition)>;
+
+	enum class AttenuationModel : uint8_t {
+		InverseSquare,
+		Linear,
+		Exponential
+	};
 }

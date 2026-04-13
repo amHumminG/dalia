@@ -19,12 +19,14 @@
 #include "messaging/IoLoadRequestQueue.h"
 #include "messaging/IoLoadEventQueue.h"
 
-#include "mixer/RtSystem.h"
+#include "mixer/ParameterBridge.h"
 #include "mixer/Voice.h"
 #include "mixer/StreamContext.h"
 #include "mixer/Bus.h"
 #include "mixer/MixGraphCompiler.h"
 #include "mixer/effects/BiquadFilter.h"
+#include "mixer/Listener.h"
+#include "mixer/RtSystem.h"
 
 #include "io/IoStreamSystem.h"
 #include "io/IoLoadSystem.h"
@@ -83,20 +85,26 @@ namespace dalia {
 		uint32_t streamCapacity	= 0;
 		uint32_t busCapacity	= 0;
 
+		uint32_t listenerCapacity = 0;
+
 		// --- Pools ---
 		std::unique_ptr<Voice[]>				voicePool;
+		std::unique_ptr<VoiceMirror[]>			voicePoolMirror;
+		std::unique_ptr<ParameterBridge<VoiceParams>[]>	voiceParamBridges;
+
 		std::unique_ptr<StreamContext[]>		streamPool;
+
 		std::unique_ptr<Bus[]>					busPool;
 		std::unique_ptr<float[]>				busBufferPool;
-
-		// --- Mirrors ---
-		std::unique_ptr<VoiceMirror[]>		voicePoolMirror;
-		std::unique_ptr<BusMirror[]>		busPoolMirror;
-
-		std::unordered_map<BusID, uint32_t> busHashMap;
+		std::unique_ptr<BusMirror[]>			busPoolMirror;
+		std::unordered_map<BusID, uint32_t>		busHashMap;
 #if DALIA_DEBUG
-		std::unordered_map<BusID, std::string> busDebugNames;
+		std::unordered_map<BusID, std::string>	busDebugNames; // Not currently used
 #endif
+
+		std::unique_ptr<Listener[]>				listenerPool;
+		std::unique_ptr<ListenerMirror[]>		listenerPoolMirror;
+		std::unique_ptr<ParameterBridge<ListenerParams>[]>	listenerParamBridges;
 
 		// --- Availability Containers ---
 		std::unique_ptr<FixedStack<uint32_t>>		freeVoices;
@@ -130,7 +138,8 @@ namespace dalia {
 		std::unique_ptr<IoLoadSystem> ioLoadSystem;
 
 		EngineInternalState(const EngineConfig& config)
-			: voiceCapacity(config.voiceCapacity), streamCapacity(config.streamCapacity), busCapacity(config.busCapacity) {
+			: voiceCapacity(config.voiceCapacity), streamCapacity(config.streamCapacity), busCapacity(config.busCapacity),
+			listenerCapacity(std::clamp(config.listenerCapacity, LISTENERS_MIN, LISTENERS_MAX)) {
 			// Message Queues
 			rtCommands			= std::make_unique<RtCommandQueue>(config.rtCommandQueueCapacity);
 			rtEvents			= std::make_unique<RtEventQueue>(config.rtEventQueueCapacity);
@@ -141,9 +150,14 @@ namespace dalia {
 			// Pools
 			voicePool			= std::make_unique<Voice[]>(voiceCapacity);
 			voicePoolMirror		= std::make_unique<VoiceMirror[]>(voiceCapacity);
+			voiceParamBridges	= std::make_unique<ParameterBridge<VoiceParams>[]>(voiceCapacity);
 			streamPool			= std::make_unique<StreamContext[]>(streamCapacity);
 			busPool				= std::make_unique<Bus[]>(busCapacity);
 			busPoolMirror		= std::make_unique<BusMirror[]>(busCapacity);
+
+			listenerPool		= std::make_unique<Listener[]>(listenerCapacity);
+			listenerPoolMirror  = std::make_unique<ListenerMirror[]>(listenerCapacity);
+			listenerParamBridges = std::make_unique<ParameterBridge<ListenerParams>[]>(listenerCapacity);
 
 			// Effects
 			biquadFilterPool	= std::make_unique<BiquadFilter[]>(config.biquadCapacity);
@@ -469,45 +483,45 @@ namespace dalia {
 		}
 	}
 
-	static inline void ResolveAndFlushGains(EngineInternalState* state, uint32_t vIndex) {
-		VoiceMirror& vMirror = state->voicePoolMirror[vIndex];
-
-		float volumeLinear = DbToGain(vMirror.volumeDb);
-		float finalGainMatrix[CHANNELS_MAX][CHANNELS_MAX] = {0};
-
-		if (vMirror.isSpatial) {
-			// 3D spatial
-			// Calculate distance attenuation & VBAP
-		}
-		else {
-			if (vMirror.channels == CHANNELS_MONO) {
-				// Constant power panning
-				float panNormalized = (vMirror.stereoPan + 1.0f) * 0.5f;
-				float angle = panNormalized * PI * 0.5f;
-
-				finalGainMatrix[0][0] = std::cos(angle) * volumeLinear; // Left
-				finalGainMatrix[0][1] = std::sin(angle) * volumeLinear; // Right
-
-				DALIA_LOG_DEBUG(LOG_CTX_CORE,
-					"Updated gain matrix for voice %d (MONO). Gain[0][0] = %.2f, Gain[0][1] = %.2f.",
-					vIndex, finalGainMatrix[0][0], finalGainMatrix[1][1]);
-			}
-			else { // CHANNELS_STEREO
-				float gainL = std::clamp(1.0f - vMirror.stereoPan, 0.0f, 1.0f);
-				float gainR = std::clamp(1.0f + vMirror.stereoPan, 0.0f, 1.0f);
-
-				finalGainMatrix[0][0] = gainL * volumeLinear;
-				finalGainMatrix[1][1] = gainR * volumeLinear;
-
-				DALIA_LOG_DEBUG(LOG_CTX_CORE,
-					"Updated gain matrix for voice %d (STEREO). Gain[0][0] = %.2f, Gain[1][1] = %.2f.",
-					vIndex, finalGainMatrix[0][0], finalGainMatrix[1][1]);
-			}
-		}
-
-		state->rtCommands->Enqueue(RtCommand::SetVoiceGainMatrix(vIndex, vMirror.gen, finalGainMatrix));
-		vMirror.isGainDirty = false;
-	}
+	// static inline void ResolveAndFlushGains(EngineInternalState* state, uint32_t vIndex) {
+	// 	VoiceMirror& vMirror = state->voicePoolMirror[vIndex];
+	//
+	// 	float volumeLinear = math::DbToGain(vMirror.volumeDb);
+	// 	float finalGainMatrix[CHANNELS_MAX][CHANNELS_MAX] = {0};
+	//
+	// 	if (vMirror.isSpatial) {
+	// 		// 3D spatial
+	// 		// Calculate distance attenuation & VBAP
+	// 	}
+	// 	else {
+	// 		if (vMirror.channels == CHANNELS_MONO) {
+	// 			// Constant power panning
+	// 			float panNormalized = (vMirror.stereoPan + 1.0f) * 0.5f;
+	// 			float angle = panNormalized * PI * 0.5f;
+	//
+	// 			finalGainMatrix[0][0] = std::cos(angle) * volumeLinear; // Left
+	// 			finalGainMatrix[0][1] = std::sin(angle) * volumeLinear; // Right
+	//
+	// 			DALIA_LOG_DEBUG(LOG_CTX_CORE,
+	// 				"Updated gain matrix for voice %d (MONO). Gain[0][0] = %.2f, Gain[0][1] = %.2f.",
+	// 				vIndex, finalGainMatrix[0][0], finalGainMatrix[1][1]);
+	// 		}
+	// 		else { // CHANNELS_STEREO
+	// 			float gainL = std::clamp(1.0f - vMirror.stereoPan, 0.0f, 1.0f);
+	// 			float gainR = std::clamp(1.0f + vMirror.stereoPan, 0.0f, 1.0f);
+	//
+	// 			finalGainMatrix[0][0] = gainL * volumeLinear;
+	// 			finalGainMatrix[1][1] = gainR * volumeLinear;
+	//
+	// 			DALIA_LOG_DEBUG(LOG_CTX_CORE,
+	// 				"Updated gain matrix for voice %d (STEREO). Gain[0][0] = %.2f, Gain[1][1] = %.2f.",
+	// 				vIndex, finalGainMatrix[0][0], finalGainMatrix[1][1]);
+	// 		}
+	// 	}
+	//
+	// 	state->rtCommands->Enqueue(RtCommand::SetVoiceGainMatrix(vIndex, vMirror.gen, finalGainMatrix));
+	// 	vMirror.isGainDirty = false;
+	// }
 
 	// ------------------------
 
@@ -563,7 +577,8 @@ namespace dalia {
 
 		// Buffer allocations based on period size
 		const uint32_t maxSamplesPerPeriod = bufferSizeInFrames * CHANNELS_MAX;
-		m_state->busBufferPool = std::make_unique<float[]>(m_state->busCapacity * maxSamplesPerPeriod);
+		uint32_t busBufferPoolSize = m_state->busCapacity * maxSamplesPerPeriod;
+		m_state->busBufferPool = std::make_unique<float[]>(busBufferPoolSize);
 		m_state->dspScratchBuffer = std::make_unique<float[]>(maxSamplesPerPeriod);
 
 		// --- SYSTEMS SETUP ---
@@ -574,11 +589,14 @@ namespace dalia {
 		rtConfig.rtEvents			= m_state->rtEvents.get();
 		rtConfig.ioStreamRequests	= m_state->ioStreamRequests.get();
 		rtConfig.voicePool			= std::span(m_state->voicePool.get(), m_state->voiceCapacity);
+		rtConfig.voiceParamBridges  = std::span(m_state->voiceParamBridges.get(), m_state->voiceCapacity);
 		rtConfig.streamPool			= std::span(m_state->streamPool.get(), m_state->streamCapacity);
 		rtConfig.busPool			= std::span(m_state->busPool.get(), m_state->busCapacity);
-		rtConfig.busBufferPool		= std::span(m_state->busBufferPool.get(), m_state->busCapacity * maxSamplesPerPeriod);
+		rtConfig.busBufferPool		= std::span(m_state->busBufferPool.get(), busBufferPoolSize);
 		rtConfig.mixGraphCompiler	= m_state->mixGraphCompiler.get();
 		rtConfig.mixOrder			= std::span(m_state->mixOrder.get(), m_state->busCapacity);
+		rtConfig.listenerPool		= std::span(m_state->listenerPool.get(), m_state->listenerCapacity);
+		rtConfig.listenerParamBridges = std::span(m_state->listenerParamBridges.get(), m_state->listenerCapacity);
 		rtConfig.dspScratchBuffer	= std::span(m_state->dspScratchBuffer.get(), maxSamplesPerPeriod);
 		rtConfig.biquadFilterPool	= std::span(m_state->biquadFilterPool.get(), m_state->biquadHM->GetCapacity());
 		m_state->rtSystem = std::make_unique<RtSystem>(rtConfig);

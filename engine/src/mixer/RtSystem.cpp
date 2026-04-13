@@ -163,7 +163,9 @@ namespace dalia {
 		m_mixGraphCompiler(config.mixGraphCompiler),
 		m_mixOrder(config.mixOrder),
 		m_dspScratchBuffer(config.dspScratchBuffer),
-		m_biquadFilterPool(config.biquadFilterPool) {
+		m_biquadFilterPool(config.biquadFilterPool),
+		m_listenerPool(config.listenerPool),
+		m_listenerParamBridges(config.listenerParamBridges) {
 		m_smoothingCoefficient = 1.0f - std::exp(-2.0f * PI * SMOOTHING_CUTOFF_HZ / config.outSampleRate);
 		m_fadeStep = CalculateLinearFadeStep(FADE_TIME_GAIN, m_outSampleRate);
     }

@@ -26,6 +26,8 @@ namespace dalia {
 		uint32_t busCapacity		= 64;
 		uint32_t biquadCapacity		= 32;
 
+		uint32_t listenerCapacity	= 1; // Min 1, max 4
+
 		size_t rtCommandQueueCapacity		= 1024;
 		size_t rtEventQueueCapacity			= 1024;
 		size_t ioStreamRequestQueueCapacity	= 256;
