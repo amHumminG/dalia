@@ -4,7 +4,7 @@
 #include <cmath>
 #include <xmmintrin.h>
 
-namespace dalia {
+namespace dalia::math {
 
     inline float DbToGain(float db) {
         if (db <= VOLUME_DB_MIN) return GAIN_MIN;

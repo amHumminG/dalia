@@ -1,10 +1,12 @@
 #pragma once
+
 #include "dalia/audio/PlaybackControl.h"
 #include "dalia/audio/SoundControl.h"
 #include "core/Constants.h"
-#include <cstdint>
-
+#include "core/Math.h"
 #include "StreamContext.h"
+
+#include <cstdint>
 
 namespace dalia {
 
@@ -15,6 +17,21 @@ namespace dalia {
         Paused,
         Stopped
     };
+
+	struct VoiceParams {
+		float volumeDb = VOLUME_DB_DEFAULT;
+		float pitch = 1.0f;
+		float stereoPan = PAN_STEREO_DEFAULT;
+
+		bool isLooping = false;
+		bool isSpatial = false;
+
+		// Only used if isSpatial is true
+		AttenuationModel attenuationModel = AttenuationModel::InverseSquare;
+		math::Vector3 position{0.0f, 0.0f, 0.0f};
+		float minDistance = MIN_DIST_DEFAULT;
+		float maxDistance = MAX_DIST_DEFAULT;
+	};
 
     struct Voice {
         uint32_t gen = START_GENERATION;
@@ -34,17 +51,26 @@ namespace dalia {
     	uint32_t pendingSeekFrame = 0;
 
         // Mixing Properties
-    	float currentFadeGain = 1.0f; // Owned by the voice
-    	float targetFadeGain = 1.0f;  // Owned by the reconciler
+    	float currentFadeGain = GAIN_DEFAULT; // Owned by the voice
+    	float targetFadeGain = GAIN_DEFAULT;  // Owned by the resolver
+
+    	float currentGains[CHANNELS_MAX] = {
+    		GAIN_DEFAULT, GAIN_DEFAULT, GAIN_DEFAULT, GAIN_DEFAULT,
+    		GAIN_DEFAULT, GAIN_DEFAULT, GAIN_DEFAULT, GAIN_DEFAULT
+    	};
+    	float targetGains[CHANNELS_MAX] {
+    		GAIN_DEFAULT, GAIN_DEFAULT, GAIN_DEFAULT, GAIN_DEFAULT,
+			GAIN_DEFAULT, GAIN_DEFAULT, GAIN_DEFAULT, GAIN_DEFAULT
+    	};
+
+    	VoiceParams params;
+    	bool isParamsDirty = false;
 
         bool isLooping = false;
-        float targetGainMatrix[CHANNELS_MAX][CHANNELS_MAX];
-        float currentGainMatrix[CHANNELS_MAX][CHANNELS_MAX];
-        float pitch = 1.0f;
 
         uint32_t channels = CHANNELS_STEREO;
         uint32_t sampleRate = TARGET_OUTPUT_SAMPLE_RATE;
-        double cursor = 0.0f;
+        double cursor = 0.0;
 
         SoundType soundType = SoundType::None;
         union {
@@ -76,16 +102,22 @@ namespace dalia {
         	hasPendingSeek = false;
 			pendingSeekFrame = 0;
 
-        	currentFadeGain = 1.0f;
-        	targetFadeGain = 1.0f;
+        	currentFadeGain = GAIN_DEFAULT;
+        	targetFadeGain = GAIN_DEFAULT;
+
+        	for (uint32_t c = 0; c < CHANNELS_MAX; c++) {
+        		currentGains[c] = GAIN_DEFAULT;
+        		targetGains[c]  = GAIN_DEFAULT;
+        	}
 
             isLooping = false;
-            std::memset(targetGainMatrix, 0.0f, sizeof(targetGainMatrix));
-            std::memset(currentGainMatrix, 0.0f, sizeof(currentGainMatrix));
+
+        	params = VoiceParams{};
+        	isParamsDirty = false;
 
             channels = 0;
             sampleRate = 0;
-            cursor = 0.0f;
+            cursor = 0.0;
 
             soundType = SoundType::None;
             data = {};
@@ -98,24 +130,16 @@ namespace dalia {
         AudioEventCallback onStopCallback = nullptr;
         uint64_t assetUuid;
 
-        bool isGainDirty = true;
-        float volumeDb = VOLUME_DB_DEFAULT;
-        float stereoPan = 0.0f;
-
-        bool isSpatial = false;
-        // Vector3 position
-        // Vector3 velocity
-
-        // --- Voice Properties ---
+        // --- Voice Lifecycle ---
         uint32_t gen = START_GENERATION;
         VoiceState state = VoiceState::Free;
 
         // Routing
         uint32_t parentBusIndex = MASTER_BUS_INDEX;
-
-        // Mixing Properties
         bool isLooping = false;
-        float pitch = 1.0f;
+
+    	VoiceParams params;
+    	bool isParamsDirty = false;
 
         // Asset
         uint32_t frameCount = 0;
@@ -128,10 +152,6 @@ namespace dalia {
             onStopCallback = nullptr;
             assetUuid = 0;
 
-            isGainDirty = true;
-            volumeDb = VOLUME_DB_DEFAULT;
-            stereoPan = 0.0f;
-
             gen++;
             if (gen == NO_GENERATION) gen = START_GENERATION;
             state = VoiceState::Free;
@@ -139,7 +159,6 @@ namespace dalia {
             parentBusIndex = MASTER_BUS_INDEX;
 
             isLooping = false;
-            pitch = 1.0f;
 
             channels = 0;
             soundType = SoundType::None;

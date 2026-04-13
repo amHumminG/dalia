@@ -661,12 +661,13 @@ namespace dalia {
 			ProcessIoLoadEvent(m_state, loadEv);
 		}
 
-		// Update voice gains if necessary
+		// Update voice params if necessary
 		for (uint32_t vIndex = 0; vIndex < m_state->voiceCapacity; vIndex++) {
 			VoiceMirror& vMirror = m_state->voicePoolMirror[vIndex];
-			if (vMirror.state == VoiceState::Free || !vMirror.isGainDirty) continue;
+			if (vMirror.state == VoiceState::Free || !vMirror.isParamsDirty) continue;
 
-			ResolveAndFlushGains(m_state, vIndex);
+			m_state->voiceParamBridges[vIndex].PushUpdate(vMirror.params);
+			vMirror.isParamsDirty = false;
 		}
 
 		m_state->rtCommands->Dispatch(); // Send all commands accumulated from this frame to the audio thread
@@ -989,7 +990,7 @@ namespace dalia {
 		float clampedVolumeDb = std::clamp(volumeDb, VOLUME_DB_MIN, VOLUME_DB_MAX);
 		m_state->busPoolMirror[bIndex].volumeDb = clampedVolumeDb;
 
-		m_state->rtCommands->Enqueue(RtCommand::SetBusGain(bIndex, DbToGain(clampedVolumeDb)));
+		m_state->rtCommands->Enqueue(RtCommand::SetBusGain(bIndex, math::DbToGain(clampedVolumeDb)));
 		DALIA_LOG_DEBUG(LOG_CTX_API, "Set bus (%s) volume to %.2f dB.", identifier, clampedVolumeDb);
 
 		return Result::Ok;
@@ -1538,10 +1539,8 @@ namespace dalia {
 		Result res = ResolveVoiceMirror(m_state, vIndex, vGeneration, vMirror);
 		if (res != Result::Ok) return res;
 
-		float clampedVolumeDb = std::clamp(volumeDb, VOLUME_DB_MIN, VOLUME_DB_MAX);
-		if (NearlyEqual(vMirror->volumeDb, clampedVolumeDb, EPSILON_VOLUME)) return Result::Ok;
-		vMirror->volumeDb = clampedVolumeDb;
-		vMirror->isGainDirty = true;
+		vMirror->params.volumeDb = std::clamp(volumeDb, VOLUME_DB_MIN, VOLUME_DB_MAX);
+		vMirror->isParamsDirty = true;
 
 		return Result::Ok;
 	}
@@ -1557,10 +1556,8 @@ namespace dalia {
 		Result res = ResolveVoiceMirror(m_state, vIndex, vGeneration, vMirror);
 		if (res != Result::Ok) return res;
 
-		float clampedPan = std::clamp(pan, PAN_MIN, PAN_MAX);
-		if (NearlyEqual(vMirror->stereoPan, clampedPan, EPSILON_PAN)) return Result::Ok;
-		vMirror->stereoPan = clampedPan;
-		vMirror->isGainDirty = true;
+		vMirror->params.stereoPan = std::clamp(pan, PAN_MIN, PAN_MAX);
+		vMirror->isParamsDirty = true;
 
 		return Result::Ok;
 	}

@@ -7,6 +7,7 @@
 #include "mixer/Voice.h"
 #include "mixer/StreamContext.h"
 #include "mixer/Bus.h"
+#include "mixer/Listener.h"
 
 #include "messaging/RtCommandQueue.h"
 #include "messaging/RtEventQueue.h"
@@ -74,8 +75,8 @@ namespace dalia {
 		float& currentGain, float targetGain, float smoothingCoefficient,
 		float& currentFade, float targetFade, float fadeStep) {
 
-		bool gainStable = NearlyEqual(currentGain, targetGain, EPSILON_GAIN);
-		bool fadeStable = NearlyEqual(currentFade, targetFade, EPSILON_GAIN);
+		bool gainStable = math::NearlyEqual(currentGain, targetGain, EPSILON_GAIN);
+		bool fadeStable = math::NearlyEqual(currentFade, targetFade, EPSILON_GAIN);
 
 		// Fast path
 		if (gainStable && fadeStable) {
@@ -84,10 +85,10 @@ namespace dalia {
 
 			float combinedGain = currentGain * currentFade;
 
-			if (NearlyEqual(combinedGain, 1.0f, EPSILON_GAIN)) return;
+			if (math::NearlyEqual(combinedGain, 1.0f, EPSILON_GAIN)) return;
 
 			uint32_t sampleCount = frameCount * channels;
-			if (NearlyEqual(combinedGain, 0.0f, EPSILON_GAIN)) {
+			if (math::NearlyEqual(combinedGain, 0.0f, EPSILON_GAIN)) {
 				std::memset(buffer, 0, sampleCount * sizeof(float));
 				return;
 			}
@@ -171,11 +172,9 @@ namespace dalia {
     }
 
     void RtSystem::Tick(float* output, uint32_t frameCount) {
-        // Process incoming commands from the API thread
-        ProcessCommands();
-
-        // Render the audio frame
-        Render(output, frameCount);
+        ProcessCommands();			// Process incoming commands from the API thread
+		ProcessParams();			// Process continuous parameter updates from the API thread
+        Render(output, frameCount); // Render the audio frame
     }
 
     void RtSystem::ProcessCommands() {
@@ -266,14 +265,6 @@ namespace dalia {
 	            	voice.isLooping = cmd.data.boolVal.value;
 	            	break;
 				}
-				case RtCommand::Type::SetVoiceGainMatrix: {
-	            	Voice& voice = m_voicePool[cmd.targetIndex];
-	            	if (voice.gen != cmd.targetGen || voice.isExiting) break;
-
-					std::memcpy(voice.targetGainMatrix, cmd.data.gain.gainMatrix,
-						sizeof(voice.targetGainMatrix));
-					break;
-	            }
 				case RtCommand::Type::AllocateBus: {
 		            Bus& bus = m_busPool[cmd.targetIndex];
 
@@ -376,6 +367,22 @@ namespace dalia {
         }
     }
 
+    void RtSystem::ProcessParams() {
+		VoiceParams vParams;
+		for (uint32_t vIndex = 0; vIndex < m_voiceParamBridges.size(); vIndex++) {
+			if (m_voiceParamBridges[vIndex].ConsumeUpdate(vParams)) {
+				m_voicePool[vIndex].params = vParams;
+			}
+		}
+
+		ListenerParams lParams;
+		for (uint32_t lIndex = 0; lIndex < m_listenerPool.size(); lIndex++) {
+			if (m_listenerParamBridges[lIndex].ConsumeUpdate(lParams)) {
+				m_listenerPool[lIndex].params = lParams;
+			}
+		}
+    }
+
     void RtSystem::Render(float* output, uint32_t frameCount) {
         const uint32_t sampleCount = frameCount * m_outChannels;
 
@@ -447,7 +454,7 @@ namespace dalia {
 		// Do we need to duck?
 		if (requiresSilence) voice.targetFadeGain = 0.0f;
 
-		if (NearlyEqual(voice.currentFadeGain, 0.0f, EPSILON_GAIN) || voice.currentState != VoiceState::Playing) {
+		if (math::NearlyEqual(voice.currentFadeGain, 0.0f, EPSILON_GAIN) || voice.currentState != VoiceState::Playing) {
 			// Voice is silent
 
 			// Handle Routing swap
@@ -661,7 +668,7 @@ namespace dalia {
 
 		if (requiresSilence) bus.targetFadeGain = GAIN_SILENCE;
 
-		if (NearlyEqual(bus.currentFadeGain, 0.0f, EPSILON_GAIN)) {
+		if (math::NearlyEqual(bus.currentFadeGain, 0.0f, EPSILON_GAIN)) {
 			// Bus is silent
 
 			if (bus.currentParentIndex != bus.targetParentIndex) {
