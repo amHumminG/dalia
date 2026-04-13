@@ -26,6 +26,7 @@ namespace dalia {
     static constexpr size_t MAX_IO_PATH_SIZE = 256; // The maximum length of a filepath string
 
     // --- Mixing ---
+	constexpr float EPSILON = 1e-5f;
     constexpr float EPSILON_VOLUME = 1e-5f;
     constexpr float EPSILON_GAIN = 1e-5f;
     constexpr float EPSILON_PAN = 1e-5f;
@@ -40,19 +41,37 @@ namespace dalia {
 
     static constexpr float GAIN_DEFAULT = 1.0f;
 	static constexpr float GAIN_MIN = 0.0f;
-	static constexpr float GAIN_SILENCE = 0.0f;
 	static constexpr float GAIN_MAX = 15.8489f;
+	static constexpr float GAIN_SILENCE = GAIN_MIN;
 
     static constexpr float VOLUME_DB_DEFAULT = 0.0f;
     static constexpr float VOLUME_DB_MIN = -96.0f;  // Minimum volume in decibels
     static constexpr float VOLUME_DB_MAX = 24.0f;   // Maximum volume in decibels
 
-    static constexpr float PAN_MIN = -1.0f;
-    static constexpr float PAN_MAX = 1.0f;
+	// Panning
+	static constexpr float PAN_STEREO_DEFAULT = 0.0f;
+    static constexpr float PAN_STEREO_MIN = -1.0f;
+    static constexpr float PAN_STEREO_MAX = 1.0f;
+    static constexpr float PAN_STEREO_LEFT = PAN_STEREO_MIN;
+	static constexpr float PAN_STEREO_MIDDLE = PAN_STEREO_DEFAULT;
+    static constexpr float PAN_STEREO_RIGHT = PAN_STEREO_MAX;
 
+	// Channels
+	static constexpr uint32_t CHANNELS_MONO = 1;
+	static constexpr uint32_t CHANNELS_STEREO = 2;
     static constexpr uint32_t CHANNELS_MAX = 8;
-    static constexpr uint32_t CHANNELS_MONO = 1;
-    static constexpr uint32_t CHANNELS_STEREO = 2;
+
+	// Listeners
+	static constexpr uint32_t LISTENERS_DEFAULT = 1;
+	static constexpr uint32_t LISTENERS_MIN		= 1;
+	static constexpr uint32_t LISTENERS_MAX		= 4;
+
+	// Distance attenuation
+	static constexpr float MIN_DIST_DEFAULT = 1.0f;
+	static constexpr float MAX_DIST_DEFAULT = 100.0f;
+	static constexpr float MIN_DIST_MIN = 0.01f;
+	static constexpr float MAX_DIST_MIN = 0.01f;
+
 
     static constexpr uint32_t CONTROL_RATE = 32; // Number of frames between effect recalculations
 
@@ -61,8 +80,7 @@ namespace dalia {
     constexpr float FILTER_RESONANCE_MIN = 0.1f;
     constexpr float FILTER_RESONANCE_MAX = 10.0f;
 
-    static constexpr uint32_t TARGET_OUTPUT_SAMPLE_RATE = 48000; // Only to be used in engine init
-    static constexpr size_t MAX_FRAMES_PER_RENDER = 1024; // Maximum frames that we can render per audio callback
+    static constexpr uint32_t TARGET_OUTPUT_SAMPLE_RATE = 48000; // The output sample rate the engine wants to output
 
     // --- Handles, Indices & Generations ---
     static constexpr uint64_t INVALID_UUID = 0;
