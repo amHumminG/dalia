@@ -58,6 +58,48 @@ namespace dalia {
 		m_sampleRate = mixFormat->nSamplesPerSec;
 		m_channelCount = mixFormat->nChannels;
 
+		m_speakerLayout = SpeakerLayout::Stereo;
+		if (mixFormat->wFormatTag == WAVE_FORMAT_EXTENSIBLE) {
+			WAVEFORMATEXTENSIBLE* extFormat = reinterpret_cast<WAVEFORMATEXTENSIBLE*>(mixFormat);
+			DWORD mask = extFormat->dwChannelMask;
+
+			// Windows standard masks
+			switch (mask) {
+				case KSAUDIO_SPEAKER_MONO:
+					m_speakerLayout = SpeakerLayout::Mono;
+					DALIA_LOG_DEBUG(LOG_CTX_BACKEND, "Detected speaker layout (Mono) with %u channel(s).", m_channelCount);
+					break;
+				case KSAUDIO_SPEAKER_STEREO:
+					m_speakerLayout = SpeakerLayout::Stereo;
+					DALIA_LOG_DEBUG(LOG_CTX_BACKEND, "Detected speaker layout (Stereo) with %u channel(s).", m_channelCount);
+					break;
+				case KSAUDIO_SPEAKER_5POINT1:
+				case KSAUDIO_SPEAKER_5POINT1_SURROUND:
+					m_speakerLayout = SpeakerLayout::Surround51;
+					DALIA_LOG_DEBUG(LOG_CTX_BACKEND, "Detected speaker layout (5.1 Surround) with %u channel(s).", m_channelCount);
+					break;
+				case KSAUDIO_SPEAKER_7POINT1:
+				case KSAUDIO_SPEAKER_7POINT1_SURROUND:
+					m_speakerLayout = SpeakerLayout::Surround71;
+					DALIA_LOG_DEBUG(LOG_CTX_BACKEND, "Detected speaker layout (7.1 Surround) with %u channel(s).", m_channelCount);
+					break;
+				default:
+					DALIA_LOG_WARN(LOG_CTX_BACKEND, "Non-standard speaker layout detected (mask: 0x%X).", mask);
+					// Attempt to guess the layout
+					if (m_channelCount >= 8) m_speakerLayout = SpeakerLayout::Surround71;
+					else if (m_channelCount >= 6) m_speakerLayout = SpeakerLayout::Surround51;
+					else if (m_channelCount >= 2) m_speakerLayout = SpeakerLayout::Stereo;
+					else m_speakerLayout = SpeakerLayout::Mono;
+			}
+		}
+		else {
+			DALIA_LOG_WARN(LOG_CTX_BACKEND, "Missing speaker layout. Falling back to estimation based on %u channel(s).", m_channelCount);
+			if (m_channelCount >= 8) m_speakerLayout = SpeakerLayout::Surround71;
+			else if (m_channelCount >= 6) m_speakerLayout = SpeakerLayout::Surround51;
+			else if (m_channelCount >= 2) m_speakerLayout = SpeakerLayout::Stereo;
+			else m_speakerLayout = SpeakerLayout::Mono;
+		}
+
 		// Initialize WASAPI in shared mode
 		bool initializedLowLatency = false;
 

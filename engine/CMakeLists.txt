@@ -73,6 +73,7 @@ set(ENGINE_FILES
     src/resources/StreamSound.h
     src/mixer/Listener.h
     src/mixer/ParameterBridge.h
+    src/mixer/Speakers.h
 )
 
 add_library(dalia_engine STATIC ${ENGINE_FILES})
