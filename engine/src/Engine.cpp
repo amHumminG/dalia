@@ -27,6 +27,7 @@
 #include "mixer/effects/BiquadFilter.h"
 #include "mixer/Listener.h"
 #include "mixer/RtSystem.h"
+#include "mixer/Speakers.h"
 
 #include "io/IoStreamSystem.h"
 #include "io/IoLoadSystem.h"
@@ -68,10 +69,13 @@ namespace dalia {
 	struct EngineInternalState {
 		bool initialized = false;
 
+		// --- Output Thingies ---
 		std::unique_ptr<IAudioBackend> backend; // HAL
 
 		uint32_t outChannels = 0;
 		uint32_t outSampleRate = 0;
+
+		SpeakerLayout speakerLayout;
 
 		// --- Messaging Queues ---
 		std::unique_ptr<RtCommandQueue>			rtCommands;
@@ -567,6 +571,14 @@ namespace dalia {
 			return res;
 		}
 
+		m_state->speakerLayout		= m_state->backend->GetSpeakerLayout();
+		if (m_state->speakerLayout != SpeakerLayout::Mono || m_state->speakerLayout != SpeakerLayout::Stereo) {
+			// Temporary fix until we support more output layouts
+			DALIA_LOG_CRIT(LOG_CTX_API, "Failed to initialize engine. Device uses unsupported speaker layout.");
+			TeardownInternal();
+			return Result::DeviceFailed;
+		}
+
 		m_state->outChannels		= m_state->backend->GetChannelCount();
 		m_state->outSampleRate		= m_state->backend->GetSampleRate();
 		uint32_t bufferSizeInFrames = m_state->backend->GetBufferCapacityInFrames();
@@ -583,6 +595,7 @@ namespace dalia {
 
 		// --- SYSTEMS SETUP ---
 		RtSystemConfig rtConfig;
+		rtConfig.speakerLayout		= m_state->speakerLayout;
 		rtConfig.outChannels		= m_state->outChannels;
 		rtConfig.outSampleRate		= m_state->outSampleRate;
 		rtConfig.rtCommands			= m_state->rtCommands.get();

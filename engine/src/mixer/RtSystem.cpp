@@ -241,6 +241,7 @@ namespace dalia {
 		m_listenerParamBridges(config.listenerParamBridges) {
 		m_smoothingCoefficient = 1.0f - std::exp(-2.0f * PI * SMOOTHING_CUTOFF_HZ / config.outSampleRate);
 		m_fadeStep = CalculateLinearFadeStep(FADE_TIME_GAIN, m_outSampleRate);
+		ConfigureSpeakerLayout(config.speakerLayout);
     }
 
     void RtSystem::Tick(float* output, uint32_t frameCount) {
@@ -849,4 +850,34 @@ namespace dalia {
 		default: break;
 		}
     }
+
+    void RtSystem::ConfigureSpeakerLayout(SpeakerLayout layout) {
+		for (uint32_t c = 0; c < CHANNELS_MAX; c++) {
+			m_speakerMatrix[c] = { math::Vector3(0, 0, 0), c };
+		}
+
+		if (layout == SpeakerLayout::Mono) {
+			m_speakerMatrix[0] = { math::AngleToVector3(0.0f),  0 };
+			m_spatialSpeakerCount = 1;
+		}
+		else if (layout == SpeakerLayout::Stereo) {
+			m_speakerMatrix[0] = { math::AngleToVector3(-30.0f), 0 }; // Left
+			m_speakerMatrix[1] = { math::AngleToVector3(30.0f), 1 };  // Right
+			m_spatialSpeakerCount = 2;
+		}
+		else if (layout == SpeakerLayout::Surround51) {
+			// TODO: Add this when we want to start supporting 5.1 surround sound
+			// m_speakerMatrix[0] = { math::AngleToVector3(-30.0f), 0 }; // Left
+			// m_speakerMatrix[1] = { math::AngleToVector3(30.0f), 1 }; // Right
+			// m_speakerMatrix[2] = { math::AngleToVector3(0.0f), 2 }; // Center
+			// // Channel 3 is LFE (Subwoofer should not be spatialized)
+			// m_speakerMatrix[3] = { math::AngleToVector3(-110.0f), 4 }; // Surround Left
+			// m_speakerMatrix[4] = { math::AngleToVector3(110.0f), 5 }; // Surround Right
+			// m_spatialSpeakerCount = 5;
+		}
+		else if (layout == SpeakerLayout::Surround71) {
+			// TODO: Add this when we want to start supporting 7.1 surround sound
+		}
+    }
+
 }
