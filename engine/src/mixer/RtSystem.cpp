@@ -176,6 +176,50 @@ namespace dalia {
 		}
 	}
 
+	void VBAP(
+		math::Vector3 sourcePos,
+		math::Vector3 listenerPos,
+		math::Vector3 listenerForward,
+		math::Vector3 listenerUp,
+		const VirtualSpeaker* speakerMatrix,
+		uint32_t spatialSpeakerCount,
+		float out[CHANNELS_MAX]) {
+		// Convert to listener space
+		math::Vector3 relative = sourcePos - listenerPos;
+		// FIXME: This operation should depend on the coordinate system
+		math::Vector3 listenerRight = math::Vector3::Normalize(listenerUp.Cross(listenerForward));
+
+		float x = relative.Dot(listenerRight);
+		float y = relative.Dot(listenerForward);
+
+		math::Vector3 listenerSpaceDir(x, y, 0.0f);
+		listenerSpaceDir.Normalize();
+
+		for (uint32_t c = 0; c < CHANNELS_MAX; c++) out[c] = 0.0f; // Clear output
+
+		// --- Routing Logic ---
+
+		if (spatialSpeakerCount == 1) {
+			// Mono -> Cannot apply VBAP to mono output
+			out[0] = 1.0f;
+		}
+		else if (spatialSpeakerCount == 2) {
+			// Stereo (we assume that speaker matrix [0] is left and [1] is right
+			float pan = (listenerSpaceDir.x + 1.0f) * 0.5f;
+			float leftSqr = 1.0f - pan;
+			float rightSqr = pan;
+
+			uint32_t leftChannel = speakerMatrix[0].channelIndex;
+			uint32_t rightChannel = speakerMatrix[1].channelIndex;
+
+			out[leftChannel] = leftSqr * math::CalculateInvSqrt(leftSqr);
+			out[rightChannel] = rightSqr * math::CalculateInvSqrt(rightSqr);
+		}
+		else {
+			// TODO: Implement VBAP for 5.1 and 7.1 surround
+		}
+	}
+
 	// ------------
 
     RtSystem::RtSystem(const RtSystemConfig& config)
