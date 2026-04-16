@@ -22,7 +22,6 @@ namespace dalia {
         Error           // Stream state is corrupted (something failed, probably on the I/O thread)
     };
 
-    // Is this really thread safe?
     struct StreamContext {
         std::atomic<uint32_t> gen{0};
         std::atomic<StreamState> state = StreamState::Free;

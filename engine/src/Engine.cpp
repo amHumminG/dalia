@@ -487,46 +487,6 @@ namespace dalia {
 		}
 	}
 
-	// static inline void ResolveAndFlushGains(EngineInternalState* state, uint32_t vIndex) {
-	// 	VoiceMirror& vMirror = state->voicePoolMirror[vIndex];
-	//
-	// 	float volumeLinear = math::DbToGain(vMirror.volumeDb);
-	// 	float finalGainMatrix[CHANNELS_MAX][CHANNELS_MAX] = {0};
-	//
-	// 	if (vMirror.isSpatial) {
-	// 		// 3D spatial
-	// 		// Calculate distance attenuation & VBAP
-	// 	}
-	// 	else {
-	// 		if (vMirror.channels == CHANNELS_MONO) {
-	// 			// Constant power panning
-	// 			float panNormalized = (vMirror.stereoPan + 1.0f) * 0.5f;
-	// 			float angle = panNormalized * PI * 0.5f;
-	//
-	// 			finalGainMatrix[0][0] = std::cos(angle) * volumeLinear; // Left
-	// 			finalGainMatrix[0][1] = std::sin(angle) * volumeLinear; // Right
-	//
-	// 			DALIA_LOG_DEBUG(LOG_CTX_CORE,
-	// 				"Updated gain matrix for voice %d (MONO). Gain[0][0] = %.2f, Gain[0][1] = %.2f.",
-	// 				vIndex, finalGainMatrix[0][0], finalGainMatrix[1][1]);
-	// 		}
-	// 		else { // CHANNELS_STEREO
-	// 			float gainL = std::clamp(1.0f - vMirror.stereoPan, 0.0f, 1.0f);
-	// 			float gainR = std::clamp(1.0f + vMirror.stereoPan, 0.0f, 1.0f);
-	//
-	// 			finalGainMatrix[0][0] = gainL * volumeLinear;
-	// 			finalGainMatrix[1][1] = gainR * volumeLinear;
-	//
-	// 			DALIA_LOG_DEBUG(LOG_CTX_CORE,
-	// 				"Updated gain matrix for voice %d (STEREO). Gain[0][0] = %.2f, Gain[1][1] = %.2f.",
-	// 				vIndex, finalGainMatrix[0][0], finalGainMatrix[1][1]);
-	// 		}
-	// 	}
-	//
-	// 	state->rtCommands->Enqueue(RtCommand::SetVoiceGainMatrix(vIndex, vMirror.gen, finalGainMatrix));
-	// 	vMirror.isGainDirty = false;
-	// }
-
 	// ------------------------
 
 	Engine::Engine() = default;
@@ -572,7 +532,12 @@ namespace dalia {
 		}
 
 		m_state->speakerLayout		= m_state->backend->GetSpeakerLayout();
-		if (m_state->speakerLayout != SpeakerLayout::Mono || m_state->speakerLayout != SpeakerLayout::Stereo) {
+		if (m_state->speakerLayout == SpeakerLayout::Mono) DALIA_LOG_DEBUG(LOG_CTX_API, "Device is has mono layout.");
+		if (m_state->speakerLayout == SpeakerLayout::Stereo) DALIA_LOG_DEBUG(LOG_CTX_API, "Device is has stereo layout.");
+		if (m_state->speakerLayout == SpeakerLayout::Surround51) DALIA_LOG_DEBUG(LOG_CTX_API, "Device is has 5.1 layout.");
+		if (m_state->speakerLayout == SpeakerLayout::Surround71) DALIA_LOG_DEBUG(LOG_CTX_API, "Device is has 7.1 layout.");
+
+		if (m_state->speakerLayout != SpeakerLayout::Mono && m_state->speakerLayout != SpeakerLayout::Stereo) {
 			// Temporary fix until we support more output layouts
 			DALIA_LOG_CRIT(LOG_CTX_API, "Failed to initialize engine. Device uses unsupported speaker layout.");
 			TeardownInternal();
@@ -1569,7 +1534,7 @@ namespace dalia {
 		Result res = ResolveVoiceMirror(m_state, vIndex, vGeneration, vMirror);
 		if (res != Result::Ok) return res;
 
-		vMirror->params.stereoPan = std::clamp(pan, PAN_MIN, PAN_MAX);
+		vMirror->params.stereoPan = std::clamp(pan, PAN_STEREO_MIN, PAN_STEREO_MAX);
 		vMirror->isParamsDirty = true;
 
 		return Result::Ok;

@@ -62,8 +62,8 @@ namespace dalia {
 
         bool isLooping = false;
 
-        uint32_t channels = CHANNELS_STEREO;
-        uint32_t sampleRate = TARGET_OUTPUT_SAMPLE_RATE;
+        uint32_t channels = 0;
+        uint32_t sampleRate = 0;
         double cursor = 0.0;
 
         SoundType soundType = SoundType::None;

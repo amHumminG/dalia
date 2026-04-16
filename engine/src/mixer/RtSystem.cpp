@@ -292,6 +292,9 @@ namespace dalia {
 
 	            	voice.data.stream.streamContextIndex = cmd.data.prepStreaming.streamIndex;
 	            	voice.data.stream.frontBufferIndex = 0;
+
+					voice.channels = cmd.data.prepStreaming.channels;
+					voice.sampleRate = cmd.data.prepStreaming.sampleRate;
 	            	break;
 	            }
 				case RtCommand::Type::SeekVoice: {
@@ -481,6 +484,8 @@ namespace dalia {
 		}
 
         // --- Voice Pass ---
+		EvaluateVoiceTargetGains();
+
     	uint32_t voicesMixed = 0;
         for (uint32_t vIndex = 0; vIndex < m_voicePool.size(); vIndex++) {
             Voice& voice = m_voicePool[vIndex];
@@ -735,17 +740,19 @@ namespace dalia {
         		float localFadeGain = voice.currentFadeGain;
         		float localFadeTarget = voice.targetFadeGain;
 
+        		float localGainMatrix[CHANNELS_MAX][CHANNELS_MAX];
+        		std::memcpy(localGainMatrix, voice.currentGainMatrix, CHANNELS_MAX * CHANNELS_MAX * sizeof(float));
+
         		for (uint32_t i = 0; i < framesToMixNow; i++) {
         			StepFadeGain(localFadeGain, localFadeTarget, m_fadeStep);
-
-        			StepMatrixGains(voice.currentGainMatrix, voice.targetGainMatrix, sourceChannels,
+        			StepMatrixGains(localGainMatrix, voice.targetGainMatrix, sourceChannels,
         				m_outChannels, m_smoothingCoefficient);
 
         			for (uint32_t inC = 0; inC < sourceChannels; inC++) {
-        				float sample = inPtr[inC] * localFadeGain; // Applying fade gain first
+        				float sample = inPtr[inC] * localFadeGain;
 
         				for (uint32_t outC = 0; outC < m_outChannels; outC++) {
-        					outPtr[outC] += sample * voice.currentGainMatrix[inC][outC];
+        					outPtr[outC] += sample * localGainMatrix[inC][outC];
         				}
         			}
 
@@ -754,6 +761,7 @@ namespace dalia {
         		}
 
         		voice.currentFadeGain = localFadeGain;
+        		std::memcpy(voice.currentGainMatrix, localGainMatrix, CHANNELS_MAX * CHANNELS_MAX * sizeof(float));
         	}
 
         	voice.cursor += static_cast<float>(framesToMixNow);
