@@ -51,17 +51,11 @@ namespace dalia {
     	uint32_t pendingSeekFrame = 0;
 
         // Mixing Properties
-    	float currentFadeGain = GAIN_DEFAULT; // Owned by the voice
-    	float targetFadeGain = GAIN_DEFAULT;  // Owned by the resolver
+    	float currentFadeGain = GAIN_DEFAULT; // Owned by the voice (used for micro-fading)
+    	float targetFadeGain = GAIN_DEFAULT;  // Owned by the resolver (used for micro-fading)
 
-    	float currentGains[CHANNELS_MAX] = {
-    		GAIN_DEFAULT, GAIN_DEFAULT, GAIN_DEFAULT, GAIN_DEFAULT,
-    		GAIN_DEFAULT, GAIN_DEFAULT, GAIN_DEFAULT, GAIN_DEFAULT
-    	};
-    	float targetGains[CHANNELS_MAX] {
-    		GAIN_DEFAULT, GAIN_DEFAULT, GAIN_DEFAULT, GAIN_DEFAULT,
-			GAIN_DEFAULT, GAIN_DEFAULT, GAIN_DEFAULT, GAIN_DEFAULT
-    	};
+    	float currentGainMatrix[CHANNELS_MAX][CHANNELS_MAX];
+    	float targetGainMatrix[CHANNELS_MAX][CHANNELS_MAX];
 
     	VoiceParams params;
     	bool isParamsDirty = false;
@@ -105,9 +99,11 @@ namespace dalia {
         	currentFadeGain = GAIN_DEFAULT;
         	targetFadeGain = GAIN_DEFAULT;
 
-        	for (uint32_t c = 0; c < CHANNELS_MAX; c++) {
-        		currentGains[c] = GAIN_DEFAULT;
-        		targetGains[c]  = GAIN_DEFAULT;
+        	for (uint32_t inC = 0; inC < CHANNELS_MAX; inC++) {
+        		for (uint32_t outC = 0; outC < CHANNELS_MAX; outC++) {
+        			currentGainMatrix[inC][outC] = GAIN_SILENCE;
+        			targetGainMatrix[inC][outC]  = GAIN_SILENCE;
+        		}
         	}
 
             isLooping = false;

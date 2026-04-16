@@ -573,6 +573,104 @@ namespace dalia {
 		if (!requiresSilence && voice.currentState == VoiceState::Playing) voice.targetFadeGain = 1.0f;
     }
 
+	    void RtSystem::EvaluateVoiceTargetGains() {
+		for (uint32_t vIndex = 0; vIndex < m_voicePool.size(); vIndex++) {
+			Voice& voice = m_voicePool[vIndex];
+			if (voice.currentState != VoiceState::Playing) continue;
+
+			float baseGain = math::DbToGain(voice.params.volumeDb);
+
+			for (uint32_t inC = 0; inC < CHANNELS_MAX; inC++) {
+				for (uint32_t outC = 0; outC < CHANNELS_MAX; outC++) {
+					voice.targetGainMatrix[inC][outC] = GAIN_SILENCE;
+				}
+			}
+
+			if (!voice.params.isSpatial) {
+				// --- NOT SPATIAL ---
+				if (voice.channels == CHANNELS_MONO) {
+					// Constant power panning
+					float panNormalized = (voice.params.stereoPan + 1.0f) * 0.5f;
+					float leftSqr = 1.0f - panNormalized;
+					float rightSqr = panNormalized;
+
+					float gainL = (leftSqr > EPSILON_GAIN) ? leftSqr * math::CalculateInvSqrt(leftSqr) : GAIN_SILENCE;
+					float gainR = (rightSqr > EPSILON_GAIN) ? rightSqr * math::CalculateInvSqrt(rightSqr) : GAIN_SILENCE;
+
+					voice.targetGainMatrix[0][0] = gainL * baseGain;
+					voice.targetGainMatrix[0][1] = gainR * baseGain;
+				}
+				else if (voice.channels == CHANNELS_STEREO) {
+					// Stereo panning
+					float gainL = std::clamp(1.0f - voice.params.stereoPan, 0.0f, 1.0f);
+					float gainR = std::clamp(1.0f + voice.params.stereoPan, 0.0f, 1.0f);
+
+					voice.targetGainMatrix[0][0] = gainL * baseGain;
+					voice.targetGainMatrix[1][1] = gainR * baseGain;
+				}
+				else {
+					uint32_t limit = std::min(voice.channels, m_outChannels);
+					for (uint32_t c = 0; c < limit; c++) {
+						voice.targetGainMatrix[c][c] = baseGain;
+					}
+				}
+
+				continue;
+			}
+
+			// --- SPATIAL ---
+			float maxSpatialGain = GAIN_SILENCE;
+			ListenerParams bestListenerParams;
+
+			for (uint32_t lIndex = 0; lIndex < m_listenerPool.size(); lIndex++) {
+				Listener& listener = m_listenerPool[lIndex];
+				if (!listener.isActive) continue; // We should evaluate this somewhere else!
+
+			float distGain = GetDistanceAttenuationGain(
+					voice.params.position.DistanceTo(listener.params.position),
+					voice.params.minDistance,
+					voice.params.maxDistance,
+					voice.params.attenuationModel
+				);
+
+				// NOTE: If we add directional sound cones or occlusion in the future, this is where we do that!
+
+				// Check if the voice was loudest for this listener
+				if (distGain > maxSpatialGain) {
+					maxSpatialGain = distGain;
+					bestListenerParams = listener.params;
+				}
+			}
+
+			float finalGain = baseGain * maxSpatialGain;
+			float vbapDistribution[CHANNELS_MAX] = {};
+
+			if (finalGain > EPSILON_GAIN) {
+				VBAP(
+					voice.params.position,
+					bestListenerParams.position,
+					bestListenerParams.forward,
+					bestListenerParams.up,
+					m_speakerMatrix,
+					m_spatialSpeakerCount,
+					vbapDistribution
+				);
+			}
+
+			// Implicit downmix
+			// As we are pushing the inputs of multiple channels into the same speaker we have to make sure the volume
+			// stays the same
+			float channelAttenuation = 1.0f / static_cast<float>(voice.channels);
+			finalGain *= channelAttenuation;
+
+			for (uint32_t inC = 0; inC < voice.channels; inC++) {
+				for (uint32_t outC = 0; outC < m_outChannels; outC++) {
+					voice.targetGainMatrix[inC][outC] = finalGain * vbapDistribution[outC];
+				}
+			}
+		}
+    }
+
     bool RtSystem::ProcessVoice(uint32_t voiceIndex, uint32_t frameCount) {
 		Voice& voice = m_voicePool[voiceIndex];
 

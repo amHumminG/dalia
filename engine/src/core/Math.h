@@ -69,6 +69,19 @@ namespace dalia::math {
 				z *= invSqrt;
 			}
 		}
+
+		static Vector3 Normalize(const Vector3& vec) {
+			Vector3 normalized;
+			float sqrDist = (vec.x * vec.x) + (vec.y * vec.y) + (vec.z * vec.z);
+			if (sqrDist > EPSILON) {
+				float invSqrt = CalculateInvSqrt(sqrDist);
+				normalized.x = vec.x * invSqrt;
+				normalized.y = vec.y * invSqrt;
+				normalized.z = vec.z * invSqrt;
+			}
+
+			return normalized;
+		}
 	};
 
 }
