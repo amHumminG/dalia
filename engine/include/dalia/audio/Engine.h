@@ -435,7 +435,34 @@ namespace dalia {
 		/// @retval Result::ExpiredHandle		The playback handle has already stopped playing.
 		Result SetPlaybackStereoPan(PlaybackHandle playback, float pan);
 
+		// New stuff (Playback)
+
+		Result SetPlaybackSpatial(PlaybackHandle playback, bool spatial);
+
+		Result SetPlaybackDistanceMode(PlaybackHandle playback, DistanceMode mode);
+
+		Result SetPlaybackAttenuationModel(PlaybackHandle playback, AttenuationModel model);
+
+		Result SetPlaybackPosition(PlaybackHandle playback, const Vec3& position);
+
+		Result SetPlaybackMinMaxDistance(PlaybackHandle playbackHandle, float minDistance, float maxDistance);
+
+		Result SetPlaybackListenerMask(PlaybackHandle playback, ListenerMask mask);
+
 #pragma endregion PLAYBACK_MANAGEMENT
+
+		// ============================================================================
+		// [ LISTENER MANAGEMENT ]
+		// Methods for activating, deactivating and modifying listeners.
+		// ============================================================================
+#pragma region LISTENER_MANAGEMENT
+
+		Result SetListenerActive(uint32_t listenerIndex, bool active);
+
+		Result SetListenerTransform(uint32_t listenerIndex, ListenerTransform transform);
+
+#pragma endregion LISTENER_MANAGEMENT
+
 
 	private:
 		void TeardownInternal();
