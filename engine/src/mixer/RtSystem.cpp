@@ -168,7 +168,7 @@ namespace dalia {
 			case AttenuationModel::Linear: {
 				return 1.0f - distanceFactor;
 			}
-			case AttenuationModel::Exponential: {
+			case AttenuationModel::Quadratic: {
 				float inverseFactor = 1.0f - distanceFactor;
 				return inverseFactor * inverseFactor;
 			}
@@ -578,7 +578,7 @@ namespace dalia {
 		if (!requiresSilence && voice.currentState == VoiceState::Playing) voice.targetFadeGain = 1.0f;
     }
 
-	    void RtSystem::EvaluateVoiceTargetGains() {
+	void RtSystem::EvaluateVoiceTargetGains() {
 		for (uint32_t vIndex = 0; vIndex < m_voicePool.size(); vIndex++) {
 			Voice& voice = m_voicePool[vIndex];
 			if (voice.currentState != VoiceState::Playing) continue;
@@ -629,16 +629,25 @@ namespace dalia {
 
 			for (uint32_t lIndex = 0; lIndex < m_listenerPool.size(); lIndex++) {
 				Listener& listener = m_listenerPool[lIndex];
-				if (!listener.isActive) continue; // We should evaluate this somewhere else!
+				if (!listener.isActive) continue; // Maybe evaluate this somewhere else for better branch prediction?
+				if (!(voice.params.listenerMask & (1 << lIndex))) continue;
 
-			float distGain = GetDistanceAttenuationGain(
-					voice.params.position.DistanceTo(listener.params.position),
+				float distance;
+				if (voice.params.distanceMode == DistanceMode::FromListener) {
+					distance = voice.params.position.DistanceTo(listener.params.position);
+				}
+				else {
+					distance = voice.params.position.DistanceTo(listener.params.distanceProbePosition);
+				}
+
+				float distGain = GetDistanceAttenuationGain(
+					distance,
 					voice.params.minDistance,
 					voice.params.maxDistance,
 					voice.params.attenuationModel
 				);
 
-				// NOTE: If we add directional sound cones or occlusion in the future, this is where we do that!
+				// NOTE: If we add directional sound cones or occlusion in the future, this is probably where we do that
 
 				// Check if the voice was loudest for this listener
 				if (distGain > maxSpatialGain) {

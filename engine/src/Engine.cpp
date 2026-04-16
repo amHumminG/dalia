@@ -648,6 +648,14 @@ namespace dalia {
 			vMirror.isParamsDirty = false;
 		}
 
+		for (uint32_t lIndex = 0; lIndex < m_state->listenerCapacity; lIndex++) {
+			ListenerMirror& lMirror = m_state->listenerPoolMirror[lIndex];
+			if (!lMirror.isActive || !lMirror.isParamsDirty) continue;
+
+			m_state->listenerParamBridges[lIndex].PushUpdate(lMirror.params);
+			lMirror.isParamsDirty = false;
+		}
+
 		m_state->rtCommands->Dispatch(); // Send all commands accumulated from this frame to the audio thread
 		Logger::ProcessLogs(); // Print all logs accumulated from this frame
 	}

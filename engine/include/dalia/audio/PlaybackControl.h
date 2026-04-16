@@ -41,6 +41,15 @@ namespace dalia {
 	enum class AttenuationModel : uint8_t {
 		InverseSquare,
 		Linear,
-		Exponential
+		Quadratic
 	};
+
+	enum class DistanceMode {
+		FromListener,		// Standard 3D (Evaluate distance from listener)
+		FromDistanceProbe	// Evaluate listener from a custom 3D position
+	};
+
+	using ListenerMask = uint32_t;
+	constexpr ListenerMask MASK_ALL_LISTENERS = 0xFFFFFFFF;
+	constexpr ListenerMask MASK_NONE = 0x00000000;
 }

@@ -4,7 +4,6 @@
 #include "dalia/audio/SoundControl.h"
 #include "core/Constants.h"
 #include "core/Math.h"
-#include "StreamContext.h"
 
 #include <cstdint>
 
@@ -20,17 +19,19 @@ namespace dalia {
 
 	struct VoiceParams {
 		float volumeDb = VOLUME_DB_DEFAULT;
-		float pitch = 1.0f;
+		float pitch = PITCH_DEFAULT;
 		float stereoPan = PAN_STEREO_DEFAULT;
 
 		bool isLooping = false;
 		bool isSpatial = false;
 
 		// Only used if isSpatial is true
+		DistanceMode distanceMode = DistanceMode::FromListener;
 		AttenuationModel attenuationModel = AttenuationModel::InverseSquare;
 		math::Vector3 position{0.0f, 0.0f, 0.0f};
 		float minDistance = MIN_DIST_DEFAULT;
 		float maxDistance = MAX_DIST_DEFAULT;
+		ListenerMask listenerMask = MASK_ALL_LISTENERS;
 	};
 
     struct Voice {
