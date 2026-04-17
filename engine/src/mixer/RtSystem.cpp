@@ -149,7 +149,7 @@ namespace dalia {
 		}
 	}
 
-	static float GetDistanceAttenuationGain(float distance, float minDistance, float maxDistance, AttenuationModel model) {
+	static float GetDistanceAttenuationGain(float distance, float minDistance, float maxDistance, AttenuationCurve model) {
 		if (maxDistance <= minDistance) {
 			if (distance <= minDistance) return 1.0f;
 			if (distance > minDistance)  return 0.0f;
@@ -161,14 +161,14 @@ namespace dalia {
 		float distanceFactor = (distance - minDistance) / (maxDistance - minDistance); // Factor between 0 and 1
 
 		switch (model) {
-			case AttenuationModel::InverseSquare: {
+			case AttenuationCurve::InverseSquare: {
 				float inverseFactor = minDistance / distance;
 				return inverseFactor * (1.0f - distanceFactor);
 			}
-			case AttenuationModel::Linear: {
+			case AttenuationCurve::Linear: {
 				return 1.0f - distanceFactor;
 			}
-			case AttenuationModel::Quadratic: {
+			case AttenuationCurve::Quadratic: {
 				float inverseFactor = 1.0f - distanceFactor;
 				return inverseFactor * inverseFactor;
 			}

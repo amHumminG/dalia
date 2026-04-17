@@ -435,18 +435,87 @@ namespace dalia {
 		/// @retval Result::ExpiredHandle		The playback handle has already stopped playing.
 		Result SetPlaybackStereoPan(PlaybackHandle playback, float pan);
 
-		// New stuff (Playback)
-
+		/// @brief Enables or disables 3D spatialization for a playback instance.
+		///
+		/// @param[in] playback The handle to the playback instance.
+		/// @param[in] spatial	True to enable 3D spatialization, false for 2D/global playback.
+		///
+		/// @retval Result::Ok					The playback spatialization was successfully enabled or disabled.
+		/// @retval Result::NotInitialized		The engine is not initialized.
+		/// @retval Result::InvalidHandle		The playback handle is not recognized.
+		/// @retval Result::ExpiredHandle		The playback handle has already stopped playing.
 		Result SetPlaybackSpatial(PlaybackHandle playback, bool spatial);
 
+		/// @brief Defines which listener position is used when calculating the distance attenuation for a playback
+		/// instance.
+		///
+		/// @note[Spatial only] This only affects playback instances that have spatialization enabled.
+		///
+		/// @param[in] playback The handle to the playback instance.
+		/// @param[in] mode		The distance evaluation mode to apply.
+		///
+		/// @retval Result::Ok					The playback distance mode was successfully applied.
+		/// @retval Result::NotInitialized		The engine is not initialized.
+		/// @retval Result::InvalidHandle		The playback handle is not recognized.
+		/// @retval Result::ExpiredHandle		The playback handle has already stopped playing.
 		Result SetPlaybackDistanceMode(PlaybackHandle playback, DistanceMode mode);
 
-		Result SetPlaybackAttenuationModel(PlaybackHandle playback, AttenuationModel model);
+		/// @brief Sets the curve used to evaluate volume drop-off over distance for a playback instance.
+		///
+		/// @note[Spatial only] This only affects playback instances that have spatialization enabled.
+		///
+		/// @param[in] playback The handle to the playback instance.
+		/// @param[in] model	The attenuation curve to apply.
+		///
+		/// @retval Result::Ok					The playback attenuation curve was successfully set.
+		/// @retval Result::NotInitialized		The engine is not initialized.
+		/// @retval Result::InvalidHandle		The playback handle is not recognized.
+		/// @retval Result::ExpiredHandle		The playback handle has already stopped playing.
+		Result SetPlaybackAttenuationCurve(PlaybackHandle playback, AttenuationCurve model);
 
+		/// @brief Updates the 3D world position of a playback instance.
+		///
+		/// @note[Spatial only] This only affects playback instances that have spatialization enabled.
+		///
+		/// @param[in] playback The handle to the playback instance.
+		/// @param[in] position	The new 3D world coordinates.
+		///
+		/// @retval Result::Ok					The playback world position was successfully set.
+		/// @retval Result::NotInitialized		The engine is not initialized.
+		/// @retval Result::InvalidHandle		The playback handle is not recognized.
+		/// @retval Result::ExpiredHandle		The playback handle has already stopped playing.
 		Result SetPlaybackPosition(PlaybackHandle playback, const Vec3& position);
 
+		/// @brief Defines the distance boundaries for the attenuation curve of a playback instance.
+		///
+		/// @note[Spatial only] This only affects playback instances that have spatialization enabled.
+		///
+		/// @note[Safe values] The engine internally ensures that maxDistance is never less than minDistance,
+		/// and that minDistance respects the engine's absolute floor limit to prevent division-by-zero.
+		///
+		/// @param[in] playback		The handle to the playback instance.
+		/// @param[in] minDistance	The radius where the volume drop-off begins.
+		/// @param[in] maxDistance	The radius where the volume drops to silence.
+		///
+		/// @retval Result::Ok					The playback min and max distance were successfully set.
+		/// @retval Result::NotInitialized		The engine is not initialized.
+		/// @retval Result::InvalidHandle		The playback handle is not recognized.
+		/// @retval Result::ExpiredHandle		The playback handle has already stopped playing.
 		Result SetPlaybackMinMaxDistance(PlaybackHandle playback, float minDistance, float maxDistance);
 
+		/// @brief Sets the listener routing mask for a playback instance.
+		///
+		/// The routing mask determines which listeners are allowed to hear and evaluate the playback instance.
+		///
+		/// @note[Spatial only] This only affects playback instances that have spatialization enabled.
+		///
+		/// @param[in] playback The handle to the playback instance.
+		/// @param[in] mask		The listener routing bitmask.
+		///
+		/// @retval Result::Ok					The listener routing mask for the playback instance was successfully set.
+		/// @retval Result::NotInitialized		The engine is not initialized.
+		/// @retval Result::InvalidHandle		The playback handle is not recognized.
+		/// @retval Result::ExpiredHandle		The playback handle has already stopped playing.
 		Result SetPlaybackListenerMask(PlaybackHandle playback, ListenerMask mask);
 
 #pragma endregion PLAYBACK_MANAGEMENT
@@ -457,8 +526,26 @@ namespace dalia {
 		// ============================================================================
 #pragma region LISTENER_MANAGEMENT
 
+		/// @brief Enables or disables a listener.
+		///
+		/// @param listenerIndex	The zero-based index of the listener. Must be less than the number of allocated
+		///							listeners at engine initialization.
+		/// @param active			True to enable the listener, false to disable it.
+		///
+		/// @retval Result::Ok					The listener was successfully enabled or disabled.
+		/// @retval Result::NotInitialized		The engine is not initialized.
+		/// @retval Result::ListenerNotFound	The listener index exceeds the allocated listener capacity.
 		Result SetListenerActive(uint32_t listenerIndex, bool active);
 
+		/// @brief Updates the 3D position and orientation of a listener.
+		///
+		/// @param listenerIndex	The zero-based index of the listener. Must be less than the number of allocated
+		///							listeners at engine initialization.
+		/// @param transform		The new position and orientation.
+		///
+		/// @retval Result::Ok					The listener transform was successfully set.
+		/// @retval Result::NotInitialized		The engine is not initialized.
+		/// @retval Result::ListenerNotFound	The listener index exceeds the allocated listener capacity.
 		Result SetListenerTransform(uint32_t listenerIndex, ListenerTransform transform);
 
 #pragma endregion LISTENER_MANAGEMENT

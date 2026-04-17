@@ -1594,7 +1594,7 @@ namespace dalia {
 		return Result::Ok;
 	}
 
-	Result Engine::SetPlaybackAttenuationModel(PlaybackHandle playback, AttenuationModel model) {
+	Result Engine::SetPlaybackAttenuationCurve(PlaybackHandle playback, AttenuationCurve model) {
 		if (!IsInitialized(m_state)) return Result::NotInitialized;
 
 		if (!playback.IsValid()) return Result::InvalidHandle;

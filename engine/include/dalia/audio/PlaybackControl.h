@@ -48,8 +48,8 @@ namespace dalia {
 	/// instance is stopped.
 	using PlaybackExitCallback = std::function<void(PlaybackHandle handle, PlaybackExitCondition exitCondition)>;
 
-	/// @brief Model used to calculate distance attenuation.
-	enum class AttenuationModel : uint8_t {
+	/// @brief Curve used to calculate distance attenuation.
+	enum class AttenuationCurve : uint8_t {
 		InverseSquare,
 		Linear,
 		Quadratic
