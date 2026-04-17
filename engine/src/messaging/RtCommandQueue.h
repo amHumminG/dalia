@@ -12,8 +12,9 @@ namespace dalia {
 		enum class Type : uint8_t {
 			None,
 
-			// General
-			SwapMixOrder,
+			// Listener
+			SetListenerActive,
+			SetListenerInactive,
 
 			// Voice Lifecycle
 			AllocateVoice,
@@ -107,16 +108,22 @@ namespace dalia {
 
 		} data = {};
 
-		static RtCommand SwapMixOrder(uint32_t* ptr, uint32_t nodeCount) {
+		static RtCommand SetListenerActive(uint32_t index) {
 			RtCommand cmd{};
-			cmd.type = Type::SwapMixOrder;
-			cmd.data.mixOrder.ptr = ptr;
-			cmd.data.mixOrder.nodeCount = nodeCount;
+			cmd.type = Type::SetListenerActive;
+			cmd.targetIndex = index;
+			return cmd;
+		}
+
+		static RtCommand SetListenerInactive(uint32_t index) {
+			RtCommand cmd{};
+			cmd.type = Type::SetListenerInactive;
+			cmd.targetIndex = index;
 			return cmd;
 		}
 
 		static RtCommand AllocateVoice(uint32_t index, uint32_t gen) {
-			RtCommand cmd;
+			RtCommand cmd{};
 			cmd.type = Type::AllocateVoice;
 			cmd.targetIndex = index;
 			cmd.targetGen = gen;
@@ -124,7 +131,7 @@ namespace dalia {
 		}
 
 		static RtCommand DeallocateVoice(uint32_t index, uint32_t gen) {
-			RtCommand cmd;
+			RtCommand cmd{};
 			cmd.type = Type::DeallocateVoice;
 			cmd.targetIndex = index;
 			cmd.targetGen = gen;

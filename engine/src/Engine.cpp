@@ -38,6 +38,14 @@
 
 #include "common/StringID.h"
 
+#if defined(min)
+#undef min
+#endif
+
+#if defined(max)
+#undef max
+#endif
+
 namespace dalia {
 
 	struct VoiceID {
@@ -1544,6 +1552,154 @@ namespace dalia {
 
 		vMirror->params.stereoPan = std::clamp(pan, PAN_STEREO_MIN, PAN_STEREO_MAX);
 		vMirror->isParamsDirty = true;
+
+		return Result::Ok;
+	}
+
+	Result Engine::SetPlaybackSpatial(PlaybackHandle playback, bool spatial) {
+		if (!IsInitialized(m_state)) return Result::NotInitialized;
+
+		if (!playback.IsValid()) return Result::InvalidHandle;
+		uint32_t vIndex = playback.GetIndex();
+		uint32_t vGeneration = playback.GetGeneration();
+
+		VoiceMirror* vMirror = nullptr;
+		Result res = ResolveVoiceMirror(m_state, vIndex, vGeneration, vMirror);
+		if (res != Result::Ok) return res;
+
+		vMirror->params.isSpatial = spatial;
+		vMirror->isParamsDirty = true;
+
+		return Result::Ok;
+	}
+
+	Result Engine::SetPlaybackDistanceMode(PlaybackHandle playback, DistanceMode mode) {
+		if (!IsInitialized(m_state)) return Result::NotInitialized;
+
+		if (!playback.IsValid()) return Result::InvalidHandle;
+		uint32_t vIndex = playback.GetIndex();
+		uint32_t vGeneration = playback.GetGeneration();
+
+		VoiceMirror* vMirror = nullptr;
+		Result res = ResolveVoiceMirror(m_state, vIndex, vGeneration, vMirror);
+		if (res != Result::Ok) return res;
+
+		vMirror->params.distanceMode = mode;
+		vMirror->isParamsDirty = true;
+
+		return Result::Ok;
+	}
+
+	Result Engine::SetPlaybackAttenuationModel(PlaybackHandle playback, AttenuationModel model) {
+		if (!IsInitialized(m_state)) return Result::NotInitialized;
+
+		if (!playback.IsValid()) return Result::InvalidHandle;
+		uint32_t vIndex = playback.GetIndex();
+		uint32_t vGeneration = playback.GetGeneration();
+
+		VoiceMirror* vMirror = nullptr;
+		Result res = ResolveVoiceMirror(m_state, vIndex, vGeneration, vMirror);
+		if (res != Result::Ok) return res;
+
+		vMirror->params.attenuationModel = model;
+		vMirror->isParamsDirty = true;
+
+		return Result::Ok;
+	}
+
+	Result Engine::SetPlaybackPosition(PlaybackHandle playback, const Vec3& position) {
+		if (!IsInitialized(m_state)) return Result::NotInitialized;
+
+		if (!playback.IsValid()) return Result::InvalidHandle;
+		uint32_t vIndex = playback.GetIndex();
+		uint32_t vGeneration = playback.GetGeneration();
+
+		VoiceMirror* vMirror = nullptr;
+		Result res = ResolveVoiceMirror(m_state, vIndex, vGeneration, vMirror);
+		if (res != Result::Ok) return res;
+
+		vMirror->params.position = math::Vector3(position.x, position.y, position.z);
+		vMirror->isParamsDirty = true;
+
+		return Result::Ok;
+	}
+
+	Result Engine::SetPlaybackMinMaxDistance(PlaybackHandle playback, float minDistance, float maxDistance) {
+		if (!IsInitialized(m_state)) return Result::NotInitialized;
+
+		if (!playback.IsValid()) return Result::InvalidHandle;
+		uint32_t vIndex = playback.GetIndex();
+		uint32_t vGeneration = playback.GetGeneration();
+
+		VoiceMirror* vMirror = nullptr;
+		Result res = ResolveVoiceMirror(m_state, vIndex, vGeneration, vMirror);
+		if (res != Result::Ok) return res;
+
+		float clampedMinDistance = std::max(minDistance, MIN_DIST_MIN);
+		float clampedMaxDistance = std::max(maxDistance, clampedMinDistance);
+
+		vMirror->params.minDistance = clampedMinDistance;
+		vMirror->params.maxDistance = clampedMaxDistance;
+		vMirror->isParamsDirty = true;
+
+		return Result::Ok;
+	}
+
+	Result Engine::SetPlaybackListenerMask(PlaybackHandle playback, ListenerMask mask) {
+		if (!IsInitialized(m_state)) return Result::NotInitialized;
+
+		if (!playback.IsValid()) return Result::InvalidHandle;
+		uint32_t vIndex = playback.GetIndex();
+		uint32_t vGeneration = playback.GetGeneration();
+
+		VoiceMirror* vMirror = nullptr;
+		Result res = ResolveVoiceMirror(m_state, vIndex, vGeneration, vMirror);
+		if (res != Result::Ok) return res;
+
+		vMirror->params.listenerMask = mask; // Should we double-check this somehow?
+		vMirror->isParamsDirty = true;
+
+		return Result::Ok;
+	}
+
+	Result Engine::SetListenerActive(uint32_t listenerIndex, bool active) {
+		if (!IsInitialized(m_state)) return Result::NotInitialized;
+
+		if (listenerIndex >= m_state->listenerCapacity) {
+			if (active) DALIA_LOG_ERR(LOG_CTX_API, "Failed to set listener active. Listener with index %u does not exist.",
+				listenerIndex);
+			else DALIA_LOG_ERR(LOG_CTX_API, "Failed to set listener inactive. Listener with index %u does not exist.",
+				listenerIndex);
+			return Result::ListenerNotFound;
+		}
+
+		ListenerMirror& lMirror = m_state->listenerPoolMirror[listenerIndex];
+		lMirror.isActive = active;
+
+		m_state->rtCommands->Enqueue(RtCommand::SetListenerActive(listenerIndex));
+
+		return Result::Ok;
+	}
+
+	Result Engine::SetListenerTransform(uint32_t listenerIndex, ListenerTransform transform) {
+		if (!IsInitialized(m_state)) return Result::NotInitialized;
+
+		if (listenerIndex >= m_state->listenerCapacity) {
+			DALIA_LOG_ERR(LOG_CTX_API, "Failed to set listener transform. Listener with index %u does not exist.",
+			listenerIndex);
+			return Result::ListenerNotFound;
+		}
+
+		ListenerMirror& lMirror = m_state->listenerPoolMirror[listenerIndex];
+		lMirror.params.position = math::Vector3(transform.position.x, transform.position.y, transform.position.z);
+		lMirror.params.distanceProbePosition = math::Vector3(
+			transform.distanceProbePosition.x,
+			transform.distanceProbePosition.y,
+			transform.distanceProbePosition.z
+		);
+		lMirror.params.forward = math::Vector3(transform.forward.x, transform.forward.y, transform.forward.z);
+		lMirror.params.up = math::Vector3(transform.up.x, transform.up.y, transform.up.z);
+		lMirror.isParamsDirty = true;
 
 		return Result::Ok;
 	}

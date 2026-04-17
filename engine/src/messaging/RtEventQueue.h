@@ -8,9 +8,6 @@ namespace dalia {
 		enum class Type {
 			None,
 
-			// General
-			MixOrderSwapped,
-
 			// Voice Lifecycle
 			VoiceStopped,
 
@@ -34,12 +31,6 @@ namespace dalia {
 			} effect;
 
 		} data = {};
-
-		static RtEvent MixOrderSwapped() {
-			RtEvent ev;
-			ev.type = RtEvent::Type::MixOrderSwapped;
-			return ev;
-		}
 
 		static RtEvent VoiceStopped(uint32_t index, uint32_t generation, PlaybackExitCondition exitCondition) {
 			RtEvent ev;

@@ -445,7 +445,7 @@ namespace dalia {
 
 		Result SetPlaybackPosition(PlaybackHandle playback, const Vec3& position);
 
-		Result SetPlaybackMinMaxDistance(PlaybackHandle playbackHandle, float minDistance, float maxDistance);
+		Result SetPlaybackMinMaxDistance(PlaybackHandle playback, float minDistance, float maxDistance);
 
 		Result SetPlaybackListenerMask(PlaybackHandle playback, ListenerMask mask);
 
