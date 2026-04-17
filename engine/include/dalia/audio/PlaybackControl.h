@@ -5,17 +5,18 @@
 
 namespace dalia {
 
+	/// @brief Handle used to manage playback instances. This handle will expire once the playback instance it is
+	/// referencing stops.
 	struct PlaybackHandle {
 	public:
-		bool IsValid() const { return uuid != 0; }
+		/// @return true if the handle has referenced an active playback instance at some point. Otherwise, false.
+		bool IsValid() const { return rawId != 0; }
 
-		uint32_t GetIndex() const { return static_cast<uint32_t>(uuid & 0xFFFFFFFF); }
-		uint32_t GetGeneration() const { return static_cast<uint32_t>(uuid >> 32); }
+		bool operator==(const PlaybackHandle& other) const { return rawId == other.rawId; }
+		bool operator!=(const PlaybackHandle& other) const { return rawId != other.rawId; }
 
-		uint64_t GetUUID() const { return uuid; }
-
-		bool operator==(const PlaybackHandle& other) const { return uuid == other.uuid; }
-		bool operator!=(const PlaybackHandle& other) const { return uuid != other.uuid; }
+		/// @return The underlying raw id of the handle.
+		uint64_t GetRawId() const { return rawId; }
 
 	private:
 		friend class Engine;
@@ -23,39 +24,51 @@ namespace dalia {
 
 		static PlaybackHandle Create(uint32_t index, uint32_t generation) {
 			PlaybackHandle handle;
-			handle.uuid = (static_cast<uint64_t>(generation) << 32) | index;
+			handle.rawId = (static_cast<uint64_t>(generation) << 32) | index;
 			return handle;
 		}
 
-		uint64_t uuid = 0;
+		uint32_t GetIndex() const { return static_cast<uint32_t>(rawId & 0xFFFFFFFF); }
+		uint32_t GetGeneration() const { return static_cast<uint32_t>(rawId >> 32); }
+
+		uint64_t rawId = 0;
 	};
 
+	constexpr PlaybackHandle InvalidPlaybackHandle{};
+
+	/// @brief The condition under which a playback instance was stopped.
 	enum class PlaybackExitCondition : uint8_t {
-		NaturalEnd		= 0,
-		ExplicitStop	= 1,
-		Evicted			= 2,
-		Error			= 3,
+		NaturalEnd		= 0, // Finished naturally.
+		ExplicitStop	= 1, // Explicitly stopped by an API call.
+		Evicted			= 2, // Stopped to make room for a playback instance with higher priority.
+		Error			= 3, // Stopped by the engine due to an error.
 	};
-	using AudioEventCallback = std::function<void(PlaybackHandle handle, PlaybackExitCondition exitCondition)>;
 
+	/// @brief A function that, if provided when creating a playback instance, will be called when the playback
+	/// instance is stopped.
+	using PlaybackExitCallback = std::function<void(PlaybackHandle handle, PlaybackExitCondition exitCondition)>;
+
+	/// @brief Model used to calculate distance attenuation.
 	enum class AttenuationModel : uint8_t {
 		InverseSquare,
 		Linear,
 		Quadratic
 	};
 
+	/// @brief Mode used to determine what listener position to use when calculating distance attenuation.
 	enum class DistanceMode {
-		FromListener,		// Standard 3D (Evaluate distance from listener)
-		FromDistanceProbe	// Evaluate listener from a custom 3D position
+		FromListener,		// Standard 3D (Evaluate distance from listener).
+		FromDistanceProbe	// Evaluate distance from the listener's separate distance probe.
 	};
 
-	// User-facing vector struct used for API methods
+	/// @brief Standard 3D vector for the DALIA API.
 	struct Vec3 {
 		float x = 0.0f;
 		float y = 0.0f;
 		float z = 0.0f;
 	};
 
+	/// @brief Transform representing a listener's position and orientation.
 	struct ListenerTransform {
 		Vec3 position;
 		Vec3 distanceProbePosition;
@@ -89,13 +102,20 @@ namespace dalia {
 		return { position, probePosition, forward, up };
 	}
 
+	/// @brief Routing mask used to target a specific listener. Can be combined to target multiple listeners using
+	/// bitwise OR.
 	using ListenerMask = uint32_t;
-	constexpr ListenerMask MASK_ALL_LISTENERS = 0xFFFFFFFF;
-	constexpr ListenerMask MASK_NONE = 0x00000000;
+
+	constexpr ListenerMask MASK_NONE = 0b00000000;			 // Targets none of the listeners (silent if spatial).
+	constexpr ListenerMask MASK_LISTENER_0 = 0b00000001;	 // Targets listener 0.
+	constexpr ListenerMask MASK_LISTENER_1 = 0b00000010;	 // Targets listener 1.
+	constexpr ListenerMask MASK_LISTENER_2 = 0b00000100;	 // Targets listener 2.
+	constexpr ListenerMask MASK_LISTENER_3 = 0b00001000;	 // Targets listener 3.
+	constexpr ListenerMask MASK_ALL_LISTENERS = 0xFFFFFFFFF; // Targets all listeners.
 
 	/// @brief Creates a routing mask targeting a specific listener.
 	///
-	/// @Note[Combining masks] Multiple masks can be combined using bitwise OR (|).
+	/// @Note[Combining masks] Multiple masks can be combined using bitwise OR.
 	///
 	/// @param[in] listenerIndex The zero-based index of the listener to target.
 	///

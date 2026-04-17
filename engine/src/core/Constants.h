@@ -85,7 +85,7 @@ namespace dalia {
     static constexpr uint32_t TARGET_OUTPUT_SAMPLE_RATE = 48000; // The output sample rate the engine wants to output
 
     // --- Handles, Indices & Generations ---
-    static constexpr uint64_t INVALID_UUID = 0;
+    static constexpr uint64_t INVALID_RAW_ID = 0;
 
     static constexpr uint32_t MASTER_BUS_INDEX = 0;  // The index of the master bus within the bus pool
     static constexpr uint32_t NO_PARENT = INT32_MAX; // Indicator that a voice or bus has no parent

@@ -124,8 +124,8 @@ namespace dalia {
     struct VoiceMirror {
         // --- API Thread Only Stuff ---
         bool pendingLoad = false; // Pending playback due to asset loading
-        AudioEventCallback onStopCallback = nullptr;
-        uint64_t assetUuid;
+        PlaybackExitCallback onStopCallback = nullptr;
+        uint64_t assetRawId;
 
         // --- Voice Lifecycle ---
         uint32_t gen = START_GENERATION;
@@ -147,7 +147,7 @@ namespace dalia {
         void Reset() {
             pendingLoad = false;
             onStopCallback = nullptr;
-            assetUuid = 0;
+            assetRawId = 0;
 
             gen++;
             if (gen == NO_GENERATION) gen = START_GENERATION;

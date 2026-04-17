@@ -939,11 +939,11 @@ namespace dalia {
 
 			if (slot.state == EffectState::FadingIn && slot.currentMix >= 1.0f) {
 				slot.state = EffectState::Active;
-				m_rtEvents->Push(RtEvent::EffectActive(slot.effect.GetUUID()));
+				m_rtEvents->Push(RtEvent::EffectActive(slot.effect.GetRawId()));
 			}
 			else if (slot.state == EffectState::FadingOut && slot.currentMix <= 0.0f) {
 				slot.Reset(); // Detach effect
-				m_rtEvents->Push(RtEvent::EffectDetached(slot.effect.GetUUID()));
+				m_rtEvents->Push(RtEvent::EffectDetached(slot.effect.GetRawId()));
 			}
 		}
     }

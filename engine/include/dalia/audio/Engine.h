@@ -326,7 +326,7 @@ namespace dalia {
 		/// @retval Result::StreamPoolExhausted			The allocated stream capacity has been reached.
 		/// @retval Result::IoStreamRequestQueueFull	The I/O streaming request queue is at capacity.
 		Result CreatePlayback(PlaybackHandle& playback, SoundHandle sound,
-		                      AudioEventCallback callback = nullptr);
+		                      PlaybackExitCallback callback = nullptr);
 
 		/// @brief Routes a playback instance to output its audio into the specified mixing bus.
 		///

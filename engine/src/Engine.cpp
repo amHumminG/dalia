@@ -65,7 +65,7 @@ namespace dalia {
 	struct PendingPlayback {
 		uint32_t voiceIndex = NO_INDEX;
 		uint32_t voiceGen = NO_GENERATION;
-		uint64_t assetUuid = INVALID_UUID;
+		uint64_t assetRawId = INVALID_RAW_ID;
 	};
 
 	struct EffectRouting {
@@ -197,8 +197,12 @@ namespace dalia {
 			return PlaybackHandle::Create(index, generation);
 		}
 
-		SoundHandle ForgeSoundHandle(uint64_t uuid) { return SoundHandle::FromUUID(uuid); }
-		EffectHandle ForgeEffectHandle(uint64_t uuid) { return EffectHandle::FromUUID(uuid); }
+		SoundHandle ForgeSoundHandle(uint64_t rawId) { return SoundHandle::FromRawId(rawId); }
+
+		EffectHandle ForgeEffectHandle(uint64_t rawId) { return EffectHandle::FromRawId(rawId); }
+		uint32_t GetEffectIndex(EffectHandle effect) const { return effect.GetIndex(); }
+		uint32_t GetEffectGen(EffectHandle effect) const { return effect.GetGeneration(); }
+		EffectType GetEffectType(EffectHandle effect) const { return effect.GetType(); }
 	};
 
 	// --- INTERNAL HELPERS ---
@@ -243,11 +247,11 @@ namespace dalia {
 		return Result::Ok;
 	}
 
-	static inline Result ValidateEffectHandle(const EngineInternalState* state, EffectHandle effect) {
+	static inline Result ValidateEffectHandle(EngineInternalState* state, EffectHandle effect) {
 		if (!effect.IsValid()) return Result::InvalidHandle;
 
-		const uint32_t index = effect.GetIndex();
-		const uint32_t gen = effect.GetGeneration();
+		const uint32_t index = state->GetEffectIndex(effect);
+		const uint32_t gen = state->GetEffectGen(effect);
 
 		switch (effect.GetType()) {
 			case EffectType::None: {
@@ -264,11 +268,11 @@ namespace dalia {
 		return Result::Ok;
 	}
 
-	static inline Result FreeEffectHandle(const EngineInternalState* state, EffectHandle effect) {
+	static inline Result FreeEffectHandle(EngineInternalState* state, EffectHandle effect) {
 		if (!effect.IsValid()) return Result::InvalidHandle;
 
-		const uint32_t index = effect.GetIndex();
-		const uint32_t gen = effect.GetGeneration();
+		const uint32_t index = state->GetEffectIndex(effect);
+		const uint32_t gen = state->GetEffectGen(effect);
 
 		switch (effect.GetType()) {
 		case EffectType::None: {
@@ -294,7 +298,7 @@ namespace dalia {
 				Result res = ResolveVoiceMirror(state, index, generation, vMirror);
 
 				if (res == Result::Ok) { // Voice is still valid
-					AudioEventCallback callback = vMirror->onStopCallback;
+					PlaybackExitCallback callback = vMirror->onStopCallback;
 					vMirror->Reset();
 					state->freeVoices->Push(index);
 
@@ -319,7 +323,7 @@ namespace dalia {
 
 							const char* typeStr = (it->handle.GetType() == SoundType::Resident) ? "resident" : "stream";
 							DALIA_LOG_DEBUG(LOG_CTX_CORE, "Unloaded %s sound with handle %d (deferred)",
-								typeStr, it->handle.GetUUID());
+								typeStr, it->handle.GetRawId());
 
 							it = state->pendingSoundUnloads.erase(it);
 						}
@@ -329,7 +333,7 @@ namespace dalia {
 				break;
 			}
 			case RtEvent::Type::EffectActive: {
-				auto it = state->effectRoutingTable.find(ev.data.effect.handleUUID);
+				auto it = state->effectRoutingTable.find(ev.data.effect.handleRawId);
 				if (it != state->effectRoutingTable.end()) {
 					EffectRouting& routing = it->second;
 					routing.effectState = EffectState::Active;
@@ -337,11 +341,11 @@ namespace dalia {
 				break;
 			}
 			case RtEvent::Type::EffectDetached: {
-				auto it = state->effectRoutingTable.find(ev.data.effect.handleUUID);
+				auto it = state->effectRoutingTable.find(ev.data.effect.handleRawId);
 				if (it != state->effectRoutingTable.end()) {
 					EffectRouting routing = it->second;
 					auto& mirroredHandle = state->busPoolMirror[routing.busIndex].effectSlots[routing.effectSlot];
-					if (mirroredHandle.GetUUID() == ev.data.effect.handleUUID) {
+					if (mirroredHandle.GetRawId() == ev.data.effect.handleRawId) {
 						// Detach the handle if it's still in the same slot
 						mirroredHandle = InvalidEffectHandle;
 					}
@@ -367,13 +371,13 @@ namespace dalia {
 			case IoLoadEvent::Type::SoundLoaded: {
 				// Process deferred playbacks
 				for (auto it = state->pendingPlaybacks.begin(); it != state->pendingPlaybacks.end(); ) {
-					if (it->assetUuid == ev.assetUuid) {
+					if (it->assetRawId == ev.assetRawId) {
 						uint32_t vIndex = it->voiceIndex, vGen = it->voiceGen;
 						VoiceMirror* vMirror = nullptr;
 						Result res = ResolveVoiceMirror(state, vIndex, vGen, vMirror);
 
 						if (res == Result::Ok && vMirror->pendingLoad) {
-							SoundHandle handle = state->ForgeSoundHandle(ev.assetUuid);
+							SoundHandle handle = state->ForgeSoundHandle(ev.assetRawId);
 							SoundType soundType = handle.GetType();
 							uint32_t frameCount = 0;
 							uint32_t channels = 0;
@@ -461,7 +465,7 @@ namespace dalia {
 			}
 			case IoLoadEvent::Type::SoundLoadFailed: {
 				for (auto it = state->pendingPlaybacks.begin(); it != state->pendingPlaybacks.end(); ) {
-					if (it->assetUuid == ev.assetUuid) {
+					if (it->assetRawId == ev.assetRawId) {
 						uint32_t vIndex = it->voiceIndex, vGen = it->voiceGen;
 						VoiceMirror* vMirror = nullptr;
 						Result res = ResolveVoiceMirror(state, vIndex, vGen, vMirror);
@@ -757,7 +761,7 @@ namespace dalia {
 
 			// Remove pending playbacks for the sound
 			for (auto it = m_state->pendingPlaybacks.begin(); it != m_state->pendingPlaybacks.end(); ) {
-				if (it->assetUuid == soundHandle.GetUUID()) {
+				if (it->assetRawId == soundHandle.GetRawId()) {
 					VoiceMirror& vMirror = m_state->voicePoolMirror[it->voiceIndex];
 
 					if (vMirror.onStopCallback) {
@@ -779,7 +783,7 @@ namespace dalia {
 			for (uint32_t i = 0; i < m_state->voiceCapacity; i++) {
 				VoiceMirror& vMirror = m_state->voicePoolMirror[i];
 
-				if (vMirror.state != VoiceState::Free && vMirror.assetUuid == soundHandle.GetUUID()) {
+				if (vMirror.state != VoiceState::Free && vMirror.assetRawId == soundHandle.GetRawId()) {
 					pendingUnload.voicesToStop.push_back(VoiceID(i, vMirror.gen));
 
 					m_state->rtCommands->Enqueue(RtCommand::StopVoice(i, vMirror.gen));
@@ -792,7 +796,7 @@ namespace dalia {
 			}
 			else {
 				m_state->assetRegistry->FreeSound(soundHandle);
-				DALIA_LOG_DEBUG(LOG_CTX_API, "Unloaded sound with handle %d.", soundHandle.GetUUID());
+				DALIA_LOG_DEBUG(LOG_CTX_API, "Unloaded sound with handle %d.", soundHandle.GetRawId());
 			}
 		}
 
@@ -1013,7 +1017,7 @@ namespace dalia {
 			sanitizedConfig
 		);
 		m_state->rtCommands->Enqueue(cmd);
-		DALIA_LOG_DEBUG(LOG_CTX_API, "Created biquad filter with handle uuid: 0x%016llx.", effect.GetUUID());
+		DALIA_LOG_DEBUG(LOG_CTX_API, "Created biquad filter with handle rawId: 0x%016llx.", effect.GetRawId());
 
 		return Result::Ok;
 	}
@@ -1044,7 +1048,7 @@ namespace dalia {
 		sanitizedConfig.resonance = std::clamp(config.resonance, FILTER_RESONANCE_MIN, FILTER_RESONANCE_MAX);
 
 		m_state->rtCommands->Enqueue(RtCommand::SetBiquadParams(index, gen, sanitizedConfig));
-		DALIA_LOG_DEBUG(LOG_CTX_API, "Updated biquad parameters for handle uuid: 0x%016llx.", effect.GetUUID());
+		DALIA_LOG_DEBUG(LOG_CTX_API, "Updated biquad parameters for handle rawId: 0x%016llx.", effect.GetRawId());
 
 		return Result::Ok;
 	}
@@ -1083,7 +1087,7 @@ namespace dalia {
 		}
 
 		// Steal effect if already attached
-		auto it = m_state->effectRoutingTable.find(effect.GetUUID());
+		auto it = m_state->effectRoutingTable.find(effect.GetRawId());
 		if (it != m_state->effectRoutingTable.end()) {
 			EffectRouting routing = it->second;
 			BusMirror& bMirror = m_state->busPoolMirror[routing.busIndex];
@@ -1113,7 +1117,7 @@ namespace dalia {
 
 			// Detach old effect
 			EffectHandle oldEffect = bMirror.effectSlots[effectSlot];
-			m_state->effectRoutingTable.erase(oldEffect.GetUUID());
+			m_state->effectRoutingTable.erase(oldEffect.GetRawId());
 
 			RtCommand detachCmd = RtCommand::ForceDetachEffect(
 				oldEffect.GetIndex(),
@@ -1126,7 +1130,7 @@ namespace dalia {
 		}
 
 		bMirror.effectSlots[effectSlot] = effect;
-		m_state->effectRoutingTable[effect.GetUUID()] = EffectRouting(bIndex, effectSlot);
+		m_state->effectRoutingTable[effect.GetRawId()] = EffectRouting(bIndex, effectSlot);
 
 		RtCommand cmd = RtCommand::AttachEffect(
 			effect.GetIndex(),
@@ -1137,8 +1141,8 @@ namespace dalia {
 		);
 		m_state->rtCommands->Enqueue(cmd);
 
-		DALIA_LOG_DEBUG(LOG_CTX_API, "Attached effect (handle uuid: 0x%016llx) to bus %s (slot %d).",
-			effect.GetUUID(), busIdentifier, effectSlot);
+		DALIA_LOG_DEBUG(LOG_CTX_API, "Attached effect (handle rawId: 0x%016llx) to bus %s (slot %d).",
+			effect.GetRawId(), busIdentifier, effectSlot);
 
 		return Result::Ok;
 	}
@@ -1159,7 +1163,7 @@ namespace dalia {
 		}
 
 		// Detach effect if attached (routed)
-		auto it = m_state->effectRoutingTable.find(effect.GetUUID());
+		auto it = m_state->effectRoutingTable.find(effect.GetRawId());
 		if (it != m_state->effectRoutingTable.end()) {
 			EffectRouting& routing = it->second;
 			routing.effectState = EffectState::FadingOut;
@@ -1174,8 +1178,8 @@ namespace dalia {
 			m_state->rtCommands->Enqueue(cmd);
 
 			DALIA_LOG_DEBUG(LOG_CTX_API,
-				"Detached effect (uuid: 0x%016llx) from bus (index: %d) (slot: %d).",
-				effect.GetUUID(), routing.busIndex, routing.effectSlot);
+				"Detached effect (rawId: 0x%016llx) from bus (index: %d) (slot: %d).",
+				effect.GetRawId(), routing.busIndex, routing.effectSlot);
 
 			return Result::Ok;
 		}
@@ -1199,7 +1203,7 @@ namespace dalia {
 			return res;
 		}
 
-		auto it = m_state->effectRoutingTable.find(effect.GetUUID());
+		auto it = m_state->effectRoutingTable.find(effect.GetRawId());
 		if (it != m_state->effectRoutingTable.end()) {
 			EffectRouting routing = it->second;
 			BusMirror& bMirror = m_state->busPoolMirror[routing.busIndex];
@@ -1222,12 +1226,12 @@ namespace dalia {
 
 		RtCommand cmd = RtCommand::DeallocateEffect(effect.GetIndex(), effect.GetGeneration(), effect.GetType());
 		m_state->rtCommands->Enqueue(cmd);
-		DALIA_LOG_DEBUG(LOG_CTX_API, "Destroyed effect (handle uuid: 0x%016llx).", effect.GetUUID());
+		DALIA_LOG_DEBUG(LOG_CTX_API, "Destroyed effect (handle rawId: 0x%016llx).", effect.GetRawId());
 
 		return Result::Ok;
 	}
 
-	Result Engine::CreatePlayback(PlaybackHandle& pbkHandle, SoundHandle soundHandle, AudioEventCallback callback) {
+	Result Engine::CreatePlayback(PlaybackHandle& pbkHandle, SoundHandle soundHandle, PlaybackExitCallback callback) {
 		if (!IsInitialized(m_state)) return Result::NotInitialized;
 
 		SoundType soundType = soundHandle.GetType();
@@ -1269,7 +1273,7 @@ namespace dalia {
 		// Prime voice mirror
 		VoiceMirror& vMirror = m_state->voicePoolMirror[vIndex];
 		vMirror.state = VoiceState::Inactive;
-		vMirror.assetUuid = soundHandle.GetUUID();
+		vMirror.assetRawId = soundHandle.GetRawId();
 		vMirror.frameCount = frameCount;
 		vMirror.channels = channels;
 		vMirror.sampleRate = sampleRate;
@@ -1281,7 +1285,7 @@ namespace dalia {
 			m_state->pendingPlaybacks.push_back({
 				vIndex,
 				vMirror.gen,
-				soundHandle.GetUUID()
+				soundHandle.GetRawId()
 			});
 			vMirror.pendingLoad = true;
 			DALIA_LOG_DEBUG(LOG_CTX_API, "Deferring playback for voice %d. Sound not yet loaded.", vIndex);
