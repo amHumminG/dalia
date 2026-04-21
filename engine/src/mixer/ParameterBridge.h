@@ -11,7 +11,7 @@ struct ParameterBridge {
 	ParameterBridge() : writeIndex(0), isDirty(false) {}
 
 	void PushUpdate(const T& newParams) {
-		uint32_t nextWrite = (writeIndex.load(std::memory_order_relaxed) + 1);
+		uint32_t nextWrite = (writeIndex.load(std::memory_order_relaxed) + 1) & 1;
 		buffers[nextWrite] = newParams;
 		writeIndex.store(nextWrite, std::memory_order_release);
 		isDirty.store(true, std::memory_order_release);
