@@ -80,6 +80,7 @@ namespace dalia {
 		// --- Output Thingies ---
 		std::unique_ptr<IAudioBackend> backend; // HAL
 
+		uint32_t maxSamplesPerPeriod = 0;
 		uint32_t outChannels = 0;
 		uint32_t outSampleRate = 0;
 
@@ -565,14 +566,15 @@ namespace dalia {
 		DALIA_LOG_DEBUG(LOG_CTX_API, "Backend buffer size: %d.", bufferSizeInFrames);
 
 		// Buffer allocations based on period size
-		const uint32_t maxSamplesPerPeriod = bufferSizeInFrames * CHANNELS_MAX;
-		uint32_t busBufferPoolSize = m_state->busCapacity * maxSamplesPerPeriod;
+		m_state->maxSamplesPerPeriod = bufferSizeInFrames * CHANNELS_MAX;
+		uint32_t busBufferPoolSize = m_state->busCapacity * m_state->maxSamplesPerPeriod;
 		m_state->busBufferPool = std::make_unique<float[]>(busBufferPoolSize);
-		m_state->dspScratchBuffer = std::make_unique<float[]>(maxSamplesPerPeriod);
+		m_state->dspScratchBuffer = std::make_unique<float[]>(m_state->maxSamplesPerPeriod);
 
 		// --- SYSTEMS SETUP ---
 		RtSystemConfig rtConfig;
 		rtConfig.speakerLayout		= m_state->speakerLayout;
+		rtConfig.maxSamplesPerPeriod = m_state->maxSamplesPerPeriod;
 		rtConfig.outChannels		= m_state->outChannels;
 		rtConfig.outSampleRate		= m_state->outSampleRate;
 		rtConfig.rtCommands			= m_state->rtCommands.get();
@@ -587,7 +589,7 @@ namespace dalia {
 		rtConfig.mixOrder			= std::span(m_state->mixOrder.get(), m_state->busCapacity);
 		rtConfig.listenerPool		= std::span(m_state->listenerPool.get(), m_state->listenerCapacity);
 		rtConfig.listenerParamBridges = std::span(m_state->listenerParamBridges.get(), m_state->listenerCapacity);
-		rtConfig.dspScratchBuffer	= std::span(m_state->dspScratchBuffer.get(), maxSamplesPerPeriod);
+		rtConfig.dspScratchBuffer	= std::span(m_state->dspScratchBuffer.get(), m_state->maxSamplesPerPeriod);
 		rtConfig.biquadFilterPool	= std::span(m_state->biquadFilterPool.get(), m_state->biquadHM->GetCapacity());
 		m_state->rtSystem = std::make_unique<RtSystem>(rtConfig);
 

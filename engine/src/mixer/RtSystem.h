@@ -33,6 +33,8 @@ namespace dalia {
 
     struct RtSystemConfig {
         SpeakerLayout speakerLayout;
+
+    	uint32_t maxSamplesPerPeriod = 0;
         uint32_t outChannels = 0;
         uint32_t outSampleRate = 0;
 
@@ -65,21 +67,26 @@ namespace dalia {
         void ProcessCommands();
     	void ProcessParams();
         void Render(float* output, uint32_t frameCount);
+
     	void ResolveVoice(Voice& voice);
     	void EvaluateVoiceTargetGains();
         bool ProcessVoice(uint32_t voiceIndex, uint32_t frameCount);
         void FreeVoice(uint32_t voiceIndex);
+
     	bool ResolveBus(Bus& bus);
         void ProcessBus(uint32_t busIndex, uint32_t frameCount);
         void ApplyBusEffect(float* busBuffer, EffectSlot& slot, uint32_t frameCount);
+
         void AttachEffect(EffectHandle effect, uint32_t busIndex, uint32_t effectSlot);
         void DetachEffect(EffectHandle effect, uint32_t busIndex, uint32_t effectSlot);
         void FadeOutEffect(EffectHandle effect, uint32_t busIndex, uint32_t effectSlot);
         void FlushEffect(EffectType type, uint32_t index, uint32_t gen);
+
     	void ConfigureSpeakerLayout(SpeakerLayout layout); // Returns the spatial speaker count
 
     	SpeakerLayout m_speakerLayout;
     	uint32_t m_spatialSpeakerCount = 0;
+    	uint32_t m_maxSamplesPerPeriod = 0;
         uint32_t m_outChannels = 0;
         uint32_t m_outSampleRate = 0;
 

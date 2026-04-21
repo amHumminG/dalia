@@ -900,7 +900,7 @@ namespace dalia {
 		);
 
     	if (bus.currentParentIndex != NO_PARENT) {
-    		float* parentBuffer = m_busBufferPool.data() + (bus.currentParentIndex * frameCount * CHANNELS_MAX);
+    		float* parentBuffer = m_busBufferPool.data() + (bus.currentParentIndex * m_maxSamplesPerPeriod);
     		MixToBuffer(parentBuffer, buffer, frameCount * m_outChannels);
     	}
     }
