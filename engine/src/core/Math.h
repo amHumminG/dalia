@@ -84,4 +84,9 @@ namespace dalia::math {
 		}
 	};
 
+	inline Vector3 AngleToVector3(float degrees) {
+		float radians = degrees * DEG_TO_RAD;
+		return Vector3(std::sinf(radians), 0.0f, cosf(radians));
+	}
+
 }
