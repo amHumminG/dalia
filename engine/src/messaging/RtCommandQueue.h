@@ -16,7 +16,7 @@ namespace dalia {
 			SetListenerActive,
 			SetListenerInactive,
 
-			// Voice Lifecycle
+			// Voice
 			AllocateVoice,
 			DeallocateVoice,
 			PrepareVoiceStreaming,
@@ -25,20 +25,13 @@ namespace dalia {
 			PlayVoice,
 			PauseVoice,
 			StopVoice,
-
-			// Voice Properties
 			SetVoiceParent,
-			SetVoiceLooping,
-			SetVoiceGainMatrix,
-			SetVoicePitch,
 
-			// Bus Lifecycle
+			// Bus
 			AllocateBus,
 			DeallocateBus,
-
-			// Bus Properties
 			SetBusParent,
-			SetBusGain,
+			SetBusGain, // This will be removed and replaced by a parameter bridge in the future (probably)
 
 			// Effects
 			AllocateBiquad,
@@ -90,10 +83,6 @@ namespace dalia {
 			struct {
 				float value;
 			} floatVal;
-
-			struct {
-				float gainMatrix[CHANNELS_MAX][CHANNELS_MAX];
-			} gain;
 
 			struct {
 				BiquadFilterType type;
@@ -204,25 +193,6 @@ namespace dalia {
 			cmd.targetIndex = index;
 			cmd.targetGen = gen;
 			cmd.data.setParent.parentIndex = parentBusIndex;
-			return cmd;
-		}
-
-		static RtCommand SetVoiceLooping(uint32_t index, uint32_t gen, bool looping) {
-			RtCommand cmd{};
-			cmd.type = Type::SetVoiceLooping;
-			cmd.targetIndex = index;
-			cmd.targetGen = gen;
-			cmd.data.boolVal.value = looping;
-			return cmd;
-		}
-
-		static RtCommand SetVoiceGainMatrix(uint32_t index, uint32_t gen,
-			const float gainMatrix[CHANNELS_MAX][CHANNELS_MAX]) {
-			RtCommand cmd{};
-			cmd.type = Type::SetVoiceGainMatrix;
-			cmd.targetIndex = index;
-			cmd.targetGen = gen;
-			std::memcpy(cmd.data.gain.gainMatrix, gainMatrix, sizeof(cmd.data.gain.gainMatrix));
 			return cmd;
 		}
 

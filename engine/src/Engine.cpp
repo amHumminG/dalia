@@ -1503,31 +1503,6 @@ namespace dalia {
 		return Result::Ok;
 	}
 
-	Result Engine::SetPlaybackLooping(PlaybackHandle playback, bool looping) {
-		if (!IsInitialized(m_state)) return Result::NotInitialized;
-
-		if (!playback.IsValid()) return Result::InvalidHandle;
-		uint32_t vIndex = playback.GetIndex();
-		uint32_t vGeneration = playback.GetGeneration();
-
-		VoiceMirror* vMirror = nullptr;
-		Result res = ResolveVoiceMirror(m_state, vIndex, vGeneration, vMirror);
-		if (res != Result::Ok) return res;
-
-		if (vMirror->isLooping == looping) {
-			if (looping) DALIA_LOG_WARN(LOG_CTX_API, "Setting playback to loop. Playback is already set to loop");
-			else DALIA_LOG_WARN(LOG_CTX_API, "Setting playback to not loop. Playback is already set to not loop");
-			return Result::Ok;
-		}
-
-		vMirror->isLooping = looping;
-		m_state->rtCommands->Enqueue(RtCommand::SetVoiceLooping(vIndex, vGeneration, looping));
-		if (looping) DALIA_LOG_DEBUG(LOG_CTX_API, "Setting voice %d to loop.", vIndex);
-		else DALIA_LOG_DEBUG(LOG_CTX_API, "Setting voice %d to not loop.", vIndex);
-
-		return Result::Ok;
-	}
-
 	Result Engine::SetPlaybackVolumeDb(PlaybackHandle playback, float volumeDb) {
 		if (!IsInitialized(m_state)) return Result::NotInitialized;
 
@@ -1540,6 +1515,23 @@ namespace dalia {
 		if (res != Result::Ok) return res;
 
 		vMirror->params.volumeDb = std::clamp(volumeDb, VOLUME_DB_MIN, VOLUME_DB_MAX);
+		vMirror->isParamsDirty = true;
+
+		return Result::Ok;
+	}
+
+	Result Engine::SetPlaybackPitch(PlaybackHandle playback, float pitch) {
+		if (!IsInitialized(m_state)) return Result::NotInitialized;
+
+		if (!playback.IsValid()) return Result::InvalidHandle;
+		uint32_t vIndex = playback.GetIndex();
+		uint32_t vGeneration = playback.GetGeneration();
+
+		VoiceMirror* vMirror = nullptr;
+		Result res = ResolveVoiceMirror(m_state, vIndex, vGeneration, vMirror);
+		if (res != Result::Ok) return res;
+
+		vMirror->params.pitch = std::clamp(pitch, PITCH_MIN, PITCH_MAX);
 		vMirror->isParamsDirty = true;
 
 		return Result::Ok;
@@ -1562,6 +1554,29 @@ namespace dalia {
 		return Result::Ok;
 	}
 
+	Result Engine::SetPlaybackLooping(PlaybackHandle playback, bool looping) {
+		if (!IsInitialized(m_state)) return Result::NotInitialized;
+
+		if (!playback.IsValid()) return Result::InvalidHandle;
+		uint32_t vIndex = playback.GetIndex();
+		uint32_t vGeneration = playback.GetGeneration();
+
+		VoiceMirror* vMirror = nullptr;
+		Result res = ResolveVoiceMirror(m_state, vIndex, vGeneration, vMirror);
+		if (res != Result::Ok) return res;
+
+		if (vMirror->params.isLooping == looping) {
+			if (looping) DALIA_LOG_WARN(LOG_CTX_API, "Setting playback to loop. Playback is already set to loop.");
+			else DALIA_LOG_WARN(LOG_CTX_API, "Setting playback to not loop. Playback is already set to not loop.");
+			return Result::Ok;
+		}
+
+		vMirror->params.isLooping = looping;
+		vMirror->isParamsDirty = true;
+
+		return Result::Ok;
+	}
+
 	Result Engine::SetPlaybackSpatial(PlaybackHandle playback, bool spatial) {
 		if (!IsInitialized(m_state)) return Result::NotInitialized;
 
@@ -1572,6 +1587,12 @@ namespace dalia {
 		VoiceMirror* vMirror = nullptr;
 		Result res = ResolveVoiceMirror(m_state, vIndex, vGeneration, vMirror);
 		if (res != Result::Ok) return res;
+
+		if (vMirror->params.isSpatial == spatial) {
+			if (spatial) DALIA_LOG_WARN(LOG_CTX_API, "Setting playback to spatial. Playback is already spatial.");
+			else DALIA_LOG_WARN(LOG_CTX_API, "Setting playback to non-spatial. Playback is already set to non-spatial.");
+			return Result::Ok;
+		}
 
 		vMirror->params.isSpatial = spatial;
 		vMirror->isParamsDirty = true;

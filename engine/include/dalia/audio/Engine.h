@@ -397,19 +397,6 @@ namespace dalia {
 		/// @retval Result::ExpiredHandle		The playback handle has already stopped playing.
 		Result SeekPlayback(PlaybackHandle playback, double timeInSeconds);
 
-		/// @brief Sets the looping state a playback instance.
-		///
-		/// This method updates whether a playback instance will automatically restart upon finishing.
-		///
-		/// @param[in] playback The handle to the playback instance.
-		/// @param[in] looping The looping state.
-		///
-		/// @retval Result::Ok					The playback instance looping state was successfully set.
-		/// @retval Result::NotInitialized		The engine is not initialized.
-		/// @retval Result::InvalidHandle		The playback handle is not recognized.
-		/// @retval Result::ExpiredHandle		The playback handle has already stopped playing.
-		Result SetPlaybackLooping(PlaybackHandle playback, bool looping);
-
 		/// @brief Sets the mixing volume of a playback instance in decibels (dB).
 		///
 		/// @param[in] playback The handle to the playback instance.
@@ -423,6 +410,18 @@ namespace dalia {
 		/// @retval Result::ExpiredHandle		The playback handle has already stopped playing.
 		Result SetPlaybackVolumeDb(PlaybackHandle playback, float volumeDb);
 
+		/// @brief Sets the pitch of a playback instance.
+		///
+		/// @param[in] playback The handle to the playback instance.
+		/// @param[in] pitch	The new pitch. This is clamped internally between 0.1 and 4.0 to prevent performance
+		///						issues.
+		///
+		/// @retval Result::Ok					The pitch of the playback instance was successfully set.
+		/// @retval Result::NotInitialized		The engine is not initialized.
+		/// @retval Result::InvalidHandle		The playback handle is not recognized.
+		/// @retval Result::ExpiredHandle		The playback handle has already stopped playing.
+		Result SetPlaybackPitch(PlaybackHandle playback, float pitch);
+
 		/// @brief Sets the stereo pan of a playback instance.
 		///
 		/// @param[in] playback The handle to the playback instance.
@@ -434,6 +433,19 @@ namespace dalia {
 		/// @retval Result::InvalidHandle		The playback handle is not recognized.
 		/// @retval Result::ExpiredHandle		The playback handle has already stopped playing.
 		Result SetPlaybackStereoPan(PlaybackHandle playback, float pan);
+
+		/// @brief Sets the looping state a playback instance.
+		///
+		/// This method updates whether a playback instance will automatically restart upon finishing.
+		///
+		/// @param[in] playback The handle to the playback instance.
+		/// @param[in] looping The looping state.
+		///
+		/// @retval Result::Ok					The playback instance looping state was successfully set.
+		/// @retval Result::NotInitialized		The engine is not initialized.
+		/// @retval Result::InvalidHandle		The playback handle is not recognized.
+		/// @retval Result::ExpiredHandle		The playback handle has already stopped playing.
+		Result SetPlaybackLooping(PlaybackHandle playback, bool looping);
 
 		/// @brief Enables or disables 3D spatialization for a playback instance.
 		///

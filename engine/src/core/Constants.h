@@ -50,6 +50,8 @@ namespace dalia {
     static constexpr float VOLUME_DB_MAX = 24.0f;   // Maximum volume in decibels
 
 	static constexpr float PITCH_DEFAULT = 1.0f;
+	static constexpr float PITCH_MIN = 0.1f;
+	static constexpr float PITCH_MAX = 4.0f;
 
 	// Panning
 	static constexpr float PAN_STEREO_DEFAULT = 0.0f;

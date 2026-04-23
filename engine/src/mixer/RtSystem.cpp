@@ -482,13 +482,6 @@ namespace dalia {
 					voice.targetBusIndex = cmd.data.setParent.parentIndex;
 	            	break;
 				}
-				case RtCommand::Type::SetVoiceLooping: {
-	            	Voice& voice = m_voicePool[cmd.targetIndex];
-	            	if (voice.gen != cmd.targetGen || voice.isExiting) break;
-
-	            	voice.isLooping = cmd.data.boolVal.value;
-	            	break;
-				}
 				case RtCommand::Type::AllocateBus: {
 		            Bus& bus = m_busPool[cmd.targetIndex];
 
