@@ -147,7 +147,6 @@ namespace dalia {
                 if (stream.state.load(std::memory_order_acquire) != StreamState::Streaming) break;
 
                 FillBuffer(stream, bufferIndex);
-                // DALIA_LOG_DEBUG(LOG_CTX_IO, "Refilled buffer %d, for stream %d.", bufferIndex, sIndex);
                 break;
             }
             case IoStreamRequest::Type::SeekStream: {
@@ -160,7 +159,6 @@ namespace dalia {
                 if (stream.state.load(std::memory_order_acquire) != StreamState::Seeking) break;
 
                 stb_vorbis_seek_frame(stream.decoder, seekFrame);
-                stream.readCursor = 0;
 
                 FillBuffer(stream, 0);
                 FillBuffer(stream, 1);

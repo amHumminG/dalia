@@ -38,6 +38,7 @@ namespace dalia {
     static constexpr double dPI = 3.14159265358979323846f;
     static constexpr float PI	= 3.14159265358979323846f;
     static constexpr float PI_2 = 1.57079632679489661923f;
+	static constexpr float DEG_TO_RAD = PI / 180.0f;
 
     static constexpr float GAIN_DEFAULT = 1.0f;
 	static constexpr float GAIN_MIN = 0.0f;
@@ -74,6 +75,8 @@ namespace dalia {
 	static constexpr float MIN_DIST_MIN = 0.01f;
 	static constexpr float MAX_DIST_MIN = 0.01f;
 
+	// Resampling
+	static constexpr uint32_t HERMITE_LOOKAHEAD_FRAMES = 2;
 
     static constexpr uint32_t CONTROL_RATE = 32; // Number of frames between effect recalculations
 

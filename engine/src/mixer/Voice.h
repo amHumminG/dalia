@@ -4,6 +4,7 @@
 #include "dalia/audio/SoundControl.h"
 #include "core/Constants.h"
 #include "core/Math.h"
+#include "mixer/Resampler.h"
 
 #include <cstdint>
 
@@ -52,6 +53,8 @@ namespace dalia {
     	uint32_t pendingSeekFrame = 0;
 
         // Mixing Properties
+    	ResamplerState resamplerState;
+
     	float currentFadeGain = GAIN_DEFAULT; // Owned by the voice (used for micro-fading)
     	float targetFadeGain = GAIN_DEFAULT;  // Owned by the resolver (used for micro-fading)
 
@@ -97,6 +100,8 @@ namespace dalia {
         	hasPendingSeek = false;
 			pendingSeekFrame = 0;
 
+        	resamplerState = ResamplerState{};
+
         	currentFadeGain = GAIN_DEFAULT;
         	targetFadeGain = GAIN_DEFAULT;
 
@@ -133,7 +138,6 @@ namespace dalia {
 
         // Routing
         uint32_t parentBusIndex = MASTER_BUS_INDEX;
-        bool isLooping = false;
 
     	VoiceParams params;
     	bool isParamsDirty = false;
@@ -153,11 +157,14 @@ namespace dalia {
             if (gen == NO_GENERATION) gen = START_GENERATION;
             state = VoiceState::Free;
 
-            parentBusIndex = MASTER_BUS_INDEX;
+        	parentBusIndex = MASTER_BUS_INDEX;
 
-            isLooping = false;
+        	params = VoiceParams{};
+        	isParamsDirty = false;
 
-            channels = 0;
+        	frameCount = 0;
+        	channels = 0;
+        	sampleRate = 0;
             soundType = SoundType::None;
         }
     };
