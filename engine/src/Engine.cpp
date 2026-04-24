@@ -500,6 +500,14 @@ namespace dalia {
 		}
 	}
 
+	inline math::Vector3 FromPublic(const dalia::Vec3& v) {
+		return { v.x, v.y, v.z };
+	}
+
+	inline Vec3 ToPublic(const math::Vector3& v) {
+		return { v.x, v.y, v.z };
+	}
+
 	// ------------------------
 
 	Engine::Engine() = default;
@@ -674,8 +682,17 @@ namespace dalia {
 		Logger::ProcessLogs(); // Print all logs accumulated from this frame
 	}
 
+	Result Engine::SetGlobalDopplerFactor(float globalDopplerFactor) {
+		if (!IsInitialized(m_state)) return Result::NotInitialized;
+
+		float clampedGlobalDopplerFactor = std::clamp(globalDopplerFactor, DOPPLER_FACTOR_MIN, DOPPLER_FACTOR_MAX);
+		m_state->rtCommands->Enqueue(RtCommand::SetGlobalDopplerFactor(clampedGlobalDopplerFactor));
+
+		return Result::Ok;
+	}
+
 	Result Engine::LoadSoundAsync(SoundHandle& sound, SoundType soundType, const char* filepath, AssetLoadCallback callback,
-		uint32_t* outRequestId) {
+	                              uint32_t* outRequestId) {
 		if (!IsInitialized(m_state)) return Result::NotInitialized;
 
 		const SoundID pathId(filepath);
@@ -1645,7 +1662,7 @@ namespace dalia {
 		Result res = ResolveVoiceMirror(m_state, vIndex, vGeneration, vMirror);
 		if (res != Result::Ok) return res;
 
-		vMirror->params.position = math::Vector3(position.x, position.y, position.z);
+		vMirror->params.position = FromPublic(position);
 		vMirror->isParamsDirty = true;
 
 		return Result::Ok;
@@ -1667,6 +1684,57 @@ namespace dalia {
 
 		vMirror->params.minDistance = clampedMinDistance;
 		vMirror->params.maxDistance = clampedMaxDistance;
+		vMirror->isParamsDirty = true;
+
+		return Result::Ok;
+	}
+
+	Result Engine::SetPlaybackUseDoppler(PlaybackHandle playback, bool useDoppler) {
+		if (!IsInitialized(m_state)) return Result::NotInitialized;
+
+		if (!playback.IsValid()) return Result::InvalidHandle;
+		uint32_t vIndex = playback.GetIndex();
+		uint32_t vGeneration = playback.GetGeneration();
+
+		VoiceMirror* vMirror = nullptr;
+		Result res = ResolveVoiceMirror(m_state, vIndex, vGeneration, vMirror);
+		if (res != Result::Ok) return res;
+
+		vMirror->params.useDoppler = useDoppler;
+		vMirror->isParamsDirty = true;
+
+		return Result::Ok;
+	}
+
+	Result Engine::SetPlaybackDopplerFactor(PlaybackHandle playback, float dopplerFactor) {
+		if (!IsInitialized(m_state)) return Result::NotInitialized;
+
+		if (!playback.IsValid()) return Result::InvalidHandle;
+		uint32_t vIndex = playback.GetIndex();
+		uint32_t vGeneration = playback.GetGeneration();
+
+		VoiceMirror* vMirror = nullptr;
+		Result res = ResolveVoiceMirror(m_state, vIndex, vGeneration, vMirror);
+		if (res != Result::Ok) return res;
+
+		vMirror->params.dopplerFactor = std::clamp(dopplerFactor, DOPPLER_FACTOR_MIN, DOPPLER_FACTOR_MAX);
+		vMirror->isParamsDirty = true;
+
+		return Result::Ok;
+	}
+
+	Result Engine::SetPlaybackVelocity(PlaybackHandle playback, const Vec3& velocity) {
+		if (!IsInitialized(m_state)) return Result::NotInitialized;
+
+		if (!playback.IsValid()) return Result::InvalidHandle;
+		uint32_t vIndex = playback.GetIndex();
+		uint32_t vGeneration = playback.GetGeneration();
+
+		VoiceMirror* vMirror = nullptr;
+		Result res = ResolveVoiceMirror(m_state, vIndex, vGeneration, vMirror);
+		if (res != Result::Ok) return res;
+
+		vMirror->params.velocity = FromPublic(velocity);
 		vMirror->isParamsDirty = true;
 
 		return Result::Ok;
@@ -1708,24 +1776,91 @@ namespace dalia {
 		return Result::Ok;
 	}
 
-	Result Engine::SetListenerTransform(uint32_t listenerIndex, ListenerTransform transform) {
+	Result Engine::SetListener3DAttributes(uint32_t listenerIndex, const Listener3DAttributes& attributes) {
 		if (!IsInitialized(m_state)) return Result::NotInitialized;
 
 		if (listenerIndex >= m_state->listenerCapacity) {
-			DALIA_LOG_ERR(LOG_CTX_API, "Failed to set listener transform. Listener with index %u does not exist.",
+			DALIA_LOG_ERR(LOG_CTX_API, "Failed to set listener attributes. Listener with index %u does not exist.",
 			listenerIndex);
 			return Result::ListenerNotFound;
 		}
 
 		ListenerMirror& lMirror = m_state->listenerPoolMirror[listenerIndex];
-		lMirror.params.position = math::Vector3(transform.position.x, transform.position.y, transform.position.z);
-		lMirror.params.distanceProbePosition = math::Vector3(
-			transform.distanceProbePosition.x,
-			transform.distanceProbePosition.y,
-			transform.distanceProbePosition.z
-		);
-		lMirror.params.forward = math::Vector3(transform.forward.x, transform.forward.y, transform.forward.z);
-		lMirror.params.up = math::Vector3(transform.up.x, transform.up.y, transform.up.z);
+
+		lMirror.params.position					= FromPublic(attributes.position);
+		lMirror.params.distanceProbePosition	= FromPublic(attributes.distanceProbePosition);
+		lMirror.params.forward					= math::Vector3::Normalize(FromPublic(attributes.forward));
+		lMirror.params.up						= math::Vector3::Normalize(FromPublic(attributes.up));
+		lMirror.params.velocity					= FromPublic(attributes.velocity);
+		lMirror.isParamsDirty = true;
+
+		return Result::Ok;
+	}
+
+	Result Engine::SetListenerPosition(uint32_t listenerIndex, const Vec3& position) {
+		if (!IsInitialized(m_state)) return Result::NotInitialized;
+
+		if (listenerIndex >= m_state->listenerCapacity) {
+			DALIA_LOG_ERR(LOG_CTX_API, "Failed to set listener position. Listener with index %u does not exist.",
+			listenerIndex);
+			return Result::ListenerNotFound;
+		}
+
+		ListenerMirror& lMirror = m_state->listenerPoolMirror[listenerIndex];
+
+		lMirror.params.position = FromPublic(position);
+		lMirror.isParamsDirty = true;
+
+		return Result::Ok;
+	}
+
+	Result Engine::SetListenerDistanceProbePosition(uint32_t listenerIndex, const Vec3& distanceProbePosition) {
+		if (!IsInitialized(m_state)) return Result::NotInitialized;
+
+		if (listenerIndex >= m_state->listenerCapacity) {
+			DALIA_LOG_ERR(LOG_CTX_API, "Failed to set listener distance probe position. Listener with index %u does not exist.",
+			listenerIndex);
+			return Result::ListenerNotFound;
+		}
+
+		ListenerMirror& lMirror = m_state->listenerPoolMirror[listenerIndex];
+
+		lMirror.params.distanceProbePosition = FromPublic(distanceProbePosition);
+		lMirror.isParamsDirty = true;
+
+		return Result::Ok;
+	}
+
+	Result Engine::SetListenerOrientation(uint32_t listenerIndex, const Vec3& forward, const Vec3& up) {
+		if (!IsInitialized(m_state)) return Result::NotInitialized;
+
+		if (listenerIndex >= m_state->listenerCapacity) {
+			DALIA_LOG_ERR(LOG_CTX_API, "Failed to set listener orientation. Listener with index %u does not exist.",
+			listenerIndex);
+			return Result::ListenerNotFound;
+		}
+
+		ListenerMirror& lMirror = m_state->listenerPoolMirror[listenerIndex];
+
+		lMirror.params.forward	= math::Vector3::Normalize(FromPublic(forward));
+		lMirror.params.up		= math::Vector3::Normalize(FromPublic(up));
+		lMirror.isParamsDirty = true;
+
+		return Result::Ok;
+	}
+
+	Result Engine::SetListenerVelocity(uint32_t listenerIndex, const Vec3& velocity) {
+		if (!IsInitialized(m_state)) return Result::NotInitialized;
+
+		if (listenerIndex >= m_state->listenerCapacity) {
+			DALIA_LOG_ERR(LOG_CTX_API, "Failed to set listener velocity. Listener with index %u does not exist.",
+			listenerIndex);
+			return Result::ListenerNotFound;
+		}
+
+		ListenerMirror& lMirror = m_state->listenerPoolMirror[listenerIndex];
+
+		lMirror.params.velocity = FromPublic(velocity);
 		lMirror.isParamsDirty = true;
 
 		return Result::Ok;

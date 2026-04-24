@@ -87,6 +87,22 @@ namespace dalia {
 #pragma endregion ENGINE_LIFECYCLE
 
 		// ============================================================================
+		// [ ENGINE SETTINGS ]
+		// Core methods for setting engine attributes.
+		// ============================================================================
+#pragma region ENGINE_SETTINGS
+
+		/// @brief Sets the global scaling factor for the Doppler effect for the entire engine.
+		///
+		/// @param[in] globalDopplerFactor The global scaling factor. Clamped internally between 0.0 and 10.0.
+		///
+		/// @retval Result::Ok				The global scaling factor for the Doppler effect was successfully set.
+		/// @retval Result::NotInitialized	The engine is not initialized.
+		Result SetGlobalDopplerFactor(float globalDopplerFactor);
+
+#pragma endregion ENGINE_SETTINGS
+
+		// ============================================================================
 		// [ ASSET MANAGEMENT ]
 		// Lifecycle methods for loading, tracking, and freeing raw audio memory
 		// and soundbanks.
@@ -515,6 +531,51 @@ namespace dalia {
 		/// @retval Result::ExpiredHandle		The playback handle has already stopped playing.
 		Result SetPlaybackMinMaxDistance(PlaybackHandle playback, float minDistance, float maxDistance);
 
+		/// @brief Enables or disables the Doppler effect for a playback instance.
+		///
+		/// @note[Spatial only] This only affects playback instances that have spatialization enabled.
+		///
+		/// @note[Requirements] In order for the doppler pitch shifting to be used, both listener and playback velocity
+		///						must be supplied to the engine every frame.
+		///
+		/// @param[in] playback		The handle to the playback instance.
+		/// @param[in] useDoppler	True to enable Doppler pitch shifting, false to disable it.
+		///
+		/// @retval Result::Ok					The playback Doppler effect was successfully enabled or disabled.
+		/// @retval Result::NotInitialized		The engine is not initialized.
+		/// @retval Result::InvalidHandle		The playback handle is not recognized.
+		/// @retval Result::ExpiredHandle		The playback handle has already stopped playing.
+		Result SetPlaybackUseDoppler(PlaybackHandle playback, bool useDoppler);
+
+		/// @brief Sets the scaling factor for the Doppler effect for a playback instance.
+		///
+		/// @note[Spatial only] This only affects playback instances that have spatialization and Doppler pitch-shifting
+		///						enabled.
+		///
+		/// @param[in] playback			The handle to the playback instance.
+		/// @param[in] dopplerFactor	The scaling factor. Clamped internally between 0.0 and 10.0.
+		///
+		/// @retval Result::Ok					The playback Doppler effect's scaling factor was successfully set.
+		/// @retval Result::NotInitialized		The engine is not initialized.
+		/// @retval Result::InvalidHandle		The playback handle is not recognized.
+		/// @retval Result::ExpiredHandle		The playback handle has already stopped playing.
+		Result SetPlaybackDopplerFactor(PlaybackHandle playback, float dopplerFactor);
+
+		/// @brief Sets the velocity of a playback instance.
+		///
+		/// Velocity is used exclusively to calculate the Doppler effect. If the Effect is disabled, this value is ignored.
+		///
+		/// @note[Spatial only] This only affects playback instances that have spatialization enabled.
+		///
+		/// @param[in] playback The handle to the playback instance.
+		/// @param[in] velocity	The velocity vector (in m/s).
+		///
+		/// @retval Result::Ok					The playback velocity was successfully set.
+		/// @retval Result::NotInitialized		The engine is not initialized.
+		/// @retval Result::InvalidHandle		The playback handle is not recognized.
+		/// @retval Result::ExpiredHandle		The playback handle has already stopped playing.
+		Result SetPlaybackVelocity(PlaybackHandle playback, const Vec3& velocity);
+
 		/// @brief Sets the listener routing mask for a playback instance.
 		///
 		/// The routing mask determines which listeners are allowed to hear and evaluate the playback instance.
@@ -540,8 +601,7 @@ namespace dalia {
 
 		/// @brief Enables or disables a listener.
 		///
-		/// @param listenerIndex	The zero-based index of the listener. Must be less than the number of allocated
-		///							listeners at engine initialization.
+		/// @param listenerIndex	The zero-based index of the listener.
 		/// @param active			True to enable the listener, false to disable it.
 		///
 		/// @retval Result::Ok					The listener was successfully enabled or disabled.
@@ -549,19 +609,61 @@ namespace dalia {
 		/// @retval Result::ListenerNotFound	The listener index exceeds the allocated listener capacity.
 		Result SetListenerActive(uint32_t listenerIndex, bool active);
 
-		/// @brief Updates the 3D position and orientation of a listener.
+		/// @brief Updates the complete 3D state of a listener.
 		///
-		/// @param listenerIndex	The zero-based index of the listener. Must be less than the number of allocated
-		///							listeners at engine initialization.
-		/// @param transform		The new position and orientation.
+		/// @param listenerIndex	The zero-based index of the listener.
+		/// @param attributes		The new 3D attributes.
 		///
-		/// @retval Result::Ok					The listener transform was successfully set.
+		/// @retval Result::Ok					The listener 3D attributes were successfully set.
 		/// @retval Result::NotInitialized		The engine is not initialized.
 		/// @retval Result::ListenerNotFound	The listener index exceeds the allocated listener capacity.
-		Result SetListenerTransform(uint32_t listenerIndex, ListenerTransform transform);
+		Result SetListener3DAttributes(uint32_t listenerIndex, const Listener3DAttributes& attributes);
+
+		/// @brief Updates the world position of a listener.
+		///
+		/// @param[in] listenerIndex	The zero-based index of the listener.
+		/// @param[in] position			The new world position.
+		///
+		/// @retval Result::Ok					The listener world position was successfully set.
+		/// @retval Result::NotInitialized		The engine is not initialized.
+		/// @retval Result::ListenerNotFound	The listener index exceeds the allocated listener capacity.
+		Result SetListenerPosition(uint32_t listenerIndex, const Vec3& position);
+
+		/// @brief Sets the distance probe world position for a listener.
+		///
+		/// @note [Usage]	This position is only used for distance attenuation by playback instances with distance mode
+		///					set to FromDistanceProbe.
+		///
+		/// @param[in] listenerIndex			The zero-based index of the listener.
+		/// @param[in] distanceProbePosition	The new world position.
+		///
+		/// @retval Result::Ok					The listener's distance probe world position was successfully set.
+		/// @retval Result::NotInitialized		The engine is not initialized.
+		/// @retval Result::ListenerNotFound	The listener index exceeds the allocated listener capacity.
+		Result SetListenerDistanceProbePosition(uint32_t listenerIndex, const Vec3& distanceProbePosition);
+
+		/// @brief Sets the facing direction of a listener.
+		///
+		/// @param[in] listenerIndex	The zero-based index of the listener.
+		/// @param[in] forward			The forward-facing direction vector. Normalized internally.
+		/// @param[in] up				The upward-facing direction vector. Normalized internally.
+		///
+		/// @retval Result::Ok					The listener orientation was successfully set.
+		/// @retval Result::NotInitialized		The engine is not initialized.
+		/// @retval Result::ListenerNotFound	The listener index exceeds the allocated listener capacity.
+		Result SetListenerOrientation(uint32_t listenerIndex, const Vec3& forward, const Vec3& up);
+
+		/// @brief Sets the velocity of a listener.
+		///
+		/// @param[in] listenerIndex	The zero-based index of the listener.
+		/// @param[in] velocity			The velocity vector (in m/s).
+		///
+		/// @retval Result::Ok					The listener velocity was successfully set.
+		/// @retval Result::NotInitialized		The engine is not initialized.
+		/// @retval Result::ListenerNotFound	The listener index exceeds the allocated listener capacity.
+		Result SetListenerVelocity(uint32_t listenerIndex, const Vec3& velocity);
 
 #pragma endregion LISTENER_MANAGEMENT
-
 
 	private:
 		void TeardownInternal();

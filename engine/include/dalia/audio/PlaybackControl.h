@@ -68,38 +68,35 @@ namespace dalia {
 		float z = 0.0f;
 	};
 
-	/// @brief Transform representing a listener's position and orientation.
-	struct ListenerTransform {
-		Vec3 position;
-		Vec3 distanceProbePosition;
-		Vec3 forward;
-		Vec3 up;
+	/// @brief A snapshot of a listener's 3D state in the world.
+	struct Listener3DAttributes {
+		Vec3 position{0.0f, 0.0f, 0.0f};				// The world position that will be used for panning logic.
+		Vec3 distanceProbePosition{0.0f, 0.0f, 0.0f};	// The world position that will be used for attenuation logic
+																// if the distance mode of a playback instance is set to FromDistanceProbe.
+		Vec3 forward{0.0f, 0.0f, 1.0f};				// The direction the listener is facing.
+		Vec3 up{0.0f, 1.0f, 0.0f};						// The up direction from the listener position.
+		Vec3 velocity{0.0f, 0.0f, 0.0f};				// The velocity of the listener.
 	};
 
 	/// @brief Constructs a listener transform for a listener that performs panning and attenuation logic from the same
 	///	world position.
-	///
-	/// @param[in] position The world position of the listener.
-	/// @param[in] forward	The direction the listener is facing.
-	/// @param[in] up		The up direction from the listeners position.
-	///
-	/// @return The listener transform.
-	inline constexpr ListenerTransform MakeListenerTransform(const Vec3& position, const Vec3& forward, const Vec3& up) {
-		return { position, position, forward, up };
+	inline constexpr Listener3DAttributes MakeListener3DAttributes(
+		const Vec3& position,
+		const Vec3& forward,
+		const Vec3& up,
+		const Vec3& velocity) {
+		return { position, position, forward, up, velocity };
 	}
 
 	/// @brief Constructs a listener transform for a listener that performs panning and attenuation logic from two
 	/// separate positions.
-	///
-	/// @param[in] position			The world position that the listener will use for panning logic.
-	/// @param[in] probePosition	The world position that the listener will use for attenuation logic.
-	/// @param[in] forward			The direction the listener is facing.
-	/// @param[in] up				The up direction from the listeners position.
-	///
-	/// @return The listener transform.
-	inline constexpr ListenerTransform MakeListenerTransformSplit(const Vec3& position, const Vec3& probePosition,
-	                                                              const Vec3& forward, const Vec3& up) {
-		return { position, probePosition, forward, up };
+	inline constexpr Listener3DAttributes MakeListener3DAttributesSplit(
+		const Vec3& position,
+		const Vec3& probePosition,
+		const Vec3& forward,
+		const Vec3& up,
+		const Vec3& velocity) {
+		return { position, probePosition, forward, up, velocity};
 	}
 
 	/// @brief Routing mask used to target a specific listener. Can be combined to target multiple listeners using
