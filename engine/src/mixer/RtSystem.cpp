@@ -733,6 +733,8 @@ namespace dalia {
 				}
 			}
 
+			voice.currentPitch = voice.params.pitch;
+
 			if (!voice.params.isSpatial) {
 				// --- NOT SPATIAL ---
 				if (voice.channels == CHANNELS_MONO) {
@@ -816,7 +818,6 @@ namespace dalia {
 			}
 
 			// Pitch
-			voice.currentPitch = voice.params.pitch;
 			float totalDopplerFactor = voice.params.dopplerFactor * m_globalDopplerFactor;
 			if (voice.params.useDoppler && totalDopplerFactor > 0.0f) {
 				math::Vector3 listenerToEmitter = voice.params.position - bestListenerParams.position;
