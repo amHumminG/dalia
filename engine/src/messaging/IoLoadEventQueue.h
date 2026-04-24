@@ -17,13 +17,13 @@ namespace dalia {
         uint32_t requestId = 0;
         Result result = Result::Ok;
 
-        uint64_t assetUuid = 0;
+        uint64_t assetRawId = 0;
 
-        static IoLoadEvent SoundLoaded(uint32_t reqId, uint64_t uuid) {
+        static IoLoadEvent SoundLoaded(uint32_t reqId, uint64_t assetRawId) {
             IoLoadEvent ev;
             ev.type = Type::SoundLoaded;
             ev.requestId = reqId;
-            ev.assetUuid = uuid;
+            ev.assetRawId = assetRawId;
             return ev;
         }
 

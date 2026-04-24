@@ -1,10 +1,12 @@
 #pragma once
+
 #include "dalia/audio/PlaybackControl.h"
 #include "dalia/audio/SoundControl.h"
 #include "core/Constants.h"
-#include <cstdint>
+#include "core/Math.h"
+#include "mixer/Resampler.h"
 
-#include "StreamContext.h"
+#include <cstdint>
 
 namespace dalia {
 
@@ -15,6 +17,28 @@ namespace dalia {
         Paused,
         Stopped
     };
+
+	struct VoiceParams {
+		float volumeDb = VOLUME_DB_DEFAULT;
+		float pitch = PITCH_DEFAULT;
+		float stereoPan = PAN_STEREO_DEFAULT;
+
+		bool isLooping = false;
+		bool isSpatial = false;
+
+		// Only used if isSpatial is true
+		DistanceMode distanceMode = DistanceMode::FromListener;
+		AttenuationCurve attenuationModel = AttenuationCurve::InverseSquare;
+		math::Vector3 position{0.0f, 0.0f, 0.0f};
+		float minDistance = MIN_DIST_DEFAULT;
+		float maxDistance = MAX_DIST_DEFAULT;
+
+		bool useDoppler = false;
+		float dopplerFactor = 1.0f;
+		math::Vector3 velocity{0.0f, 0.0f, 0.0f};
+
+		ListenerMask listenerMask = MASK_ALL_LISTENERS;
+	};
 
     struct Voice {
         uint32_t gen = START_GENERATION;
@@ -34,17 +58,24 @@ namespace dalia {
     	uint32_t pendingSeekFrame = 0;
 
         // Mixing Properties
-    	float currentFadeGain = 1.0f; // Owned by the voice
-    	float targetFadeGain = 1.0f;  // Owned by the reconciler
+    	ResamplerState resamplerState;
+
+    	float currentFadeGain = GAIN_DEFAULT; // Owned by the voice (used for micro-fading)
+    	float targetFadeGain = GAIN_DEFAULT;  // Owned by the resolver (used for micro-fading)
+
+    	float currentGainMatrix[CHANNELS_MAX][CHANNELS_MAX];
+    	float targetGainMatrix[CHANNELS_MAX][CHANNELS_MAX];
+
+    	float currentPitch = 1.0f; // Final resolved pitch after doppler has been applied
+
+    	VoiceParams params;
+    	bool isParamsDirty = false;
 
         bool isLooping = false;
-        float targetGainMatrix[CHANNELS_MAX][CHANNELS_MAX];
-        float currentGainMatrix[CHANNELS_MAX][CHANNELS_MAX];
-        float pitch = 1.0f;
 
-        uint32_t channels = CHANNELS_STEREO;
-        uint32_t sampleRate = TARGET_OUTPUT_SAMPLE_RATE;
-        double cursor = 0.0f;
+        uint32_t channels = 0;
+        uint32_t sampleRate = 0;
+        double cursor = 0.0;
 
         SoundType soundType = SoundType::None;
         union {
@@ -76,16 +107,26 @@ namespace dalia {
         	hasPendingSeek = false;
 			pendingSeekFrame = 0;
 
-        	currentFadeGain = 1.0f;
-        	targetFadeGain = 1.0f;
+        	resamplerState = ResamplerState{};
+
+        	currentFadeGain = GAIN_DEFAULT;
+        	targetFadeGain = GAIN_DEFAULT;
+
+        	for (uint32_t inC = 0; inC < CHANNELS_MAX; inC++) {
+        		for (uint32_t outC = 0; outC < CHANNELS_MAX; outC++) {
+        			currentGainMatrix[inC][outC] = GAIN_SILENCE;
+        			targetGainMatrix[inC][outC]  = GAIN_SILENCE;
+        		}
+        	}
 
             isLooping = false;
-            std::memset(targetGainMatrix, 0.0f, sizeof(targetGainMatrix));
-            std::memset(currentGainMatrix, 0.0f, sizeof(currentGainMatrix));
+
+        	params = VoiceParams{};
+        	isParamsDirty = false;
 
             channels = 0;
             sampleRate = 0;
-            cursor = 0.0f;
+            cursor = 0.0;
 
             soundType = SoundType::None;
             data = {};
@@ -95,27 +136,18 @@ namespace dalia {
     struct VoiceMirror {
         // --- API Thread Only Stuff ---
         bool pendingLoad = false; // Pending playback due to asset loading
-        AudioEventCallback onStopCallback = nullptr;
-        uint64_t assetUuid;
+        PlaybackExitCallback onStopCallback = nullptr;
+        uint64_t assetRawId;
 
-        bool isGainDirty = true;
-        float volumeDb = VOLUME_DB_DEFAULT;
-        float stereoPan = 0.0f;
-
-        bool isSpatial = false;
-        // Vector3 position
-        // Vector3 velocity
-
-        // --- Voice Properties ---
+        // --- Voice Lifecycle ---
         uint32_t gen = START_GENERATION;
         VoiceState state = VoiceState::Free;
 
         // Routing
         uint32_t parentBusIndex = MASTER_BUS_INDEX;
 
-        // Mixing Properties
-        bool isLooping = false;
-        float pitch = 1.0f;
+    	VoiceParams params;
+    	bool isParamsDirty = false;
 
         // Asset
         uint32_t frameCount = 0;
@@ -126,22 +158,20 @@ namespace dalia {
         void Reset() {
             pendingLoad = false;
             onStopCallback = nullptr;
-            assetUuid = 0;
-
-            isGainDirty = true;
-            volumeDb = VOLUME_DB_DEFAULT;
-            stereoPan = 0.0f;
+            assetRawId = 0;
 
             gen++;
             if (gen == NO_GENERATION) gen = START_GENERATION;
             state = VoiceState::Free;
 
-            parentBusIndex = MASTER_BUS_INDEX;
+        	parentBusIndex = MASTER_BUS_INDEX;
 
-            isLooping = false;
-            pitch = 1.0f;
+        	params = VoiceParams{};
+        	isParamsDirty = false;
 
-            channels = 0;
+        	frameCount = 0;
+        	channels = 0;
+        	sampleRate = 0;
             soundType = SoundType::None;
         }
     };

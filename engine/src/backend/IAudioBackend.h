@@ -1,6 +1,7 @@
 #pragma once
 
 #include "dalia/core/Result.h"
+#include "mixer/Speakers.h"
 
 #include <cstdint>
 
@@ -20,6 +21,7 @@ namespace dalia {
 
 		virtual uint32_t GetSampleRate() const = 0;
 		virtual uint32_t GetChannelCount() const = 0;
+		virtual SpeakerLayout GetSpeakerLayout() const = 0;
 		virtual uint32_t GetPeriodSizeInFrames() const = 0;
 		virtual uint32_t GetBufferCapacityInFrames() const = 0;
 	};

@@ -59,7 +59,7 @@ namespace dalia {
     void IoLoadSystem::ProcessRequest(const IoLoadRequest& req) {
         switch (req.type) {
             case IoLoadRequest::Type::LoadSound: {
-                SoundHandle soundHandle = SoundHandle::FromUUID(req.data.soundFromFile.resourceHandleUuid);
+                SoundHandle soundHandle = SoundHandle::FromRawId(req.data.soundFromFile.resourceHandleRawId);
                 SoundType soundType = soundHandle.GetType();
 
                 ResidentSound* residentSound = nullptr;
@@ -70,7 +70,7 @@ namespace dalia {
                     residentSound = m_assetRegistry->GetResidentSound(soundHandle);
                     if (!residentSound) {
                         DALIA_LOG_ERR(LOG_CTX_IO, "Failed to load resident sound. Invalid handle (%d)",
-                            soundHandle.GetUUID());
+                            soundHandle.GetRawId());
                         return;
                     }
                     soundLoadStatePtr = &residentSound->state;
@@ -79,7 +79,7 @@ namespace dalia {
                     streamSound = m_assetRegistry->GetStreamSound(soundHandle);
                     if (!streamSound) {
                         DALIA_LOG_ERR(LOG_CTX_IO, "Failed to load stream sound. Invalid handle (%d)",
-                            soundHandle.GetUUID());
+                            soundHandle.GetRawId());
                         return;
                     }
                     soundLoadStatePtr = &streamSound->state;
@@ -99,16 +99,6 @@ namespace dalia {
 
                 stb_vorbis_info info = stb_vorbis_get_info(decoder);
                 uint32_t totalFrames = stb_vorbis_stream_length_in_samples(decoder);
-
-            	if (info.sample_rate != m_outSampleRate) {
-            		soundLoadStatePtr->store(LoadState::Error, std::memory_order_release);
-
-            		m_ioLoadEvents->Push(IoLoadEvent::SoundLoadFailed(req.requestId, Result::UnsupportedFormat));
-            		DALIA_LOG_ERR(LOG_CTX_IO, "Failed to load sound from file (%s). Sample rate not supported (%d).",
-						req.data.soundFromFile.filepath, info.sample_rate);
-
-            		return;
-            	}
 
                 if (soundType == SoundType::Resident) {
                     uint32_t totalSamples = totalFrames * info.channels;
@@ -151,7 +141,7 @@ namespace dalia {
                 stb_vorbis_close(decoder);
                 soundLoadStatePtr->store(LoadState::Loaded, std::memory_order_release);
 
-                m_ioLoadEvents->Push(IoLoadEvent::SoundLoaded(req.requestId, soundHandle.GetUUID()));
+                m_ioLoadEvents->Push(IoLoadEvent::SoundLoaded(req.requestId, soundHandle.GetRawId()));
 
                 DALIA_LOG_DEBUG(LOG_CTX_IO, "Loaded sound from file (%s).", req.data.soundFromFile.filepath);
                 break;

@@ -15,6 +15,8 @@ namespace dalia {
 		InvalidRouting				= -7,
 		InvalidEffectSlot			= -8,
 		EffectAlreadyAttached		= -9,
+		ListenerNotFound			= -10,
+
 
 		// Pool Capacity Errors
 		// PoolExhausted				= -100,

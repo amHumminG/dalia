@@ -24,6 +24,7 @@ struct PlaybackInstance {
     std::string targetBus = "Master"; // Default route
     bool isLooping = false;
     float volumeDb = 0.0f;
+	float pitch = 1.0f;
     float pan = 0.0f;
 
     float seekTargetSeconds = 0.0f;
@@ -130,7 +131,7 @@ void TestInterface() {
             SoundHandle h = loadedAssets[i].handle;
             std::string typeTag = (h.GetType() == SoundType::Resident) ? "[RAM] " : "[DSK] ";
             char label[256];
-            snprintf(label, sizeof(label), "%s%s (0x%08X)", typeTag.c_str(), loadedAssets[i].path.c_str(), h.GetIndex());
+            // snprintf(label, sizeof(label), "%s%s (0x%08X)", typeTag.c_str(), loadedAssets[i].path.c_str(), h.GetIndex());
 
             if (ImGui::Selectable(label, selectedAssetIdx == i)) selectedAssetIdx = i;
         }
@@ -162,7 +163,7 @@ void TestInterface() {
         ImGui::BeginChild("PlaybackList", ImVec2(0, 200), true);
         for (int i = 0; i < playbacks.size(); i++) {
             char label[256];
-            snprintf(label, sizeof(label), "%s (0x%016llx)", playbacks[i].name.c_str(), playbacks[i].handle.GetUUID());
+            snprintf(label, sizeof(label), "%s (0x%016llx)", playbacks[i].name.c_str(), playbacks[i].handle.GetRawId());
             if (ImGui::Selectable(label, selectedPlaybackIdx == i)) selectedPlaybackIdx = i;
         }
         ImGui::EndChild();
@@ -217,6 +218,14 @@ void TestInterface() {
                     playbacks[selectedPlaybackIdx].volumeDb = currentVol;
                 }
             }
+
+        	float currentPitch = playbacks[selectedPlaybackIdx].pitch;
+        	if (ImGui::SliderFloat("Pitch##PB", &currentPitch, 0.1f, 4.0f, "%.2f x")) {
+        		lastResult = engine.SetPlaybackPitch(currentHandle, currentPitch);
+        		if (lastResult == Result::Ok) {
+        			playbacks[selectedPlaybackIdx].pitch = currentPitch;
+        		}
+        	}
 
             float currentPan = playbacks[selectedPlaybackIdx].pan;
             if (ImGui::SliderFloat("Pan##PB", &currentPan, -1.0f, 1.0f, "%.2f")) {
@@ -339,7 +348,7 @@ void TestInterface() {
         ImGui::BeginChild("EffectList", ImVec2(0, 120), true);
         for (int i = 0; i < loadedEffects.size(); i++) {
             char label[256];
-            snprintf(label, sizeof(label), "%s (0x%016llx)", loadedEffects[i].name.c_str(), loadedEffects[i].handle.GetUUID());
+            snprintf(label, sizeof(label), "%s (0x%016llx)", loadedEffects[i].name.c_str(), loadedEffects[i].handle.GetRawId());
             if (ImGui::Selectable(label, selectedEffectIdx == i)) selectedEffectIdx = i;
         }
         ImGui::EndChild();

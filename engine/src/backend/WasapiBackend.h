@@ -3,6 +3,7 @@
 #include "backend/IAudioBackend.h"
 
 #include "dalia/core/Result.h"
+#include "mixer/Speakers.h"
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
@@ -30,6 +31,7 @@ namespace dalia {
 
 		uint32_t GetSampleRate() const override { return m_sampleRate; }
 		uint32_t GetChannelCount() const override { return m_channelCount; }
+		SpeakerLayout GetSpeakerLayout() const override { return m_speakerLayout; }
 		uint32_t GetPeriodSizeInFrames() const override { return m_periodSizeInFrames; }
 		uint32_t GetBufferCapacityInFrames() const override { return m_bufferCapacityInFrames; }
 
@@ -50,6 +52,7 @@ namespace dalia {
 
 		uint32_t m_sampleRate = 0;
 		uint32_t m_channelCount = 0;
+		SpeakerLayout m_speakerLayout = SpeakerLayout::Stereo;
 		uint32_t m_periodSizeInFrames = 0;
 		uint32_t m_bufferCapacityInFrames = 0;
 	};

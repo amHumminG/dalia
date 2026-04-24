@@ -12,10 +12,11 @@ namespace dalia {
 		enum class Type : uint8_t {
 			None,
 
-			// General
-			SwapMixOrder,
+			// Listener
+			SetListenerActive,
+			SetListenerInactive,
 
-			// Voice Lifecycle
+			// Voice
 			AllocateVoice,
 			DeallocateVoice,
 			PrepareVoiceStreaming,
@@ -24,20 +25,13 @@ namespace dalia {
 			PlayVoice,
 			PauseVoice,
 			StopVoice,
-
-			// Voice Properties
 			SetVoiceParent,
-			SetVoiceLooping,
-			SetVoiceGainMatrix,
-			SetVoicePitch,
 
-			// Bus Lifecycle
+			// Bus
 			AllocateBus,
 			DeallocateBus,
-
-			// Bus Properties
 			SetBusParent,
-			SetBusGain,
+			SetBusGain, // This will be removed and replaced by a parameter bridge in the future (probably)
 
 			// Effects
 			AllocateBiquad,
@@ -46,7 +40,10 @@ namespace dalia {
 			AttachEffect,
 			FadeDetachEffect,
 			ForceDetachEffect,
-			DeallocateEffect
+			DeallocateEffect,
+
+			// Misc
+			SetGlobalDopplerFactor
 		};
 
 		Type type = Type::None;
@@ -91,10 +88,6 @@ namespace dalia {
 			} floatVal;
 
 			struct {
-				float gainMatrix[CHANNELS_MAX][CHANNELS_MAX];
-			} gain;
-
-			struct {
 				BiquadFilterType type;
 				BiquadConfig config;
 			} biquad;
@@ -107,16 +100,22 @@ namespace dalia {
 
 		} data = {};
 
-		static RtCommand SwapMixOrder(uint32_t* ptr, uint32_t nodeCount) {
+		static RtCommand SetListenerActive(uint32_t index) {
 			RtCommand cmd{};
-			cmd.type = Type::SwapMixOrder;
-			cmd.data.mixOrder.ptr = ptr;
-			cmd.data.mixOrder.nodeCount = nodeCount;
+			cmd.type = Type::SetListenerActive;
+			cmd.targetIndex = index;
+			return cmd;
+		}
+
+		static RtCommand SetListenerInactive(uint32_t index) {
+			RtCommand cmd{};
+			cmd.type = Type::SetListenerInactive;
+			cmd.targetIndex = index;
 			return cmd;
 		}
 
 		static RtCommand AllocateVoice(uint32_t index, uint32_t gen) {
-			RtCommand cmd;
+			RtCommand cmd{};
 			cmd.type = Type::AllocateVoice;
 			cmd.targetIndex = index;
 			cmd.targetGen = gen;
@@ -124,7 +123,7 @@ namespace dalia {
 		}
 
 		static RtCommand DeallocateVoice(uint32_t index, uint32_t gen) {
-			RtCommand cmd;
+			RtCommand cmd{};
 			cmd.type = Type::DeallocateVoice;
 			cmd.targetIndex = index;
 			cmd.targetGen = gen;
@@ -197,25 +196,6 @@ namespace dalia {
 			cmd.targetIndex = index;
 			cmd.targetGen = gen;
 			cmd.data.setParent.parentIndex = parentBusIndex;
-			return cmd;
-		}
-
-		static RtCommand SetVoiceLooping(uint32_t index, uint32_t gen, bool looping) {
-			RtCommand cmd{};
-			cmd.type = Type::SetVoiceLooping;
-			cmd.targetIndex = index;
-			cmd.targetGen = gen;
-			cmd.data.boolVal.value = looping;
-			return cmd;
-		}
-
-		static RtCommand SetVoiceGainMatrix(uint32_t index, uint32_t gen,
-			const float gainMatrix[CHANNELS_MAX][CHANNELS_MAX]) {
-			RtCommand cmd{};
-			cmd.type = Type::SetVoiceGainMatrix;
-			cmd.targetIndex = index;
-			cmd.targetGen = gen;
-			std::memcpy(cmd.data.gain.gainMatrix, gainMatrix, sizeof(cmd.data.gain.gainMatrix));
 			return cmd;
 		}
 
@@ -314,6 +294,13 @@ namespace dalia {
 			cmd.targetIndex = index;
 			cmd.targetGen = gen;
 			cmd.data.effect.type = type;
+			return cmd;
+		}
+
+		static RtCommand SetGlobalDopplerFactor(float value) {
+			RtCommand cmd{};
+			cmd.type = Type::SetGlobalDopplerFactor;
+			cmd.data.floatVal.value = value;
 			return cmd;
 		}
 	};

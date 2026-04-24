@@ -13,17 +13,19 @@ namespace dalia {
         Stream   = 2
     };
 
+    /// @brief Handle used to manage loaded sounds. This handle expires once the sound it is referencing is unloaded.
     struct SoundHandle {
     public:
-        bool IsValid() const { return uuid != 0; }
-        bool operator==(const SoundHandle& other) const { return uuid == other.uuid; }
-        bool operator!=(const SoundHandle& other) const { return uuid != other.uuid; }
+    	/// @return true if the handle has referenced a loaded sound at some point. Otherwise, false.
+        bool IsValid() const { return rawId != 0; }
+        bool operator==(const SoundHandle& other) const { return rawId == other.rawId; }
+        bool operator!=(const SoundHandle& other) const { return rawId != other.rawId; }
 
-        SoundType GetType() const { return static_cast<SoundType>(uuid >> 56); }
-        uint32_t GetIndex() const { return static_cast<uint32_t>(uuid & 0xFFFFFFFF); }
-        uint32_t GetGeneration() const { return static_cast<uint32_t>((uuid >> 32) & 0xFFFFFF); }
+    	/// @return The type of sound (stream or resident) that this handle references.
+    	SoundType GetType() const { return static_cast<SoundType>(rawId >> 56); }
 
-        uint64_t GetUUID() const { return uuid; }
+    	/// @return The underlying raw id of the handle.
+        uint64_t GetRawId() const { return rawId; }
 
     private:
         friend struct EngineInternalState;
@@ -36,19 +38,25 @@ namespace dalia {
             uint64_t generationBits = (static_cast<uint64_t>(generation) & 0xFFFFFF) << 32;
             uint64_t indexBits = static_cast<uint64_t>(index);
 
-            handle.uuid = typeBits | generationBits | indexBits;
+            handle.rawId = typeBits | generationBits | indexBits;
             return handle;
         }
 
-        static SoundHandle FromUUID(uint64_t rawUuid) {
+        static SoundHandle FromRawId(uint64_t rawId) {
             SoundHandle handle;
-            handle.uuid = rawUuid;
+            handle.rawId = rawId;
             return handle;
         }
 
-        uint64_t uuid = 0;
+    	uint32_t GetIndex() const { return static_cast<uint32_t>(rawId & 0xFFFFFFFF); }
+    	uint32_t GetGeneration() const { return static_cast<uint32_t>((rawId >> 32) & 0xFFFFFF); }
+
+        uint64_t rawId = 0;
     };
 
     constexpr uint32_t INVALID_REQUEST_ID = 0;
+
+    /// @brief A function that, if provided when loading an asset, will be called once the asset has been successfully
+    /// loaded.
     using AssetLoadCallback = std::function<void(uint32_t requestId, Result result)>;
 }

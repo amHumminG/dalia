@@ -17,6 +17,8 @@ namespace dalia {
 		LogLevel logLevel = LogLevel::Warning;
 		LogCallback logCallback = nullptr;
 
+		CoordinateSystem coordinateSystem = CoordinateSystem::RightHanded;
+
 		uint32_t residentSoundCapacity = 256; // Maybe this should be higher?
 		uint32_t streamSoundCapacity = 256;
 
@@ -25,6 +27,8 @@ namespace dalia {
 		uint32_t streamCapacity		= 32;
 		uint32_t busCapacity		= 64;
 		uint32_t biquadCapacity		= 32;
+
+		uint32_t listenerCapacity	= 1; // Min 1, max 4
 
 		size_t rtCommandQueueCapacity		= 1024;
 		size_t rtEventQueueCapacity			= 1024;
@@ -83,6 +87,22 @@ namespace dalia {
 		void Update();
 
 #pragma endregion ENGINE_LIFECYCLE
+
+		// ============================================================================
+		// [ ENGINE SETTINGS ]
+		// Core methods for setting engine attributes.
+		// ============================================================================
+#pragma region ENGINE_SETTINGS
+
+		/// @brief Sets the global scaling factor for the Doppler effect for the entire engine.
+		///
+		/// @param[in] globalDopplerFactor The global scaling factor. Clamped internally between 0.0 and 10.0.
+		///
+		/// @retval Result::Ok				The global scaling factor for the Doppler effect was successfully set.
+		/// @retval Result::NotInitialized	The engine is not initialized.
+		Result SetGlobalDopplerFactor(float globalDopplerFactor);
+
+#pragma endregion ENGINE_SETTINGS
 
 		// ============================================================================
 		// [ ASSET MANAGEMENT ]
@@ -324,7 +344,7 @@ namespace dalia {
 		/// @retval Result::StreamPoolExhausted			The allocated stream capacity has been reached.
 		/// @retval Result::IoStreamRequestQueueFull	The I/O streaming request queue is at capacity.
 		Result CreatePlayback(PlaybackHandle& playback, SoundHandle sound,
-		                      AudioEventCallback callback = nullptr);
+		                      PlaybackExitCallback callback = nullptr);
 
 		/// @brief Routes a playback instance to output its audio into the specified mixing bus.
 		///
@@ -395,19 +415,6 @@ namespace dalia {
 		/// @retval Result::ExpiredHandle		The playback handle has already stopped playing.
 		Result SeekPlayback(PlaybackHandle playback, double timeInSeconds);
 
-		/// @brief Sets the looping state a playback instance.
-		///
-		/// This method updates whether a playback instance will automatically restart upon finishing.
-		///
-		/// @param[in] playback The handle to the playback instance.
-		/// @param[in] looping The looping state.
-		///
-		/// @retval Result::Ok					The playback instance looping state was successfully set.
-		/// @retval Result::NotInitialized		The engine is not initialized.
-		/// @retval Result::InvalidHandle		The playback handle is not recognized.
-		/// @retval Result::ExpiredHandle		The playback handle has already stopped playing.
-		Result SetPlaybackLooping(PlaybackHandle playback, bool looping);
-
 		/// @brief Sets the mixing volume of a playback instance in decibels (dB).
 		///
 		/// @param[in] playback The handle to the playback instance.
@@ -421,6 +428,18 @@ namespace dalia {
 		/// @retval Result::ExpiredHandle		The playback handle has already stopped playing.
 		Result SetPlaybackVolumeDb(PlaybackHandle playback, float volumeDb);
 
+		/// @brief Sets the pitch of a playback instance.
+		///
+		/// @param[in] playback The handle to the playback instance.
+		/// @param[in] pitch	The new pitch. This is clamped internally between 0.1 and 4.0 to prevent performance
+		///						issues.
+		///
+		/// @retval Result::Ok					The pitch of the playback instance was successfully set.
+		/// @retval Result::NotInitialized		The engine is not initialized.
+		/// @retval Result::InvalidHandle		The playback handle is not recognized.
+		/// @retval Result::ExpiredHandle		The playback handle has already stopped playing.
+		Result SetPlaybackPitch(PlaybackHandle playback, float pitch);
+
 		/// @brief Sets the stereo pan of a playback instance.
 		///
 		/// @param[in] playback The handle to the playback instance.
@@ -433,7 +452,220 @@ namespace dalia {
 		/// @retval Result::ExpiredHandle		The playback handle has already stopped playing.
 		Result SetPlaybackStereoPan(PlaybackHandle playback, float pan);
 
+		/// @brief Sets the looping state a playback instance.
+		///
+		/// This method updates whether a playback instance will automatically restart upon finishing.
+		///
+		/// @param[in] playback The handle to the playback instance.
+		/// @param[in] looping The looping state.
+		///
+		/// @retval Result::Ok					The playback instance looping state was successfully set.
+		/// @retval Result::NotInitialized		The engine is not initialized.
+		/// @retval Result::InvalidHandle		The playback handle is not recognized.
+		/// @retval Result::ExpiredHandle		The playback handle has already stopped playing.
+		Result SetPlaybackLooping(PlaybackHandle playback, bool looping);
+
+		/// @brief Enables or disables 3D spatialization for a playback instance.
+		///
+		/// @param[in] playback The handle to the playback instance.
+		/// @param[in] spatial	True to enable 3D spatialization, false for 2D/global playback.
+		///
+		/// @retval Result::Ok					The playback spatialization was successfully enabled or disabled.
+		/// @retval Result::NotInitialized		The engine is not initialized.
+		/// @retval Result::InvalidHandle		The playback handle is not recognized.
+		/// @retval Result::ExpiredHandle		The playback handle has already stopped playing.
+		Result SetPlaybackSpatial(PlaybackHandle playback, bool spatial);
+
+		/// @brief Defines which listener position is used when calculating the distance attenuation for a playback
+		/// instance.
+		///
+		/// @note[Spatial only] This only affects playback instances that have spatialization enabled.
+		///
+		/// @param[in] playback The handle to the playback instance.
+		/// @param[in] mode		The distance evaluation mode to apply.
+		///
+		/// @retval Result::Ok					The playback distance mode was successfully applied.
+		/// @retval Result::NotInitialized		The engine is not initialized.
+		/// @retval Result::InvalidHandle		The playback handle is not recognized.
+		/// @retval Result::ExpiredHandle		The playback handle has already stopped playing.
+		Result SetPlaybackDistanceMode(PlaybackHandle playback, DistanceMode mode);
+
+		/// @brief Sets the curve used to evaluate volume drop-off over distance for a playback instance.
+		///
+		/// @note[Spatial only] This only affects playback instances that have spatialization enabled.
+		///
+		/// @param[in] playback The handle to the playback instance.
+		/// @param[in] model	The attenuation curve to apply.
+		///
+		/// @retval Result::Ok					The playback attenuation curve was successfully set.
+		/// @retval Result::NotInitialized		The engine is not initialized.
+		/// @retval Result::InvalidHandle		The playback handle is not recognized.
+		/// @retval Result::ExpiredHandle		The playback handle has already stopped playing.
+		Result SetPlaybackAttenuationCurve(PlaybackHandle playback, AttenuationCurve model);
+
+		/// @brief Updates the 3D world position of a playback instance.
+		///
+		/// @note[Spatial only] This only affects playback instances that have spatialization enabled.
+		///
+		/// @param[in] playback The handle to the playback instance.
+		/// @param[in] position	The new 3D world coordinates.
+		///
+		/// @retval Result::Ok					The playback world position was successfully set.
+		/// @retval Result::NotInitialized		The engine is not initialized.
+		/// @retval Result::InvalidHandle		The playback handle is not recognized.
+		/// @retval Result::ExpiredHandle		The playback handle has already stopped playing.
+		Result SetPlaybackPosition(PlaybackHandle playback, const Vec3& position);
+
+		/// @brief Defines the distance boundaries for the attenuation curve of a playback instance.
+		///
+		/// @note[Spatial only] This only affects playback instances that have spatialization enabled.
+		///
+		/// @note[Safe values] The engine internally ensures that maxDistance is never less than minDistance,
+		/// and that minDistance respects the engine's absolute floor limit to prevent division-by-zero.
+		///
+		/// @param[in] playback		The handle to the playback instance.
+		/// @param[in] minDistance	The radius where the volume drop-off begins.
+		/// @param[in] maxDistance	The radius where the volume drops to silence.
+		///
+		/// @retval Result::Ok					The playback min and max distance were successfully set.
+		/// @retval Result::NotInitialized		The engine is not initialized.
+		/// @retval Result::InvalidHandle		The playback handle is not recognized.
+		/// @retval Result::ExpiredHandle		The playback handle has already stopped playing.
+		Result SetPlaybackMinMaxDistance(PlaybackHandle playback, float minDistance, float maxDistance);
+
+		/// @brief Enables or disables the Doppler effect for a playback instance.
+		///
+		/// @note[Spatial only] This only affects playback instances that have spatialization enabled.
+		///
+		/// @note[Requirements] In order for the doppler pitch shifting to be used, both listener and playback velocity
+		///						must be supplied to the engine every frame.
+		///
+		/// @param[in] playback		The handle to the playback instance.
+		/// @param[in] useDoppler	True to enable Doppler pitch shifting, false to disable it.
+		///
+		/// @retval Result::Ok					The playback Doppler effect was successfully enabled or disabled.
+		/// @retval Result::NotInitialized		The engine is not initialized.
+		/// @retval Result::InvalidHandle		The playback handle is not recognized.
+		/// @retval Result::ExpiredHandle		The playback handle has already stopped playing.
+		Result SetPlaybackUseDoppler(PlaybackHandle playback, bool useDoppler);
+
+		/// @brief Sets the scaling factor for the Doppler effect for a playback instance.
+		///
+		/// @note[Spatial only] This only affects playback instances that have spatialization and Doppler pitch-shifting
+		///						enabled.
+		///
+		/// @param[in] playback			The handle to the playback instance.
+		/// @param[in] dopplerFactor	The scaling factor. Clamped internally between 0.0 and 10.0.
+		///
+		/// @retval Result::Ok					The playback Doppler effect's scaling factor was successfully set.
+		/// @retval Result::NotInitialized		The engine is not initialized.
+		/// @retval Result::InvalidHandle		The playback handle is not recognized.
+		/// @retval Result::ExpiredHandle		The playback handle has already stopped playing.
+		Result SetPlaybackDopplerFactor(PlaybackHandle playback, float dopplerFactor);
+
+		/// @brief Sets the velocity of a playback instance.
+		///
+		/// Velocity is used exclusively to calculate the Doppler effect. If the Effect is disabled, this value is ignored.
+		///
+		/// @note[Spatial only] This only affects playback instances that have spatialization enabled.
+		///
+		/// @param[in] playback The handle to the playback instance.
+		/// @param[in] velocity	The velocity vector (in m/s).
+		///
+		/// @retval Result::Ok					The playback velocity was successfully set.
+		/// @retval Result::NotInitialized		The engine is not initialized.
+		/// @retval Result::InvalidHandle		The playback handle is not recognized.
+		/// @retval Result::ExpiredHandle		The playback handle has already stopped playing.
+		Result SetPlaybackVelocity(PlaybackHandle playback, const Vec3& velocity);
+
+		/// @brief Sets the listener routing mask for a playback instance.
+		///
+		/// The routing mask determines which listeners are allowed to hear and evaluate the playback instance.
+		///
+		/// @note[Spatial only] This only affects playback instances that have spatialization enabled.
+		///
+		/// @param[in] playback The handle to the playback instance.
+		/// @param[in] mask		The listener routing bitmask.
+		///
+		/// @retval Result::Ok					The listener routing mask for the playback instance was successfully set.
+		/// @retval Result::NotInitialized		The engine is not initialized.
+		/// @retval Result::InvalidHandle		The playback handle is not recognized.
+		/// @retval Result::ExpiredHandle		The playback handle has already stopped playing.
+		Result SetPlaybackListenerMask(PlaybackHandle playback, ListenerMask mask);
+
 #pragma endregion PLAYBACK_MANAGEMENT
+
+		// ============================================================================
+		// [ LISTENER MANAGEMENT ]
+		// Methods for activating, deactivating and modifying listeners.
+		// ============================================================================
+#pragma region LISTENER_MANAGEMENT
+
+		/// @brief Enables or disables a listener.
+		///
+		/// @param listenerIndex	The zero-based index of the listener.
+		/// @param active			True to enable the listener, false to disable it.
+		///
+		/// @retval Result::Ok					The listener was successfully enabled or disabled.
+		/// @retval Result::NotInitialized		The engine is not initialized.
+		/// @retval Result::ListenerNotFound	The listener index exceeds the allocated listener capacity.
+		Result SetListenerActive(uint32_t listenerIndex, bool active);
+
+		/// @brief Updates the complete 3D state of a listener.
+		///
+		/// @param listenerIndex	The zero-based index of the listener.
+		/// @param attributes		The new 3D attributes.
+		///
+		/// @retval Result::Ok					The listener 3D attributes were successfully set.
+		/// @retval Result::NotInitialized		The engine is not initialized.
+		/// @retval Result::ListenerNotFound	The listener index exceeds the allocated listener capacity.
+		Result SetListener3DAttributes(uint32_t listenerIndex, const Listener3DAttributes& attributes);
+
+		/// @brief Updates the world position of a listener.
+		///
+		/// @param[in] listenerIndex	The zero-based index of the listener.
+		/// @param[in] position			The new world position.
+		///
+		/// @retval Result::Ok					The listener world position was successfully set.
+		/// @retval Result::NotInitialized		The engine is not initialized.
+		/// @retval Result::ListenerNotFound	The listener index exceeds the allocated listener capacity.
+		Result SetListenerPosition(uint32_t listenerIndex, const Vec3& position);
+
+		/// @brief Sets the distance probe world position for a listener.
+		///
+		/// @note [Usage]	This position is only used for distance attenuation by playback instances with distance mode
+		///					set to FromDistanceProbe.
+		///
+		/// @param[in] listenerIndex			The zero-based index of the listener.
+		/// @param[in] distanceProbePosition	The new world position.
+		///
+		/// @retval Result::Ok					The listener's distance probe world position was successfully set.
+		/// @retval Result::NotInitialized		The engine is not initialized.
+		/// @retval Result::ListenerNotFound	The listener index exceeds the allocated listener capacity.
+		Result SetListenerDistanceProbePosition(uint32_t listenerIndex, const Vec3& distanceProbePosition);
+
+		/// @brief Sets the facing direction of a listener.
+		///
+		/// @param[in] listenerIndex	The zero-based index of the listener.
+		/// @param[in] forward			The forward-facing direction vector. Normalized internally.
+		/// @param[in] up				The upward-facing direction vector. Normalized internally.
+		///
+		/// @retval Result::Ok					The listener orientation was successfully set.
+		/// @retval Result::NotInitialized		The engine is not initialized.
+		/// @retval Result::ListenerNotFound	The listener index exceeds the allocated listener capacity.
+		Result SetListenerOrientation(uint32_t listenerIndex, const Vec3& forward, const Vec3& up);
+
+		/// @brief Sets the velocity of a listener.
+		///
+		/// @param[in] listenerIndex	The zero-based index of the listener.
+		/// @param[in] velocity			The velocity vector (in m/s).
+		///
+		/// @retval Result::Ok					The listener velocity was successfully set.
+		/// @retval Result::NotInitialized		The engine is not initialized.
+		/// @retval Result::ListenerNotFound	The listener index exceeds the allocated listener capacity.
+		Result SetListenerVelocity(uint32_t listenerIndex, const Vec3& velocity);
+
+#pragma endregion LISTENER_MANAGEMENT
 
 	private:
 		void TeardownInternal();
