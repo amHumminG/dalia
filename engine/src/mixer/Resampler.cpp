@@ -10,7 +10,8 @@ namespace dalia {
        return ((c3 * frac + c2) * frac + c1) * frac + c0;
     }
 
-    void ProcessResampler(ResamplerState& state,
+    void ProcessResampler(
+    	ResamplerState& state,
        const float* DALIA_RESTRICT sourceData,
        uint32_t maxSourceFrames,
        uint32_t channels,

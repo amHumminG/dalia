@@ -9,9 +9,7 @@
 
 namespace dalia {
 
-	class StringID;
 	struct EngineInternalState;
-
 
 	struct EngineConfig {
 		LogLevel logLevel = LogLevel::Warning;

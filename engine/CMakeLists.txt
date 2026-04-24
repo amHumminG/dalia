@@ -66,16 +66,16 @@ set(ENGINE_FILES
     src/mixer/MixGraphCompiler.h
     src/mixer/effects/BiquadFilter.h
     src/mixer/effects/BiquadFilter.cpp
-
-    src/resources/ResidentSound.h
-    src/resources/AssetRegistry.cpp
-    src/resources/AssetRegistry.h
-    src/resources/StreamSound.h
     src/mixer/Listener.h
     src/mixer/ParameterBridge.h
     src/mixer/Speakers.h
     src/mixer/Resampler.h
     src/mixer/Resampler.cpp
+
+    src/resources/ResidentSound.h
+    src/resources/AssetRegistry.cpp
+    src/resources/AssetRegistry.h
+    src/resources/StreamSound.h
 )
 
 add_library(dalia_engine STATIC ${ENGINE_FILES})

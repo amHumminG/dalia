@@ -6,11 +6,6 @@
 
 namespace dalia {
 
-	// struct ResamplerState {
-	// 	float fractionalPhase = 0.0f;
-	// 	float history[3 * CHANNELS_MAX] = {0.0f};
-	// };
-
 	struct ResamplerState {
 		float fractionalPhase = 0.0f;
 		float history[CHANNELS_MAX] = {0.0f};
