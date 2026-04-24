@@ -84,6 +84,8 @@ namespace dalia {
 		uint32_t outChannels = 0;
 		uint32_t outSampleRate = 0;
 
+		CoordinateSystem coordinateSystem;
+
 		SpeakerLayout speakerLayout;
 
 		// --- Messaging Queues ---
@@ -151,7 +153,7 @@ namespace dalia {
 		std::unique_ptr<IoLoadSystem> ioLoadSystem;
 
 		EngineInternalState(const EngineConfig& config)
-			: voiceCapacity(config.voiceCapacity), streamCapacity(config.streamCapacity), busCapacity(config.busCapacity),
+			: coordinateSystem(config.coordinateSystem), voiceCapacity(config.voiceCapacity), streamCapacity(config.streamCapacity), busCapacity(config.busCapacity),
 			listenerCapacity(std::clamp(config.listenerCapacity, LISTENERS_MIN, LISTENERS_MAX)) {
 			// Message Queues
 			rtCommands			= std::make_unique<RtCommandQueue>(config.rtCommandQueueCapacity);
@@ -581,6 +583,7 @@ namespace dalia {
 
 		// --- SYSTEMS SETUP ---
 		RtSystemConfig rtConfig;
+		rtConfig.coordinateSystem	= m_state->coordinateSystem;
 		rtConfig.speakerLayout		= m_state->speakerLayout;
 		rtConfig.maxSamplesPerPeriod = m_state->maxSamplesPerPeriod;
 		rtConfig.outChannels		= m_state->outChannels;

@@ -177,6 +177,7 @@ namespace dalia {
 	}
 
 	void VBAP(
+		CoordinateSystem coordinateSystem,
 		math::Vector3 sourcePos,
 		math::Vector3 listenerPos,
 		math::Vector3 listenerForward,
@@ -186,8 +187,10 @@ namespace dalia {
 		float out[CHANNELS_MAX]) {
 		// Convert to listener space
 		math::Vector3 relative = sourcePos - listenerPos;
-		// FIXME: This operation should depend on the coordinate system
-		math::Vector3 listenerRight = math::Vector3::Normalize(listenerUp.Cross(listenerForward));
+		math::Vector3 listenerRight;
+		if (coordinateSystem == CoordinateSystem::RightHanded) math::Vector3::CrossProduct(listenerForward, listenerUp);
+		else listenerRight = math::Vector3::CrossProduct(listenerUp, listenerForward);
+
 
 		float x = relative.Dot(listenerRight);
 		float y = relative.Dot(listenerForward);
@@ -358,7 +361,8 @@ namespace dalia {
 	// ------------
 
     RtSystem::RtSystem(const RtSystemConfig& config)
-        : m_maxSamplesPerPeriod(config.maxSamplesPerPeriod),
+        : m_coordinateSystem(config.coordinateSystem),
+		m_maxSamplesPerPeriod(config.maxSamplesPerPeriod),
 		m_outChannels(config.outChannels),
 		m_outSampleRate(config.outSampleRate),
 		m_voicePool(config.voicePool),

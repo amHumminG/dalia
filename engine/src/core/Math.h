@@ -41,14 +41,30 @@ namespace dalia::math {
 		Vector3 operator-(const Vector3& other) const { return Vector3(x - other.x, y - other.y, z - other.z); }
 		Vector3 operator*(float scalar) const { return Vector3(x * scalar, y * scalar, z * scalar); }
 
-		float Dot(const Vector3& other) const { return (x * other.x) + (y * other.y) + (z * other.z); }
+		static float DotProduct(const Vector3& first, const Vector3& second) {
+			return (first.x * second.x) + (first.y * second.y) + (first.z * second.z);
+		}
 
-		Vector3 Cross(const Vector3& other) const {
+		float Dot(const Vector3& other) const { return DotProduct(*this, other); }
+
+		static Vector3 CrossProduct(const Vector3& first, const Vector3& second) {
 			return Vector3(
-				(y * other.z) - (z * other.y),
-				(z * other.x) - (x * other.z),
-				(x * other.y) - (y * other.x)
+			(first.y * second.z) - (first.z * second.y),
+			(first.z * second.x) - (first.x * second.z),
+			(first.x * second.y) - (first.y * second.x)
 			);
+		}
+
+		Vector3 Cross(const Vector3& other) const { return CrossProduct(*this, other); }
+
+		static float Length(const Vector3& vec) {
+			float sqrDist = (vec.x * vec.x) + (vec.y * vec.y) + (vec.z * vec.z);
+			if (sqrDist < EPSILON) return 0.0f;
+			return sqrDist * CalculateInvSqrt(sqrDist);
+		}
+
+		float Length() const {
+			return Length(*this);
 		}
 
 		float DistanceTo(const Vector3& other) const {
@@ -59,20 +75,6 @@ namespace dalia::math {
 
 			if (sqrDist < EPSILON) return 0.0f;
 			return sqrDist * CalculateInvSqrt(sqrDist);
-		}
-
-		float Length() {
-			return Length(*this);
-		}
-
-		void Normalize() {
-			float sqrDist = (x * x) + (y * y) + (z * z);
-			if (sqrDist > EPSILON) {
-				float invSqrt = CalculateInvSqrt(sqrDist);
-				x *= invSqrt;
-				y *= invSqrt;
-				z *= invSqrt;
-			}
 		}
 
 		static Vector3 Normalize(const Vector3& vec) {
@@ -88,11 +90,10 @@ namespace dalia::math {
 			return normalized;
 		}
 
-		static float Length(const Vector3& vec) {
-			float sqrDist = (vec.x * vec.x) + (vec.y * vec.y) + (vec.z * vec.z);
-			if (sqrDist < EPSILON) return 0.0f;
-			return sqrDist * CalculateInvSqrt(sqrDist);
+		void Normalize() {
+			*this = Normalize(*this);
 		}
+
 	};
 
 	inline Vector3 AngleToVector3(float degrees) {

@@ -23,6 +23,7 @@ namespace dalia {
 	struct Listener;
 	struct ListenerParams;
 
+	enum class CoordinateSystem;
 	enum class SpeakerLayout;
 	struct VirtualSpeaker;
 
@@ -32,6 +33,8 @@ namespace dalia {
     struct BiquadFilter;
 
     struct RtSystemConfig {
+    	CoordinateSystem coordinateSystem;
+
         SpeakerLayout speakerLayout;
 
     	uint32_t maxSamplesPerPeriod = 0;
@@ -70,9 +73,9 @@ namespace dalia {
     	void ProcessParams();
         void Render(float* output, uint32_t frameCount);
 
-    	void ResolveVoiceState(Voice& voice);
+    	void ResolveVoiceStates();
     	void ResolveVoiceAcoustics();
-        bool RenderVoice(uint32_t voiceIndex, uint32_t frameCount);
+        uint32_t RenderVoices(uint32_t frameCount);
         void FreeVoice(uint32_t voiceIndex);
 
     	bool ResolveBusState(Bus& bus);
@@ -85,6 +88,8 @@ namespace dalia {
         void FlushEffect(EffectType type, uint32_t index, uint32_t gen);
 
     	void ConfigureSpeakerLayout(SpeakerLayout layout); // Returns the spatial speaker count
+
+    	CoordinateSystem m_coordinateSystem;
 
     	SpeakerLayout m_speakerLayout;
     	uint32_t m_spatialSpeakerCount = 0;

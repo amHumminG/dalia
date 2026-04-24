@@ -119,4 +119,9 @@ namespace dalia {
 	/// @return A bitmask with the corresponding listener's bit enabled.
 	inline constexpr ListenerMask MakeListenerMask(uint32_t listenerIndex) { return (1 << listenerIndex); }
 
+	enum class CoordinateSystem {
+		RightHanded,
+		LeftHanded
+	};
+
 }

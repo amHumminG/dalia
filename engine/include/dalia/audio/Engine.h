@@ -17,6 +17,8 @@ namespace dalia {
 		LogLevel logLevel = LogLevel::Warning;
 		LogCallback logCallback = nullptr;
 
+		CoordinateSystem coordinateSystem = CoordinateSystem::RightHanded;
+
 		uint32_t residentSoundCapacity = 256; // Maybe this should be higher?
 		uint32_t streamSoundCapacity = 256;
 
