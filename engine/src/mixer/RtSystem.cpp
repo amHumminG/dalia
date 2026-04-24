@@ -612,7 +612,7 @@ namespace dalia {
         const uint32_t sampleCount = frameCount * m_outChannels;
 
     	// Bus preprocessing
-        std::ranges::fill(m_busBufferPool, 0.0f);
+		std::memset(m_busBufferPool.data(), 0, m_busBufferPool.size() * sizeof(float));
 		for (uint32_t bIndex = 0; bIndex < m_busPool.size(); bIndex++) {
 			Bus& bus = m_busPool[bIndex];
 			if (bus.isActive) m_isMixOrderDirty |= ResolveBusState(bus);
@@ -634,31 +634,8 @@ namespace dalia {
 
         // --- Voice Pass ---
 		ResolveVoiceAcoustics();
-
-    	uint32_t voicesMixed = 0;
-        for (uint32_t vIndex = 0; vIndex < m_voicePool.size(); vIndex++) {
-            Voice& voice = m_voicePool[vIndex];
-
-        	if (voice.currentState == VoiceState::Free) continue;
-        	if (voice.currentState == VoiceState::Stopped) {
-        		FreeVoice(vIndex);
-        		continue;
-        	}
-        	if (voice.currentBusIndex == NO_PARENT) {
-        		voice.exitCondition = PlaybackExitCondition::ExplicitStop;
-        		FreeVoice(vIndex);
-        		continue;
-        	}
-
-        	ResolveVoiceState(voice);
-
-        	if (voice.currentState == VoiceState::Playing) {
-            	bool isStillPlaying = RenderVoice(vIndex, frameCount);
-            	if (!isStillPlaying) voice.currentState = VoiceState::Stopped;
-
-            	voicesMixed++;
-            }
-        }
+		ResolveVoiceStates();
+		RenderVoices(frameCount);
 
         // --- Bus Pass ---
 		std::span activeMixOrder = m_mixOrder.subspan(0, m_mixOrderSize);
@@ -671,61 +648,76 @@ namespace dalia {
         std::copy_n(masterBuffer, sampleCount, output);
 	}
 
-	void RtSystem::ResolveVoiceState(Voice& voice) {
-		bool requiresSilence = false;
+	void RtSystem::ResolveVoiceStates() {
+		for (uint32_t vIndex = 0; vIndex < m_voicePool.size(); vIndex++) {
+			Voice& voice = m_voicePool[vIndex];
 
-		if (voice.currentState != voice.targetState && voice.targetState != VoiceState::Playing) requiresSilence = true;
-		if (voice.currentBusIndex != voice.targetBusIndex) requiresSilence = true;
-		if (voice.hasPendingSeek) requiresSilence = true;
+			// Skip unused voices
+			if (voice.currentState == VoiceState::Free) continue;
 
-		// Do we need to duck?
-		if (requiresSilence) voice.targetFadeGain = 0.0f;
+			// Garbage collection
+			if (voice.currentState == VoiceState::Stopped || voice.currentBusIndex == NO_PARENT) {
+				if (voice.currentBusIndex) voice.exitCondition = PlaybackExitCondition::ExplicitStop;
+				FreeVoice(vIndex);
+				continue;
+			}
 
-		if (math::NearlyEqual(voice.currentFadeGain, 0.0f, EPSILON_GAIN) || voice.currentState != VoiceState::Playing) {
-			// Voice is silent
+			// State transitions
+			bool requiresSilence = false;
 
-			// Handle Routing swap
-			if (voice.currentBusIndex != voice.targetBusIndex) voice.currentBusIndex = voice.targetBusIndex;
+			if (voice.currentState != voice.targetState && voice.targetState != VoiceState::Playing) requiresSilence = true;
+			if (voice.currentBusIndex != voice.targetBusIndex) requiresSilence = true;
+			if (voice.hasPendingSeek) requiresSilence = true;
 
-			// Handle seek request
-			if (voice.hasPendingSeek) {
-				if (voice.soundType == SoundType::Resident) {
-					voice.cursor = static_cast<double>(voice.pendingSeekFrame);
-					voice.hasPendingSeek = false;
-					voice.pendingSeekFrame = 0;
-				}
-				else if (voice.soundType == SoundType::Stream) {
-					StreamContext& stream = m_streamPool[voice.data.stream.streamContextIndex];
-					StreamState expectedState = StreamState::Streaming;
-					if (stream.state.compare_exchange_strong(expectedState, StreamState::Seeking,
-						std::memory_order_release)) {
-						// If streaming we can push the request
+			// Do we need to duck?
+			if (requiresSilence) voice.targetFadeGain = 0.0f;
 
-						m_ioStreamRequests->Push(IoStreamRequest::SeekStream(
-							voice.data.stream.streamContextIndex,
-							stream.gen,
-							voice.pendingSeekFrame
-						));
+			if (math::NearlyEqual(voice.currentFadeGain, 0.0f, EPSILON_GAIN) || voice.currentState != VoiceState::Playing) {
+				// Voice is silent
 
-						voice.cursor = 0.0;
-						voice.data.stream.frontBufferIndex = 0;
+				// Handle Routing swap
+				if (voice.currentBusIndex != voice.targetBusIndex) voice.currentBusIndex = voice.targetBusIndex;
+
+				// Handle seek request
+				if (voice.hasPendingSeek) {
+					if (voice.soundType == SoundType::Resident) {
+						voice.cursor = static_cast<double>(voice.pendingSeekFrame);
 						voice.hasPendingSeek = false;
 						voice.pendingSeekFrame = 0;
 					}
+					else if (voice.soundType == SoundType::Stream) {
+						StreamContext& stream = m_streamPool[voice.data.stream.streamContextIndex];
+						StreamState expectedState = StreamState::Streaming;
+						if (stream.state.compare_exchange_strong(expectedState, StreamState::Seeking,
+							std::memory_order_release)) {
+							// If streaming we can push the request
+
+							m_ioStreamRequests->Push(IoStreamRequest::SeekStream(
+								voice.data.stream.streamContextIndex,
+								stream.gen,
+								voice.pendingSeekFrame
+							));
+
+							voice.cursor = 0.0;
+							voice.data.stream.frontBufferIndex = 0;
+							voice.hasPendingSeek = false;
+							voice.pendingSeekFrame = 0;
+						}
+					}
 				}
+
+				// Check if we are waiting for and I/O operation
+				if (voice.soundType == SoundType::Stream) {
+					StreamContext& stream = m_streamPool[voice.data.stream.streamContextIndex];
+					if (stream.state.load(std::memory_order_acquire) != StreamState::Streaming) continue;
+				}
+
+				// Handle state change
+				if (voice.currentState != voice.targetState) voice.currentState = voice.targetState;
 			}
 
-			// Check if we are waiting for and I/O operation
-			if (voice.soundType == SoundType::Stream) {
-				StreamContext& stream = m_streamPool[voice.data.stream.streamContextIndex];
-				if (stream.state.load(std::memory_order_acquire) != StreamState::Streaming) return;
-			}
-
-			// Handle state change
-			if (voice.currentState != voice.targetState) voice.currentState = voice.targetState;
+			if (!requiresSilence && voice.currentState == VoiceState::Playing) voice.targetFadeGain = 1.0f;
 		}
-
-		if (!requiresSilence && voice.currentState == VoiceState::Playing) voice.targetFadeGain = 1.0f;
     }
 
 	void RtSystem::ResolveVoiceAcoustics() {
@@ -812,6 +804,7 @@ namespace dalia {
 			// Panning
 			if (finalGain > EPSILON_GAIN) {
 				VBAP(
+					m_coordinateSystem,
 					voice.params.position,
 					bestListenerParams.position,
 					bestListenerParams.forward,
@@ -862,73 +855,84 @@ namespace dalia {
 		}
     }
 
-	bool RtSystem::RenderVoice(uint32_t voiceIndex, uint32_t frameCount) {
-		Voice& voice = m_voicePool[voiceIndex];
-		float* busBuffer = GetBusBuffer(m_busBufferPool.data(), voice.currentBusIndex, frameCount);
-		uint32_t framesMixed = 0;
+	uint32_t RtSystem::RenderVoices(uint32_t frameCount) {
+		uint32_t voicesRendered = 0;
 
-		float phaseInc = voice.params.pitch * (static_cast<float>(voice.sampleRate) / static_cast<float>(m_outSampleRate));
-		DALIA_LOG_DEBUG(LOG_CTX_MIXER, "Voice pitch: %.3f", voice.params.pitch);
+		for (uint32_t vIndex = 0; vIndex < m_voicePool.size(); vIndex++) {
+			Voice& voice = m_voicePool[vIndex];
 
-		while (framesMixed < frameCount) {
-			uint32_t outputFramesNeeded = frameCount - framesMixed;
-			uint32_t sourceFramesNeeded = static_cast<uint32_t>(
-				std::ceil(static_cast<float>(outputFramesNeeded) * phaseInc)) + HERMITE_LOOKAHEAD_FRAMES;
+			// Skip unused voices
+			if (voice.currentState != VoiceState::Playing) continue;
 
-			SourceBlock block = FetchSourceBlock(voice, m_streamPool.data(), sourceFramesNeeded);
-			if (block.isError) {
-				voice.currentState = VoiceState::Stopped;
-				voice.exitCondition = PlaybackExitCondition::Error;
-				return false;
-			}
-			if (block.isUnderrun) {
-				DALIA_LOG_DEBUG(LOG_CTX_MIXER, "Stream buffer underrun for voice %u.", voiceIndex); // TODO: Remove log
-				return true;
-			}
+			voicesRendered++;
+			float* busBuffer = GetBusBuffer(m_busBufferPool.data(), voice.currentBusIndex, frameCount);
+			uint32_t framesMixed = 0;
 
-			// Render block
-			if (block.framesAvailable > 0) {
-				uint32_t outputFramesGenerated = 0;
-				uint32_t sourceFramesConsumed = 0;
+			float phaseInc = voice.currentPitch * (static_cast<float>(voice.sampleRate) / static_cast<float>(m_outSampleRate));
 
-				ProcessResampler(
-					voice.resamplerState,
-					block.pcmData,
-					block.framesAvailable,
-					block.channels,
-					m_dspScratchBuffer.data(),
-					outputFramesNeeded,
-					phaseInc,
-					outputFramesGenerated,
-					sourceFramesConsumed
-				);
+			while (framesMixed < frameCount) {
+				uint32_t outputFramesNeeded = frameCount - framesMixed;
+				uint32_t sourceFramesNeeded = static_cast<uint32_t>(
+					std::ceil(static_cast<float>(outputFramesNeeded) * phaseInc)) + HERMITE_LOOKAHEAD_FRAMES;
 
-				MixVoiceBlock(
-					m_dspScratchBuffer.data(),
-					&busBuffer[framesMixed * m_outChannels],
-					outputFramesGenerated,
-					block.channels,
-					m_outChannels,
-					voice.currentFadeGain,
-					voice.targetFadeGain,
-					m_fadeStep,
-					voice.currentGainMatrix,
-					voice.targetGainMatrix,
-					m_smoothingCoefficient
-				);
+				SourceBlock block = FetchSourceBlock(voice, m_streamPool.data(), sourceFramesNeeded);
+				if (block.isError) {
+					voice.currentState = VoiceState::Stopped;
+					voice.exitCondition = PlaybackExitCondition::Error;
+					break;
+				}
+				if (block.isUnderrun) {
+					DALIA_LOG_DEBUG(LOG_CTX_MIXER, "Stream buffer underrun for voice %u.", vIndex); // TODO: Remove log
+					break;
+				}
 
-				voice.cursor += static_cast<double>(sourceFramesConsumed);
-				framesMixed += outputFramesGenerated;
-			}
+				// Render block
+				if (block.framesAvailable > 0) {
+					uint32_t outputFramesGenerated = 0;
+					uint32_t sourceFramesConsumed = 0;
 
-			// Boundary check
-			if (block.framesAvailable < sourceFramesNeeded) {
-				bool keepPlaying = HandleVoiceBoundary(voice, m_streamPool.data(), m_ioStreamRequests);
-				if (!keepPlaying) return false;
+					ProcessResampler(
+						voice.resamplerState,
+						block.pcmData,
+						block.framesAvailable,
+						block.channels,
+						m_dspScratchBuffer.data(),
+						outputFramesNeeded,
+						phaseInc,
+						outputFramesGenerated,
+						sourceFramesConsumed
+					);
+
+					MixVoiceBlock(
+						m_dspScratchBuffer.data(),
+						&busBuffer[framesMixed * m_outChannels],
+						outputFramesGenerated,
+						block.channels,
+						m_outChannels,
+						voice.currentFadeGain,
+						voice.targetFadeGain,
+						m_fadeStep,
+						voice.currentGainMatrix,
+						voice.targetGainMatrix,
+						m_smoothingCoefficient
+					);
+
+					voice.cursor += static_cast<double>(sourceFramesConsumed);
+					framesMixed += outputFramesGenerated;
+				}
+
+				// Boundary check
+				if (block.framesAvailable < sourceFramesNeeded) {
+					bool keepPlaying = HandleVoiceBoundary(voice, m_streamPool.data(), m_ioStreamRequests);
+					if (!keepPlaying) {
+						voice.currentState = VoiceState::Stopped;
+						break;
+					}
+				}
 			}
 		}
 
-		return true;
+		return voicesRendered;
 	}
 
     void RtSystem::FreeVoice(uint32_t vIndex) {
