@@ -40,7 +40,10 @@ namespace dalia {
 			AttachEffect,
 			FadeDetachEffect,
 			ForceDetachEffect,
-			DeallocateEffect
+			DeallocateEffect,
+
+			// Misc
+			SetGlobalDopplerFactor
 		};
 
 		Type type = Type::None;
@@ -291,6 +294,13 @@ namespace dalia {
 			cmd.targetIndex = index;
 			cmd.targetGen = gen;
 			cmd.data.effect.type = type;
+			return cmd;
+		}
+
+		static RtCommand SetGlobalDopplerFactor(float value) {
+			RtCommand cmd{};
+			cmd.type = Type::SetGlobalDopplerFactor;
+			cmd.data.floatVal.value = value;
 			return cmd;
 		}
 	};

@@ -99,4 +99,10 @@ namespace dalia {
     static constexpr uint32_t NO_GENERATION = 0;
     static constexpr uint32_t START_GENERATION = 1;
 
+	// Physics
+	static constexpr float SPEED_OF_SOUND = 343.3f;
+
+	static constexpr float DOPPLER_FACTOR_MIN = 0.0f;
+	static constexpr float DOPPLER_FACTOR_MAX = 10.0f;
+
 }

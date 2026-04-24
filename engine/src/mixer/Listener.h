@@ -7,10 +7,13 @@
 namespace dalia {
 
 	struct ListenerParams {
-		math::Vector3 position;				  // Panning position
-		math::Vector3 distanceProbePosition;  // Probe position (for distance)
+		math::Vector3 position{0.0f, 0.0f, 0.0f};				// Panning/Distance attenuation
+		math::Vector3 distanceProbePosition{0.0f, 0.0f, 0.0f};	// Probe position (for distance if activated)
+
 		math::Vector3 forward{0.0f, 0.0f, 1.0f};
 		math::Vector3 up{0.0f, 1.0f, 0.0f};
+
+		math::Vector3 velocity{0.0f, 0.0f, 0.0f};
 	};
 
 	struct Listener {

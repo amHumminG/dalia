@@ -32,6 +32,11 @@ namespace dalia {
 		math::Vector3 position{0.0f, 0.0f, 0.0f};
 		float minDistance = MIN_DIST_DEFAULT;
 		float maxDistance = MAX_DIST_DEFAULT;
+
+		bool useDoppler = false;
+		float dopplerFactor = 1.0f;
+		math::Vector3 velocity{0.0f, 0.0f, 0.0f};
+
 		ListenerMask listenerMask = MASK_ALL_LISTENERS;
 	};
 
@@ -60,6 +65,8 @@ namespace dalia {
 
     	float currentGainMatrix[CHANNELS_MAX][CHANNELS_MAX];
     	float targetGainMatrix[CHANNELS_MAX][CHANNELS_MAX];
+
+    	float currentPitch = 1.0f; // Final resolved pitch after doppler has been applied
 
     	VoiceParams params;
     	bool isParamsDirty = false;

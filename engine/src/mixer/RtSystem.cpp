@@ -578,6 +578,10 @@ namespace dalia {
 	            	}
 	            	break;
 				}
+            	case RtCommand::Type::SetGlobalDopplerFactor: {
+            		m_globalDopplerFactor = cmd.data.floatVal.value;
+            		break;
+            	}
                 default:
             		break;
             }
@@ -607,7 +611,7 @@ namespace dalia {
         std::ranges::fill(m_busBufferPool, 0.0f);
 		for (uint32_t bIndex = 0; bIndex < m_busPool.size(); bIndex++) {
 			Bus& bus = m_busPool[bIndex];
-			if (bus.isActive) m_isMixOrderDirty |= ResolveBus(bus);
+			if (bus.isActive) m_isMixOrderDirty |= ResolveBusState(bus);
 		}
 
 		if (m_isMixOrderDirty) {
@@ -625,7 +629,7 @@ namespace dalia {
 		}
 
         // --- Voice Pass ---
-		EvaluateVoiceTargetGains();
+		ResolveVoiceAcoustics();
 
     	uint32_t voicesMixed = 0;
         for (uint32_t vIndex = 0; vIndex < m_voicePool.size(); vIndex++) {
@@ -642,10 +646,10 @@ namespace dalia {
         		continue;
         	}
 
-        	ResolveVoice(voice);
+        	ResolveVoiceState(voice);
 
         	if (voice.currentState == VoiceState::Playing) {
-            	bool isStillPlaying = ProcessVoice(vIndex, frameCount);
+            	bool isStillPlaying = RenderVoice(vIndex, frameCount);
             	if (!isStillPlaying) voice.currentState = VoiceState::Stopped;
 
             	voicesMixed++;
@@ -655,7 +659,7 @@ namespace dalia {
         // --- Bus Pass ---
 		std::span activeMixOrder = m_mixOrder.subspan(0, m_mixOrderSize);
         for (uint32_t bIndex : activeMixOrder) {
-            ProcessBus(bIndex, frameCount);
+            RenderBus(bIndex, frameCount);
         }
 
         float* masterBuffer = m_busBufferPool.data();
@@ -663,7 +667,7 @@ namespace dalia {
         std::copy_n(masterBuffer, sampleCount, output);
 	}
 
-	void RtSystem::ResolveVoice(Voice& voice) {
+	void RtSystem::ResolveVoiceState(Voice& voice) {
 		bool requiresSilence = false;
 
 		if (voice.currentState != voice.targetState && voice.targetState != VoiceState::Playing) requiresSilence = true;
@@ -720,7 +724,7 @@ namespace dalia {
 		if (!requiresSilence && voice.currentState == VoiceState::Playing) voice.targetFadeGain = 1.0f;
     }
 
-	void RtSystem::EvaluateVoiceTargetGains() {
+	void RtSystem::ResolveVoiceAcoustics() {
 		for (uint32_t vIndex = 0; vIndex < m_voicePool.size(); vIndex++) {
 			Voice& voice = m_voicePool[vIndex];
 			if (voice.currentState != VoiceState::Playing) continue;
@@ -801,6 +805,7 @@ namespace dalia {
 			float finalGain = baseGain * maxSpatialGain;
 			float vbapDistribution[CHANNELS_MAX] = {};
 
+			// Panning
 			if (finalGain > EPSILON_GAIN) {
 				VBAP(
 					voice.params.position,
@@ -811,6 +816,32 @@ namespace dalia {
 					m_spatialSpeakerCount,
 					vbapDistribution
 				);
+			}
+
+			// Pitch
+			voice.currentPitch = voice.params.pitch;
+			float totalDopplerFactor = voice.params.dopplerFactor * m_globalDopplerFactor;
+			if (voice.params.useDoppler && totalDopplerFactor > 0.0f) {
+				math::Vector3 listenerToEmitter = voice.params.position - bestListenerParams.position;
+				float distance = math::Vector3::Length(listenerToEmitter);
+
+				if (distance > EPSILON) {
+					math::Vector3 direction = listenerToEmitter * (1 / distance);
+
+					float emitterRadial = voice.params.velocity.Dot(direction);
+					float listenerRadial = bestListenerParams.velocity.Dot(direction);
+
+					emitterRadial = std::clamp(emitterRadial, -SPEED_OF_SOUND, SPEED_OF_SOUND);
+					listenerRadial = std::clamp(listenerRadial, -SPEED_OF_SOUND, SPEED_OF_SOUND);
+
+					float dopplerMultiplier = (SPEED_OF_SOUND - listenerRadial) / (SPEED_OF_SOUND - emitterRadial);
+
+					if (voice.params.dopplerFactor != 1.0f) {
+						dopplerMultiplier = std::powf(dopplerMultiplier, totalDopplerFactor);
+					}
+
+					voice.currentPitch = std::clamp(voice.currentPitch * dopplerMultiplier, PITCH_MIN, PITCH_MAX);
+				}
 			}
 
 			// Implicit downmix
@@ -827,7 +858,7 @@ namespace dalia {
 		}
     }
 
-	bool RtSystem::ProcessVoice(uint32_t voiceIndex, uint32_t frameCount) {
+	bool RtSystem::RenderVoice(uint32_t voiceIndex, uint32_t frameCount) {
 		Voice& voice = m_voicePool[voiceIndex];
 		float* busBuffer = GetBusBuffer(m_busBufferPool.data(), voice.currentBusIndex, frameCount);
 		uint32_t framesMixed = 0;
@@ -924,7 +955,7 @@ namespace dalia {
     	voice.Reset();
     }
 
-    bool RtSystem::ResolveBus(Bus& bus) {
+    bool RtSystem::ResolveBusState(Bus& bus) {
 		bool requiresSilence = false;
 		bool topologyChanged = false;
 
@@ -948,7 +979,7 @@ namespace dalia {
 		return topologyChanged;
     }
 
-    void RtSystem::ProcessBus(uint32_t busIndex, uint32_t frameCount) {
+    void RtSystem::RenderBus(uint32_t busIndex, uint32_t frameCount) {
     	Bus& bus = m_busPool[busIndex];
 		float* buffer = GetBusBuffer(m_busBufferPool.data(), busIndex, frameCount);
 

@@ -57,7 +57,12 @@ namespace dalia::math {
 			float dz = z - other.z;
 			float sqrDist = (dx * dx) + (dy * dy) + (dz * dz);
 
-			return sqrDist * CalculateInvSqrt(sqrDist);;
+			if (sqrDist < EPSILON) return 0.0f;
+			return sqrDist * CalculateInvSqrt(sqrDist);
+		}
+
+		float Length() {
+			return Length(*this);
 		}
 
 		void Normalize() {
@@ -81,6 +86,12 @@ namespace dalia::math {
 			}
 
 			return normalized;
+		}
+
+		static float Length(const Vector3& vec) {
+			float sqrDist = (vec.x * vec.x) + (vec.y * vec.y) + (vec.z * vec.z);
+			if (sqrDist < EPSILON) return 0.0f;
+			return sqrDist * CalculateInvSqrt(sqrDist);
 		}
 	};
 
