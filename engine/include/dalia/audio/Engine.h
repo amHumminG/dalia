@@ -322,7 +322,7 @@ namespace dalia {
 
 		/// @brief Creates a playback instance with a sound and prepares it for playback.
 		///
-		/// This function  does not start playback.
+		/// This function does not start playback.
 		///
 		/// @note [Deferred Playback] This function will still succeed if the sound is still being loaded
 		/// asynchronously.
@@ -373,7 +373,7 @@ namespace dalia {
 		/// @retval Result::InvalidHandle		The playback handle is not recognized.
 		/// @retval Result::ExpiredHandle		The playback handle has already stopped playing.
 		/// @retval Result::PlaybackCorrupted	The internal state of the playback instance has been corrupted.
-		Result Play(PlaybackHandle playback);
+		Result PlayPlayback(PlaybackHandle playback);
 
 		/// @brief Pauses a playback instance.
 		///
@@ -383,7 +383,7 @@ namespace dalia {
 		/// @retval Result::NotInitialized		The engine is not initialized.
 		/// @retval Result::InvalidHandle		The playback handle is not recognized.
 		/// @retval Result::ExpiredHandle		The playback handle has already stopped playing.
-		Result Pause(PlaybackHandle playback);
+		Result PausePlayback(PlaybackHandle playback);
 
 		/// @brief Stops a playback instance.
 		///
@@ -399,7 +399,7 @@ namespace dalia {
 		/// @retval Result::NotInitialized		The engine is not initialized.
 		/// @retval Result::InvalidHandle		The playback handle is not recognized.
 		/// @retval Result::ExpiredHandle		The playback handle has already stopped playing.
-		Result Stop(PlaybackHandle playback);
+		Result StopPlayback(PlaybackHandle playback);
 
 		/// @brief Seeks a playback instance to a specified time offset.
 		///
@@ -439,6 +439,8 @@ namespace dalia {
 		Result SetPlaybackPitch(PlaybackHandle playback, float pitch);
 
 		/// @brief Sets the stereo pan of a playback instance.
+		///
+		/// @note[Spatial] This only affects playback instances that have spatialization disabled.
 		///
 		/// @param[in] playback The handle to the playback instance.
 		/// @param[in] pan		The normalized pan position. A value of 0.0 represents an equal distribution between
