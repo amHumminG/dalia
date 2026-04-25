@@ -37,8 +37,20 @@ add_library(rlimgui_lib_demo STATIC
 target_include_directories(rlimgui_lib_demo SYSTEM PUBLIC ${rlimgui_SOURCE_DIR})
 target_link_libraries(rlimgui_lib_demo PUBLIC raylib imgui_lib_demo)
 
-# Output
-add_executable(dalia_demo src/main.cpp)
+
+SET(DEMO_FILES
+    src/main.cpp
+    src/Sandbox.cpp
+    src/Sandbox.h
+    src/Panel.h
+    src/PlaybackInstance.cpp
+    src/PlaybackInstance.h
+    src/Listener.cpp
+    src/Listener.h
+)
+
+add_executable(dalia_demo ${DEMO_FILES})
+
 target_link_libraries(dalia_demo
     PRIVATE dalia_engine
     PRIVATE rlimgui_lib_demo
