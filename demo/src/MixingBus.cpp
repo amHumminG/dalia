@@ -61,6 +61,15 @@ void MixingBus::DrawInspectorUI() {
 		}
 	}
 
+	ImGui::Separator();
+
+	ImGui::TextDisabled("General Properties");
+
+	if (ImGui::SliderFloat("Volume (dB)", &m_volumeDb, -60.0f, 12.0f)) {
+		dalia::Result res = m_engine->SetBusVolumeDb(m_identifier.c_str(), m_volumeDb);
+		if (res != dalia::Result::Ok) m_result = res;
+	}
+
 	ImGui::PopID();
 }
 

@@ -40,6 +40,8 @@ Sandbox::Sandbox()
 	config.listenerCapacity = 4;
 	m_engine.Init(config);
 
+	m_buses.push_back(std::make_unique<MixingBus>(&m_engine, "Master"));
+
 	RefreshAvailableAssets();
 }
 
@@ -123,6 +125,7 @@ void Sandbox::Draw() {
 	DrawAssetBrowser();
 	DrawViewportPanel();
 	DrawConsolePanel();
+	DrawBusHierarchyPanel();
 
 	rlImGuiEnd();
 	EndDrawing();
@@ -217,6 +220,17 @@ void Sandbox::DrawInspector() {
 		if (ImGui::Button("Delete Asset", ImVec2(-1, 30))) requestDelete = true;
 		ImGui::PopStyleColor();
 	}
+	else if (m_selectionType == SelectionType::Bus) {
+		auto* bus = static_cast<MixingBus*>(m_selectedObject);
+		bus->DrawInspectorUI();
+
+		if (bus->GetIdentifier() != "Master") {
+			ImGui::Separator();
+			ImGui::PushStyleColor(ImGuiCol_Button, {0.8f, 0.2f, 0.2f, 1.0f});
+			if (ImGui::Button("Destroy Bus", ImVec2(-1, 30))) requestDelete = true;
+			ImGui::PopStyleColor();
+		}
+	}
 
 	// Object deletion
 	if (requestDelete) {
@@ -228,6 +242,11 @@ void Sandbox::DrawInspector() {
 		else if (m_selectionType == SelectionType::Sound) {
 			std::erase_if(m_sounds, [this](const std::unique_ptr<SoundAsset>& s) {
 				return s.get() == m_selectedObject;
+			});
+		}
+		else if (m_selectionType == SelectionType::Bus) {
+			std::erase_if(m_buses, [this](const std::unique_ptr<MixingBus>& b) {
+				return b.get() == m_selectedObject;
 			});
 		}
 
@@ -420,6 +439,120 @@ void Sandbox::DrawConsolePanel() {
 
 	ImGui::EndChild();
 	ImGui::End();
+}
+
+void Sandbox::DrawBusHierarchyPanel() {
+	ImGui::Begin("Bus Hierarchy");
+
+	ImGui::TextDisabled("Create New Bus");
+	ImGui::InputText("##NewBusName", m_newBusNameBuffer, sizeof(m_newBusNameBuffer));
+
+	ImGui::SameLine();
+	if (ImGui::Button("Create")) {
+		std::string newName(m_newBusNameBuffer);
+		bool exists = false;
+
+		for (const auto& bus : m_buses) {
+			if (bus->GetIdentifier() == newName) {
+				exists = true;
+				break;
+			}
+		}
+
+		if (exists) {
+			m_showDuplicateWarning = true;
+		}
+		else if (!newName.empty()) {
+			auto bus = std::make_unique<MixingBus>(&m_engine, newName);
+			if (bus->GetResult() == dalia::Result::Ok) m_buses.push_back(std::move(bus));
+			m_newBusNameBuffer[0] = '\0';
+			m_showDuplicateWarning = false;
+		}
+	}
+
+	if (m_showDuplicateWarning) {
+		ImGui::TextColored({1.0f, 0.0f, 0.0f, 1.0f}, "Bus with name already exists");
+	}
+
+	ImGui::Separator();
+
+	ImGui::TextDisabled("Routing Topology");
+
+	MixingBus* masterBus = nullptr;
+	for (const auto& bus : m_buses) {
+		if (bus->GetIdentifier() == "Master") {
+			masterBus = bus.get();
+			break;
+		}
+	}
+
+	if (masterBus) DrawBusNodeRecursive(masterBus);
+	else ImGui::TextColored({1.0f, 0.0f, 0.0f, 1.0f}, "Error! Master bus missing");
+
+	ImGui::End();
+}
+
+void Sandbox::DrawBusNodeRecursive(MixingBus* currentBus) {
+	bool hasChildren = false;
+	for (const auto& bus : m_buses) {
+		if (bus->GetParentIdentifier() == currentBus->GetIdentifier() && bus.get() != currentBus) {
+			hasChildren = true;
+			break;
+		}
+	}
+
+	// --- Set up flags ---
+	ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_OpenOnArrow |ImGuiTreeNodeFlags_OpenOnDoubleClick |
+		ImGuiTreeNodeFlags_SpanAvailWidth;
+
+	if (m_selectionType == SelectionType::Bus && m_selectedObject == currentBus) {
+		flags |= ImGuiTreeNodeFlags_Selected;
+	}
+	if (!hasChildren) {
+		flags |= ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen;
+	}
+
+	// --- Draw node ---
+
+	// Use pointer as ImGui ID to make sure it is unique
+	bool nodeOpen = ImGui::TreeNodeEx((void*)currentBus, flags, "%s", currentBus->GetIdentifier().c_str());
+
+	if (ImGui::BeginDragDropSource()) {
+		MixingBus* payloadBus = currentBus;
+		ImGui::SetDragDropPayload("DND_BUS_NODE", &payloadBus, sizeof(MixingBus*));
+
+		ImGui::Text("Route '%s'", currentBus->GetIdentifier().c_str());
+
+		ImGui::EndDragDropSource();
+	}
+
+	if (ImGui::BeginDragDropTarget()) {
+		if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("DND_BUS_NODE")) {
+			MixingBus* droppedBus = *(MixingBus**)payload->Data;
+
+			dalia::Result res = m_engine.RouteBus(droppedBus->GetIdentifier().c_str(), currentBus->GetIdentifier().c_str());
+			if (res == dalia::Result::Ok) {
+				droppedBus->SetParentIdentifier(currentBus->GetIdentifier());
+			}
+		}
+		ImGui::EndDragDropTarget();
+	}
+
+	// Selection handling
+	if (ImGui::IsItemClicked() && !ImGui::IsItemToggledOpen()) {
+		m_selectionType = SelectionType::Bus;
+		m_selectedObject = currentBus;
+	}
+
+	// Draw children
+	if (nodeOpen && hasChildren) {
+		for (const auto& bus : m_buses) {
+			if (bus->GetParentIdentifier() == currentBus->GetIdentifier()) {
+				DrawBusNodeRecursive(bus.get());
+			}
+		}
+		ImGui::TreePop();
+	}
 }
 
 void Sandbox::RefreshAvailableAssets() {

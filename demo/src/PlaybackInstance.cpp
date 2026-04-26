@@ -177,17 +177,13 @@ void PlaybackInstance::DrawInspectorUI() {
 
 		ImGui::TextDisabled("Listener Masks");
 
-		auto currentMask = static_cast<dalia::ListenerMask>(m_listenerMask);
-
 		bool changed = false;
-		changed |= ImGui::CheckboxFlags("Listener 0", &currentMask, dalia::MASK_LISTENER_0);
-		changed |= ImGui::CheckboxFlags("Listener 1", &currentMask, dalia::MASK_LISTENER_1);
-		changed |= ImGui::CheckboxFlags("Listener 2", &currentMask, dalia::MASK_LISTENER_2);
-		changed |= ImGui::CheckboxFlags("Listener 3", &currentMask, dalia::MASK_LISTENER_3);
+		changed |= ImGui::CheckboxFlags("Listener 0", &m_listenerMask, dalia::MASK_LISTENER_0);
+		changed |= ImGui::CheckboxFlags("Listener 1", &m_listenerMask, dalia::MASK_LISTENER_1);
+		changed |= ImGui::CheckboxFlags("Listener 2", &m_listenerMask, dalia::MASK_LISTENER_2);
+		changed |= ImGui::CheckboxFlags("Listener 3", &m_listenerMask, dalia::MASK_LISTENER_3);
 
 		if (changed) {
-			m_listenerMask = static_cast<dalia::ListenerMask>(currentMask);
-
 			res = m_engine->SetPlaybackListenerMask(m_handle, m_listenerMask);
 			if (res != dalia::Result::Ok) m_result = res;
 		}

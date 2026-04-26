@@ -6,10 +6,10 @@
 #include "imgui.h"
 
 #include "dalia.h"
-#include "Panel.h"
 #include "Listener.h"
 #include "PlaybackInstance.h"
 #include "SoundAsset.h"
+#include "MixingBus.h"
 
 #include <vector>
 #include <memory>
@@ -50,6 +50,8 @@ private:
 	void DrawAssetBrowser();
 	void DrawViewportPanel();
 	void DrawConsolePanel();
+	void DrawBusHierarchyPanel();
+	void DrawBusNodeRecursive(MixingBus* currentBus); // Helper
 
 	void RefreshAvailableAssets();
 
@@ -72,6 +74,11 @@ private:
 	std::vector<std::unique_ptr<SoundAsset>> m_sounds;
 	char m_newSoundPathBuffer[256] = "";
 	int m_newSoundType = 0; // Resident = 0, Stream = 1
+
+	// Buses
+	std::vector<std::unique_ptr<MixingBus>> m_buses;
+	char m_newBusNameBuffer[128] = "";
+	bool m_showDuplicateWarning = false;
 
 	// Console logging
 	std::vector<ConsoleLog> m_logs;

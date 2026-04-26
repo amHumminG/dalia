@@ -14,6 +14,7 @@ public:
 
 	std::string GetIdentifier() const { return m_identifier; }
 	std::string GetParentIdentifier() const { return m_parentIdentifier; }
+	void SetParentIdentifier(const std::string& parentIdentifier) { m_parentIdentifier = parentIdentifier; }
 	dalia::Result GetResult() const { return m_result; }
 
 private:
