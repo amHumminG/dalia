@@ -103,7 +103,11 @@ void Sandbox::Draw() {
 
 	DrawGrid(20, 1.0f);
 
-	// for (auto& listener : m_listeners) listener.Draw3D();
+	for (auto& listener : m_listeners) {
+		bool isSelected = (m_selectionType == SelectionType::Listener && m_selectedObject == &listener);
+		listener.Draw3D(isSelected);
+	}
+
 	for (auto& playback : m_playbackInstances) {
 		bool isSelected = (m_selectionType == SelectionType::Playback && m_selectedObject == playback.get());
 		playback->Draw3D(isSelected);
