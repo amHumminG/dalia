@@ -76,6 +76,7 @@ namespace dalia {
 																// if the distance mode of a playback instance is set to FromDistanceProbe.
 		Vec3 forward{0.0f, 0.0f, 1.0f};				// The direction the listener is facing.
 		Vec3 up{0.0f, 1.0f, 0.0f};						// The up direction from the listener position.
+
 		Vec3 velocity{0.0f, 0.0f, 0.0f};				// The velocity of the listener.
 	};
 

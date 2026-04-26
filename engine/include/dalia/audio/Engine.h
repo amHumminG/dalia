@@ -149,9 +149,6 @@ namespace dalia {
 		/// @retval Result::InvalidHandle	The sound handle is not recognized, or has already been freed.
 		Result UnloadSound(SoundHandle soundHandle);
 
-		// Result LoadBank(BankHandle& handle, StringID pathId);
-		// Result Unload(BankHandle handle);
-
 #pragma endregion ASSET_MANAGEMENT
 
 		// ============================================================================

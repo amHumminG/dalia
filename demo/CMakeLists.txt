@@ -47,6 +47,10 @@ SET(DEMO_FILES
     src/PlaybackInstance.h
     src/Listener.cpp
     src/Listener.h
+    src/SoundAsset.cpp
+    src/SoundAsset.h
+    src/MixingBus.cpp
+    src/MixingBus.h
 )
 
 add_executable(dalia_demo ${DEMO_FILES})

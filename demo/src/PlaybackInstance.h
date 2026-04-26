@@ -14,17 +14,21 @@ enum class PlaybackState {
 
 class PlaybackInstance {
 public:
-	PlaybackInstance(dalia::Engine& engine, dalia::SoundHandle sound);
+	PlaybackInstance(dalia::Engine* engine, dalia::SoundHandle sound, const std::string& name);
 	~PlaybackInstance();
 
-	void Update(dalia::Engine& engine);
+	void Update();
 	void Draw3D(bool isSelected);
-	void DrawInspectorUI(dalia::Engine& engine);
+	void DrawInspectorUI();
 
-	[[nodiscard]] dalia::Result GetResult() const { return m_result; }
+	dalia::Result GetResult() const { return m_result; }
+	std::string GetName() const { return m_name; }
 
 private:
+	dalia::Engine* m_engine = nullptr;
 	dalia::Result m_result = dalia::Result::Ok;
+
+	std::string m_name;
 
 	dalia::PlaybackHandle m_handle;
 	PlaybackState m_state = PlaybackState::Inactive;

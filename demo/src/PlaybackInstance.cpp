@@ -1,22 +1,26 @@
 #include "PlaybackInstance.h"
 
-#include "ImGui.h"
+#include "raylib.h"
+#include "raymath.h"
+#include "rlImGui.h"
+#include "imgui.h"
 
-PlaybackInstance::PlaybackInstance(dalia::Engine& engine, dalia::SoundHandle sound) {
+PlaybackInstance::PlaybackInstance(dalia::Engine* engine, dalia::SoundHandle sound, const std::string& name)
+	: m_engine(engine), m_name(name) {
 	// Define the exit callback
 	auto exitCallback = [this](dalia::PlaybackHandle handle, dalia::PlaybackExitCondition exitCondition) {
 		this->m_state = PlaybackState::Stopped;
 		this->m_exitCondition = exitCondition;
 	};
 
-	m_result = engine.CreatePlayback(m_handle, sound, exitCallback);
+	m_result = m_engine->CreatePlayback(m_handle, sound, exitCallback);
 }
 
 PlaybackInstance::~PlaybackInstance() {
-	if (m_state != PlaybackState::Stopped);
+	if (m_state != PlaybackState::Stopped) m_engine->StopPlayback(m_handle);
 }
 
-void PlaybackInstance::Update(dalia::Engine& engine) {
+void PlaybackInstance::Update() {
 	if (m_state != PlaybackState::Playing) return;
 
 	if (m_isSpatial) {
@@ -25,9 +29,9 @@ void PlaybackInstance::Update(dalia::Engine& engine) {
 		m_position.z += m_velocity.z * GetFrameTime();
 
 		dalia::Result res;
-		 res = engine.SetPlaybackPosition(m_handle, {m_position.x, m_position.y, m_position.z});
+		 res = m_engine->SetPlaybackPosition(m_handle, {m_position.x, m_position.y, m_position.z});
 		if (res != dalia::Result::Ok) m_result = res;
-		res = engine.SetPlaybackVelocity(m_handle, {m_velocity.x, m_velocity.y, m_velocity.z});
+		res = m_engine->SetPlaybackVelocity(m_handle, {m_velocity.x, m_velocity.y, m_velocity.z});
 		if (res != dalia::Result::Ok) m_result = res;
 	}
 }
@@ -37,10 +41,10 @@ void PlaybackInstance::Draw3D(bool isSelected) {
 
 	Color baseColor = GRAY;
 	switch (m_state) {
-		case PlaybackState::Inactive: ImGui::Text("State: INACTIVE"); baseColor = GRAY;		break;
-		case PlaybackState::Playing: ImGui::Text("State: PLAYING");	  baseColor = GREEN;	break;
-		case PlaybackState::Paused: ImGui::Text("State: PAUSED");	  baseColor = YELLOW;	break;
-		case PlaybackState::Stopped: ImGui::Text("State: STOPPED");	  baseColor = RED;		break;
+		case PlaybackState::Inactive: baseColor = GRAY;		break;
+		case PlaybackState::Playing:  baseColor = GREEN;	break;
+		case PlaybackState::Paused:   baseColor = YELLOW;	break;
+		case PlaybackState::Stopped:  baseColor = RED;		break;
 	}
 
 	DrawSphere(m_position, 0.5f, Fade(baseColor, 0.8f));
@@ -62,9 +66,11 @@ void PlaybackInstance::Draw3D(bool isSelected) {
 	}
 }
 
-void PlaybackInstance::DrawInspectorUI(dalia::Engine& engine) {
+void PlaybackInstance::DrawInspectorUI() {
 	ImGui::PushID(this);
 
+	ImGui::Text("Result: ");
+	ImGui::SameLine();
 	if (m_result == dalia::Result::Ok) {
 		ImGui::TextColored({0.0f, 1.0f, 0.0f, 1.0f}, dalia::GetErrorString(m_result));
 	}
@@ -84,20 +90,20 @@ void PlaybackInstance::DrawInspectorUI(dalia::Engine& engine) {
 	// --- State Control ---
 	if (m_state == PlaybackState::Inactive || m_state == PlaybackState::Paused) {
 		if (ImGui::Button("Play")) {
-			res = engine.PlayPlayback(m_handle);
+			res = m_engine->PlayPlayback(m_handle);
 			if (res != dalia::Result::Ok) m_result = res;
 		}
 	}
 	else if (m_state == PlaybackState::Playing) {
 		if (ImGui::Button("Pause")) {
-			res = engine.PausePlayback(m_handle);
+			res = m_engine->PausePlayback(m_handle);
 			if (res != dalia::Result::Ok) m_result = res;
 		}
 	}
 
 	ImGui::SameLine();
 	if (ImGui::Button("Stop")) {
-		res = engine.StopPlayback(m_handle);
+		res = m_engine->StopPlayback(m_handle);
 		if (res != dalia::Result::Ok) m_result = res;
 	}
 
@@ -109,35 +115,35 @@ void PlaybackInstance::DrawInspectorUI(dalia::Engine& engine) {
 	ImGui::InputDouble("Time (s)", &m_seekTime, 1.0, 10.0, "%.1f");
 	ImGui::SameLine();
 	if (ImGui::Button("Seek")) {
-		res = engine.SeekPlayback(m_handle, m_seekTime);
+		res = m_engine->SeekPlayback(m_handle, m_seekTime);
 		if (res != dalia::Result::Ok) m_result = res;
 	}
 
 	// --- General Properties ---
 	if (ImGui::SliderFloat("Volume (dB)", &m_volumeDb, -60.0f, 12.0f)) {
-		res = engine.SetPlaybackVolumeDb(m_handle, m_volumeDb);
+		res = m_engine->SetPlaybackVolumeDb(m_handle, m_volumeDb);
 		if (res != dalia::Result::Ok) m_result = res;
 	}
 
 	if (ImGui::SliderFloat("Pitch", &m_pitch, 0.1f, 4.0f)) {
-		res = engine.SetPlaybackPitch(m_handle, m_pitch);
+		res = m_engine->SetPlaybackPitch(m_handle, m_pitch);
 		if (res != dalia::Result::Ok) m_result = res;
 	}
 
 	if (!m_isSpatial) {
-		if (ImGui::SliderFloat("Stereo Pan", &m_stereoPan, 0.1f, 4.0f)) {
-			res = engine.SetPlaybackStereoPan(m_handle, m_stereoPan);
+		if (ImGui::SliderFloat("Stereo Pan", &m_stereoPan, -1.0f, 1.0f)) {
+			res = m_engine->SetPlaybackStereoPan(m_handle, m_stereoPan);
 			if (res != dalia::Result::Ok) m_result = res;
 		}
 	}
 
 	if (ImGui::Checkbox("Loop", &m_isLooping)) {
-		res = engine.SetPlaybackLooping(m_handle, m_isLooping);
+		res = m_engine->SetPlaybackLooping(m_handle, m_isLooping);
 		if (res != dalia::Result::Ok) m_result = res;
 	}
 
 	if (ImGui::Checkbox("Spatial", &m_isSpatial)) {
-		res = engine.SetPlaybackSpatial(m_handle, m_isSpatial);
+		res = m_engine->SetPlaybackSpatial(m_handle, m_isSpatial);
 		if (res != dalia::Result::Ok) m_result = res;
 	}
 
@@ -151,20 +157,36 @@ void PlaybackInstance::DrawInspectorUI(dalia::Engine& engine) {
 
 		if (ImGui::SliderFloat("Min Dist", &m_minDistance, 0.1f, 100.0f) ||
 			ImGui::SliderFloat("Max Dist", &m_maxDistance, m_minDistance, 500.0f)) {
-			res = engine.SetPlaybackMinMaxDistance(m_handle, m_minDistance, m_maxDistance);
+			res = m_engine->SetPlaybackMinMaxDistance(m_handle, m_minDistance, m_maxDistance);
 			if (res != dalia::Result::Ok) m_result = res;
 		}
 
 		if (ImGui::Checkbox("Doppler Effect", &m_useDoppler)) {
-			res = engine.SetPlaybackUseDoppler(m_handle, m_useDoppler);
+			res = m_engine->SetPlaybackUseDoppler(m_handle, m_useDoppler);
 			if (res != dalia::Result::Ok) m_result = res;
 		}
 
 		if (m_useDoppler) {
 			if (ImGui::SliderFloat("Doppler Factor", &m_dopplerFactor, 0.0f, 10.0f)) {
-				res = engine.SetPlaybackDopplerFactor(m_handle, m_dopplerFactor);
+				res = m_engine->SetPlaybackDopplerFactor(m_handle, m_dopplerFactor);
 				if (res != dalia::Result::Ok) m_result = res;
 			}
+		}
+
+		// TODO: Add distance mode setter
+
+		ImGui::TextDisabled("Listener Masks");
+
+		bool l0 = false, l1 = false, l2 = false, l3 = false;
+		dalia::ListenerMask mask = dalia::MASK_NONE;
+		if (ImGui::Checkbox("Listener 0", &l0) || ImGui::Checkbox("Listener 1", &l1) ||
+			ImGui::Checkbox("Listener 2", &l2) || ImGui::Checkbox("Listener 3", &l3)) {
+			if (l0) mask |= dalia::MASK_LISTENER_0;
+			if (l1) mask |= dalia::MASK_LISTENER_1;
+			if (l2) mask |= dalia::MASK_LISTENER_2;
+			if (l3) mask |= dalia::MASK_LISTENER_3;
+			res = m_engine->SetPlaybackListenerMask(m_handle, mask);
+			if (res != dalia::Result::Ok) m_result = res;
 		}
 
 		ImGui::Unindent();
