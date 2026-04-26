@@ -57,5 +57,5 @@ private:
 	bool m_useDoppler = false;
 	float m_dopplerFactor = 1.0f;
 
-	uint32_t listenerMask = dalia::MASK_ALL_LISTENERS;
+	uint32_t m_listenerMask = dalia::MASK_ALL_LISTENERS;
 };
