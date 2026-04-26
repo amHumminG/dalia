@@ -15,6 +15,8 @@ Sandbox::Sandbox()
 	SetConfigFlags(FLAG_WINDOW_RESIZABLE | FLAG_MSAA_4X_HINT);
 	InitWindow(screenWidth, screenHeight, "Dalia Engine Sandbox");
 	SetTargetFPS(60);
+	// SetExitKey(NULL);
+	m_viewportTexture = LoadRenderTexture(screenWidth, screenHeight);
 
 	rlImGuiSetup(true);
 	ImGuiIO& io = ImGui::GetIO();
@@ -32,11 +34,13 @@ Sandbox::Sandbox()
 	dalia::EngineConfig config;
 	config.coordinateSystem = dalia::CoordinateSystem::RightHanded;
 	config.logLevel = dalia::LogLevel::Debug;
+	config.logCallback = [this](dalia::LogLevel level, const char* context, const char* message) {
+		m_logs.push_back({level, context, message});
+	};
 	config.listenerCapacity = 4;
 	m_engine.Init(config);
 
-	// Initialize UI Panels
-	// m_panels.push_back(std::make_unique<>());
+	RefreshAvailableAssets();
 }
 
 Sandbox::~Sandbox() {
@@ -53,7 +57,22 @@ void Sandbox::Run() {
 }
 
 void Sandbox::Update() {
-	UpdateCamera(&m_spectatorCamera, CAMERA_FREE);
+	ImGuiIO& io = ImGui::GetIO();
+
+	if (!io.WantTextInput) {
+		if (IsKeyPressed(KEY_C)) {
+			if (m_in3DMode) {
+				m_in3DMode = false;
+				EnableCursor();
+			}
+			else {
+				m_in3DMode = true;
+				DisableCursor();
+			}
+		}
+	}
+
+	if (m_in3DMode) UpdateCamera(&m_spectatorCamera, CAMERA_FREE);
 
 	Listener* currentlyPiloted = nullptr;
 	for (auto& listener : m_listeners) {
@@ -75,10 +94,9 @@ void Sandbox::Update() {
 }
 
 void Sandbox::Draw() {
-	BeginDrawing();
+	// 3D Pass (to viewport texture)
+	BeginTextureMode(m_viewportTexture);
 	ClearBackground(DARKGRAY);
-
-	// 3D Pass
 	BeginMode3D(m_spectatorCamera);
 
 	DrawGrid(20, 1.0f);
@@ -90,12 +108,27 @@ void Sandbox::Draw() {
 	}
 
 	EndMode3D();
+	EndTextureMode();
 
 	// UI Pass
-	rlImGuiBegin();
+	BeginDrawing();
+	ClearBackground(BLACK);
 
+	rlImGuiBegin();
 	ImGuiID dockSpaceId = ImGui::DockSpaceOverViewport(0, ImGui::GetMainViewport());
 
+	DrawMenuBar();
+	DrawSceneOutliner();
+	DrawInspector();
+	DrawAssetBrowser();
+	DrawViewportPanel();
+	DrawConsolePanel();
+
+	rlImGuiEnd();
+	EndDrawing();
+}
+
+void Sandbox::DrawMenuBar() {
 	if (ImGui::BeginMainMenuBar()) {
 		if (ImGui::BeginMenu("Options")) {
 			if (ImGui::MenuItem("Exit")) m_isExiting = true;
@@ -103,15 +136,6 @@ void Sandbox::Draw() {
 		}
 		ImGui::EndMainMenuBar();
 	}
-
-	DrawSceneOutliner();
-	DrawInspector();
-	DrawAssetBrowser();
-
-	// for (auto& panel : m_panels) panel->Draw();
-
-	rlImGuiEnd();
-	EndDrawing();
 }
 
 void Sandbox::DrawSceneOutliner() {
@@ -221,6 +245,20 @@ void Sandbox::DrawAssetBrowser() {
 	ImGui::TextDisabled("Load Audio File");
 	ImGui::InputText("Filepath", m_newSoundPathBuffer, sizeof(m_newSoundPathBuffer));
 
+	ImGui::SameLine();
+	if (ImGui::BeginCombo("##AssetDropdown", "Browse...", ImGuiComboFlags_NoPreview)) {
+		for (const auto& assetPath : m_availableAssets) {
+			if (ImGui::Selectable(assetPath.c_str(), false)) {
+				std::strncpy(m_newSoundPathBuffer, assetPath.c_str(), sizeof(m_newSoundPathBuffer) - 1);
+				m_newSoundPathBuffer[sizeof(m_newSoundPathBuffer) - 1] = '\0';
+			}
+		}
+		ImGui::EndCombo();
+	}
+
+	ImGui::SameLine();
+	if (ImGui::Button("Refresh")) RefreshAvailableAssets();
+
 	ImGui::Combo("Type", &m_newSoundType, "Resident \0Stream\0");
 
 	if (ImGui::Button("Load Asset", ImVec2(-1, 0))) {
@@ -252,5 +290,153 @@ void Sandbox::DrawAssetBrowser() {
 	}
 
 	ImGui::End();
+}
+
+void Sandbox::DrawViewportPanel() {
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
+	ImGui::Begin("3D Viewport");
+
+
+	// Dynamic resizing
+	ImVec2 size = ImGui::GetContentRegionAvail();
+	if (size.x > 0 && size.y > 0) {
+		// Resize render texture if panel is resized
+		if (size.x != static_cast<float>(m_viewportTexture.texture.width) ||
+			size.y != static_cast<float>(m_viewportTexture.texture.height)) {
+			UnloadRenderTexture(m_viewportTexture);
+			m_viewportTexture = LoadRenderTexture(static_cast<int>(size.x), static_cast<int>(size.y));
+		}
+
+		rlImGuiImageRenderTexture(&m_viewportTexture);
+	}
+
+	if (!m_in3DMode) {
+		ImVec2 pos = ImGui::GetWindowPos();
+		ImGui::GetWindowDrawList()->AddText(
+			ImVec2(pos.x + 10, pos.y + 30),
+			IM_COL32(255, 255, 255, 150),
+			"Press C enter 3D mode"
+		);
+	}
+	else {
+		ImVec2 pos = ImGui::GetWindowPos();
+		ImGui::GetWindowDrawList()->AddText(
+			ImVec2(pos.x + 10, pos.y + 30),
+			IM_COL32(255, 255, 255, 150),
+			"Press C to exit 3D mode"
+		);
+	}
+
+	ImGui::End();
+	ImGui::PopStyleVar();
+}
+
+void Sandbox::DrawConsolePanel() {
+	ImGui::Begin("Console");
+
+	// Toolbar
+	if (ImGui::Button("Clear")) m_logs.clear();
+	ImGui::SameLine();
+	ImGui::Checkbox("Auto-scroll", &m_consoleAutoScroll);
+
+	ImGui::TextDisabled("| Filters:");
+	ImGui::SameLine();
+	ImGui::Checkbox("Debug", &m_showDebug); ImGui::SameLine();
+	ImGui::Checkbox("Info", &m_showInfo); ImGui::SameLine();
+	ImGui::Checkbox("Warnings", &m_showWarnings); ImGui::SameLine();
+	ImGui::Checkbox("Error", &m_showErrors);
+
+	ImGui::Separator();
+
+	// Logs
+	ImGui::BeginChild("ScrollingRegion", ImVec2(0, 0), false, ImGuiWindowFlags_None);
+
+	static size_t lastSize = 0;
+	if (m_logs.size() > lastSize) {
+		if (m_consoleAutoScroll) m_consoleScrollToBottom = true;
+		lastSize = m_logs.size();
+	}
+	else if (m_logs.size() < lastSize) {
+		lastSize = m_logs.size();
+	}
+
+	if (ImGui::BeginTable("LogsTable", 3, ImGuiTableFlags_RowBg | ImGuiTableFlags_SizingFixedFit)) {
+		ImGui::TableSetupColumn("Level", ImGuiTableColumnFlags_WidthFixed);
+		ImGui::TableSetupColumn("Category", ImGuiTableColumnFlags_WidthFixed);
+		ImGui::TableSetupColumn("Message", ImGuiTableColumnFlags_WidthStretch);
+
+		// Draw logs
+		for (const auto& log : m_logs) {
+			if (!m_showDebug && log.level == dalia::LogLevel::Debug) continue;
+			if (!m_showInfo && log.level == dalia::LogLevel::Info) continue;
+			if (!m_showWarnings && log.level == dalia::LogLevel::Warning) continue;
+			if (!m_showErrors && (log.level == dalia::LogLevel::Error || log.level == dalia::LogLevel::Critical)) continue;
+
+			const char* levelStr = "NONE";
+			ImVec4 color = ImVec4(0.7f, 0.7f, 0.7f, 1.0f); // Gray
+
+			switch (log.level) {
+				case dalia::LogLevel::Debug:
+					levelStr = "DEBUG";
+					color = ImVec4(0.45f, 0.45f, 0.45f, 1.0f);
+					break;
+				case dalia::LogLevel::Info:
+					levelStr = "INFO";
+					color = ImVec4(0.4f, 0.8f, 0.5f, 1.0f);
+					break;
+				case dalia::LogLevel::Warning:
+					levelStr = "WARN";
+					color = ImVec4(1.0f, 0.7f, 0.2f, 1.0f);
+					break;
+				case dalia::LogLevel::Error:
+					levelStr = "ERROR";
+					color = ImVec4(1.0f, 0.2f, 0.2f, 1.0f);
+					break;
+				case dalia::LogLevel::Critical:
+					levelStr = "CRIT";
+					color = ImVec4(1.0f, 0.2f, 0.4f, 1.0f);
+					break;
+			}
+
+			ImGui::TableNextRow();
+
+			ImGui::TableSetColumnIndex(0);
+			ImGui::TextColored(color, "[%s]", levelStr);
+
+			ImGui::TableSetColumnIndex(1);
+			ImGui::TextDisabled("[%s]", log.context.c_str());
+
+			ImGui::TableSetColumnIndex(2);
+			ImGui::TextWrapped("%s", log.message.c_str());
+		}
+
+		ImGui::EndTable();
+	}
+
+	if (m_consoleScrollToBottom) {
+		ImGui::SetScrollHereY(1.0f);
+		m_consoleScrollToBottom = false;
+	}
+
+	ImGui::EndChild();
+	ImGui::End();
+}
+
+void Sandbox::RefreshAvailableAssets() {
+	m_availableAssets.clear();
+
+	std::string targetDir = "assets";
+
+	if (std::filesystem::exists(targetDir) && std::filesystem::is_directory(targetDir)) {
+		for (const auto& entry : std::filesystem::recursive_directory_iterator(targetDir)) {
+			if (entry.is_regular_file()) {
+				// Filter audio files only (extend this when we add banks)
+				std::string ext = entry.path().extension().string();
+				if (ext == ".wav" || ext == ".mp3" || ext == ".ogg") {
+					m_availableAssets.push_back(entry.path().generic_string());
+				}
+			}
+		}
+	}
 }
 
