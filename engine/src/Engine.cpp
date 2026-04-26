@@ -522,6 +522,7 @@ namespace dalia {
 		}
 
 		Logger::Init(config.logLevel, 256);
+		if (config.logCallback != nullptr) Logger::SetSink(config.logCallback);
 
 		// --- INTERNAL STATE SETUP ---
 		m_state = new EngineInternalState(config);
