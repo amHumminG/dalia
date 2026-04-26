@@ -27,10 +27,14 @@ SoundAsset::~SoundAsset() {
 	m_engine->UnloadSound(m_handle);
 }
 
-void SoundAsset::DrawInspectorUI(std::function<void(dalia::SoundHandle, const std::string&)> onSpawnPlayback) {
+void SoundAsset::DrawInspectorUI(const UIContext& ui, std::function<void(dalia::SoundHandle, const std::string&)> onSpawnPlayback) {
 	ImGui::PushID(this);
 
-	ImGui::TextColored({1.0f, 0.8f, 0.0f, 1.0f}, "Asset: %s", m_filepath.c_str());
+	ImGui::PushFont(ui.headerFont);
+	ImGui::Text("[S] %s", m_filepath.c_str());
+	ImGui::PopFont();
+	ImGui::Separator();
+
 	ImGui::TextDisabled("Type: %s", (m_type == dalia::SoundType::Resident) ? "Resident" : "Streaming");
 
 	ImGui::Separator();

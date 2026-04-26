@@ -5,6 +5,8 @@
 #include "rlImGui.h"
 #include "imgui.h"
 
+#include "UI.h"
+
 #include "dalia.h"
 #include "Listener.h"
 #include "PlaybackInstance.h"
@@ -54,6 +56,8 @@ private:
 	void DrawBusNodeRecursive(MixingBus* currentBus); // Helper
 
 	void RefreshAvailableAssets();
+
+	UIContext m_ui;
 
 	dalia::Engine m_engine;
 

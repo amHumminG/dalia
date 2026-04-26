@@ -2,6 +2,7 @@
 
 #include "raylib.h"
 #include "dalia.h"
+#include "UI.h"
 
 #include <string>
 
@@ -10,7 +11,7 @@ public:
 	MixingBus(dalia::Engine* engine, const std::string& identifier, const std::string& parentIdentifier = "Master");
 	~MixingBus();
 
-	void DrawInspectorUI();
+	void DrawInspectorUI(const UIContext& ui);
 
 	std::string GetIdentifier() const { return m_identifier; }
 	std::string GetParentIdentifier() const { return m_parentIdentifier; }

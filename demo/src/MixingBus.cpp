@@ -18,10 +18,12 @@ MixingBus::~MixingBus() {
 	m_engine->DestroyBus(m_identifier.c_str());
 }
 
-void MixingBus::DrawInspectorUI() {
+void MixingBus::DrawInspectorUI(const UIContext& ui) {
 	ImGui::PushID(this);
 
-	ImGui::TextColored({0.8f, 0.4f, 1.0f, 1.0f}, "Mixing Bus: %s", m_identifier.c_str());
+	ImGui::PushFont(ui.headerFont);
+	ImGui::Text("[B] %s", m_identifier.c_str());
+	ImGui::PopFont();
 
 	ImGui::Separator();
 
@@ -36,7 +38,7 @@ void MixingBus::DrawInspectorUI() {
 
 	ImGui::Separator();
 
-	ImGui::TextDisabled("Routing Topology");
+	ImGui::TextDisabled("Routed to");
 
 	if (m_identifier == "Master") {
 		ImGui::Text("Parent: None (Root Node)");

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "dalia.h"
+#include "UI.h"
 
 #include <string>
 #include <functional>
@@ -16,7 +17,7 @@ public:
 	SoundAsset(dalia::Engine* engine, dalia::SoundType type, const std::string& filepath);
 	~SoundAsset();
 
-	void DrawInspectorUI(std::function<void(dalia::SoundHandle, const std::string&)> onSpawnPlayback);
+	void DrawInspectorUI(const UIContext& ui, std::function<void(dalia::SoundHandle, const std::string&)> onSpawnPlayback);
 
 	dalia::SoundHandle GetHandle() const { return m_handle; }
 	dalia::Result GetResult() const { return m_result; }

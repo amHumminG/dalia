@@ -2,6 +2,7 @@
 
 #include "raylib.h"
 #include "dalia.h"
+#include "UI.h"
 
 #include <string>
 
@@ -19,10 +20,14 @@ public:
 
 	void Update();
 	void Draw3D(bool isSelected);
-	void DrawInspectorUI();
+	void DrawInspectorUI(const UIContext& ui);
 
 	dalia::Result GetResult() const { return m_result; }
+	void SetResult(dalia::Result result) { m_result = result; }
 	std::string GetName() const { return m_name; }
+	dalia::PlaybackHandle GetHandle() const { return m_handle; }
+	std::string GetBusIdentifier() const { return m_busIdentifier; }
+	void SetBusIdentifier(const std::string& busIdentifier) { m_busIdentifier = busIdentifier; }
 
 private:
 	dalia::Engine* m_engine = nullptr;
@@ -36,7 +41,9 @@ private:
 
 	double m_seekTime = 0.0;
 
-	std::string m_bus = "Master";
+	// Bus
+	std::string m_busIdentifier = "Master";
+	char m_routeInputBuffer[128] = "";
 
 	float m_volumeDb = 0.0f;
 	float m_pitch = 1.0f;

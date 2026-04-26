@@ -66,8 +66,14 @@ void PlaybackInstance::Draw3D(bool isSelected) {
 	}
 }
 
-void PlaybackInstance::DrawInspectorUI() {
+void PlaybackInstance::DrawInspectorUI(const UIContext& ui) {
 	ImGui::PushID(this);
+
+	ImGui::PushFont(ui.headerFont);
+	ImGui::Text("[P] %s", m_name.c_str());
+	ImGui::PopFont();
+
+	ImGui::Separator();
 
 	ImGui::Text("Result: ");
 	ImGui::SameLine();
@@ -78,39 +84,61 @@ void PlaybackInstance::DrawInspectorUI() {
 		ImGui::TextColored({1.0f, 0.0f, 0.0f, 1.0f}, dalia::GetErrorString(m_result));
 	}
 
+	ImGui::Text("State: ");
+	ImGui::SameLine();
 	switch (m_state) {
-		case PlaybackState::Inactive: ImGui::Text("State: INACTIVE");	break;
-		case PlaybackState::Playing: ImGui::Text("State: PLAYING");		break;
-		case PlaybackState::Paused: ImGui::Text("State: PAUSED");		break;
-		case PlaybackState::Stopped: ImGui::Text("State: STOPPED");		break;
+		case PlaybackState::Inactive: ImGui::TextColored({0.7f, 0.7f, 0.7f, 1.0f}, "INACTIVE");	break;
+		case PlaybackState::Playing:  ImGui::TextColored({0.0f, 1.0f, 0.0f, 1.0f}, "PLAYING");	break;
+		case PlaybackState::Paused:   ImGui::TextColored({1.0f, 1.0f, 0.0f, 1.0f}, "PAUSED");	break;
+		case PlaybackState::Stopped:  ImGui::TextColored({1.0f, 0.0f, 0.0f, 1.0f}, "STOPPED");	break;
 	}
 
+	ImGui::SeparatorText("Routing");
 	dalia::Result res;
+
+	ImGui::Text("Routed to: %s", m_busIdentifier.c_str());
+
+	ImGui::InputText("##New routing", m_routeInputBuffer, sizeof(m_routeInputBuffer));
+	ImGui::SameLine();
+
+	if (ImGui::Button("Route")) {
+		std::string newBus(m_routeInputBuffer);
+
+		dalia::Result res = m_engine->RouteBus(m_busIdentifier.c_str(), newBus.c_str());
+
+		if (res == dalia::Result::Ok) {
+			m_busIdentifier = newBus;
+		}
+		else {
+			std::strncpy(m_routeInputBuffer, m_busIdentifier.c_str(), sizeof(m_routeInputBuffer) - 1);
+		}
+	}
 
 	// --- State Control ---
 	if (m_state == PlaybackState::Inactive || m_state == PlaybackState::Paused) {
 		if (ImGui::Button("Play")) {
 			res = m_engine->PlayPlayback(m_handle);
 			if (res != dalia::Result::Ok) m_result = res;
+			else m_state = PlaybackState::Playing;
 		}
 	}
 	else if (m_state == PlaybackState::Playing) {
 		if (ImGui::Button("Pause")) {
 			res = m_engine->PausePlayback(m_handle);
 			if (res != dalia::Result::Ok) m_result = res;
+			else m_state = PlaybackState::Paused;
 		}
 	}
 
-	ImGui::SameLine();
-	if (ImGui::Button("Stop")) {
-		res = m_engine->StopPlayback(m_handle);
-		if (res != dalia::Result::Ok) m_result = res;
+	if (m_state != PlaybackState::Stopped) {
+		ImGui::SameLine();
+		if (ImGui::Button("Stop")) {
+			res = m_engine->StopPlayback(m_handle);
+			if (res != dalia::Result::Ok) m_result = res;
+		}
 	}
 
-	ImGui::Separator();
-
-	// --- Navigation Control ---
-	ImGui::TextDisabled("Navigation");
+	ImGui::SeparatorText("Navigation Control");
 
 	ImGui::InputDouble("Time (s)", &m_seekTime, 1.0, 10.0, "%.1f");
 	ImGui::SameLine();
@@ -119,7 +147,8 @@ void PlaybackInstance::DrawInspectorUI() {
 		if (res != dalia::Result::Ok) m_result = res;
 	}
 
-	// --- General Properties ---
+	ImGui::SeparatorText("General Properties");
+
 	if (ImGui::SliderFloat("Volume (dB)", &m_volumeDb, -60.0f, 12.0f)) {
 		res = m_engine->SetPlaybackVolumeDb(m_handle, m_volumeDb);
 		if (res != dalia::Result::Ok) m_result = res;
@@ -147,9 +176,8 @@ void PlaybackInstance::DrawInspectorUI() {
 		if (res != dalia::Result::Ok) m_result = res;
 	}
 
-	ImGui::Separator();
+	ImGui::SeparatorText("Spatial Properties");
 
-	// --- Spatial Properties ---
 	if (m_isSpatial) {
 		ImGui::Indent();
 
@@ -179,8 +207,17 @@ void PlaybackInstance::DrawInspectorUI() {
 
 		bool changed = false;
 		changed |= ImGui::CheckboxFlags("Listener 0", &m_listenerMask, dalia::MASK_LISTENER_0);
+		ImGui::SameLine();
+		ImGui::Text("  ");
+		ImGui::SameLine();
 		changed |= ImGui::CheckboxFlags("Listener 1", &m_listenerMask, dalia::MASK_LISTENER_1);
+		ImGui::SameLine();
+		ImGui::Text("  ");
+		ImGui::SameLine();
 		changed |= ImGui::CheckboxFlags("Listener 2", &m_listenerMask, dalia::MASK_LISTENER_2);
+		ImGui::SameLine();
+		ImGui::Text("  ");
+		ImGui::SameLine();
 		changed |= ImGui::CheckboxFlags("Listener 3", &m_listenerMask, dalia::MASK_LISTENER_3);
 
 		if (changed) {

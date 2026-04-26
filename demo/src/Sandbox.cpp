@@ -23,6 +23,9 @@ Sandbox::Sandbox()
 	io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 	io.ConfigDockingTransparentPayload = true;
 
+	m_ui.defaultFont = io.Fonts->AddFontFromFileTTF("assets/fonts/Inter_18pt-Regular.ttf", 16.0f);
+	m_ui.headerFont = io.Fonts->AddFontFromFileTTF("assets/fonts/Inter_18pt-SemiBold.ttf", 18.0f);
+
 	// Camera Setup
 	m_spectatorCamera.position = { 0.0f, 10.0f, 10.0f };
 	m_spectatorCamera.target = { 0.0f, 0.0f, 0.0f };
@@ -154,7 +157,7 @@ void Sandbox::DrawSceneOutliner() {
 			bool isSelected = (m_selectionType == SelectionType::Listener && m_selectedObject == &listener);
 
 			char label[64];
-			snprintf(label, sizeof(label), "[Listener] %u", listener.GetIndex());
+			snprintf(label, sizeof(label), "[L] %u", listener.GetIndex());
 
 			if (ImGui::Selectable(label, isSelected)) {
 				m_selectionType = SelectionType::Listener;
@@ -169,11 +172,26 @@ void Sandbox::DrawSceneOutliner() {
 			bool isSelected = (m_selectionType == SelectionType::Playback && m_selectedObject == playback.get());
 
 			char label[128];
-			snprintf(label, sizeof(label), "[Playback] %s", playback->GetName().c_str());
+			snprintf(label, sizeof(label), "[P] %s", playback->GetName().c_str());
 
 			if (ImGui::Selectable(label, isSelected)) {
 				m_selectionType = SelectionType::Playback;
 				m_selectedObject = playback.get();
+			}
+		}
+	}
+
+	// Buses
+	if (ImGui::CollapsingHeader("Buses", ImGuiTreeNodeFlags_DefaultOpen)) {
+		for (auto& bus : m_buses) {
+			bool isSelected = (m_selectionType == SelectionType::Bus && m_selectedObject == bus.get());
+
+			char label[128];
+			snprintf(label, sizeof(label), "[B] %s", bus->GetIdentifier().c_str());
+
+			if (ImGui::Selectable(label, isSelected)) {
+				m_selectionType = SelectionType::Bus;
+				m_selectedObject = bus.get();
 			}
 		}
 	}
@@ -191,11 +209,11 @@ void Sandbox::DrawInspector() {
 	}
 	else if (m_selectionType == SelectionType::Listener) {
 		auto* listener = static_cast<Listener*>(m_selectedObject);
-		listener->DrawInspectorUI();
+		listener->DrawInspectorUI(m_ui);
 	}
 	else if (m_selectionType == SelectionType::Playback) {
 		auto* playback = static_cast<PlaybackInstance*>(m_selectedObject);
-		playback->DrawInspectorUI();
+		playback->DrawInspectorUI(m_ui);
 
 		ImGui::Separator();
 		ImGui::PushStyleColor(ImGuiCol_Button, {0.8f, 0.2f, 0.2f, 1.0f});
@@ -217,7 +235,7 @@ void Sandbox::DrawInspector() {
 			if (playback->GetResult() == dalia::Result::Ok) m_playbackInstances.push_back(std::move(playback));
 		};
 
-		sound->DrawInspectorUI(spawnLambda);
+		sound->DrawInspectorUI(m_ui, spawnLambda);
 
 		ImGui::Separator();
 		ImGui::PushStyleColor(ImGuiCol_Button, {0.8f, 0.2f, 0.2f, 1.0f});
@@ -226,7 +244,7 @@ void Sandbox::DrawInspector() {
 	}
 	else if (m_selectionType == SelectionType::Bus) {
 		auto* bus = static_cast<MixingBus*>(m_selectedObject);
-		bus->DrawInspectorUI();
+		bus->DrawInspectorUI(m_ui);
 
 		if (bus->GetIdentifier() != "Master") {
 			ImGui::Separator();
@@ -304,7 +322,7 @@ void Sandbox::DrawAssetBrowser() {
 		std::string filename = path.filename().string();
 
 		char label[256];
-		snprintf(label, sizeof(label), "[Asset] %s", filename.c_str());
+		snprintf(label, sizeof(label), "[S] %s", filename.c_str());
 
 		if (ImGui::Selectable(label, isSelected)) {
 			m_selectionType = SelectionType::Sound;
@@ -497,13 +515,22 @@ void Sandbox::DrawBusHierarchyPanel() {
 }
 
 void Sandbox::DrawBusNodeRecursive(MixingBus* currentBus) {
-	bool hasChildren = false;
+	bool hasChildBuses = false;
 	for (const auto& bus : m_buses) {
 		if (bus->GetParentIdentifier() == currentBus->GetIdentifier() && bus.get() != currentBus) {
-			hasChildren = true;
+			hasChildBuses = true;
 			break;
 		}
 	}
+
+	bool hasChildPlaybacks = false;
+	for (const auto& playback : m_playbackInstances) {
+		if (playback->GetBusIdentifier() == currentBus->GetIdentifier()) {
+			hasChildPlaybacks = true;
+		}
+	}
+
+	bool hasChildren = hasChildBuses || hasChildPlaybacks;
 
 	// --- Set up flags ---
 	ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_OpenOnArrow |ImGuiTreeNodeFlags_OpenOnDoubleClick |
@@ -516,11 +543,16 @@ void Sandbox::DrawBusNodeRecursive(MixingBus* currentBus) {
 		flags |= ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen;
 	}
 
-	// --- Draw node ---
+	// Draw bus node (Use pointer as ImGui ID to make sure it is unique
+	bool nodeOpen = ImGui::TreeNodeEx(currentBus, flags, "[B] %s", currentBus->GetIdentifier().c_str());
 
-	// Use pointer as ImGui ID to make sure it is unique
-	bool nodeOpen = ImGui::TreeNodeEx((void*)currentBus, flags, "%s", currentBus->GetIdentifier().c_str());
+	// Selection handling
+	if (ImGui::IsItemClicked() && !ImGui::IsItemToggledOpen()) {
+		m_selectionType = SelectionType::Bus;
+		m_selectedObject = currentBus;
+	}
 
+	// Drag and drop logic
 	if (ImGui::BeginDragDropSource()) {
 		MixingBus* payloadBus = currentBus;
 		ImGui::SetDragDropPayload("DND_BUS_NODE", &payloadBus, sizeof(MixingBus*));
@@ -531,6 +563,7 @@ void Sandbox::DrawBusNodeRecursive(MixingBus* currentBus) {
 	}
 
 	if (ImGui::BeginDragDropTarget()) {
+		// Accept buses
 		if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("DND_BUS_NODE")) {
 			MixingBus* droppedBus = *(MixingBus**)payload->Data;
 
@@ -539,20 +572,53 @@ void Sandbox::DrawBusNodeRecursive(MixingBus* currentBus) {
 				droppedBus->SetParentIdentifier(currentBus->GetIdentifier());
 			}
 		}
-		ImGui::EndDragDropTarget();
-	}
 
-	// Selection handling
-	if (ImGui::IsItemClicked() && !ImGui::IsItemToggledOpen()) {
-		m_selectionType = SelectionType::Bus;
-		m_selectedObject = currentBus;
+		// Accept playbacks
+		if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("DND_PLAYBACK_NODE")) {
+			PlaybackInstance* droppedPlayback = *(PlaybackInstance**)payload->Data;
+
+			dalia::Result res = m_engine.RoutePlayback(droppedPlayback->GetHandle(), currentBus->GetIdentifier().c_str());
+			if (res != dalia::Result::Ok) droppedPlayback->SetResult(res);
+			else droppedPlayback->SetBusIdentifier(currentBus->GetIdentifier());
+		}
+
+		ImGui::EndDragDropTarget();
 	}
 
 	// Draw children
 	if (nodeOpen && hasChildren) {
+		// Draw child buses
 		for (const auto& bus : m_buses) {
 			if (bus->GetParentIdentifier() == currentBus->GetIdentifier()) {
 				DrawBusNodeRecursive(bus.get());
+			}
+		}
+
+		// Draw child playback instances
+		for (const auto& playback : m_playbackInstances) {
+			if (playback->GetBusIdentifier() == currentBus->GetIdentifier()) {
+				ImGuiTreeNodeFlags pFlags = ImGuiTreeNodeFlags_Leaf | ImGuiTreeNodeFlags_NoTreePushOnOpen |
+					ImGuiTreeNodeFlags_SpanAvailWidth;
+
+				if (m_selectionType == SelectionType::Playback && m_selectedObject == playback.get()) {
+					pFlags |= ImGuiTreeNodeFlags_Selected;
+				}
+
+				ImGui::TreeNodeEx(playback.get(), pFlags, "[P] %s", playback->GetName().c_str());
+
+				if (ImGui::IsItemClicked() && !ImGui::IsItemToggledOpen()) {
+					m_selectionType = SelectionType::Playback;
+					m_selectedObject = playback.get();
+				}
+
+				if (ImGui::BeginDragDropSource()) {
+					PlaybackInstance* payloadPb = playback.get();
+					ImGui::SetDragDropPayload("DND_PLAYBACK_NODE", &payloadPb, sizeof(PlaybackInstance*));
+
+					ImGui::Text("Route '%s", playback->GetName().c_str());
+
+					ImGui::EndDragDropSource();
+				}
 			}
 		}
 		ImGui::TreePop();
@@ -576,4 +642,3 @@ void Sandbox::RefreshAvailableAssets() {
 		}
 	}
 }
-

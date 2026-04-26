@@ -56,10 +56,12 @@ void Listener::Draw3D(bool isSelected) {
 	else DrawSphereWires(m_position, 0.6f, 8, 8, DARKGRAY);
 }
 
-void Listener::DrawInspectorUI() {
+void Listener::DrawInspectorUI(const UIContext& ui) {
 	ImGui::PushID(this);
 
-	ImGui::TextColored({0.0f, 0.8f, 1.0f, 1.0f}, "Listener %u", m_index);
+	ImGui::PushFont(ui.headerFont);
+	ImGui::Text("[L] %u", m_index);
+	ImGui::PopFont();
 	ImGui::Separator();
 
 	dalia::Result res;

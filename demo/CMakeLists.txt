@@ -51,6 +51,7 @@ SET(DEMO_FILES
     src/SoundAsset.h
     src/MixingBus.cpp
     src/MixingBus.h
+    src/UI.h
 )
 
 add_executable(dalia_demo ${DEMO_FILES})

@@ -6,6 +6,7 @@
 #include "imgui.h"
 
 #include "dalia.h"
+#include "UI.h"
 
 class Listener {
 public:
@@ -13,7 +14,7 @@ public:
 
 	void Update();
 	void Draw3D(bool isSelected);
-	void DrawInspectorUI();
+	void DrawInspectorUI(const UIContext& ui);
 
 	bool isPiloted = false;
 	void SyncWithCamera(const Camera3D& camera);
