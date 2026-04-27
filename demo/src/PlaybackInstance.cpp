@@ -84,8 +84,9 @@ void PlaybackInstance::DrawInspectorUI(const UIContext& ui) {
 		ImGui::TextColored({1.0f, 0.0f, 0.0f, 1.0f}, dalia::GetErrorString(m_result));
 	}
 
-	ImGui::Text("State: ");
-	ImGui::SameLine();
+	ImGui::SeparatorText("State");
+	dalia::Result res;
+
 	switch (m_state) {
 		case PlaybackState::Inactive: ImGui::TextColored({0.7f, 0.7f, 0.7f, 1.0f}, "INACTIVE");	break;
 		case PlaybackState::Playing:  ImGui::TextColored({0.0f, 1.0f, 0.0f, 1.0f}, "PLAYING");	break;
@@ -93,28 +94,6 @@ void PlaybackInstance::DrawInspectorUI(const UIContext& ui) {
 		case PlaybackState::Stopped:  ImGui::TextColored({1.0f, 0.0f, 0.0f, 1.0f}, "STOPPED");	break;
 	}
 
-	ImGui::SeparatorText("Routing");
-	dalia::Result res;
-
-	ImGui::Text("Routed to: %s", m_busIdentifier.c_str());
-
-	ImGui::InputText("##New routing", m_routeInputBuffer, sizeof(m_routeInputBuffer));
-	ImGui::SameLine();
-
-	if (ImGui::Button("Route")) {
-		std::string newBus(m_routeInputBuffer);
-
-		dalia::Result res = m_engine->RouteBus(m_busIdentifier.c_str(), newBus.c_str());
-
-		if (res == dalia::Result::Ok) {
-			m_busIdentifier = newBus;
-		}
-		else {
-			std::strncpy(m_routeInputBuffer, m_busIdentifier.c_str(), sizeof(m_routeInputBuffer) - 1);
-		}
-	}
-
-	// --- State Control ---
 	if (m_state == PlaybackState::Inactive || m_state == PlaybackState::Paused) {
 		if (ImGui::Button("Play")) {
 			res = m_engine->PlayPlayback(m_handle);
@@ -138,13 +117,31 @@ void PlaybackInstance::DrawInspectorUI(const UIContext& ui) {
 		}
 	}
 
-	ImGui::SeparatorText("Navigation Control");
-
 	ImGui::InputDouble("Time (s)", &m_seekTime, 1.0, 10.0, "%.1f");
 	ImGui::SameLine();
 	if (ImGui::Button("Seek")) {
 		res = m_engine->SeekPlayback(m_handle, m_seekTime);
 		if (res != dalia::Result::Ok) m_result = res;
+	}
+
+	ImGui::SeparatorText("Routing");
+
+	ImGui::Text("Routed to: %s", m_busIdentifier.c_str());
+
+	ImGui::InputText("##New routing", m_routeInputBuffer, sizeof(m_routeInputBuffer));
+	ImGui::SameLine();
+
+	if (ImGui::Button("Route")) {
+		std::string newBus(m_routeInputBuffer);
+
+		dalia::Result res = m_engine->RouteBus(m_busIdentifier.c_str(), newBus.c_str());
+
+		if (res == dalia::Result::Ok) {
+			m_busIdentifier = newBus;
+		}
+		else {
+			std::strncpy(m_routeInputBuffer, m_busIdentifier.c_str(), sizeof(m_routeInputBuffer) - 1);
+		}
 	}
 
 	ImGui::SeparatorText("General Properties");
