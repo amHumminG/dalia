@@ -2,6 +2,8 @@
 
 #include <filesystem>
 
+static constexpr float DEG_TO_RAD = PI / 180.0f;
+
 Sandbox::Sandbox()
 	: m_listeners{
 		Listener(&m_engine, 0, true),
@@ -185,7 +187,7 @@ void Sandbox::Update() {
 void Sandbox::Draw() {
 	// 3D Pass (to viewport texture)
 	BeginTextureMode(m_viewportTexture);
-	ClearBackground(BLACK);
+	ClearBackground(Color(60, 60, 60, 1));
 	BeginMode3D(m_spectatorCamera);
 
 	DrawGrid(20, 1.0f);
@@ -208,6 +210,7 @@ void Sandbox::Draw() {
 	ClearBackground(BLACK);
 
 	rlImGuiBegin();
+	ImGuizmo::BeginFrame();
 	ImGuiID dockSpaceId = ImGui::DockSpaceOverViewport(0, ImGui::GetMainViewport());
 
 	DrawMenuBar();
@@ -443,9 +446,10 @@ void Sandbox::DrawViewportPanel() {
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
 	ImGui::Begin("3D Viewport");
 
-
-	// Dynamic resizing
+	// ---  Dynamic Resizing ---
 	ImVec2 size = ImGui::GetContentRegionAvail();
+	ImVec2 pos = ImGui::GetWindowPos();
+
 	if (size.x > 0 && size.y > 0) {
 		// Resize render texture if panel is resized
 		if (size.x != static_cast<float>(m_viewportTexture.texture.width) ||
@@ -455,6 +459,224 @@ void Sandbox::DrawViewportPanel() {
 		}
 
 		rlImGuiImageRenderTexture(&m_viewportTexture);
+	}
+
+	// --- Viewport Hover Controls ---
+	static bool isDraggingCamera = false;
+	static Vector2 restoreMousePos = { 0, 0 };
+
+	if (!m_in3DMode) {
+		ImGuiIO& io = ImGui::GetIO();
+
+		if (ImGui::IsWindowHovered()) {
+			// Snap camera target to selection (F)
+			if (ImGui::IsKeyPressed(ImGuiKey_F) && m_selectedObject != nullptr) {
+				Vector3 focusPos = { 0, 0, 0 };
+				bool hasFocusTarget = false;
+
+				if (m_selectionType == SelectionType::Listener) {
+					auto* listener = static_cast<Listener*>(m_selectedObject);
+					if (listener->IsActive()) {
+						if (listener->targetBody == Listener::TargetBody::Probe) focusPos = listener->GetProbePosition();
+						else focusPos = listener->GetPosition();
+						hasFocusTarget = true;
+					}
+				}
+				else if (m_selectionType == SelectionType::Playback) {
+					auto* playback = static_cast<PlaybackInstance*>(m_selectedObject);
+					if (playback->IsSpatial()) focusPos = playback->GetPosition();
+					hasFocusTarget = true;
+				}
+
+				if (hasFocusTarget) {
+					Vector3 currentOffset = Vector3Subtract(m_spectatorCamera.position, m_spectatorCamera.target);
+					Vector3 lookDirection = Vector3Normalize(currentOffset);
+					float distance = Vector3Distance(m_spectatorCamera.position, focusPos);
+
+					m_spectatorCamera.target = focusPos;
+					m_spectatorCamera.position = Vector3Add(focusPos, Vector3Scale(lookDirection, distance));
+				}
+			}
+
+			// Camera movement forwards and backwards using (MOUSE SCROLL)
+			if (io.MouseWheel != 0.0f) {
+				Vector3 lookDir = Vector3Subtract(m_spectatorCamera.target, m_spectatorCamera.position);
+				float currentDist = Vector3Length(lookDir);
+				lookDir = Vector3Normalize(lookDir);
+				float zoomAmount = io.MouseWheel * 2.5f;
+
+				// If we zoom past original target, push target forward
+				if (zoomAmount > 0.0f && (currentDist - zoomAmount) < 1.0f) {
+					m_spectatorCamera.target = Vector3Add(m_spectatorCamera.target, Vector3Scale(lookDir, zoomAmount));
+				}
+				m_spectatorCamera.position = Vector3Add(m_spectatorCamera.position, Vector3Scale(lookDir, zoomAmount));
+			}
+
+			if (ImGui::IsMouseClicked(ImGuiMouseButton_Right) || ImGui::IsMouseClicked(ImGuiMouseButton_Middle)) {
+				isDraggingCamera = true;
+				restoreMousePos = GetMousePosition();
+				DisableCursor();
+			}
+		}
+
+		if (isDraggingCamera) {
+			Vector3 movement = { 0.0f, 0.0f, 0.0f };
+			Vector3 rotation = { 0.0f, 0.0f, 0.0f };
+			Vector2 delta = GetMouseDelta();
+
+			// Rotate Camera (LEFT ALT + MOUSE 2)
+			if (ImGui::IsMouseDown(ImGuiMouseButton_Right) && ImGui::IsKeyDown(ImGuiKey_LeftAlt)) {
+				float lookSensitivity = 0.20f;
+				rotation.x = delta.x * lookSensitivity;
+				rotation.y = delta.y * lookSensitivity;
+				UpdateCameraPro(&m_spectatorCamera, movement, rotation, 0.0f);
+			}
+
+			// Orbit Camera (LEFT ALT + MOUSE 2)
+			else if (ImGui::IsMouseDown(ImGuiMouseButton_Right)) {
+				Vector3 pivot = m_spectatorCamera.target;
+				Vector3 offset = Vector3Subtract(m_spectatorCamera.position, pivot);
+
+				float orbitSpeed = 0.005f;
+				float yawAngle = -delta.x * orbitSpeed;
+				float pitchAngle = -delta.y * orbitSpeed;
+
+				// Apply yaw
+				Matrix yawMatrix = MatrixRotate({0.0f,  1.0f, 0.0f}, yawAngle);
+				offset = Vector3Transform(offset, yawMatrix);
+
+				// Apply pitch
+				Vector3 right = Vector3Normalize(Vector3CrossProduct({0.0f, 1.0f, 0.0f}, offset));
+				Matrix pitchMatrix = MatrixRotate(right, pitchAngle);
+
+				Vector3 newOffset = Vector3Transform(offset, pitchMatrix);
+				float upDot = Vector3DotProduct(Vector3Normalize(newOffset), {0.0f, 1.0f, 0.0f});
+
+				if (fabs(upDot) < 0.99f) offset = newOffset; // Safety check
+
+				m_spectatorCamera.position = Vector3Add(pivot, offset);
+				m_spectatorCamera.target = pivot;
+			}
+
+			// Pan Camera (MIDDLE MOUSE)
+			else if (ImGui::IsMouseDown(ImGuiMouseButton_Middle)) {
+				float panSensitivity = 0.05f;
+				movement.y = -delta.x * panSensitivity;
+				movement.z = delta.y * panSensitivity;
+				UpdateCameraPro(&m_spectatorCamera, movement, rotation, 0.0f);
+			}
+		}
+
+		if (isDraggingCamera) {
+			if (!ImGui::IsMouseDown(ImGuiMouseButton_Right) && !ImGui::IsMouseDown(ImGuiMouseButton_Middle)) {
+				isDraggingCamera = false;
+				EnableCursor();
+				SetMousePosition(static_cast<int>(restoreMousePos.x), static_cast<int>(restoreMousePos.y));
+			}
+		}
+	}
+
+	// --- Gizmos ---
+	static ImGuizmo::OPERATION currentGizmoOp = ImGuizmo::TRANSLATE;
+
+	bool shouldDrawGizmo = false;
+	Vector3 objPos = {0, 0, 0};
+	Vector3 objFwd = {0, 0, 1};
+	Vector3 objUp  = {0, 1, 0};
+	bool canRotate = false;
+
+	// Should we draw a gizmo?
+	if (!m_in3DMode && m_selectedObject != nullptr) {
+		if (m_selectionType == SelectionType::Listener) {
+			auto* listener = static_cast<Listener*>(m_selectedObject);
+
+			if (listener->targetBody == Listener::TargetBody::Probe) objPos = listener->GetProbePosition();
+			else objPos = listener->GetPosition();
+
+			shouldDrawGizmo = true;
+			objFwd = listener->GetForward();
+			canRotate = true;
+		}
+		else if (m_selectionType == SelectionType::Playback) {
+			auto* playback = static_cast<PlaybackInstance*>(m_selectedObject);
+
+			if (playback->IsSpatial()) {
+				shouldDrawGizmo = true;
+				objPos = playback->GetPosition();
+				canRotate = false;
+				currentGizmoOp = ImGuizmo::TRANSLATE;
+			}
+		}
+	}
+
+	if (shouldDrawGizmo) {
+		Vector3 objRight = Vector3CrossProduct(objUp, objFwd);
+		if (Vector3Length(objRight) < 0.001f) objRight = { 1.0f, 0.0f, 0.0f};
+		else objRight = Vector3Normalize(objRight);
+
+		Vector3 orthoUp = Vector3Normalize(Vector3CrossProduct(objFwd, objRight));
+		float matrixArr[16] = {
+			objRight.x, objRight.y, objRight.z, 0.0f,	// Red Arrow
+			orthoUp.x,  orthoUp.y,  orthoUp.z,  0.0f,	// Green Arrow
+			objFwd.x,   objFwd.y,   objFwd.z,   0.0f,	// Blue Arrow
+			objPos.x,   objPos.y,   objPos.z,   1.0f	// Position
+		};
+
+		ImGuizmo::SetDrawlist();
+		ImGuizmo::SetRect(pos.x, pos.y + ImGui::GetCursorStartPos().y, size.x, size.y);
+
+		Matrix view = MatrixTranspose(GetCameraMatrix(m_spectatorCamera));
+		float aspectRatio = size.x / size.y;
+		Matrix projection = MatrixTranspose(MatrixPerspective(m_spectatorCamera.fovy * DEG_TO_RAD, aspectRatio, 0.1f, 1000.0f));
+		ImGuizmo::SetOrthographic(false);
+
+		if (canRotate) {
+			ImGui::SetCursorPos(ImVec2(10, 50));
+
+			if (!ImGui::GetIO().WantTextInput) {
+				if (ImGui::IsKeyPressed(ImGuiKey_W)) currentGizmoOp = ImGuizmo::TRANSLATE;
+				if (ImGui::IsKeyPressed(ImGuiKey_E)) currentGizmoOp = ImGuizmo::ROTATE;
+			}
+
+			if (ImGui::RadioButton("Translate [W]", currentGizmoOp == ImGuizmo::TRANSLATE)) {
+				currentGizmoOp = ImGuizmo::TRANSLATE;
+			}
+			ImGui::SameLine();
+			if (ImGui::RadioButton("Rotate [E]", currentGizmoOp == ImGuizmo::ROTATE)) {
+				currentGizmoOp = ImGuizmo::ROTATE;
+			}
+		}
+
+		ImGuizmo::Manipulate(&view.m0, &projection.m0, currentGizmoOp, ImGuizmo::WORLD, matrixArr);
+
+		if (ImGuizmo::IsUsing()) {
+			if (m_selectionType == SelectionType::Listener) {
+				auto* listener = static_cast<Listener*>(m_selectedObject);
+
+				if (currentGizmoOp == ImGuizmo::TRANSLATE) {
+					Vector3 draggedPos = {matrixArr[12], matrixArr[13], matrixArr[14] };
+					Vector3 delta = Vector3Subtract(draggedPos, objPos);
+
+					if (listener->targetBody == Listener::TargetBody::Head) {
+						listener->SetPosition(draggedPos);
+					}
+					else if (listener->targetBody == Listener::TargetBody::Probe) {
+						listener->SetProbePosition(draggedPos);
+					}
+					else if (listener->targetBody == Listener::TargetBody::Both) {
+						listener->SetPosition(draggedPos);
+						listener->SetProbePosition(Vector3Add(listener->GetProbePosition(), delta));
+					}
+				}
+				else if (currentGizmoOp == ImGuizmo::ROTATE) {
+					listener->SetForward(Vector3Normalize({matrixArr[8], matrixArr[9], matrixArr[10] }));
+				}
+			}
+			else if (m_selectionType == SelectionType::Playback) {
+				auto* playback = static_cast<PlaybackInstance*>(m_selectedObject);
+				playback->SetPosition({matrixArr[12], matrixArr[13], matrixArr[14]});
+			}
+		}
 	}
 
 	if (!m_in3DMode) {

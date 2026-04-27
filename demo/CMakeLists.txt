@@ -19,7 +19,12 @@ FetchContent_Declare(
     GIT_REPOSITORY https://github.com/raylib-extras/rlImGui.git
     GIT_TAG main
 )
-FetchContent_MakeAvailable(raylib imgui rlimgui)
+FetchContent_Declare(
+    imguizmo
+    GIT_REPOSITORY https://github.com/CedricGuillemet/ImGuizmo.git
+    GIT_TAG master
+)
+FetchContent_MakeAvailable(raylib imgui rlimgui imguizmo)
 
 # Define ImGui and rlImGui as libraries
 add_library(imgui_lib_demo STATIC
@@ -37,6 +42,11 @@ add_library(rlimgui_lib_demo STATIC
 target_include_directories(rlimgui_lib_demo SYSTEM PUBLIC ${rlimgui_SOURCE_DIR})
 target_link_libraries(rlimgui_lib_demo PUBLIC raylib imgui_lib_demo)
 
+add_library(imguizmo_lib STATIC
+    ${imguizmo_SOURCE_DIR}/ImGuizmo.cpp
+)
+target_include_directories(imguizmo_lib SYSTEM PUBLIC ${imguizmo_SOURCE_DIR})
+target_link_libraries(imguizmo_lib PUBLIC imgui_lib_demo)
 
 SET(DEMO_FILES
     src/main.cpp
@@ -59,6 +69,7 @@ add_executable(dalia_demo ${DEMO_FILES})
 target_link_libraries(dalia_demo
     PRIVATE dalia_engine
     PRIVATE rlimgui_lib_demo
+    PRIVATE imguizmo_lib
     PRIVATE raylib
 )
 

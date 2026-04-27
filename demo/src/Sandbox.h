@@ -4,6 +4,7 @@
 #include "raymath.h"
 #include "rlImGui.h"
 #include "imgui.h"
+#include "ImGuizmo.h"
 
 #include "UI.h"
 

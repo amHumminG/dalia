@@ -24,12 +24,21 @@ public:
 
 	dalia::Result GetResult() const { return m_result; }
 	void SetResult(dalia::Result result) { m_result = result; }
+
 	std::string GetName() const { return m_name; }
+
 	dalia::SoundType GetSoundType() { return m_soundType; }
 	void SetSoundType(dalia::SoundType type) { m_soundType = type; }
+
 	dalia::PlaybackHandle GetHandle() const { return m_handle; }
+
 	std::string GetBusIdentifier() const { return m_busIdentifier; }
 	void SetBusIdentifier(const std::string& busIdentifier) { m_busIdentifier = busIdentifier; }
+
+	Vector3 GetPosition() const { return m_position; }
+	void SetPosition(const Vector3& position) { m_position = position; }
+
+	bool IsSpatial() const { return m_isSpatial; }
 
 private:
 	dalia::Engine* m_engine = nullptr;

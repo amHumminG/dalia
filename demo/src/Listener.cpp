@@ -13,7 +13,7 @@ void Listener::Update() {
 
 	dalia::Listener3DAttributes attributes;
 	attributes.position = {m_position.x, m_position.y, m_position.z};
-	attributes.distanceProbePosition = {m_ProbePosition.x, m_ProbePosition.y, m_ProbePosition.z};
+	attributes.distanceProbePosition = {m_probePosition.x, m_probePosition.y, m_probePosition.z};
 	attributes.forward = {m_forward.x, m_forward.y, m_forward.z};
 	attributes.up = {m_up.x, m_up.y, m_up.z};
 	attributes.velocity = {m_velocity.x, m_velocity.y, m_velocity.z};
@@ -23,37 +23,36 @@ void Listener::Update() {
 }
 
 void Listener::Draw3D(bool isSelected) {
-	if (!m_isActive) return;
+	if (!m_isActive || (isPiloted && targetBody == TargetBody::Both)) return;
 
-	Color listenerColor = SKYBLUE;
+	if (!isPiloted || targetBody != TargetBody::Head) {
+		DrawSphere(m_position, 0.5f, Fade(SKYBLUE, 0.8f));
 
-	DrawSphere(m_position, 0.5f, Fade(listenerColor, 0.8f));
+		// Orientation
+		float vecLength = 1.5f;
+		Vector3 forwardVec = {
+			m_position.x + (m_forward.x * vecLength),
+			m_position.y + (m_forward.y * vecLength),
+			m_position.z + (m_forward.z * vecLength),
+		};
 
-	// Orientation
-	float vecLength = 1.5f;
-	Vector3 forwardVec = {
-		m_position.x + (m_forward.x * vecLength),
-		m_position.y + (m_forward.y * vecLength),
-		m_position.z + (m_forward.z * vecLength),
-	};
+		Vector3 upVec = {
+			m_position.x + (m_up.x * vecLength),
+			m_position.y + (m_up.y * vecLength),
+			m_position.z + (m_up.z * vecLength),
+		};
 
-	Vector3 upVec = {
-		m_position.x + (m_up.x * vecLength),
-		m_position.y + (m_up.y * vecLength),
-		m_position.z + (m_up.z * vecLength),
-	};
+		DrawLine3D(m_position, forwardVec, BLUE);
+		DrawLine3D(m_position, upVec, GREEN);
+	}
 
-	DrawLine3D(m_position, forwardVec, BLUE);
-	DrawLine3D(m_position, upVec, GREEN);
-
-	// Draw distance probe (if used)
-	if (Vector3Distance(m_position, m_ProbePosition) > 0.01f) {
-		DrawSphere(m_ProbePosition, 0.2f, ORANGE);
-		DrawLine3D(m_position, m_ProbePosition, Fade(ORANGE, 0.5f));
+	if (!isPiloted || targetBody != TargetBody::Head)
+	if (Vector3Distance(m_position, m_probePosition) > 0.01f) {
+		DrawSphere(m_probePosition, 0.2f, ORANGE);
+		DrawLine3D(m_position, m_probePosition, Fade(ORANGE, 0.5f));
 	}
 
 	if (isSelected) DrawSphereWires(m_position, 0.6f, 8, 8, WHITE);
-	else DrawSphereWires(m_position, 0.6f, 8, 8, DARKGRAY);
 }
 
 void Listener::DrawInspectorUI(const UIContext& ui) {
@@ -66,63 +65,55 @@ void Listener::DrawInspectorUI(const UIContext& ui) {
 
 	dalia::Result res;
 
-	if (ImGui::Checkbox("Active", &m_isActive)) {
-		res = m_engine->SetListenerActive(m_index, m_isActive);
-		if (res != dalia::Result::Ok) m_result = res;
+	if (m_index != 0) {
+		if (ImGui::Checkbox("Active", &m_isActive)) {
+			res = m_engine->SetListenerActive(m_index, m_isActive);
+			if (res != dalia::Result::Ok) m_result = res;
+		}
+	}
+	else {
+		ImGui::Text("Listener 0 is always active");
 	}
 
 	if (m_isActive) {
-		ImGui::Indent();
+		ImGui::Text("Target Body:");
+		ImGui::SameLine();
 
-		// Pilot Controls
-		ImGui::Separator();
-		ImGui::TextDisabled("Camera Control");
+		int* target = reinterpret_cast<int*>(&targetBody);
+		ImGui::RadioButton("Both", target, 0);
+		ImGui::SameLine();
+		ImGui::RadioButton("Head", target, 1);
+		ImGui::SameLine();
+		ImGui::RadioButton("Probe", target, 2);
 
-		if (isPiloted) {
-			ImGui::PushStyleColor(ImGuiCol_Button, {0.8f, 0.2f, 0.2f, 1.0f});
-			if (ImGui::Button("Stop Piloting")) isPiloted = false;
-			ImGui::PopStyleColor();
-
-			ImGui::SameLine();
-			ImGui::Text("Driving:");
-			ImGui::SameLine();
-
-			int* target = reinterpret_cast<int*>(&m_pilotTarget);
-			ImGui::RadioButton("Head", target, 0);
-			ImGui::SameLine();
-			ImGui::RadioButton("Probe", target, 1);
+		if (!isPiloted) {
+			if (ImGui::Button("Pilot")) isPiloted = true;
 		}
 		else {
-			if (ImGui::Button("Pilot Listener")) isPiloted = true;
+			if (ImGui::Button("Stop Piloting")) isPiloted = false;
 		}
 
-		ImGui::TextDisabled("Transform");
-
-		if (isPiloted) ImGui::BeginDisabled();
-
-		// TODO: Add transform setters for position and velocity
-
-		ImGui::Separator();
-
-		ImGui::TextDisabled("Advanced");
-
-		// TODO: Add position setter for probe position
-
-		if (isPiloted) ImGui::EndDisabled();
-
-		ImGui::Unindent();
+		if (!isPiloted) {
+			// TODO: Add transform setters for velocity
+		}
 	}
 
 	ImGui::PopID();
 }
 
 void Listener::SyncWithCamera(const Camera3D& camera) {
-	if (m_pilotTarget == PilotTarget::Head) {
+	if (targetBody == TargetBody::Both) {
 		m_position = camera.position;
-		m_up = camera.up;
+		m_probePosition = camera.position;
 		m_forward = Vector3Normalize(Vector3Subtract(camera.target, camera.position));
+		m_up = camera.up;
 	}
-	else if (m_pilotTarget == PilotTarget::Probe) {
-		m_ProbePosition = camera.position;
+	else if (targetBody == TargetBody::Head) {
+		m_position = camera.position;
+		m_forward = Vector3Normalize(Vector3Subtract(camera.target, camera.position));
+		m_up = camera.up;
+	}
+	else if (targetBody == TargetBody::Probe) {
+		m_probePosition = camera.position;
 	}
 }
