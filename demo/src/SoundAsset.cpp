@@ -27,15 +27,14 @@ SoundAsset::~SoundAsset() {
 	m_engine->UnloadSound(m_handle);
 }
 
-void SoundAsset::DrawInspectorUI(const UIContext& ui, std::function<void(dalia::SoundHandle, const std::string&)> onSpawnPlayback) {
+void SoundAsset::DrawInspectorUI(const UIContext& ui, std::function<void(dalia::SoundHandle, const std::string&, dalia::SoundType)> onSpawnPlayback) {
 	ImGui::PushID(this);
 
 	ImGui::PushFont(ui.headerFont);
-	ImGui::Text("[S] %s", m_filepath.c_str());
+	const char* typeTag = (m_type == dalia::SoundType::Resident) ? "Resident" : "Streaming";
+	ImGui::Text("[A] %s (%s)", m_filepath.c_str(), typeTag);
 	ImGui::PopFont();
 	ImGui::Separator();
-
-	ImGui::TextDisabled("Type: %s", (m_type == dalia::SoundType::Resident) ? "Resident" : "Streaming");
 
 	ImGui::Separator();
 
@@ -64,7 +63,7 @@ void SoundAsset::DrawInspectorUI(const UIContext& ui, std::function<void(dalia::
 		ImGui::Separator();
 
 		if (ImGui::Button("Create Playback Instance", ImVec2(-1, 30))) {
-			if (onSpawnPlayback) onSpawnPlayback(m_handle, m_filepath);
+			if (onSpawnPlayback) onSpawnPlayback(m_handle, m_filepath, m_type);
 		}
 	}
 

@@ -17,12 +17,13 @@ public:
 	SoundAsset(dalia::Engine* engine, dalia::SoundType type, const std::string& filepath);
 	~SoundAsset();
 
-	void DrawInspectorUI(const UIContext& ui, std::function<void(dalia::SoundHandle, const std::string&)> onSpawnPlayback);
+	void DrawInspectorUI(const UIContext& ui, std::function<void(dalia::SoundHandle, const std::string&, dalia::SoundType)> onSpawnPlayback);
 
 	dalia::SoundHandle GetHandle() const { return m_handle; }
 	dalia::Result GetResult() const { return m_result; }
 	SoundLoadState GetLoadState() const { return m_loadState; }
 	std::string GetFilePath() const { return m_filepath; }
+	dalia::SoundType GetType() const { return m_type; }
 
 private:
 	dalia::Engine* m_engine = nullptr;

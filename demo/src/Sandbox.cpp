@@ -270,8 +270,9 @@ void Sandbox::DrawSceneOutliner() {
 		for (auto& playback : m_playbackInstances) {
 			bool isSelected = (m_selectionType == SelectionType::Playback && m_selectedObject == playback.get());
 
+			const char* typeTag = (playback->GetSoundType() == dalia::SoundType::Resident) ? "Resident" : "Stream";
 			char label[128];
-			snprintf(label, sizeof(label), "[P] %s", playback->GetName().c_str());
+			snprintf(label, sizeof(label), "[P] %s (%s)", playback->GetName().c_str(), typeTag);
 
 			if (ImGui::Selectable(label, isSelected)) {
 				m_selectionType = SelectionType::Playback;
@@ -307,16 +308,19 @@ void Sandbox::DrawInspector() {
 	else if (m_selectionType == SelectionType::Sound) {
 		auto* sound = static_cast<SoundAsset*>(m_selectedObject);
 
-		auto spawnLambda = [this](dalia::SoundHandle handle, const std::string& filepath) {
+		auto spawnLambda = [this](dalia::SoundHandle handle, const std::string& filepath, dalia::SoundType soundType) {
 			std::filesystem::path fullpath = filepath;
 			std::string baseName = fullpath.stem().string();
 
 			static uint32_t playbackSpawnCounter = 0;
 			char nameBuffer[128];
-			snprintf(nameBuffer, sizeof(nameBuffer), "%s (%u)", baseName.c_str(), playbackSpawnCounter++);
+			snprintf(nameBuffer, sizeof(nameBuffer), "%s %u", baseName.c_str(), playbackSpawnCounter++);
 
 			auto playback = std::make_unique<PlaybackInstance>(&m_engine, handle, nameBuffer);
-			if (playback->GetResult() == dalia::Result::Ok) m_playbackInstances.push_back(std::move(playback));
+			if (playback->GetResult() == dalia::Result::Ok) {
+				playback->SetSoundType(soundType);
+				m_playbackInstances.push_back(std::move(playback));
+			}
 		};
 
 		sound->DrawInspectorUI(m_ui, spawnLambda);
@@ -386,26 +390,45 @@ void Sandbox::DrawAssetBrowser() {
 
 	ImGui::Combo("Type", &m_newSoundType, "Resident \0Stream\0");
 
-	if (ImGui::Button("Load Asset", ImVec2(-1, 0))) {
+	if (ImGui::Button("Load", ImVec2(-1, 0))) {
 		std::string path(m_newSoundPathBuffer);
 		if (!path.empty()) {
+			// Check if sound already exists
+			bool exists = false;
 			dalia::SoundType type = (m_newSoundType == 0) ? dalia::SoundType::Resident : dalia::SoundType::Stream;
-			auto sound = std::make_unique<SoundAsset>(&m_engine, type, path);
-			if (sound->GetResult() == dalia::Result::Ok) m_sounds.push_back(std::move(sound));
-			m_newSoundPathBuffer[0] = '\0';
+			for (const auto& sound : m_sounds) {
+				if (path == sound->GetFilePath() && sound->GetType() == type) exists = true;
+				break;
+			}
+
+			if (exists) {
+				m_showDuplicateSoundWarning = true;
+			}
+			else {
+
+				auto sound = std::make_unique<SoundAsset>(&m_engine, type, path);
+				if (sound->GetResult() == dalia::Result::Ok) m_sounds.push_back(std::move(sound));
+				m_newSoundPathBuffer[0] = '\0';
+				m_showDuplicateSoundWarning = false;
+			}
 		}
 	}
 
+	if (m_showDuplicateSoundWarning) {
+		ImGui::TextColored({1.0f, 0.0f, 0.0f, 1.0f}, "Sound is already loaded");
+	}
+
 	ImGui::SeparatorText("Loaded Assets");
-	
+
 	for (auto& sound : m_sounds) {
 		bool isSelected = (m_selectionType == SelectionType::Sound && m_selectedObject == sound.get());
 
 		std::filesystem::path path(sound->GetFilePath());
 		std::string filename = path.filename().string();
 
+		const char* typeTag = (sound->GetType() == dalia::SoundType::Resident) ? "Resident" : "Stream";
 		char label[256];
-		snprintf(label, sizeof(label), "[S] %s", filename.c_str());
+		snprintf(label, sizeof(label), "[A] %s (%s)", filename.c_str(), typeTag);
 
 		if (ImGui::Selectable(label, isSelected)) {
 			m_selectionType = SelectionType::Sound;
@@ -565,17 +588,17 @@ void Sandbox::DrawMixingHierarchyPanel() {
 		}
 
 		if (exists) {
-			m_showDuplicateWarning = true;
+			m_showDuplicateBusWarning = true;
 		}
 		else if (!newName.empty()) {
 			auto bus = std::make_unique<MixingBus>(&m_engine, newName);
 			if (bus->GetResult() == dalia::Result::Ok) m_buses.push_back(std::move(bus));
 			m_newBusNameBuffer[0] = '\0';
-			m_showDuplicateWarning = false;
+			m_showDuplicateBusWarning = false;
 		}
 	}
 
-	if (m_showDuplicateWarning) {
+	if (m_showDuplicateBusWarning) {
 		ImGui::TextColored({1.0f, 0.0f, 0.0f, 1.0f}, "Bus with name already exists");
 	}
 
@@ -685,7 +708,9 @@ void Sandbox::DrawBusNodeRecursive(MixingBus* currentBus) {
 					pFlags |= ImGuiTreeNodeFlags_Selected;
 				}
 
-				ImGui::TreeNodeEx(playback.get(), pFlags, "[P] %s", playback->GetName().c_str());
+				const char* typeTag = (playback->GetSoundType() == dalia::SoundType::Resident) ? "Resident" : "Stream";
+
+				ImGui::TreeNodeEx(playback.get(), pFlags, "[P] %s (%s)", playback->GetName().c_str(), typeTag);
 
 				if (ImGui::IsItemClicked() && !ImGui::IsItemToggledOpen()) {
 					m_selectionType = SelectionType::Playback;

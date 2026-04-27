@@ -53,7 +53,7 @@ private:
 	void DrawAssetBrowser();
 	void DrawViewportPanel();
 	void DrawConsolePanel();
-	void DrawBusHierarchyPanel();
+	void DrawMixingHierarchyPanel();
 	void DrawBusNodeRecursive(MixingBus* currentBus); // Helper
 
 	void RefreshAvailableAssets();
@@ -79,11 +79,12 @@ private:
 	std::vector<std::unique_ptr<SoundAsset>> m_sounds;
 	char m_newSoundPathBuffer[256] = "";
 	int m_newSoundType = 0; // Resident = 0, Stream = 1
+	bool m_showDuplicateSoundWarning = false;
 
 	// Buses
 	std::vector<std::unique_ptr<MixingBus>> m_buses;
 	char m_newBusNameBuffer[128] = "";
-	bool m_showDuplicateWarning = false;
+	bool m_showDuplicateBusWarning = false;
 
 	// Console logging
 	std::vector<ConsoleLog> m_logs;

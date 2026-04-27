@@ -70,7 +70,8 @@ void PlaybackInstance::DrawInspectorUI(const UIContext& ui) {
 	ImGui::PushID(this);
 
 	ImGui::PushFont(ui.headerFont);
-	ImGui::Text("[P] %s", m_name.c_str());
+	const char* typeTag = (m_soundType == dalia::SoundType::Resident) ? "Resident" : "Stream";
+	ImGui::Text("[P] %s (%s)", m_name.c_str(), typeTag);
 	ImGui::PopFont();
 
 	ImGui::Separator();

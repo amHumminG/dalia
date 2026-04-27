@@ -25,6 +25,8 @@ public:
 	dalia::Result GetResult() const { return m_result; }
 	void SetResult(dalia::Result result) { m_result = result; }
 	std::string GetName() const { return m_name; }
+	dalia::SoundType GetSoundType() { return m_soundType; }
+	void SetSoundType(dalia::SoundType type) { m_soundType = type; }
 	dalia::PlaybackHandle GetHandle() const { return m_handle; }
 	std::string GetBusIdentifier() const { return m_busIdentifier; }
 	void SetBusIdentifier(const std::string& busIdentifier) { m_busIdentifier = busIdentifier; }
@@ -34,6 +36,8 @@ private:
 	dalia::Result m_result = dalia::Result::Ok;
 
 	std::string m_name;
+
+	dalia::SoundType m_soundType = dalia::SoundType::None;
 
 	dalia::PlaybackHandle m_handle;
 	PlaybackState m_state = PlaybackState::Inactive;
