@@ -114,6 +114,31 @@ void Sandbox::ApplyTheme() {
     colors[ImGuiCol_TitleBgActive]        = ImVec4(0.08f, 0.08f, 0.08f, 1.00f);
     colors[ImGuiCol_TitleBgCollapsed]     = ImVec4(0.00f, 0.00f, 0.00f, 0.51f);
     colors[ImGuiCol_DockingPreview]       = ImVec4(0.60f, 0.60f, 0.60f, 0.70f);
+
+	// Separators (The lines between docked panels)
+	colors[ImGuiCol_Separator]            = ImVec4(0.20f, 0.20f, 0.20f, 1.00f);
+	colors[ImGuiCol_SeparatorHovered]     = ImVec4(0.30f, 0.30f, 0.30f, 1.00f);
+	colors[ImGuiCol_SeparatorActive]      = ImVec4(0.45f, 0.45f, 0.45f, 1.00f);
+
+	// Resize Grips (Bottom right corners of floating windows)
+	colors[ImGuiCol_ResizeGrip]           = ImVec4(0.20f, 0.20f, 0.20f, 1.00f);
+	colors[ImGuiCol_ResizeGripHovered]    = ImVec4(0.30f, 0.30f, 0.30f, 1.00f);
+	colors[ImGuiCol_ResizeGripActive]     = ImVec4(0.45f, 0.45f, 0.45f, 1.00f);
+
+	// Text Selection
+	colors[ImGuiCol_TextSelectedBg]       = ImVec4(0.38f, 0.38f, 0.38f, 0.50f);
+
+	// Drag & Drop Target
+	colors[ImGuiCol_DragDropTarget]       = ImVec4(0.80f, 0.80f, 0.80f, 1.00f);
+
+	// Nav Highlight
+	colors[ImGuiCol_NavHighlight]         = ImVec4(0.60f, 0.60f, 0.60f, 1.00f);
+
+	// Scrollbars
+	colors[ImGuiCol_ScrollbarBg]          = ImVec4(0.04f, 0.04f, 0.04f, 0.50f);
+	colors[ImGuiCol_ScrollbarGrab]        = ImVec4(0.20f, 0.20f, 0.20f, 1.00f);
+	colors[ImGuiCol_ScrollbarGrabHovered] = ImVec4(0.30f, 0.30f, 0.30f, 1.00f);
+	colors[ImGuiCol_ScrollbarGrabActive]  = ImVec4(0.45f, 0.45f, 0.45f, 1.00f);
 }
 
 void Sandbox::Update() {
@@ -191,7 +216,7 @@ void Sandbox::Draw() {
 	DrawAssetBrowser();
 	DrawViewportPanel();
 	DrawConsolePanel();
-	DrawBusHierarchyPanel();
+	DrawMixingHierarchyPanel();
 
 	rlImGuiEnd();
 	EndDrawing();
@@ -342,7 +367,7 @@ void Sandbox::DrawAssetBrowser() {
 	ImGui::Begin("Asset Browser");
 
 	// Loading new assets
-	ImGui::TextDisabled("Load Audio File");
+	ImGui::SeparatorText("Load Sound From File");
 	ImGui::InputText("Filepath", m_newSoundPathBuffer, sizeof(m_newSoundPathBuffer));
 
 	ImGui::SameLine();
@@ -371,9 +396,8 @@ void Sandbox::DrawAssetBrowser() {
 		}
 	}
 
-	ImGui::Separator();
-
-	ImGui::TextDisabled("Loaded Assets");
+	ImGui::SeparatorText("Loaded Assets");
+	
 	for (auto& sound : m_sounds) {
 		bool isSelected = (m_selectionType == SelectionType::Sound && m_selectedObject == sound.get());
 
@@ -522,8 +546,8 @@ void Sandbox::DrawConsolePanel() {
 	ImGui::End();
 }
 
-void Sandbox::DrawBusHierarchyPanel() {
-	ImGui::Begin("Bus Hierarchy");
+void Sandbox::DrawMixingHierarchyPanel() {
+	ImGui::Begin("Mixing Hierarchy");
 
 	ImGui::TextDisabled("Create New Bus");
 	ImGui::InputText("##NewBusName", m_newBusNameBuffer, sizeof(m_newBusNameBuffer));
@@ -555,9 +579,7 @@ void Sandbox::DrawBusHierarchyPanel() {
 		ImGui::TextColored({1.0f, 0.0f, 0.0f, 1.0f}, "Bus with name already exists");
 	}
 
-	ImGui::Separator();
-
-	ImGui::TextDisabled("Routing Topology");
+	ImGui::SeparatorText("Hierarchy");
 
 	MixingBus* masterBus = nullptr;
 	for (const auto& bus : m_buses) {
