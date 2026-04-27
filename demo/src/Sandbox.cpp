@@ -66,13 +66,17 @@ void Sandbox::Update() {
 
 	if (!io.WantTextInput) {
 		if (IsKeyPressed(KEY_C)) {
+			m_in3DMode = !m_in3DMode;
+
 			if (m_in3DMode) {
-				m_in3DMode = false;
-				EnableCursor();
+				DisableCursor();
+				io.ConfigFlags |= ImGuiConfigFlags_NoMouseCursorChange;
+				io.ConfigFlags |= ImGuiConfigFlags_NoMouse;
 			}
 			else {
-				m_in3DMode = true;
-				DisableCursor();
+				EnableCursor();
+				io.ConfigFlags &= ~ImGuiConfigFlags_NoMouseCursorChange;
+				io.ConfigFlags &= ~ImGuiConfigFlags_NoMouse;
 			}
 		}
 	}
