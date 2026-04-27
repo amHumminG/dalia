@@ -39,6 +39,7 @@ public:
 	};
 
 private:
+	void ApplyTheme();
 	void Update();
 	void Draw();
 
