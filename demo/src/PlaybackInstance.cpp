@@ -174,12 +174,9 @@ void PlaybackInstance::DrawInspectorUI(const UIContext& ui) {
 		if (res != dalia::Result::Ok) m_result = res;
 	}
 
-	ImGui::SeparatorText("Spatial Properties");
-
 	if (m_isSpatial) {
+		ImGui::SeparatorText("Spatial Properties");
 		ImGui::Indent();
-
-		// TODO: Add position and velocity setters
 
 		if (ImGui::SliderFloat("Min Dist", &m_minDistance, 0.1f, 100.0f) ||
 			ImGui::SliderFloat("Max Dist", &m_maxDistance, m_minDistance, 500.0f)) {
@@ -200,6 +197,13 @@ void PlaybackInstance::DrawInspectorUI(const UIContext& ui) {
 		}
 
 		// TODO: Add distance mode setter
+		ImGui::Text("Distance Mode");
+		ImGui::SameLine();
+
+		int* distanceMode = reinterpret_cast<int*>(&m_distanceMode);
+		ImGui::RadioButton("From Listener", distanceMode, 0);
+		ImGui::SameLine();
+		ImGui::RadioButton("From Probe", distanceMode, 1);
 
 		ImGui::TextDisabled("Listener Masks");
 

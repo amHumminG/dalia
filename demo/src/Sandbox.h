@@ -48,20 +48,32 @@ private:
 
 	SelectionType m_selectionType = SelectionType::None;
 	void* m_selectedObject = nullptr;
+
 	void DrawMenuBar();
 	void DrawSceneOutliner();
 	void DrawInspector();
 	void DrawAssetBrowser();
-	void DrawViewportPanel();
-	void DrawConsolePanel();
-	void DrawMixingHierarchyPanel();
+	void DrawViewport();
+	void DrawConsole();
+	void DrawMixingHierarchy();
 	void DrawBusNodeRecursive(MixingBus* currentBus); // Helper
+
+	void DrawHotkeysWindow();
 
 	void RefreshAvailableAssets();
 
+	dalia::Engine m_engine;
+
 	UIContext m_ui;
 
-	dalia::Engine m_engine;
+	bool m_showInspector = true;
+	bool m_showAssetBrowser = true;
+	bool m_showSceneOutliner = true;
+	bool m_showMixingHierarchy = true;
+	bool m_showViewport = true;
+	bool m_showConsole = true;
+
+	bool m_showHotkeysWindow = false;
 
 	// 3D
 	RenderTexture2D m_viewportTexture;

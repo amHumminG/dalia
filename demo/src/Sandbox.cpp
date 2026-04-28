@@ -32,7 +32,7 @@ Sandbox::Sandbox()
 	io.FontDefault = m_ui.defaultFont;
 
 	// Camera Setup
-	m_spectatorCamera.position = { 0.0f, 10.0f, 10.0f };
+	m_spectatorCamera.position = { 0.0f, 10.0f, -10.0f };
 	m_spectatorCamera.target = { 0.0f, 0.0f, 0.0f };
 	m_spectatorCamera.up = { 0.0f, 1.0f, 0.0f };
 	m_spectatorCamera.fovy = 45.0f;
@@ -141,6 +141,24 @@ void Sandbox::ApplyTheme() {
 	colors[ImGuiCol_ScrollbarGrab]        = ImVec4(0.20f, 0.20f, 0.20f, 1.00f);
 	colors[ImGuiCol_ScrollbarGrabHovered] = ImVec4(0.30f, 0.30f, 0.30f, 1.00f);
 	colors[ImGuiCol_ScrollbarGrabActive]  = ImVec4(0.45f, 0.45f, 0.45f, 1.00f);
+
+	// Tab Overlines (The thin line at the top of active/selected tabs)
+	colors[ImGuiCol_TabSelectedOverline]        = ImVec4(0.60f, 0.60f, 0.60f, 1.00f);
+	colors[ImGuiCol_TabDimmedSelectedOverline]  = ImVec4(0.20f, 0.20f, 0.20f, 1.00f);
+
+	// Nav Windowing
+	colors[ImGuiCol_NavWindowingHighlight]      = ImVec4(0.60f, 0.60f, 0.60f, 0.70f);
+	colors[ImGuiCol_NavWindowingDimBg]          = ImVec4(0.04f, 0.04f, 0.04f, 0.20f);
+
+	// Modals
+	colors[ImGuiCol_ModalWindowDimBg]           = ImVec4(0.00f, 0.00f, 0.00f, 0.60f);
+
+	// Tables
+	colors[ImGuiCol_TableHeaderBg]              = ImVec4(0.14f, 0.14f, 0.14f, 1.00f);
+	colors[ImGuiCol_TableBorderStrong]          = ImVec4(0.20f, 0.20f, 0.20f, 1.00f);
+	colors[ImGuiCol_TableBorderLight]           = ImVec4(0.20f, 0.20f, 0.20f, 0.50f);
+	colors[ImGuiCol_TableRowBg]                 = ImVec4(0.00f, 0.00f, 0.00f, 0.00f);
+	colors[ImGuiCol_TableRowBgAlt]              = ImVec4(1.00f, 1.00f, 1.00f, 0.03f);
 }
 
 void Sandbox::Update() {
@@ -214,12 +232,15 @@ void Sandbox::Draw() {
 	ImGuiID dockSpaceId = ImGui::DockSpaceOverViewport(0, ImGui::GetMainViewport());
 
 	DrawMenuBar();
-	DrawSceneOutliner();
-	DrawInspector();
-	DrawAssetBrowser();
-	DrawViewportPanel();
-	DrawConsolePanel();
-	DrawMixingHierarchyPanel();
+
+	if (m_showInspector) DrawInspector();
+	if (m_showAssetBrowser) DrawAssetBrowser();
+	if (m_showSceneOutliner) DrawSceneOutliner();
+	if (m_showMixingHierarchy) DrawMixingHierarchy();
+	if (m_showViewport) DrawViewport();
+	if (m_showConsole) DrawConsole();
+
+	if (m_showHotkeysWindow) DrawHotkeysWindow();
 
 	rlImGuiEnd();
 	EndDrawing();
@@ -227,10 +248,38 @@ void Sandbox::Draw() {
 
 void Sandbox::DrawMenuBar() {
 	if (ImGui::BeginMainMenuBar()) {
-		if (ImGui::BeginMenu("Options")) {
-			if (ImGui::MenuItem("Exit")) m_isExiting = true;
+		if (ImGui::BeginMenu("File")) {
+			if (ImGui::MenuItem("Exit", "(Esc)")) m_isExiting = true;
+
 			ImGui::EndMenu();
 		}
+
+		if (ImGui::BeginMenu("View")) {
+			ImGui::MenuItem("Inspector", nullptr, &m_showInspector);
+			ImGui::MenuItem("Asset Browser", nullptr, &m_showAssetBrowser);
+			ImGui::MenuItem("Scene Outliner", nullptr, &m_showSceneOutliner);
+			ImGui::MenuItem("Mixing Hierarchy", nullptr, &m_showMixingHierarchy);
+			ImGui::MenuItem("Viewport", nullptr, &m_showViewport);
+			ImGui::MenuItem("Console", nullptr, &m_showConsole);
+
+			ImGui::EndMenu();
+		}
+
+		if (ImGui::BeginMenu("Tools")) {
+			if (ImGui::MenuItem("Reset Camera")) {
+				m_spectatorCamera.position = { 0.0f, 10.0f, -10.0f };
+				m_spectatorCamera.target = { 0.0f, 0.0f, 0.0f };
+			}
+
+			ImGui::EndMenu();
+		}
+
+		if (ImGui::BeginMenu("Help")) {
+			ImGui::MenuItem("Hotkeys & Controls", nullptr, &m_showHotkeysWindow);
+
+			ImGui::EndMenu();
+		}
+
 		ImGui::EndMainMenuBar();
 	}
 }
@@ -442,7 +491,7 @@ void Sandbox::DrawAssetBrowser() {
 	ImGui::End();
 }
 
-void Sandbox::DrawViewportPanel() {
+void Sandbox::DrawViewport() {
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
 	ImGui::Begin("3D Viewport");
 
@@ -691,7 +740,7 @@ void Sandbox::DrawViewportPanel() {
 		ImGui::GetWindowDrawList()->AddText(
 			ImVec2(pos.x + 10, pos.y + 30),
 			IM_COL32(255, 255, 255, 150),
-			"Press C enter 3D mode"
+			"Press C to enter free camera mode"
 		);
 	}
 	else {
@@ -699,7 +748,7 @@ void Sandbox::DrawViewportPanel() {
 		ImGui::GetWindowDrawList()->AddText(
 			ImVec2(pos.x + 10, pos.y + 30),
 			IM_COL32(255, 255, 255, 150),
-			"Press C to exit 3D mode"
+			"Press C to exit free camera mode"
 		);
 	}
 
@@ -707,7 +756,7 @@ void Sandbox::DrawViewportPanel() {
 	ImGui::PopStyleVar();
 }
 
-void Sandbox::DrawConsolePanel() {
+void Sandbox::DrawConsole() {
 	ImGui::Begin("Console");
 
 	// Toolbar
@@ -798,7 +847,7 @@ void Sandbox::DrawConsolePanel() {
 	ImGui::End();
 }
 
-void Sandbox::DrawMixingHierarchyPanel() {
+void Sandbox::DrawMixingHierarchy() {
 	ImGui::Begin("Mixing Hierarchy");
 
 	ImGui::TextDisabled("Create New Bus");
@@ -958,6 +1007,48 @@ void Sandbox::DrawBusNodeRecursive(MixingBus* currentBus) {
 		}
 		ImGui::TreePop();
 	}
+}
+
+void Sandbox::DrawHotkeysWindow() {
+	ImGui::Begin("Hotkeys & Controls", &m_showHotkeysWindow, ImGuiWindowFlags_AlwaysAutoResize);
+
+	auto DrawShortcut = [](const char* action, const char* shortcut) {
+		ImGui::TableNextRow();
+		ImGui::TableNextColumn();
+		ImGui::TextUnformatted(action);
+		ImGui::TableNextColumn();
+		ImGui::TextColored(ImVec4(0.95f, 0.95f, 0.95f, 1.0f), "%s", shortcut);
+	};
+
+	ImGui::SeparatorText("Viewport Navigation");
+	if (ImGui::BeginTable("Viewport Navigation", 2, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg)) {
+		ImGui::TableSetupColumn("Action", ImGuiTableColumnFlags_WidthStretch);
+		ImGui::TableSetupColumn("Shortcut", ImGuiTableColumnFlags_WidthStretch);
+		ImGui::TableHeadersRow();
+
+		DrawShortcut("Toggle Free Camera Mode", "C");
+		DrawShortcut("Focus Selected", "F");
+		DrawShortcut("Orbit Selected", "Mouse2 + Drag");
+		DrawShortcut("Look Around", "Left Alt + Mouse2 + Drag");
+		DrawShortcut("Pan", "Mouse3 + Drag");
+		DrawShortcut("Zoom", "Mouse3 Scroll");
+
+		ImGui::EndTable();
+	}
+
+	ImGui::SeparatorText("Selection Manipulation");
+	if (ImGui::BeginTable("Selection Manipulation", 2, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg)) {
+		ImGui::TableSetupColumn("Action", ImGuiTableColumnFlags_WidthStretch);
+		ImGui::TableSetupColumn("Shortcut", ImGuiTableColumnFlags_WidthStretch);
+		ImGui::TableHeadersRow();
+
+		DrawShortcut("Translate Tool", "W");
+		DrawShortcut("Rotate Tool", "E");
+
+		ImGui::EndTable();
+	}
+
+	ImGui::End();
 }
 
 void Sandbox::RefreshAvailableAssets() {
