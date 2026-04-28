@@ -190,7 +190,7 @@ void Sandbox::Draw() {
 	ClearBackground(Color(60, 60, 60, 1));
 	BeginMode3D(m_spectatorCamera);
 
-	DrawGrid(20, 1.0f);
+	DrawGrid(100, 1.0f);
 
 	for (auto& listener : m_listeners) {
 		bool isSelected = (m_selectionType == SelectionType::Listener && m_selectedObject == &listener);
@@ -463,7 +463,7 @@ void Sandbox::DrawViewportPanel() {
 
 	// --- Viewport Hover Controls ---
 	static bool isDraggingCamera = false;
-	static Vector2 restoreMousePos = { 0, 0 };
+	static Vector2 anchorMousePos = { 0, 0 };
 
 	if (!m_in3DMode) {
 		ImGuiIO& io = ImGui::GetIO();
@@ -514,15 +514,23 @@ void Sandbox::DrawViewportPanel() {
 
 			if (ImGui::IsMouseClicked(ImGuiMouseButton_Right) || ImGui::IsMouseClicked(ImGuiMouseButton_Middle)) {
 				isDraggingCamera = true;
-				restoreMousePos = GetMousePosition();
-				DisableCursor();
+				anchorMousePos = GetMousePosition();
+				HideCursor();
 			}
 		}
 
 		if (isDraggingCamera) {
+			ImGui::SetMouseCursor(ImGuiMouseCursor_None);
+
 			Vector3 movement = { 0.0f, 0.0f, 0.0f };
 			Vector3 rotation = { 0.0f, 0.0f, 0.0f };
-			Vector2 delta = GetMouseDelta();
+
+			Vector2 currentMousePos = GetMousePosition();
+			Vector2 delta = {
+				currentMousePos.x - anchorMousePos.x,
+				currentMousePos.y - anchorMousePos.y
+			};
+			SetMousePosition(static_cast<int>(anchorMousePos.x), static_cast<int>(anchorMousePos.y));
 
 			// Rotate Camera (LEFT ALT + MOUSE 2)
 			if (ImGui::IsMouseDown(ImGuiMouseButton_Right) && ImGui::IsKeyDown(ImGuiKey_LeftAlt)) {
@@ -570,8 +578,7 @@ void Sandbox::DrawViewportPanel() {
 		if (isDraggingCamera) {
 			if (!ImGui::IsMouseDown(ImGuiMouseButton_Right) && !ImGui::IsMouseDown(ImGuiMouseButton_Middle)) {
 				isDraggingCamera = false;
-				EnableCursor();
-				SetMousePosition(static_cast<int>(restoreMousePos.x), static_cast<int>(restoreMousePos.y));
+				ShowCursor();
 			}
 		}
 	}
