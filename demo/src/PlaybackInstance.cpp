@@ -1,9 +1,9 @@
 #include "PlaybackInstance.h"
 
 #include "raylib.h"
-#include "raymath.h"
-#include "rlImGui.h"
 #include "imgui.h"
+
+#include "DrawHelper.h"
 
 PlaybackInstance::PlaybackInstance(dalia::Engine* engine, dalia::SoundHandle sound, const std::string& name)
 	: m_engine(engine), m_name(name) {
@@ -40,29 +40,43 @@ void PlaybackInstance::Draw3D(bool isSelected) {
 	if (!m_isSpatial) return;
 
 	Color baseColor = GRAY;
+	float radius = 0.5f;
 	switch (m_state) {
-		case PlaybackState::Inactive: baseColor = GRAY;		break;
-		case PlaybackState::Playing:  baseColor = GREEN;	break;
-		case PlaybackState::Paused:   baseColor = YELLOW;	break;
-		case PlaybackState::Stopped:  baseColor = RED;		break;
-	}
+		case PlaybackState::Inactive:
+			baseColor = GRAY;
+			break;
+		case PlaybackState::Playing: {
+			float time = static_cast<float>(GetTime());
+			float pulseSpeed = 6.0f;
+			float t = (sinf(time * pulseSpeed) + 1.0f) * 0.5f;
 
-	DrawSphere(m_position, 0.5f, Fade(baseColor, 0.8f));
+			Color color1 = { 0, 255, 0, 255 };
+			Color color2 = { 0, 117, 44, 255 };
+
+			baseColor.r = static_cast<unsigned char>(color2.r + t * (color1.r - color2.r));
+			baseColor.g = static_cast<unsigned char>(color2.g + t * (color1.g - color2.g));
+			baseColor.b = static_cast<unsigned char>(color2.b + t * (color1.b - color2.b));
+			baseColor.a = 255;
+
+			radius = 0.45f + (t * 0.1f);
+			break;
+		}
+		case PlaybackState::Paused:
+			baseColor = YELLOW;
+			break;
+		case PlaybackState::Stopped:
+			baseColor = RED;
+			break;
+	}
+	DrawSphere(m_position, radius, Fade(baseColor, 0.8f));
 
 	if (isSelected) {
-		DrawSphereWires(m_position, 0.6f, 8, 8, WHITE);
-
-		// Gizmo (Do we need this?)
-		DrawLine3D(m_position, {m_position.x + 2.0f, m_position.y, m_position.z}, RED);   // X
-		DrawLine3D(m_position, {m_position.x, m_position.y + 2.0f, m_position.z}, GREEN); // Y
-		DrawLine3D(m_position, {m_position.x, m_position.y, m_position.z + 2.0f}, BLUE);  // Z
+		// DrawSphereWires(m_position, 0.6f, 16, 16, Fade(WHITE, 0.7f));
+		DrawSelectionAnchor(m_position, 0.6f, WHITE);
 
 		// Attenuation ranges
 		DrawCircle3D(m_position, m_minDistance, {1.0f, 0.0f, 0.0f}, 90.0f, Fade(baseColor, 0.5f));
 		DrawCircle3D(m_position, m_maxDistance, {1.0f, 0.0f, 0.0f}, 90.0f, Fade(DARKGRAY, 0.3f));
-	}
-	else {
-		DrawSphereWires(m_position, 0.5f, 8, 8, DARKGRAY);
 	}
 }
 

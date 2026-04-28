@@ -1,5 +1,8 @@
 #include "Listener.h"
 
+#include "rlgl.h"
+#include "DrawHelper.h"
+
 Listener::Listener(dalia::Engine* engine, uint32_t index, bool isActive)
 	: m_engine(engine), m_index(index), m_isActive(isActive) {
 }
@@ -26,33 +29,104 @@ void Listener::Draw3D(bool isSelected) {
 	if (!m_isActive || (isPiloted && targetBody == TargetBody::Both)) return;
 
 	if (!isPiloted || targetBody != TargetBody::Head) {
-		DrawSphere(m_position, 0.5f, Fade(SKYBLUE, 0.8f));
+		float headRadius = 0.4f;
+		DrawSphere(m_position, headRadius, Fade(SKYBLUE, 0.8f));
 
-		// Orientation
-		float vecLength = 1.5f;
-		Vector3 forwardVec = {
-			m_position.x + (m_forward.x * vecLength),
-			m_position.y + (m_forward.y * vecLength),
-			m_position.z + (m_forward.z * vecLength),
+		Vector3 left = Vector3Normalize(Vector3CrossProduct(m_forward, m_up));
+		Vector3 right = Vector3Normalize(Vector3CrossProduct(m_up, m_forward));
+
+		Vector3 earLeft = {
+			m_position.x + (left.x * headRadius),
+			m_position.y + (left.y * headRadius),
+			m_position.z + (left.z * headRadius)
+		};
+		Vector3 earRight = {
+			m_position.x + (right.x * headRadius),
+			m_position.y + (right.y * headRadius),
+			m_position.z + (right.z * headRadius)
+		};
+		DrawSphere(earLeft, 0.15f, BLACK);
+		DrawSphere(earRight, 0.15f, BLACK);
+
+		// Headband
+		int segments = 16;
+		float bandRadius = headRadius + 0.05f;
+		float bandThickness = 0.03f;
+
+		Vector3 prevPoint = {
+			m_position.x + (right.x * bandRadius),
+			m_position.y + (right.y * bandRadius),
+			m_position.z + (right.z * bandRadius)
 		};
 
-		Vector3 upVec = {
-			m_position.x + (m_up.x * vecLength),
-			m_position.y + (m_up.y * vecLength),
-			m_position.z + (m_up.z * vecLength),
-		};
+		for (int i = 1; i <= segments; i++) {
+			float angle = (static_cast<float>(i) / segments) * PI;
 
-		DrawLine3D(m_position, forwardVec, BLUE);
-		DrawLine3D(m_position, upVec, GREEN);
+			Vector3 nextPoint = {
+				m_position.x + ((right.x * cosf(angle)) + (m_up.x * sinf(angle))) * bandRadius,
+				m_position.y + ((right.y * cosf(angle)) + (m_up.y * sinf(angle))) * bandRadius,
+				m_position.z + ((right.z * cosf(angle)) + (m_up.z * sinf(angle))) * bandRadius,
+			};
+
+			DrawCylinderEx(prevPoint, nextPoint, bandThickness, bandThickness, 6, BLACK);
+			DrawSphere(nextPoint, bandThickness, BLACK);
+
+			prevPoint = nextPoint;
+		}
+
+		// --- FACE ICONOGRAPHY ---
+		float eyeWhiteRadius = 0.07f;
+		float pupilRadius = 0.035f;
+		float noseRadius = 0.08f;
+
+		// Calculate normalized directions for the eyes
+		Vector3 leftEyeDir = Vector3Normalize({
+			m_forward.x + (m_up.x * 0.35f) + (left.x * 0.4f),
+			m_forward.y + (m_up.y * 0.35f) + (left.y * 0.4f),
+			m_forward.z + (m_up.z * 0.35f) + (left.z * 0.4f)
+		});
+
+		Vector3 rightEyeDir = Vector3Normalize({
+			m_forward.x + (m_up.x * 0.35f) + (right.x * 0.4f),
+			m_forward.y + (m_up.y * 0.35f) + (right.y * 0.4f),
+			m_forward.z + (m_up.z * 0.35f) + (right.z * 0.4f)
+		});
+
+		// Position the Eye Whites on the surface
+		Vector3 leftEye = Vector3Add(m_position, Vector3Scale(leftEyeDir, headRadius));
+		Vector3 rightEye = Vector3Add(m_position, Vector3Scale(rightEyeDir, headRadius));
+
+		DrawSphere(leftEye, eyeWhiteRadius, WHITE);
+		DrawSphere(rightEye, eyeWhiteRadius, WHITE);
+
+		// Position the Pupils
+		float pupilOffset = headRadius + (eyeWhiteRadius * 0.7f);
+		Vector3 leftPupil = Vector3Add(m_position, Vector3Scale(leftEyeDir, pupilOffset));
+		Vector3 rightPupil = Vector3Add(m_position, Vector3Scale(rightEyeDir, pupilOffset));
+
+		DrawSphere(leftPupil, pupilRadius, BLACK);
+		DrawSphere(rightPupil, pupilRadius, BLACK);
+
+		// Position the Nose
+		Vector3 noseDir = Vector3Normalize({
+			m_forward.x - (m_up.x * 0.1f),
+			m_forward.y - (m_up.y * 0.1f),
+			m_forward.z - (m_up.z * 0.1f)
+		});
+
+		Vector3 nosePos = Vector3Add(m_position, Vector3Scale(noseDir, headRadius));
+		DrawSphere(nosePos, noseRadius, RED);
 	}
 
-	if (!isPiloted || targetBody != TargetBody::Head)
 	if (Vector3Distance(m_position, m_probePosition) > 0.01f) {
 		DrawSphere(m_probePosition, 0.2f, ORANGE);
-		DrawLine3D(m_position, m_probePosition, Fade(ORANGE, 0.5f));
+		DrawCylinderEx(m_position, m_probePosition, 0.015f, 0.015f, 8, Fade(ORANGE, 0.5f));
 	}
 
-	if (isSelected) DrawSphereWires(m_position, 0.6f, 8, 8, WHITE);
+	if (isSelected) {
+		DrawSelectionAnchor(m_position, 0.6f, WHITE);
+		if (Vector3Distance(m_probePosition, m_position) > 0.001f) DrawSelectionAnchor(m_probePosition, 0.3f, WHITE);
+	}
 }
 
 void Listener::DrawInspectorUI(const UIContext& ui) {
@@ -71,9 +145,6 @@ void Listener::DrawInspectorUI(const UIContext& ui) {
 			if (res != dalia::Result::Ok) m_result = res;
 		}
 	}
-	else {
-		ImGui::Text("Listener 0 is always active");
-	}
 
 	if (m_isActive) {
 		ImGui::Text("Target Body:");
@@ -85,6 +156,11 @@ void Listener::DrawInspectorUI(const UIContext& ui) {
 		ImGui::RadioButton("Head", target, 1);
 		ImGui::SameLine();
 		ImGui::RadioButton("Probe", target, 2);
+
+		ImGui::SameLine();
+		if (ImGui::Button("Reset Probe")) {
+			m_probePosition = m_position;
+		}
 
 		if (!isPiloted) {
 			if (ImGui::Button("Pilot")) isPiloted = true;

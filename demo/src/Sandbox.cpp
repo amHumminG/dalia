@@ -2,6 +2,8 @@
 
 #include <filesystem>
 
+#include "DrawHelper.h"
+
 static constexpr float DEG_TO_RAD = PI / 180.0f;
 
 Sandbox::Sandbox()
@@ -166,9 +168,9 @@ void Sandbox::Update() {
 
 	if (!io.WantTextInput) {
 		if (IsKeyPressed(KEY_C)) {
-			m_in3DMode = !m_in3DMode;
+			m_inFreeCamMode = !m_inFreeCamMode;
 
-			if (m_in3DMode) {
+			if (m_inFreeCamMode) {
 				DisableCursor();
 				io.ConfigFlags |= ImGuiConfigFlags_NoMouseCursorChange;
 				io.ConfigFlags |= ImGuiConfigFlags_NoMouse;
@@ -181,7 +183,7 @@ void Sandbox::Update() {
 		}
 	}
 
-	if (m_in3DMode) UpdateCamera(&m_spectatorCamera, CAMERA_FREE);
+	if (m_inFreeCamMode) UpdateCamera(&m_spectatorCamera, CAMERA_FREE);
 
 	Listener* currentlyPiloted = nullptr;
 	for (auto& listener : m_listeners) {
@@ -208,7 +210,7 @@ void Sandbox::Draw() {
 	ClearBackground(Color(60, 60, 60, 1));
 	BeginMode3D(m_spectatorCamera);
 
-	DrawGrid(100, 1.0f);
+	DrawEditorGrid(100, 1.0f, Fade(WHITE, 0.3f));
 
 	for (auto& listener : m_listeners) {
 		bool isSelected = (m_selectionType == SelectionType::Listener && m_selectedObject == &listener);
@@ -514,7 +516,7 @@ void Sandbox::DrawViewport() {
 	static bool isDraggingCamera = false;
 	static Vector2 anchorMousePos = { 0, 0 };
 
-	if (!m_in3DMode) {
+	if (!m_inFreeCamMode) {
 		ImGuiIO& io = ImGui::GetIO();
 
 		if (ImGui::IsWindowHovered()) {
@@ -642,16 +644,18 @@ void Sandbox::DrawViewport() {
 	bool canRotate = false;
 
 	// Should we draw a gizmo?
-	if (!m_in3DMode && m_selectedObject != nullptr) {
+	if (!m_inFreeCamMode && m_selectedObject != nullptr) {
 		if (m_selectionType == SelectionType::Listener) {
 			auto* listener = static_cast<Listener*>(m_selectedObject);
 
-			if (listener->targetBody == Listener::TargetBody::Probe) objPos = listener->GetProbePosition();
-			else objPos = listener->GetPosition();
+			if (listener->IsActive()) {
+				if (listener->targetBody == Listener::TargetBody::Probe) objPos = listener->GetProbePosition();
+				else objPos = listener->GetPosition();
 
-			shouldDrawGizmo = true;
-			objFwd = listener->GetForward();
-			canRotate = true;
+				shouldDrawGizmo = true;
+				objFwd = listener->GetForward();
+				if (listener->targetBody != Listener::TargetBody::Probe) canRotate = true;
+			}
 		}
 		else if (m_selectionType == SelectionType::Playback) {
 			auto* playback = static_cast<PlaybackInstance*>(m_selectedObject);
@@ -735,22 +739,38 @@ void Sandbox::DrawViewport() {
 		}
 	}
 
-	if (!m_in3DMode) {
-		ImVec2 pos = ImGui::GetWindowPos();
+	// Text Overlays
+	ImVec2 windowPos = ImGui::GetWindowPos();
+	ImVec2 windowSize = ImGui::GetWindowSize();
+
+	if (!m_inFreeCamMode) {
+		const char* text = "Press C to enter free camera mode";
+		float textWidth = ImGui::CalcTextSize(text).x;
 		ImGui::GetWindowDrawList()->AddText(
-			ImVec2(pos.x + 10, pos.y + 30),
+			ImVec2(windowPos.x + (windowSize.x / 2) - (textWidth / 2), windowPos.y + 30),
 			IM_COL32(255, 255, 255, 150),
-			"Press C to enter free camera mode"
+			text
 		);
 	}
 	else {
-		ImVec2 pos = ImGui::GetWindowPos();
+		const char* text = "Press C to exit free camera mode";
+		float textWidth = ImGui::CalcTextSize(text).x;
 		ImGui::GetWindowDrawList()->AddText(
-			ImVec2(pos.x + 10, pos.y + 30),
+		ImVec2(windowPos.x + (windowSize.x / 2) - (textWidth / 2), windowPos.y + 30),
 			IM_COL32(255, 255, 255, 150),
-			"Press C to exit free camera mode"
+			text
 		);
 	}
+
+	// Draw camera coordinates
+	Vector3 cameraPos = m_spectatorCamera.position;
+	char coordText[64];
+	snprintf(coordText, sizeof(coordText), "X: %.1f Y: %.1f Z: %.1f", cameraPos.x, cameraPos.y, cameraPos.z);
+	ImGui::GetWindowDrawList()->AddText(
+		ImVec2(windowPos.x + 10, windowPos.y + 30),
+		IM_COL32(255, 255, 255, 150),
+		coordText
+	);
 
 	ImGui::End();
 	ImGui::PopStyleVar();

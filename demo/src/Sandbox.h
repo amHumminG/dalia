@@ -75,13 +75,12 @@ private:
 
 	bool m_showHotkeysWindow = false;
 
-	// 3D
+	// 3D viewport
 	RenderTexture2D m_viewportTexture;
 	Camera3D m_spectatorCamera;
-	bool m_in3DMode = false;
+	bool m_inFreeCamMode = false;
 
-	// std::vector<std::unique_ptr<Panel>> m_panels;
-
+	// Listener
 	std::array<Listener, 4> m_listeners;
 
 	// Playback

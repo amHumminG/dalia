@@ -62,6 +62,8 @@ SET(DEMO_FILES
     src/MixingBus.cpp
     src/MixingBus.h
     src/UI.h
+    src/DrawHelper.h
+    src/DrawHelper.cpp
 )
 
 add_executable(dalia_demo ${DEMO_FILES})
