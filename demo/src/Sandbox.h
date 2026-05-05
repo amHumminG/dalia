@@ -5,6 +5,7 @@
 #include "rlImGui.h"
 #include "imgui.h"
 #include "ImGuizmo.h"
+#include "imgui_internal.h"
 
 #include "UI.h"
 

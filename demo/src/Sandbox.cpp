@@ -16,7 +16,7 @@ Sandbox::Sandbox()
 {
 	int screenWidth = 1920;
 	int screenHeight = 1080;
-	SetConfigFlags(FLAG_WINDOW_RESIZABLE | FLAG_MSAA_4X_HINT);
+	SetConfigFlags(FLAG_WINDOW_RESIZABLE | FLAG_WINDOW_MAXIMIZED);
 	InitWindow(screenWidth, screenHeight, "Dalia Engine Sandbox");
 	SetTargetFPS(60);
 	// SetExitKey(NULL);
@@ -235,7 +235,41 @@ void Sandbox::Draw() {
 
 	rlImGuiBegin();
 	ImGuizmo::BeginFrame();
-	ImGuiID dockSpaceId = ImGui::DockSpaceOverViewport(0, ImGui::GetMainViewport());
+
+	// Dockspace
+	ImGuiID dockspaceId = ImGui::GetID("MainDockspace");
+	ImGui::DockSpaceOverViewport(dockspaceId, ImGui::GetMainViewport(), ImGuiDockNodeFlags_None);
+
+	static bool firstLaunchLayout = true;
+	if (firstLaunchLayout) {
+		firstLaunchLayout = false;
+		ImGui::DockBuilderRemoveNode(dockspaceId);
+		ImGui::DockBuilderAddNode(dockspaceId, ImGuiDockNodeFlags_DockSpace);
+		ImGui::DockBuilderSetNodeSize(dockspaceId, ImGui::GetMainViewport()->Size);
+
+		// Dockspace splitting
+		ImGuiID dockIdMain = dockspaceId;
+
+		ImGuiID dockIdLeft = ImGui::DockBuilderSplitNode(dockIdMain, ImGuiDir_Left, 0.20f, NULL, &dockIdMain);
+		ImGuiID dockIdLeftBottom = ImGui::DockBuilderSplitNode(dockIdLeft, ImGuiDir_Down, 0.45f, NULL, &dockIdLeft);
+
+		ImGuiID dockIdRight = ImGui::DockBuilderSplitNode(dockIdMain, ImGuiDir_Right, 0.25f, NULL, &dockIdMain);
+
+		ImGuiID dockIdBottom = ImGui::DockBuilderSplitNode(dockIdMain, ImGuiDir_Down, 0.35f, NULL, &dockIdMain);
+
+		ImGui::DockBuilderDockWindow("Scene Outliner", dockIdLeft);
+		ImGui::DockBuilderDockWindow("Mixing Hierarchy", dockIdLeft);
+		// ImGui::DockBuilderDockWindow("Effect Rack", dockIdLeftBottom);
+
+		ImGui::DockBuilderDockWindow("Inspector", dockIdRight);
+
+		ImGui::DockBuilderDockWindow("Asset Browser", dockIdBottom);
+		ImGui::DockBuilderDockWindow("Console", dockIdBottom);
+
+		ImGui::DockBuilderDockWindow("3D Viewport", dockIdMain);
+
+		ImGui::DockBuilderFinish(dockspaceId);
+	}
 
 	DrawMenuBar();
 
