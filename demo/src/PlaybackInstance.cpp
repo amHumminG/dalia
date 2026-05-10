@@ -79,13 +79,16 @@ void PlaybackInstance::Draw3D(bool isSelected) {
 	}
 	DrawSphere(m_position, radius, Fade(baseColor, 0.8f));
 
+	float AnchorOffset = 0.1f;
 	if (isSelected) {
-		// DrawSphereWires(m_position, 0.6f, 16, 16, Fade(WHITE, 0.7f));
-		DrawSelectionAnchor(m_position, 0.6f, WHITE);
+		DrawSelectionAnchor(m_position, radius + AnchorOffset, WHITE);
 
 		// Attenuation ranges
-		DrawCircle3D(m_position, m_minDistance, {1.0f, 0.0f, 0.0f}, 90.0f, Fade(baseColor, 0.5f));
-		DrawCircle3D(m_position, m_maxDistance, {1.0f, 0.0f, 0.0f}, 90.0f, Fade(DARKGRAY, 0.3f));
+		DrawCircle3D(m_position, m_minDistance, {1.0f, 0.0f, 0.0f}, 90.0f, Fade(GREEN, 0.5f));
+		DrawCircle3D(m_position, m_maxDistance, {1.0f, 0.0f, 0.0f}, 90.0f, Fade(RED, 0.5f));
+	}
+	else {
+		DrawSelectionAnchor(m_position, radius + AnchorOffset, DARKGRAY);
 	}
 }
 

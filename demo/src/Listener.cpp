@@ -40,8 +40,8 @@ void Listener::Update(float deltaTime) {
 void Listener::Draw3D(bool isSelected) {
 	if (!m_isActive || (isPiloted && targetBody == TargetBody::Both)) return;
 
+	float headRadius = 0.4f;
 	if (!isPiloted || targetBody != TargetBody::Head) {
-		float headRadius = 0.4f;
 		DrawSphere(m_position, headRadius, Fade(SKYBLUE, 0.8f));
 
 		Vector3 left = Vector3Normalize(Vector3CrossProduct(m_forward, m_up));
@@ -130,14 +130,21 @@ void Listener::Draw3D(bool isSelected) {
 		DrawSphere(nosePos, noseRadius, RED);
 	}
 
+	// Draw probe
+	float probeRadius = 0.2f;
 	if (Vector3Distance(m_position, m_probePosition) > 0.01f) {
-		DrawSphere(m_probePosition, 0.2f, ORANGE);
+		DrawSphere(m_probePosition, probeRadius, ORANGE);
 		DrawCylinderEx(m_position, m_probePosition, 0.015f, 0.015f, 8, Fade(ORANGE, 0.5f));
 	}
 
+	float AnchorOffset = 0.1f;
 	if (isSelected) {
-		DrawSelectionAnchor(m_position, 0.6f, WHITE);
-		if (Vector3Distance(m_probePosition, m_position) > 0.001f) DrawSelectionAnchor(m_probePosition, 0.3f, WHITE);
+		DrawSelectionAnchor(m_position, headRadius + AnchorOffset, WHITE);
+		if (Vector3Distance(m_probePosition, m_position) > 0.001f) DrawSelectionAnchor(m_probePosition, probeRadius + AnchorOffset, WHITE);
+	}
+	else {
+		DrawSelectionAnchor(m_position, headRadius + AnchorOffset, DARKGRAY);
+		if (Vector3Distance(m_probePosition, m_position) > 0.001f) DrawSelectionAnchor(m_probePosition, probeRadius + AnchorOffset, DARKGRAY);
 	}
 }
 
