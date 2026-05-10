@@ -3,6 +3,7 @@
 #include "raylib.h"
 #include "dalia.h"
 #include "UI.h"
+#include "Movement.h"
 
 #include <string>
 
@@ -18,7 +19,7 @@ public:
 	PlaybackInstance(dalia::Engine* engine, dalia::SoundHandle sound, const std::string& name);
 	~PlaybackInstance();
 
-	void Update();
+	void Update(float deltaTime);
 	void Draw3D(bool isSelected);
 	void DrawInspectorUI(const UIContext& ui);
 
@@ -39,6 +40,8 @@ public:
 	void SetPosition(const Vector3& position) { m_position = position; }
 
 	bool IsSpatial() const { return m_isSpatial; }
+
+	MovementState GetMovementState() const { return m_movementState; }
 
 private:
 	dalia::Engine* m_engine = nullptr;
@@ -71,7 +74,9 @@ private:
 	float m_minDistance = 1.0f;
 	float m_maxDistance = 100.0f;
 
+	MovementState m_movementState;
 	Vector3 m_position = {0.0f, 0.0f, 0.0f};
+	Vector3 m_previousPosition = { 0.0f, 0.0f, 0.0f };
 	Vector3 m_velocity = {0.0f, 0.0f, 0.0f};
 
 	bool m_useDoppler = false;

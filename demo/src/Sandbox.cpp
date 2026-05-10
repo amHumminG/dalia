@@ -14,13 +14,24 @@ Sandbox::Sandbox()
 		Listener(&m_engine, 3, false)
 	}
 {
-	int screenWidth = 1920;
-	int screenHeight = 1080;
-	SetConfigFlags(FLAG_WINDOW_RESIZABLE | FLAG_WINDOW_MAXIMIZED);
-	InitWindow(screenWidth, screenHeight, "Dalia Engine Sandbox");
+	// Window initialization
+	SetConfigFlags(FLAG_WINDOW_RESIZABLE);
+	InitWindow(1280, 720, "Dalia Engine Sandbox");
+
+	int monitor = GetCurrentMonitor();
+	int monitorWidth = GetMonitorWidth(monitor);
+	int monitorHeight = GetMonitorHeight(monitor);
+
+	int windowWidth = static_cast<int>(monitorWidth * 0.8f);
+	int windowHeight = static_cast<int>(monitorHeight * 0.8f);
+	SetWindowSize(windowWidth, windowHeight);
+	SetWindowPosition((monitorWidth - windowWidth) / 2, (monitorHeight - windowHeight) / 2);
+
+	SetWindowState(FLAG_WINDOW_MAXIMIZED);
 	SetTargetFPS(60);
 	// SetExitKey(NULL);
-	m_viewportTexture = LoadRenderTexture(screenWidth, screenHeight);
+
+	m_viewportTexture = LoadRenderTexture(monitorWidth, monitorHeight);
 
 	rlImGuiSetup(true);
 	ImGuizmo::SetImGuiContext(ImGui::GetCurrentContext());
@@ -165,6 +176,33 @@ void Sandbox::ApplyTheme() {
 }
 
 void Sandbox::Update() {
+	// Fullcreen borderless toggles
+	if (IsKeyPressed(KEY_F11) || (IsKeyDown(KEY_LEFT_ALT) && IsKeyPressed(KEY_ENTER))) {
+		int monitor = GetCurrentMonitor();
+
+		if (!m_isFullscreenBl) {
+			// Enter fullscreen borderless
+			m_savedWindowPos = GetWindowPosition();
+			m_savedWindowSize = { static_cast<float>(GetScreenWidth()), static_cast<float>(GetScreenHeight()) };
+
+			SetWindowState(FLAG_WINDOW_UNDECORATED);
+			SetWindowSize(GetMonitorWidth(monitor), GetMonitorHeight(monitor));
+			SetWindowPosition(0, 0);
+
+			m_isFullscreenBl = true;
+		}
+		else {
+			// Exit fullcreen borderless
+			ClearWindowState(FLAG_WINDOW_UNDECORATED);
+
+			SetWindowSize(static_cast<int>(m_savedWindowSize.x), static_cast<int>(m_savedWindowSize.y));
+			SetWindowPosition(static_cast<int>(m_savedWindowPos.x), static_cast<int>(m_savedWindowPos.y));
+
+			m_isFullscreenBl = false;
+		}
+	}
+
+
 	// DPI Scale
 	Vector2 currentDpi = GetWindowScaleDPI();
 	SetMouseScale(1.0f / currentDpi.x, 1.0f / currentDpi.y);
@@ -203,8 +241,8 @@ void Sandbox::Update() {
 		}
 	}
 
-	for (auto& listener : m_listeners) listener.Update();
-	for (auto& playback: m_playbackInstances) playback->Update();
+	for (auto& listener : m_listeners) listener.Update(GetFrameTime());
+	for (auto& playback: m_playbackInstances) playback->Update(GetFrameTime());
 
 	m_engine.Update();
 }
@@ -242,25 +280,19 @@ void Sandbox::Draw() {
 	ImGui::DockSpaceOverViewport(dockspaceId, ImGui::GetMainViewport(), ImGuiDockNodeFlags_None);
 
 	// Do we want to reset the panel layout or is the ini file missing?
-	if (m_resetPanelLayout || ImGui::DockBuilderGetNode(dockspaceId == NULL) || ImGui::DockBuilderGetNode(dockspaceId)->IsEmpty()) {
+	if (m_resetPanelLayout || ImGui::DockBuilderGetNode(dockspaceId) == NULL || ImGui::DockBuilderGetNode(dockspaceId)->IsEmpty()) {
 		BuildDefaultDockingLayout(dockspaceId);
 		m_resetPanelLayout = false;
-	}
-
-	static bool firstLaunchLayout = true;
-	if (firstLaunchLayout) {
-		firstLaunchLayout = false;
-
 	}
 
 	DrawMenuBar();
 
 	if (m_showInspector) DrawInspector();
-	if (m_showAssetBrowser) DrawAssetBrowser();
 	if (m_showSceneOutliner) DrawSceneOutliner();
 	if (m_showMixingHierarchy) DrawMixingHierarchy();
 	if (m_showViewport) DrawViewport();
 	if (m_showConsole) DrawConsole();
+	if (m_showAssetBrowser) DrawAssetBrowser();
 
 	if (m_showHotkeysWindow) DrawHotkeysWindow();
 
@@ -672,7 +704,7 @@ void Sandbox::DrawViewport() {
 		if (m_selectionType == SelectionType::Listener) {
 			auto* listener = static_cast<Listener*>(m_selectedObject);
 
-			if (listener->IsActive()) {
+			if (listener->IsActive() && listener->GetMovementState().type == MovementPreset::Manual) {
 				if (listener->targetBody == Listener::TargetBody::Probe) objPos = listener->GetProbePosition();
 				else objPos = listener->GetPosition();
 
@@ -684,7 +716,7 @@ void Sandbox::DrawViewport() {
 		else if (m_selectionType == SelectionType::Playback) {
 			auto* playback = static_cast<PlaybackInstance*>(m_selectedObject);
 
-			if (playback->IsSpatial()) {
+			if (playback->IsSpatial() && playback->GetMovementState().type == MovementPreset::Manual) {
 				shouldDrawGizmo = true;
 				objPos = playback->GetPosition();
 				canRotate = false;

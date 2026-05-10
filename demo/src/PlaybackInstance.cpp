@@ -1,6 +1,7 @@
 #include "PlaybackInstance.h"
 
 #include "raylib.h"
+#include "raymath.h"
 #include "imgui.h"
 
 #include "DrawHelper.h"
@@ -20,13 +21,21 @@ PlaybackInstance::~PlaybackInstance() {
 	if (m_state != PlaybackState::Stopped) m_engine->StopPlayback(m_handle);
 }
 
-void PlaybackInstance::Update() {
-	if (m_state != PlaybackState::Playing) return;
-
+void PlaybackInstance::Update(float deltaTime) {
 	if (m_isSpatial) {
-		m_position.x += m_velocity.x * GetFrameTime();
-		m_position.y += m_velocity.y * GetFrameTime();
-		m_position.z += m_velocity.z * GetFrameTime();
+		UpdateMovementPreset(m_movementState, m_position, deltaTime);
+
+		// Velocity Approximation
+		Vector3 movementDelta = Vector3Subtract(m_position, m_previousPosition);
+		Vector3 rawVelocity = { 0.0f, 0.0f, 0.0f };
+		if (Vector3Length(movementDelta) < 10.0f) rawVelocity = Vector3Scale(movementDelta, 1.0f / deltaTime); // Should we keep this safety guard?
+
+		float smoothing = 15.0f * deltaTime;
+		m_velocity.x = std::lerp(m_velocity.x, rawVelocity.x, smoothing);
+		m_velocity.y = std::lerp(m_velocity.y, rawVelocity.y, smoothing);
+		m_velocity.z = std::lerp(m_velocity.z, rawVelocity.z, smoothing);
+
+		m_previousPosition = m_position;
 
 		dalia::Result res;
 		 res = m_engine->SetPlaybackPosition(m_handle, {m_position.x, m_position.y, m_position.z});
@@ -210,17 +219,16 @@ void PlaybackInstance::DrawInspectorUI(const UIContext& ui) {
 			}
 		}
 
-		// TODO: Add distance mode setter
+		DrawMovementInspector(m_movementState, m_position, m_velocity);
+
 		ImGui::Text("Distance Mode");
 		ImGui::SameLine();
-
 		int* distanceMode = reinterpret_cast<int*>(&m_distanceMode);
 		ImGui::RadioButton("From Listener", distanceMode, 0);
 		ImGui::SameLine();
 		ImGui::RadioButton("From Probe", distanceMode, 1);
 
 		ImGui::TextDisabled("Listener Masks");
-
 		bool changed = false;
 		changed |= ImGui::CheckboxFlags("Listener 0", &m_listenerMask, dalia::MASK_LISTENER_0);
 		ImGui::SameLine();

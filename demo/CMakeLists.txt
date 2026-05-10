@@ -66,6 +66,8 @@ SET(DEMO_FILES
     src/UI.h
     src/DrawHelper.h
     src/DrawHelper.cpp
+    src/Movement.h
+    src/Movement.cpp
 )
 
 add_executable(dalia_demo ${DEMO_FILES})

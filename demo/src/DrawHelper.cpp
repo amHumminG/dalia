@@ -68,3 +68,62 @@ void DrawSelectionAnchor(Vector3 position, float radius, Color color) {
 
 	rlEnd();
 }
+
+void DrawMovementInspector(MovementState& state, Vector3 currentPosition, const Vector3& derivedVelocity) {
+	ImGui::PushID(&state);
+
+	// Preset type
+	if (ImGui::CollapsingHeader("Movement & Velocity", ImGuiTreeNodeFlags_DefaultOpen)) {
+		// Preset selector
+		const char* presets[] = {
+			"Manual",
+			"OrbitXZ",
+			"OrbitXY",
+			"OscillateX",
+			"OscillateY",
+			"OscillateZ",
+			"FlybyX",
+			"FlybyY",
+			"FlybyZ"
+		};
+		int currentPreset = static_cast<int>(state.type);
+
+		if (ImGui::Combo("Preset", &currentPreset, presets, IM_ARRAYSIZE(presets))) {
+			state.type = static_cast<MovementPreset>(currentPreset);
+
+			state.timeAccumulator = 0.0f;
+			state.centerPoint = currentPosition;
+		}
+
+		// Parameters
+		if (state.type != MovementPreset::Manual) {
+			ImGui::Indent();
+
+			ImGui::DragFloat("Speed", &state.speed, 0.1f, -50.0f, 50.0f, "%.2f");
+			ImGui::DragFloat("Radius", &state.radius, 0.1f, 0.1f, 100.0f, "%.2f");
+
+			ImGui::Unindent();
+		}
+
+		ImGui::Spacing();
+		ImGui::Text("Center: [%.1f, %.1f, %.1f]", state.centerPoint.x, state.centerPoint.y, state.centerPoint.z);
+		if (ImGui::Button("Set Center to Current Position", ImVec2(-1.0f, 0))) {
+			state.centerPoint = currentPosition;
+		}
+	}
+
+	ImGui::Separator();
+
+	// Velocity Display
+	ImGui::TextDisabled("Derived Velocity (m/s)");
+	ImGui::Text("X: %6.2f | Y: %6.2f | Z: %6.2f", derivedVelocity.x, derivedVelocity.y, derivedVelocity.z);
+
+	float derivedSpeed = sqrtf(
+		(derivedVelocity.x * derivedVelocity.x) +
+		(derivedVelocity.y * derivedVelocity.y) +
+		(derivedVelocity.z * derivedVelocity.z)
+	);
+	ImGui::TextDisabled("Derived Speed: %.2f (m/s)", derivedSpeed);
+
+	ImGui::PopID();
+}

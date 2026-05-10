@@ -7,12 +7,13 @@
 
 #include "dalia.h"
 #include "UI.h"
+#include "Movement.h"
 
 class Listener {
 public:
 	Listener(dalia::Engine* engine, uint32_t index, bool isActive=false);
 
-	void Update();
+	void Update(float deltaTime);
 	void Draw3D(bool isSelected);
 	void DrawInspectorUI(const UIContext& ui);
 
@@ -24,6 +25,8 @@ public:
 
 	Vector3 GetPosition() const { return m_position; }
 	void SetPosition(const Vector3& position) { m_position = position; }
+
+	MovementState GetMovementState() const { return m_movementState; }
 
 	Vector3 GetProbePosition() const { return m_probePosition; }
 	void SetProbePosition(const Vector3& probePosition) { m_probePosition = probePosition; }
@@ -42,8 +45,11 @@ private:
 	uint32_t m_index;
 	bool m_isActive = false;
 
+	MovementState m_movementState;
+
 	Vector3 m_position = {0.0f, 0.0f, 0.0f};
 	Vector3 m_probePosition = {0.0f, 0.0f, 0.0f};
+	Vector3 m_previousPosition = { 0.0f, 0.0f, 0.0f };
 	Vector3 m_velocity = {0.0f, 0.0f, 0.0f};
 
 	Vector3 m_forward = {0.0f, 0.0f, 1.0f};

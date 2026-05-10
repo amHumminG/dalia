@@ -69,6 +69,9 @@ private:
 
 	UIContext m_ui;
 	bool m_resetPanelLayout = false;
+	bool m_isFullscreenBl = false;
+	Vector2 m_savedWindowPos = { 0.0f, 0.0f };
+	Vector2 m_savedWindowSize = { 1280.0f, 720.0f };
 
 	bool m_showInspector = true;
 	bool m_showAssetBrowser = true;
