@@ -43,9 +43,9 @@ target_include_directories(rlimgui_lib_demo SYSTEM PUBLIC ${rlimgui_SOURCE_DIR})
 target_link_libraries(rlimgui_lib_demo PUBLIC raylib imgui_lib_demo)
 
 add_library(imguizmo_lib STATIC
-    ${imguizmo_SOURCE_DIR}/ImGuizmo.cpp
+    ${imguizmo_SOURCE_DIR}/src/ImGuizmo.cpp
 )
-target_include_directories(imguizmo_lib SYSTEM PUBLIC ${imguizmo_SOURCE_DIR})
+target_include_directories(imguizmo_lib SYSTEM PUBLIC ${imguizmo_SOURCE_DIR}/src)
 target_link_libraries(imguizmo_lib PUBLIC imgui_lib_demo)
 
 SET(DEMO_FILES
