@@ -63,9 +63,12 @@ private:
 
 	void RefreshAvailableAssets();
 
+	void BuildDefaultDockingLayout(ImGuiID dockspaceId);
+
 	dalia::Engine m_engine;
 
 	UIContext m_ui;
+	bool m_resetPanelLayout = false;
 
 	bool m_showInspector = true;
 	bool m_showAssetBrowser = true;

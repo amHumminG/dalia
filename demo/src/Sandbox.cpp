@@ -240,35 +240,16 @@ void Sandbox::Draw() {
 	ImGuiID dockspaceId = ImGui::GetID("MainDockspace");
 	ImGui::DockSpaceOverViewport(dockspaceId, ImGui::GetMainViewport(), ImGuiDockNodeFlags_None);
 
+	// Do we want to reset the panel layout or is the ini file missing?
+	if (m_resetPanelLayout || ImGui::DockBuilderGetNode(dockspaceId == NULL) || ImGui::DockBuilderGetNode(dockspaceId)->IsEmpty()) {
+		BuildDefaultDockingLayout(dockspaceId);
+		m_resetPanelLayout = false;
+	}
+
 	static bool firstLaunchLayout = true;
 	if (firstLaunchLayout) {
 		firstLaunchLayout = false;
-		ImGui::DockBuilderRemoveNode(dockspaceId);
-		ImGui::DockBuilderAddNode(dockspaceId, ImGuiDockNodeFlags_DockSpace);
-		ImGui::DockBuilderSetNodeSize(dockspaceId, ImGui::GetMainViewport()->Size);
 
-		// Dockspace splitting
-		ImGuiID dockIdMain = dockspaceId;
-
-		ImGuiID dockIdLeft = ImGui::DockBuilderSplitNode(dockIdMain, ImGuiDir_Left, 0.20f, NULL, &dockIdMain);
-		ImGuiID dockIdLeftBottom = ImGui::DockBuilderSplitNode(dockIdLeft, ImGuiDir_Down, 0.45f, NULL, &dockIdLeft);
-
-		ImGuiID dockIdRight = ImGui::DockBuilderSplitNode(dockIdMain, ImGuiDir_Right, 0.25f, NULL, &dockIdMain);
-
-		ImGuiID dockIdBottom = ImGui::DockBuilderSplitNode(dockIdMain, ImGuiDir_Down, 0.35f, NULL, &dockIdMain);
-
-		ImGui::DockBuilderDockWindow("Scene Outliner", dockIdLeft);
-		ImGui::DockBuilderDockWindow("Mixing Hierarchy", dockIdLeft);
-		// ImGui::DockBuilderDockWindow("Effect Rack", dockIdLeftBottom);
-
-		ImGui::DockBuilderDockWindow("Inspector", dockIdRight);
-
-		ImGui::DockBuilderDockWindow("Asset Browser", dockIdBottom);
-		ImGui::DockBuilderDockWindow("Console", dockIdBottom);
-
-		ImGui::DockBuilderDockWindow("3D Viewport", dockIdMain);
-
-		ImGui::DockBuilderFinish(dockspaceId);
 	}
 
 	DrawMenuBar();
@@ -301,6 +282,10 @@ void Sandbox::DrawMenuBar() {
 			ImGui::MenuItem("Mixing Hierarchy", nullptr, &m_showMixingHierarchy);
 			ImGui::MenuItem("Viewport", nullptr, &m_showViewport);
 			ImGui::MenuItem("Console", nullptr, &m_showConsole);
+
+			ImGui::Separator();
+
+			if (ImGui::Button("Reset Panel Layout")) m_resetPanelLayout = true;
 
 			ImGui::EndMenu();
 		}
@@ -1125,4 +1110,28 @@ void Sandbox::RefreshAvailableAssets() {
 			}
 		}
 	}
+}
+
+void Sandbox::BuildDefaultDockingLayout(ImGuiID dockspaceId) {
+	ImGui::DockBuilderRemoveNode(dockspaceId);
+	ImGui::DockBuilderAddNode(dockspaceId, ImGuiDockNodeFlags_DockSpace);
+	ImGui::DockBuilderSetNodeSize(dockspaceId, ImGui::GetMainViewport()->Size);
+
+	ImGuiID dockIdMain = dockspaceId;
+
+	// Dockspace splitting
+	ImGuiID dockIdLeft = ImGui::DockBuilderSplitNode(dockIdMain, ImGuiDir_Left, 0.20f, NULL, &dockIdMain);
+	ImGuiID dockIdLeftBottom = ImGui::DockBuilderSplitNode(dockIdLeft, ImGuiDir_Down, 0.45f, NULL, &dockIdLeft);
+	ImGuiID dockIdRight = ImGui::DockBuilderSplitNode(dockIdMain, ImGuiDir_Right, 0.25f, NULL, &dockIdMain);
+	ImGuiID dockIdBottom = ImGui::DockBuilderSplitNode(dockIdMain, ImGuiDir_Down, 0.35f, NULL, &dockIdMain);
+
+	ImGui::DockBuilderDockWindow("Scene Outliner", dockIdLeft);
+	ImGui::DockBuilderDockWindow("Mixing Hierarchy", dockIdLeft);
+	// ImGui::DockBuilderDockWindow("Effect Rack", dockIdLeftBottom);
+	ImGui::DockBuilderDockWindow("Inspector", dockIdRight);
+	ImGui::DockBuilderDockWindow("Asset Browser", dockIdBottom);
+	ImGui::DockBuilderDockWindow("Console", dockIdBottom);
+	ImGui::DockBuilderDockWindow("3D Viewport", dockIdMain);
+
+	ImGui::DockBuilderFinish(dockspaceId);
 }
