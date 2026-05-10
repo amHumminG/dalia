@@ -23,6 +23,7 @@ Sandbox::Sandbox()
 	m_viewportTexture = LoadRenderTexture(screenWidth, screenHeight);
 
 	rlImGuiSetup(true);
+	ImGuizmo::SetImGuiContext(ImGui::GetCurrentContext());
 	ApplyTheme();
 	ImGuiIO& io = ImGui::GetIO();
 	io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
