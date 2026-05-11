@@ -293,6 +293,7 @@ void Sandbox::Draw() {
 	if (m_showViewport) DrawViewport();
 	if (m_showConsole) DrawConsole();
 	if (m_showAssetBrowser) DrawAssetBrowser();
+	if (m_showEffectRack) DrawEffectBrowser();
 
 	if (m_showHotkeysWindow) DrawHotkeysWindow();
 
@@ -313,6 +314,7 @@ void Sandbox::DrawMenuBar() {
 			ImGui::MenuItem("Asset Browser", nullptr, &m_showAssetBrowser);
 			ImGui::MenuItem("Scene Outliner", nullptr, &m_showSceneOutliner);
 			ImGui::MenuItem("Mixing Hierarchy", nullptr, &m_showMixingHierarchy);
+			ImGui::MenuItem("Effect Rack", nullptr, &m_showEffectRack);
 			ImGui::MenuItem("Viewport", nullptr, &m_showViewport);
 			ImGui::MenuItem("Console", nullptr, &m_showConsole);
 
@@ -371,6 +373,23 @@ void Sandbox::DrawSceneOutliner() {
 			if (ImGui::Selectable(label, isSelected)) {
 				m_selectionType = SelectionType::Bus;
 				m_selectedObject = bus.get();
+			}
+		}
+	}
+
+	// Effects
+	if (ImGui::CollapsingHeader("Effects", ImGuiTreeNodeFlags_DefaultOpen)) {
+		for (auto& effect : m_effects) {
+			bool isSelected = (m_selectionType == SelectionType::Effect && m_selectedObject == effect.get());
+
+			std::string label = "[E] "+ effect->GetName();
+			if (effect->IsAttached()) {
+				label += " -> " + effect->GetBusId() + "[" + std::to_string(effect->GetSlotIndex()) + "]";
+			}
+
+			if (ImGui::Selectable(label.c_str(), isSelected)) {
+				m_selectionType = SelectionType::Effect;
+				m_selectedObject = effect.get();
 			}
 		}
 	}
@@ -444,12 +463,114 @@ void Sandbox::DrawInspector() {
 		auto* bus = static_cast<MixingBus*>(m_selectedObject);
 		bus->DrawInspectorUI(m_ui);
 
+		// Signal Chain Overview
+		ImGui::SeparatorText("Effect Slots");
+
+		for (uint32_t i = 0; i < 4; i++) {
+			ImGui::PushID(i);
+
+			Effect* effectInSlot = nullptr;
+			for (auto& effect : m_effects) {
+				if (effect->IsAttached() && effect->GetBusId() == bus->GetIdentifier() && effect->GetSlotIndex() == i) {
+					effectInSlot = effect.get();
+					break;
+				}
+			}
+
+			ImGui::TextDisabled("Slot %u", i);
+			ImGui::SameLine();
+
+			if (effectInSlot) {
+				if (ImGui::Button(effectInSlot->GetName().c_str(), ImVec2(-1, 0))) {
+					m_selectedObject = effectInSlot;
+					m_selectionType = SelectionType::Effect;
+				}
+			}
+			else {
+				ImGui::TextDisabled("Empty");
+			}
+
+			ImGui::PopID();
+		}
+
 		if (bus->GetIdentifier() != "Master") {
 			ImGui::Separator();
 			ImGui::PushStyleColor(ImGuiCol_Button, {0.8f, 0.2f, 0.2f, 1.0f});
 			if (ImGui::Button("Destroy Bus", ImVec2(-1, 30))) requestDelete = true;
 			ImGui::PopStyleColor();
 		}
+	}
+	else if (m_selectionType == SelectionType::Effect) {
+		auto* effect = static_cast<Effect*>(m_selectedObject);
+
+		effect->DrawInspectorUI(m_ui);
+
+		ImGui::SeparatorText("Routing");
+		if (effect->IsAttached()) {
+			ImGui::Text("Status:");
+			ImGui::SameLine();
+			ImGui::TextColored(ImVec4(0.2f, 1.0f, 0.2f, 1.0f), "Attached");
+			ImGui::SameLine();
+			ImGui::TextDisabled("%s[%u]", effect->GetBusId().c_str(), effect->GetSlotIndex());
+
+			ImGui::Spacing();
+			if (ImGui::Button("Detach Effect", ImVec2(-1.0f, 0))) {
+				effect->Detach();
+			}
+		}
+		else {
+			ImGui::Text("Status: ");
+			ImGui::SameLine();
+			ImGui::TextColored(ImVec4(0.5f, 0.5f, 0.0f, 1.0f), "Detached");
+
+			ImGui::Spacing();
+
+			static int targetBusIndex = 0;
+			static int targetSlot = 0;
+
+			if (!m_buses.empty()) {
+
+				if (targetBusIndex >= m_buses.size()) targetBusIndex = 0;
+				std::string previewName = m_buses[targetBusIndex]->GetIdentifier();
+
+				if (ImGui::BeginCombo("Target Bus", previewName.c_str())) {
+					for (int i = 0; i < m_buses.size(); i++) {
+						bool isSelected = (targetBusIndex == i);
+
+						if (ImGui::Selectable(m_buses[i]->GetIdentifier().c_str(), isSelected)) {
+							targetBusIndex = i;
+						}
+
+						if (isSelected) ImGui::SetItemDefaultFocus();
+					}
+
+					ImGui::EndCombo();
+				}
+
+				ImGui::SliderInt("Slot", &targetSlot, 0, 3);
+
+				if (ImGui::Button("Attach", ImVec2(-1.0f, 0))) {
+					std::string targetBusId = m_buses[targetBusIndex]->GetIdentifier();
+
+					for (auto& e : m_effects) {
+						if (e.get() != effect && e->IsAttached() && e->GetBusId() == targetBusId && e->GetSlotIndex() == targetSlot) {
+							e->Detach();
+							break;
+						}
+					}
+
+					effect->AttachTo(targetBusId, targetSlot);
+				}
+			}
+			else {
+				ImGui::TextDisabled("Create a bus to route this effect.");
+			}
+		}
+
+		ImGui::Separator();
+		ImGui::PushStyleColor(ImGuiCol_Button, {0.8f, 0.2f, 0.2f, 1.0f});
+		if (ImGui::Button("Destroy Effect", ImVec2(-1, 30))) requestDelete = true;
+		ImGui::PopStyleColor();
 	}
 
 	// Object deletion
@@ -467,6 +588,11 @@ void Sandbox::DrawInspector() {
 		else if (m_selectionType == SelectionType::Bus) {
 			std::erase_if(m_buses, [this](const std::unique_ptr<MixingBus>& b) {
 				return b.get() == m_selectedObject;
+			});
+		}
+		else if (m_selectionType == SelectionType::Effect) {
+			std::erase_if(m_effects, [this](const std::unique_ptr<Effect>& e) {
+				return e.get() == m_selectedObject;
 			});
 		}
 
@@ -1085,6 +1211,47 @@ void Sandbox::DrawBusNodeRecursive(MixingBus* currentBus) {
 	}
 }
 
+void Sandbox::DrawEffectBrowser() {
+	ImGui::Begin("Effect Browser");
+
+	if (ImGui::CollapsingHeader("Biquad Filter", ImGuiTreeNodeFlags_DefaultOpen)) {
+		static int biquadCount = 0;
+		static int filterTypeInt = 0;
+		ImGui::RadioButton("LowPass", &filterTypeInt, 0);
+		ImGui::SameLine();
+		ImGui::RadioButton("HighPass", &filterTypeInt, 1);
+		ImGui::SameLine();
+		ImGui::RadioButton("BandPass", &filterTypeInt, 2);
+
+		if (ImGui::Button("Create Biquad Filter", ImVec2(-1.0f, 30.0f))) {
+			biquadCount++;
+			std::string typeNames[] = { "LowPass", "HighPass", "BandPass" };
+			std::string filterName = "Biquad " + std::to_string(biquadCount) + " (" + typeNames[filterTypeInt] + ")";
+			auto type = static_cast<dalia::BiquadFilterType>(filterTypeInt);
+
+			auto newBiquad = std::make_unique<BiquadEffect>(&m_engine, filterName, type);
+			m_selectedObject = newBiquad.get();
+			m_selectionType = SelectionType::Effect;
+
+			m_effects.push_back(std::move(newBiquad));
+		}
+	}
+
+	// Future effects go here
+
+	ImGui::End();
+}
+
+void Sandbox::RouteEffectSafely(Effect* effect, const std::string& targetBusId, uint32_t targetSlot) {
+	for (auto& e : m_effects) {
+		if (e.get() != effect && e->IsAttached() && e->GetBusId() == targetBusId && e->GetSlotIndex() == targetSlot) {
+			effect->Detach();
+		}
+	}
+
+	effect->AttachTo(targetBusId, targetSlot);
+}
+
 void Sandbox::DrawHotkeysWindow() {
 	ImGui::Begin("Hotkeys & Controls", &m_showHotkeysWindow, ImGuiWindowFlags_AlwaysAutoResize);
 
@@ -1160,7 +1327,7 @@ void Sandbox::BuildDefaultDockingLayout(ImGuiID dockspaceId) {
 
 	ImGui::DockBuilderDockWindow("Scene Outliner", dockIdLeft);
 	ImGui::DockBuilderDockWindow("Mixing Hierarchy", dockIdLeft);
-	// ImGui::DockBuilderDockWindow("Effect Rack", dockIdLeftBottom);
+	ImGui::DockBuilderDockWindow("Effect Browser", dockIdLeftBottom);
 	ImGui::DockBuilderDockWindow("Inspector", dockIdRight);
 	ImGui::DockBuilderDockWindow("Asset Browser", dockIdBottom);
 	ImGui::DockBuilderDockWindow("Console", dockIdBottom);

@@ -14,6 +14,8 @@
 #include "PlaybackInstance.h"
 #include "SoundAsset.h"
 #include "MixingBus.h"
+#include "Effect.h"
+#include "BiquadEffect.h"
 
 #include <vector>
 #include <memory>
@@ -37,7 +39,8 @@ public:
 		Listener,
 		Sound,
 		Playback,
-		Bus
+		Bus,
+		Effect
 	};
 
 private:
@@ -59,6 +62,9 @@ private:
 	void DrawMixingHierarchy();
 	void DrawBusNodeRecursive(MixingBus* currentBus); // Helper
 
+	void DrawEffectBrowser();
+	void RouteEffectSafely(Effect* effect, const std::string& targetBusId, uint32_t targetSlot);
+
 	void DrawHotkeysWindow();
 
 	void RefreshAvailableAssets();
@@ -79,6 +85,7 @@ private:
 	bool m_showMixingHierarchy = true;
 	bool m_showViewport = true;
 	bool m_showConsole = true;
+	bool m_showEffectRack = true;
 
 	bool m_showHotkeysWindow = false;
 
@@ -104,6 +111,9 @@ private:
 	std::vector<std::unique_ptr<MixingBus>> m_buses;
 	char m_newBusNameBuffer[128] = "";
 	bool m_showDuplicateBusWarning = false;
+
+	// Effects
+	std::vector<std::unique_ptr<Effect>> m_effects;
 
 	// Console logging
 	std::vector<ConsoleLog> m_logs;

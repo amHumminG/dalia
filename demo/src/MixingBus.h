@@ -6,6 +6,10 @@
 
 #include <string>
 
+struct EffectSlot {
+
+};
+
 class MixingBus {
 public:
 	MixingBus(dalia::Engine* engine, const std::string& identifier, const std::string& parentIdentifier = "Master");

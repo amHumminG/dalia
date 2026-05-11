@@ -68,6 +68,9 @@ SET(DEMO_FILES
     src/DrawHelper.cpp
     src/Movement.h
     src/Movement.cpp
+    src/Effect.h
+    src/BiquadEffect.cpp
+    src/BiquadEffect.h
 )
 
 add_executable(dalia_demo ${DEMO_FILES})
