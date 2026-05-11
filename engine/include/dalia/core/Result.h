@@ -15,6 +15,8 @@ namespace dalia {
 		InvalidRouting				= -7,
 		InvalidEffectSlot			= -8,
 		EffectAlreadyAttached		= -9,
+		ListenerNotFound			= -10,
+
 
 		// Pool Capacity Errors
 		// PoolExhausted				= -100,
@@ -37,9 +39,14 @@ namespace dalia {
 		// I/O Errors
 		SoundLoadError				= -400,
 		FileReadError				= -401,
+		UnsupportedFormat			= -402,
 
 		// Backed Errors
-		DeviceFailed				= -500,
+		SystemError					= -500,
+		DeviceNotFound				= -501,
+		DeviceFailed				= -502,
+		ClientFailed				= -503,
+
 	};
 
 	constexpr const char* GetErrorString(const Result result) {

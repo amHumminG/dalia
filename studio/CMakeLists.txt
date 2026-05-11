@@ -20,7 +20,7 @@ FetchContent_Declare(
 )
 FetchContent_Declare(
     ffmpeg
-    URL https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-n8.0-latest-win64-gpl-shared-8.0.zip
+    URL https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-win64-gpl-shared.zip
 )
 FetchContent_MakeAvailable(ffmpeg raylib imgui rlimgui)
 

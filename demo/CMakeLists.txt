@@ -35,7 +35,7 @@ add_library(rlimgui_lib_demo STATIC
     ${rlimgui_SOURCE_DIR}/rlImGui.cpp
 )
 target_include_directories(rlimgui_lib_demo SYSTEM PUBLIC ${rlimgui_SOURCE_DIR})
-target_link_libraries(rlimgui_lib_demo PUBLIC raylib imgui_lib)
+target_link_libraries(rlimgui_lib_demo PUBLIC raylib imgui_lib_demo)
 
 # Output
 add_executable(dalia_demo src/main.cpp)

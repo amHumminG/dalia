@@ -26,18 +26,32 @@ namespace dalia {
     };
 
     struct Bus {
-        uint32_t parentBusIndex = NO_PARENT;
+    	bool isActive = false;
+
+        uint32_t currentParentIndex = NO_PARENT;
+    	uint32_t targetParentIndex = NO_PARENT;
 
         // Mixing Properties
-        float targetVolumeLinear = DEFAULT_VOLUME_LINEAR; // Stored as linear amplitude
-        float currentVolumeLinear = DEFAULT_VOLUME_LINEAR;
+    	float currentFadeGain = 1.0f;
+    	float targetFadeGain = 1.0f;
+
+        float targetGain = GAIN_DEFAULT;
+        float currentGain = GAIN_DEFAULT;
+
         EffectSlot effectSlots[MAX_EFFECTS_PER_BUS];
 
         void Reset() {
-            parentBusIndex = NO_PARENT;
+        	isActive = false;
 
-            targetVolumeLinear = DEFAULT_VOLUME_LINEAR;
-            currentVolumeLinear = DEFAULT_VOLUME_LINEAR;
+            currentParentIndex = NO_PARENT;
+        	targetParentIndex = NO_PARENT;
+
+        	currentFadeGain = 1.0f;
+        	targetFadeGain = 1.0f;
+
+            targetGain = GAIN_DEFAULT;
+            currentGain = GAIN_DEFAULT;
+
             for (int i = 0; i < MAX_EFFECTS_PER_BUS; i++) {
                 effectSlots[i].Reset();
             }
@@ -49,7 +63,7 @@ namespace dalia {
         uint32_t parentBusIndex = NO_PARENT;
 
         // Mixing Properties
-        float volumeDb = DEFAULT_VOLUME_DB; // Stored in decibels
+        float volumeDb = VOLUME_DB_DEFAULT;
         EffectHandle effectSlots[MAX_EFFECTS_PER_BUS] = {
             InvalidEffectHandle,
             InvalidEffectHandle,
@@ -61,7 +75,7 @@ namespace dalia {
             refCount = 0;
             parentBusIndex = NO_PARENT;
 
-            volumeDb = DEFAULT_VOLUME_DB;
+            volumeDb = VOLUME_DB_DEFAULT;
             for (int i = 0; i < MAX_EFFECTS_PER_BUS; i++) {
                 effectSlots[i] = InvalidEffectHandle;
             }

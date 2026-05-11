@@ -16,7 +16,8 @@
 namespace dalia {
 
     IoStreamSystem::IoStreamSystem(const IoStreamSystemConfig& config)
-        : m_ioStreamRequests(config.ioStreamRequests),
+        : m_outSampleRate(config.outSampleRate),
+		m_ioStreamRequests(config.ioStreamRequests),
         m_streamPool(config.streamPool),
         m_freeStreams(config.freeStreams) {
     }
@@ -58,11 +59,13 @@ namespace dalia {
     void IoStreamSystem::ProcessRequest(const IoStreamRequest& req) {
         switch (req.type) {
             case IoStreamRequest::Type::PrepareStream: {
-                uint32_t sIndex = req.data.streamPrep.streamIndex;
-                uint32_t sGen = req.data.streamPrep.streamGen; // FIXME: This is not used and it holds a trash value?
+                uint32_t sIndex = req.index;
+                uint32_t sGen = req.gen;
                 const char* filepath = req.data.streamPrep.filepath;
 
                 StreamContext& stream = m_streamPool[sIndex];
+
+            	if (stream.gen.load(std::memory_order_relaxed) != sGen) break;
                 if (stream.state.load(std::memory_order_acquire) != StreamState::Preparing) break;
 
                 if (stream.decoder) {
@@ -77,27 +80,14 @@ namespace dalia {
                     stb_vorbis_info info = stb_vorbis_get_info(stream.decoder);
 
                     // --- Check for unsupported formats ---
-                    bool isSupported = true;
 
-                    // Channels
-                    if (info.channels == 0 || info.channels > 2) {
+                    // Channels check
+                    if (info.channels == 0 || info.channels > CHANNELS_STEREO) {
                         DALIA_LOG_ERR(LOG_CTX_IO, "Failed to load file (%s). Unsupported channel count (%d)",
                             filepath, info.channels);
-                        isSupported = false;
-                    }
-
-                    // Sample rate
-                    if (info.sample_rate != TARGET_OUTPUT_SAMPLE_RATE) {
-                        DALIA_LOG_ERR(LOG_CTX_IO, "Failed to load file (%s). Unsupported sample rate (%d).",
-                            filepath, info.sample_rate);
-                        isSupported = false;
-                    }
-
-                    if (!isSupported) {
-                        stb_vorbis_close(stream.decoder);
-                        stream.decoder = nullptr;
-                        stream.state.store(StreamState::Error, std::memory_order_release);
-                        break;
+                    	stb_vorbis_close(stream.decoder);
+                    	stream.decoder = nullptr;
+                    	stream.state.store(StreamState::Error, std::memory_order_release);
                     }
 
                     stream.channels = info.channels;
@@ -118,9 +108,12 @@ namespace dalia {
                 break;
             }
             case IoStreamRequest::Type::ReleaseStream: {
-                uint32_t sIndex = req.data.streamRefill.streamIndex;
+                uint32_t sIndex = req.index;
+            	uint32_t sGen = req.gen;
 
                 StreamContext& stream = m_streamPool[sIndex];
+            	if (stream.gen.load(std::memory_order_relaxed) != sGen) break;
+
                 if (stream.decoder) {
                     stb_vorbis_close(stream.decoder);
                     stream.decoder = nullptr;
@@ -132,8 +125,8 @@ namespace dalia {
                 break;
             }
             case IoStreamRequest::Type::RefillStreamBuffer: {
-                uint32_t sIndex = req.data.streamRefill.streamIndex;
-                uint32_t sGen = req.data.streamRefill.streamGen;
+                uint32_t sIndex = req.index;
+                uint32_t sGen = req.gen;
                 uint32_t bufferIndex = req.data.streamRefill.bufferIndex;
 
                 StreamContext& stream = m_streamPool[sIndex];
@@ -141,12 +134,11 @@ namespace dalia {
                 if (stream.state.load(std::memory_order_acquire) != StreamState::Streaming) break;
 
                 FillBuffer(stream, bufferIndex);
-                // DALIA_LOG_DEBUG(LOG_CTX_IO, "Refilled buffer %d, for stream %d.", bufferIndex, sIndex);
                 break;
             }
             case IoStreamRequest::Type::SeekStream: {
-                uint32_t sIndex = req.data.streamSeek.streamIndex;
-                uint32_t sGen = req.data.streamSeek.streamGen;
+                uint32_t sIndex = req.index;
+                uint32_t sGen = req.gen;
                 uint32_t seekFrame = req.data.streamSeek.seekFrame;
 
                 StreamContext& stream = m_streamPool[sIndex];
@@ -154,7 +146,6 @@ namespace dalia {
                 if (stream.state.load(std::memory_order_acquire) != StreamState::Seeking) break;
 
                 stb_vorbis_seek_frame(stream.decoder, seekFrame);
-                stream.readCursor = 0;
 
                 FillBuffer(stream, 0);
                 FillBuffer(stream, 1);
@@ -185,12 +176,12 @@ namespace dalia {
 
 
         while (framesWritten < framesNeeded) {
-            int samplesRemaining = (framesNeeded - framesWritten) * stream.channels;
+            int samplesRemaining = static_cast<int>((framesNeeded - framesWritten) * stream.channels);
             float* writePtr = bufferPtr + (framesWritten * stream.channels);
 
             int framesRead = stb_vorbis_get_samples_float_interleaved(
                 stream.decoder,
-                stream.channels,
+                static_cast<int>(stream.channels),
                 writePtr,
                 samplesRemaining
             );

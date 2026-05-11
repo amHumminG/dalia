@@ -8,9 +8,6 @@ namespace dalia {
 		enum class Type {
 			None,
 
-			// General
-			MixOrderSwapped,
-
 			// Voice Lifecycle
 			VoiceStopped,
 
@@ -30,16 +27,10 @@ namespace dalia {
 			} voice;
 
 			struct {
-				uint64_t handleUUID;
+				uint64_t handleRawId;
 			} effect;
 
 		} data = {};
-
-		static RtEvent MixOrderSwapped() {
-			RtEvent ev;
-			ev.type = RtEvent::Type::MixOrderSwapped;
-			return ev;
-		}
 
 		static RtEvent VoiceStopped(uint32_t index, uint32_t generation, PlaybackExitCondition exitCondition) {
 			RtEvent ev;
@@ -50,17 +41,17 @@ namespace dalia {
 			return ev;
 		}
 
-		static RtEvent EffectActive(uint64_t handleUUID) {
+		static RtEvent EffectActive(uint64_t handleRawId) {
 			RtEvent ev;
 			ev.type = Type::EffectActive;
-			ev.data.effect.handleUUID = handleUUID;
+			ev.data.effect.handleRawId = handleRawId;
 			return ev;
 		}
 
-		static RtEvent EffectDetached(uint64_t handleUUID) {
+		static RtEvent EffectDetached(uint64_t handleRawId) {
 			RtEvent ev;
 			ev.type = Type::EffectDetached;
-			ev.data.effect.handleUUID = handleUUID;
+			ev.data.effect.handleRawId = handleRawId;
 			return ev;
 		}
 	};
