@@ -38,10 +38,11 @@ namespace dalia {
 
 	/// @brief The condition under which a playback instance was stopped.
 	enum class PlaybackExitCondition : uint8_t {
-		NaturalEnd		= 0, // Finished naturally.
-		ExplicitStop	= 1, // Explicitly stopped by an API call.
-		Evicted			= 2, // Stopped to make room for a playback instance with higher priority.
-		Error			= 3, // Stopped by the engine due to an error.
+		None			= 0,
+		NaturalEnd		= 1, // Finished naturally.
+		ExplicitStop	= 2, // Explicitly stopped by an API call.
+		Evicted			= 3, // Stopped to make room for a playback instance with higher priority.
+		Error			= 4, // Stopped by the engine due to an error.
 	};
 
 	/// @brief A function that, if provided when creating a playback instance, will be called when the playback
@@ -75,6 +76,7 @@ namespace dalia {
 																// if the distance mode of a playback instance is set to FromDistanceProbe.
 		Vec3 forward{0.0f, 0.0f, 1.0f};				// The direction the listener is facing.
 		Vec3 up{0.0f, 1.0f, 0.0f};						// The up direction from the listener position.
+
 		Vec3 velocity{0.0f, 0.0f, 0.0f};				// The velocity of the listener.
 	};
 

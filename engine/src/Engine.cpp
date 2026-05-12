@@ -522,6 +522,7 @@ namespace dalia {
 		}
 
 		Logger::Init(config.logLevel, 256);
+		if (config.logCallback != nullptr) Logger::SetSink(config.logCallback);
 
 		// --- INTERNAL STATE SETUP ---
 		m_state = new EngineInternalState(config);
@@ -1394,7 +1395,7 @@ namespace dalia {
 		return Result::Ok;
 	}
 
-	Result Engine::Play(PlaybackHandle handle) {
+	Result Engine::PlayPlayback(PlaybackHandle handle) {
 		if (!IsInitialized(m_state)) return Result::NotInitialized;
 
 		if (!handle.IsValid()) return Result::InvalidHandle;
@@ -1434,7 +1435,7 @@ namespace dalia {
 		return Result::Ok;
 	}
 
-	Result Engine::Pause(PlaybackHandle playback) {
+	Result Engine::PausePlayback(PlaybackHandle playback) {
 		if (!IsInitialized(m_state)) return Result::NotInitialized;
 
 		if (!playback.IsValid()) return Result::InvalidHandle;
@@ -1458,7 +1459,7 @@ namespace dalia {
 		return Result::Ok;
 	}
 
-	Result Engine::Stop(PlaybackHandle playback) {
+	Result Engine::StopPlayback(PlaybackHandle playback) {
 		if (!IsInitialized(m_state)) return Result::NotInitialized;
 
 		if (!playback.IsValid()) return Result::InvalidHandle;

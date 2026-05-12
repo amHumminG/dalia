@@ -8,7 +8,7 @@ namespace dalia {
 
 	struct LogEntry {
 		LogLevel level;
-		char category[16];
+		char context[16];
 		char message[512];
 	};
 
@@ -37,8 +37,8 @@ namespace dalia {
 
 		LogEntry entry;
 		entry.level = level;
-		strncpy(entry.category, context, sizeof(entry.category) - 1);
-		entry.category[sizeof(entry.category) - 1] = '\0';
+		strncpy(entry.context, context, sizeof(entry.context) - 1);
+		entry.context[sizeof(entry.context) - 1] = '\0';
 
 		va_list args;
 		va_start(args, format);
@@ -55,9 +55,9 @@ namespace dalia {
 		bool didPrint = false;
 		while (m_buffer->Pop(entry)) {
 			if (m_sink) {
-				m_sink(entry.level, entry.category, entry.message);
+				m_sink(entry.level, entry.context, entry.message);
 			}
-			std::printf("[DALIA %s] [%s] %s\n", GetLevelString(entry.level), entry.category, entry.message);
+			std::printf("[DALIA %s] [%s] %s\n", GetLevelString(entry.level), entry.context, entry.message);
 			didPrint = true;
 		}
 
