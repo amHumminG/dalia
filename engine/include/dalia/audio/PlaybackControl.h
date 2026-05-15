@@ -110,7 +110,7 @@ namespace dalia {
 	constexpr ListenerMask MASK_LISTENER_1 = 0b00000010;	 // Targets listener 1.
 	constexpr ListenerMask MASK_LISTENER_2 = 0b00000100;	 // Targets listener 2.
 	constexpr ListenerMask MASK_LISTENER_3 = 0b00001000;	 // Targets listener 3.
-	constexpr ListenerMask MASK_ALL_LISTENERS = 0xFFFFFFFFF; // Targets all listeners.
+	constexpr ListenerMask MASK_ALL_LISTENERS = 0xFFFFFFFF;  // Targets all listeners.
 
 	/// @brief Creates a routing mask targeting a specific listener.
 	///

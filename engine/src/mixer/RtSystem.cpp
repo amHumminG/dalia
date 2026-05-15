@@ -8,17 +8,17 @@
 #include "mixer/StreamContext.h"
 #include "mixer/Bus.h"
 #include "mixer/Listener.h"
+#include "mixer/MixGraphCompiler.h"
 
 #include "messaging/RtCommandQueue.h"
 #include "messaging/RtEventQueue.h"
 #include "messaging/IoStreamRequestQueue.h"
 
+#include "effects/BiquadFilter.h"
+
 #include "dalia/audio/SoundControl.h"
 
 #include <cmath>
-
-#include "MixGraphCompiler.h"
-#include "effects/BiquadFilter.h"
 
 
 namespace dalia {
@@ -188,8 +188,12 @@ namespace dalia {
 		// Convert to listener space
 		math::Vector3 relative = sourcePos - listenerPos;
 		math::Vector3 listenerRight;
-		if (coordinateSystem == CoordinateSystem::RightHanded) math::Vector3::CrossProduct(listenerForward, listenerUp);
-		else listenerRight = math::Vector3::CrossProduct(listenerUp, listenerForward);
+		if (coordinateSystem == CoordinateSystem::RightHanded) {
+			listenerRight = math::Vector3::CrossProduct(listenerForward, listenerUp);
+		}
+		else {
+			listenerRight = math::Vector3::CrossProduct(listenerUp, listenerForward);
+		}
 
 
 		float x = relative.Dot(listenerRight);
@@ -775,6 +779,8 @@ namespace dalia {
 				Listener& listener = m_listenerPool[lIndex];
 				if (!listener.isActive) continue; // Maybe evaluate this somewhere else for better branch prediction?
 				if (!(voice.params.listenerMask & (1 << lIndex))) continue;
+
+				DALIA_LOG_DEBUG(LOG_CTX_MIXER, "Passed voice listener mask");
 
 				float distance;
 				if (voice.params.distanceMode == DistanceMode::FromListener) {
