@@ -539,6 +539,12 @@ namespace dalia {
 		Bus& master = m_state->busPool[MASTER_BUS_INDEX];
 		master.isActive = true;
 
+		// --- Listener Setup ---
+		Listener& l = m_state->listenerPool[0];
+		l.isActive = true;
+		ListenerMirror& lMirror = m_state->listenerPoolMirror[0];
+		lMirror.isActive = true;
+
 		// --- BACKEND (HAL) SETUP ---
 #ifdef _WIN32
 		m_state->backend = std::make_unique<WasapiBackend>();
@@ -1774,8 +1780,11 @@ namespace dalia {
 
 		ListenerMirror& lMirror = m_state->listenerPoolMirror[listenerIndex];
 		lMirror.isActive = active;
+		lMirror.isParamsDirty = true;
 
 		m_state->rtCommands->Enqueue(RtCommand::SetListenerActive(listenerIndex));
+		if (active) DALIA_LOG_DEBUG(LOG_CTX_API, "Set listener %u active", listenerIndex);
+		else DALIA_LOG_DEBUG(LOG_CTX_API, "Set listener %u inactive", listenerIndex);
 
 		return Result::Ok;
 	}
