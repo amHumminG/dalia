@@ -1541,8 +1541,11 @@ namespace dalia {
 		Result res = ResolveVoiceMirror(m_state, vIndex, vGeneration, vMirror);
 		if (res != Result::Ok) return res;
 
-		vMirror->params.volumeDb = std::clamp(volumeDb, VOLUME_DB_MIN, VOLUME_DB_MAX);
+		float clampedVolume = std::clamp(volumeDb, VOLUME_DB_MIN, VOLUME_DB_MAX);
+		vMirror->params.volumeDb = clampedVolume;
 		vMirror->isParamsDirty = true;
+
+		DALIA_LOG_DEBUG(LOG_CTX_API, "Set Voice %u volume to %.2f.", vIndex, clampedVolume);
 
 		return Result::Ok;
 	}
@@ -1558,8 +1561,11 @@ namespace dalia {
 		Result res = ResolveVoiceMirror(m_state, vIndex, vGeneration, vMirror);
 		if (res != Result::Ok) return res;
 
-		vMirror->params.pitch = std::clamp(pitch, PITCH_MIN, PITCH_MAX);
+		float clampedPitch = std::clamp(pitch, PITCH_MIN, PITCH_MAX);
+		vMirror->params.pitch = clampedPitch;
 		vMirror->isParamsDirty = true;
+
+		DALIA_LOG_DEBUG(LOG_CTX_API, "Set Voice %u pitch to %.2f.", vIndex, clampedPitch);
 
 		return Result::Ok;
 	}
@@ -1575,8 +1581,11 @@ namespace dalia {
 		Result res = ResolveVoiceMirror(m_state, vIndex, vGeneration, vMirror);
 		if (res != Result::Ok) return res;
 
-		vMirror->params.stereoPan = std::clamp(pan, PAN_STEREO_MIN, PAN_STEREO_MAX);
+		float clampedStereoPan = std::clamp(pan, PAN_STEREO_MIN, PAN_STEREO_MAX);
+		vMirror->params.stereoPan = clampedStereoPan;
 		vMirror->isParamsDirty = true;
+
+		DALIA_LOG_DEBUG(LOG_CTX_API, "Set Voice %u stereo pan to %.2f.", vIndex, clampedStereoPan);
 
 		return Result::Ok;
 	}
@@ -1601,6 +1610,9 @@ namespace dalia {
 		vMirror->params.isLooping = looping;
 		vMirror->isParamsDirty = true;
 
+		if (looping) DALIA_LOG_DEBUG(LOG_CTX_API, "Set Voice %u to loop.", vIndex);
+		else DALIA_LOG_DEBUG(LOG_CTX_API, "Set Voice %u to not loop.", vIndex);
+
 		return Result::Ok;
 	}
 
@@ -1624,6 +1636,9 @@ namespace dalia {
 		vMirror->params.isSpatial = spatial;
 		vMirror->isParamsDirty = true;
 
+		if (spatial) DALIA_LOG_DEBUG(LOG_CTX_API, "Set Voice %u to spatial.", vIndex);
+		else DALIA_LOG_DEBUG(LOG_CTX_API, "Set Voice %u to not spatial.", vIndex);
+
 		return Result::Ok;
 	}
 
@@ -1641,10 +1656,13 @@ namespace dalia {
 		vMirror->params.distanceMode = mode;
 		vMirror->isParamsDirty = true;
 
+		if (mode == DistanceMode::FromListener) DALIA_LOG_DEBUG(LOG_CTX_API, "Set Voice %u distance mode to FromListener.", vIndex);
+		else DALIA_LOG_DEBUG(LOG_CTX_API, "Set Voice %u distance mode to FromProbe.", vIndex);
+
 		return Result::Ok;
 	}
 
-	Result Engine::SetPlaybackAttenuationCurve(PlaybackHandle playback, AttenuationCurve model) {
+	Result Engine::SetPlaybackAttenuationCurve(PlaybackHandle playback, AttenuationCurve curve) {
 		if (!IsInitialized(m_state)) return Result::NotInitialized;
 
 		if (!playback.IsValid()) return Result::InvalidHandle;
@@ -1655,8 +1673,12 @@ namespace dalia {
 		Result res = ResolveVoiceMirror(m_state, vIndex, vGeneration, vMirror);
 		if (res != Result::Ok) return res;
 
-		vMirror->params.attenuationModel = model;
+		vMirror->params.attenuationCurve = curve;
 		vMirror->isParamsDirty = true;
+
+		if (curve == AttenuationCurve::InverseSquare) DALIA_LOG_DEBUG(LOG_CTX_API, "Set Voice %u attenuation curve to InverseSquare.", vIndex);
+		else if (curve == AttenuationCurve::Linear) DALIA_LOG_DEBUG(LOG_CTX_API, "Set Voice %u attenuation curve to Linear.", vIndex);
+		else if (curve == AttenuationCurve::Quadratic) DALIA_LOG_DEBUG(LOG_CTX_API, "Set Voice %u attenuation curve to Quadratic.", vIndex);
 
 		return Result::Ok;
 	}
@@ -1696,6 +1718,8 @@ namespace dalia {
 		vMirror->params.maxDistance = clampedMaxDistance;
 		vMirror->isParamsDirty = true;
 
+		DALIA_LOG_DEBUG(LOG_CTX_API, "Set Voice %u min/max distance to %.2f/%.2f.", vIndex, clampedMinDistance, clampedMaxDistance);
+
 		return Result::Ok;
 	}
 
@@ -1713,6 +1737,9 @@ namespace dalia {
 		vMirror->params.useDoppler = useDoppler;
 		vMirror->isParamsDirty = true;
 
+		if (useDoppler) DALIA_LOG_DEBUG(LOG_CTX_API, "Set Voice %u to use doppler.", vIndex);
+		else DALIA_LOG_DEBUG(LOG_CTX_API, "Set Voice %u to not use doppler.", vIndex);
+
 		return Result::Ok;
 	}
 
@@ -1727,8 +1754,11 @@ namespace dalia {
 		Result res = ResolveVoiceMirror(m_state, vIndex, vGeneration, vMirror);
 		if (res != Result::Ok) return res;
 
-		vMirror->params.dopplerFactor = std::clamp(dopplerFactor, DOPPLER_FACTOR_MIN, DOPPLER_FACTOR_MAX);
+		float clampedDopplerFactor = std::clamp(dopplerFactor, DOPPLER_FACTOR_MIN, DOPPLER_FACTOR_MAX);
+		vMirror->params.dopplerFactor = clampedDopplerFactor;
 		vMirror->isParamsDirty = true;
+
+		DALIA_LOG_DEBUG(LOG_CTX_API, "Set Voice %u doppler factor to %.2f.", vIndex, clampedDopplerFactor);
 
 		return Result::Ok;
 	}

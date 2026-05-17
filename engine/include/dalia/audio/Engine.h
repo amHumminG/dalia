@@ -492,13 +492,13 @@ namespace dalia {
 		/// @note[Spatial only] This only affects playback instances that have spatialization enabled.
 		///
 		/// @param[in] playback The handle to the playback instance.
-		/// @param[in] model	The attenuation curve to apply.
+		/// @param[in] curve	The attenuation curve to apply.
 		///
 		/// @retval Result::Ok					The playback attenuation curve was successfully set.
 		/// @retval Result::NotInitialized		The engine is not initialized.
 		/// @retval Result::InvalidHandle		The playback handle is not recognized.
 		/// @retval Result::ExpiredHandle		The playback handle has already stopped playing.
-		Result SetPlaybackAttenuationCurve(PlaybackHandle playback, AttenuationCurve model);
+		Result SetPlaybackAttenuationCurve(PlaybackHandle playback, AttenuationCurve curve);
 
 		/// @brief Updates the 3D world position of a playback instance.
 		///

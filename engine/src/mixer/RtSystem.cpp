@@ -792,7 +792,7 @@ namespace dalia {
 					distance,
 					voice.params.minDistance,
 					voice.params.maxDistance,
-					voice.params.attenuationModel
+					voice.params.attenuationCurve
 				);
 
 				// NOTE: If we add directional sound cones or occlusion in the future, this is probably where we do that

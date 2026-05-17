@@ -28,7 +28,7 @@ namespace dalia {
 
 		// Only used if isSpatial is true
 		DistanceMode distanceMode = DistanceMode::FromListener;
-		AttenuationCurve attenuationModel = AttenuationCurve::InverseSquare;
+		AttenuationCurve attenuationCurve = AttenuationCurve::InverseSquare;
 		math::Vector3 position{0.0f, 0.0f, 0.0f};
 		float minDistance = MIN_DIST_DEFAULT;
 		float maxDistance = MAX_DIST_DEFAULT;
