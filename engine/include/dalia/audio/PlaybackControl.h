@@ -57,7 +57,7 @@ namespace dalia {
 	};
 
 	/// @brief Mode used to determine what listener position to use when calculating distance attenuation.
-	enum class DistanceMode {
+	enum class DistanceMode : uint8_t {
 		FromListener,		// Standard 3D (Evaluate distance from listener).
 		FromDistanceProbe	// Evaluate distance from the listener's separate distance probe.
 	};
@@ -121,7 +121,7 @@ namespace dalia {
 	/// @return A bitmask with the corresponding listener's bit enabled.
 	inline constexpr ListenerMask MakeListenerMask(uint32_t listenerIndex) { return (1 << listenerIndex); }
 
-	enum class CoordinateSystem {
+	enum class CoordinateSystem : uint8_t {
 		RightHanded,
 		LeftHanded
 	};

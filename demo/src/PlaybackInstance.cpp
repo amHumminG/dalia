@@ -201,8 +201,23 @@ void PlaybackInstance::DrawInspectorUI(const UIContext& ui) {
 	}
 
 	if (m_isSpatial) {
-		ImGui::SeparatorText("Spatial Properties");
 		ImGui::Indent();
+		ImGui::SeparatorText("Spatial Properties");
+
+		bool changed = false;
+		ImGui::Text("Attenuation Curve");
+		ImGui::SameLine();
+		int attenuationCurve = static_cast<int>(m_attenuationCurve);
+		changed |= ImGui::RadioButton("InvSquare", &attenuationCurve, static_cast<int>(dalia::AttenuationCurve::InverseSquare));
+		ImGui::SameLine();
+		changed |= ImGui::RadioButton("Linear", &attenuationCurve, static_cast<int>(dalia::AttenuationCurve::Linear));
+		ImGui::SameLine();
+		changed |= ImGui::RadioButton("Quadratic", &attenuationCurve, static_cast<int>(dalia::AttenuationCurve::Quadratic));
+		if (changed) {
+			m_attenuationCurve = static_cast<dalia::AttenuationCurve>(attenuationCurve);
+			res = m_engine->SetPlaybackAttenuationCurve(m_handle, m_attenuationCurve);
+			if (res != dalia::Result::Ok) m_result = res;
+		}
 
 		if (ImGui::SliderFloat("Min Dist", &m_minDistance, 0.1f, 100.0f) ||
 			ImGui::SliderFloat("Max Dist", &m_maxDistance, m_minDistance, 500.0f)) {
@@ -224,15 +239,21 @@ void PlaybackInstance::DrawInspectorUI(const UIContext& ui) {
 
 		DrawMovementInspector(m_movementState, m_position, m_velocity);
 
+		changed = false;
 		ImGui::Text("Distance Mode");
 		ImGui::SameLine();
-		int* distanceMode = reinterpret_cast<int*>(&m_distanceMode);
-		ImGui::RadioButton("From Listener", distanceMode, 0);
+		int distanceMode = static_cast<int>(m_distanceMode);
+		changed |= ImGui::RadioButton("From Listener", &distanceMode, static_cast<int>(dalia::DistanceMode::FromListener));
 		ImGui::SameLine();
-		ImGui::RadioButton("From Probe", distanceMode, 1);
+		changed |= ImGui::RadioButton("From Probe", &distanceMode, static_cast<int>(dalia::DistanceMode::FromDistanceProbe));
+		if (changed) {
+			m_distanceMode = static_cast<dalia::DistanceMode>(distanceMode);
+			res = m_engine->SetPlaybackDistanceMode(m_handle, m_distanceMode);
+			if (res != dalia::Result::Ok) m_result = res;
+		}
 
 		ImGui::TextDisabled("Listener Masks");
-		bool changed = false;
+		changed = false;
 		changed |= ImGui::CheckboxFlags("Listener 0", &m_listenerMask, dalia::MASK_LISTENER_0);
 		ImGui::SameLine();
 		ImGui::Text("  ");

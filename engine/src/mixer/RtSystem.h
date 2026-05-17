@@ -23,7 +23,7 @@ namespace dalia {
 	struct Listener;
 	struct ListenerParams;
 
-	enum class CoordinateSystem;
+	enum class CoordinateSystem : uint8_t;
 	enum class SpeakerLayout;
 	struct VirtualSpeaker;
 

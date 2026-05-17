@@ -169,12 +169,14 @@ void Listener::DrawInspectorUI(const UIContext& ui) {
 		ImGui::Text("Target Body:");
 		ImGui::SameLine();
 
-		int* target = reinterpret_cast<int*>(&targetBody);
-		ImGui::RadioButton("Both", target, 0);
+		bool changed = false;
+		int target = static_cast<int>(targetBody);
+		changed |= ImGui::RadioButton("Both", &target, static_cast<int>(TargetBody::Both));
 		ImGui::SameLine();
-		ImGui::RadioButton("Head", target, 1);
+		changed |= ImGui::RadioButton("Head", &target, static_cast<int>(TargetBody::Head));
 		ImGui::SameLine();
-		ImGui::RadioButton("Probe", target, 2);
+		changed |= ImGui::RadioButton("Probe", &target, static_cast<int>(TargetBody::Probe));
+		if (changed) targetBody = static_cast<TargetBody>(target);
 
 		ImGui::SameLine();
 		if (ImGui::Button("Reset Probe")) {
