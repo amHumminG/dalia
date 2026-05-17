@@ -71,8 +71,6 @@ namespace dalia {
     	VoiceParams params;
     	bool isParamsDirty = false;
 
-        bool isLooping = false;
-
         uint32_t channels = 0;
         uint32_t sampleRate = 0;
         double cursor = 0.0;
@@ -118,8 +116,6 @@ namespace dalia {
         			targetGainMatrix[inC][outC]  = GAIN_SILENCE;
         		}
         	}
-
-            isLooping = false;
 
         	params = VoiceParams{};
         	isParamsDirty = false;

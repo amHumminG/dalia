@@ -271,7 +271,7 @@ namespace dalia {
 			uint32_t framesInSource = DOUBLE_BUFFER_FRAMES;
 			const uint32_t eofIndex = stream.eofIndex[voice.data.stream.frontBufferIndex];
 
-			if (!voice.isLooping && eofIndex != NO_EOF) framesInSource = eofIndex / stream.channels;
+			if (!voice.params.isLooping && eofIndex != NO_EOF) framesInSource = eofIndex / stream.channels;
 
 			if (cursorInt < framesInSource) {
 				block.framesAvailable = std::min(maxFramesNeeded, framesInSource - cursorInt);
@@ -287,7 +287,7 @@ namespace dalia {
 
 	inline bool HandleVoiceBoundary(Voice& voice, StreamContext* streamPool, IoStreamRequestQueue* ioStreamRequests) {
 		if (voice.soundType == SoundType::Resident) {
-			if (voice.isLooping) {
+			if (voice.params.isLooping) {
 				voice.cursor -= static_cast<double>(voice.data.resident.frameCount);
 				if (voice.cursor < 0.0) voice.cursor = 0.0;
 				return true;
@@ -302,7 +302,7 @@ namespace dalia {
 			StreamContext& stream = streamPool[voice.data.stream.streamContextIndex];
 
 			// Exit check
-			if (!voice.isLooping && stream.eofIndex[voice.data.stream.frontBufferIndex] != NO_EOF) {
+			if (!voice.params.isLooping && stream.eofIndex[voice.data.stream.frontBufferIndex] != NO_EOF) {
 				voice.currentState = VoiceState::Stopped;
 				voice.exitCondition = PlaybackExitCondition::NaturalEnd;
 				return false;
@@ -779,8 +779,6 @@ namespace dalia {
 				Listener& listener = m_listenerPool[lIndex];
 				if (!listener.isActive) continue; // Maybe evaluate this somewhere else for better branch prediction?
 				if (!(voice.params.listenerMask & (1 << lIndex))) continue;
-
-				DALIA_LOG_DEBUG(LOG_CTX_MIXER, "Passed voice listener mask");
 
 				float distance;
 				if (voice.params.distanceMode == DistanceMode::FromListener) {
