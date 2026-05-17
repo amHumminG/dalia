@@ -105,10 +105,10 @@ void PlaybackInstance::DrawInspectorUI(const UIContext& ui) {
 	ImGui::Text("Result: ");
 	ImGui::SameLine();
 	if (m_result == dalia::Result::Ok) {
-		ImGui::TextColored({0.0f, 1.0f, 0.0f, 1.0f}, dalia::GetErrorString(m_result));
+		ImGui::TextColored({0.0f, 1.0f, 0.0f, 1.0f}, dalia::GetResultString(m_result));
 	}
 	else {
-		ImGui::TextColored({1.0f, 0.0f, 0.0f, 1.0f}, dalia::GetErrorString(m_result));
+		ImGui::TextColored({1.0f, 0.0f, 0.0f, 1.0f}, dalia::GetResultString(m_result));
 	}
 
 	ImGui::SeparatorText("State");
