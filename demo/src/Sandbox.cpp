@@ -302,6 +302,8 @@ void Sandbox::Draw() {
 }
 
 void Sandbox::DrawMenuBar() {
+	bool openEngineSettings = false;
+
 	if (ImGui::BeginMainMenuBar()) {
 		if (ImGui::BeginMenu("File")) {
 			if (ImGui::MenuItem("Exit", "(Esc)")) m_isExiting = true;
@@ -325,6 +327,13 @@ void Sandbox::DrawMenuBar() {
 			ImGui::EndMenu();
 		}
 
+		if (ImGui::BeginMenu("Edit")) {
+			if (ImGui::MenuItem("Engine Settings")) {
+				openEngineSettings = true;
+			}
+			ImGui::EndMenu();
+		}
+
 		if (ImGui::BeginMenu("Tools")) {
 			if (ImGui::MenuItem("Reset Camera")) {
 				m_spectatorCamera.position = { 0.0f, 10.0f, -10.0f };
@@ -342,6 +351,10 @@ void Sandbox::DrawMenuBar() {
 
 		ImGui::EndMainMenuBar();
 	}
+
+	if (openEngineSettings) ImGui::OpenPopup("Engine Settings");
+
+	DrawEngineSettingsModal();
 }
 
 void Sandbox::DrawSceneOutliner() {
@@ -1250,6 +1263,38 @@ void Sandbox::RouteEffectSafely(Effect* effect, const std::string& targetBusId, 
 	}
 
 	effect->AttachTo(targetBusId, targetSlot);
+}
+
+void Sandbox::DrawEngineSettingsModal() {
+	ImVec2 center = ImGui::GetMainViewport()->GetCenter();
+	ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+
+	if (ImGui::BeginPopupModal("Engine Settings", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
+		ImGui::Text("Global Acoustics");
+		ImGui::Separator();
+		ImGui::Spacing();
+
+		if (ImGui::SliderFloat("Doppler Factor", &m_globalDoppplerFactor, 0.0f, 10.0f, "%.2f")) {
+			dalia::Result res = m_engine.SetGlobalDopplerFactor(m_globalDoppplerFactor);
+			if (res != dalia::Result::Ok) {
+				// This should never happen
+			}
+		}
+
+		ImGui::Spacing();
+		ImGui::Separator();
+
+		if (ImGui::Button("Close", ImVec2(120, 0))) {
+			ImGui::CloseCurrentPopup();
+		}
+
+		// This is useless as long as we close the program with escape lol
+		if (ImGui::IsKeyPressed(ImGuiKey_Escape)) {
+			ImGui::CloseCurrentPopup();
+		}
+
+		ImGui::EndPopup();
+	}
 }
 
 void Sandbox::DrawHotkeysWindow() {

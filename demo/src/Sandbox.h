@@ -65,6 +65,7 @@ private:
 	void DrawEffectBrowser();
 	void RouteEffectSafely(Effect* effect, const std::string& targetBusId, uint32_t targetSlot);
 
+	void DrawEngineSettingsModal();
 	void DrawHotkeysWindow();
 
 	void RefreshAvailableAssets();
@@ -72,6 +73,7 @@ private:
 	void BuildDefaultDockingLayout(ImGuiID dockspaceId);
 
 	dalia::Engine m_engine;
+	float m_globalDoppplerFactor = 1.0f;
 
 	UIContext m_ui;
 	bool m_resetPanelLayout = false;
