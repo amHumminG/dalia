@@ -821,26 +821,27 @@ namespace dalia {
 				);
 			}
 
-			// Pitch
+			// Pitch Evaluation
 			float totalDopplerFactor = voice.params.dopplerFactor * m_globalDopplerFactor;
 			if (voice.params.useDoppler && totalDopplerFactor > 0.0f) {
 				math::Vector3 listenerToEmitter = voice.params.position - bestListenerParams.position;
 				float distance = math::Vector3::Length(listenerToEmitter);
 
 				if (distance > EPSILON) {
-					math::Vector3 direction = listenerToEmitter * (1 / distance);
+					math::Vector3 direction = listenerToEmitter * (1.0f / distance);
 
-					float emitterRadial = voice.params.velocity.Dot(direction);
+					// Radial velocities
 					float listenerRadial = bestListenerParams.velocity.Dot(direction);
+					float emitterRadial = voice.params.velocity.Dot(direction);
 
-					emitterRadial = std::clamp(emitterRadial, -SPEED_OF_SOUND, SPEED_OF_SOUND);
-					listenerRadial = std::clamp(listenerRadial, -SPEED_OF_SOUND, SPEED_OF_SOUND);
+					// Scale velocities to avoid powf call
+					listenerRadial *= totalDopplerFactor;
+					emitterRadial *= totalDopplerFactor;
 
-					float dopplerMultiplier = (SPEED_OF_SOUND - listenerRadial) / (SPEED_OF_SOUND - emitterRadial);
+					listenerRadial = std::max(listenerRadial, -SPEED_OF_SOUND);
+					emitterRadial = std::max(emitterRadial, -SPEED_OF_SOUND + EPSILON);
 
-					if (voice.params.dopplerFactor != 1.0f) {
-						dopplerMultiplier = std::powf(dopplerMultiplier, totalDopplerFactor);
-					}
+					float dopplerMultiplier = (SPEED_OF_SOUND + listenerRadial) / (SPEED_OF_SOUND + emitterRadial);
 
 					voice.currentPitch = std::clamp(voice.currentPitch * dopplerMultiplier, PITCH_MIN, PITCH_MAX);
 				}
