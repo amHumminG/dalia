@@ -17,7 +17,11 @@ void Listener::Update(float deltaTime) {
 	if (m_movementState.type != MovementPreset::Manual) m_probePosition = Vector3Add(m_probePosition, movementDelta);
 
 	Vector3 rawVelocity = { 0.0f, 0.0f, 0.0f };
-	if (Vector3Length(movementDelta) < 10.0f) rawVelocity = Vector3Scale(movementDelta, 1.0f / deltaTime); // Should we keep this safety guard?
+	if (deltaTime > 0.0001f) {
+		if (Vector3Length(movementDelta) < 10.0f) {
+			rawVelocity = Vector3Scale(movementDelta, 1.0f / deltaTime);
+		}
+	}
 
 	float smoothing = 15.0f * deltaTime;
 	m_velocity.x = std::lerp(m_velocity.x, rawVelocity.x, smoothing);
