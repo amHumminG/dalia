@@ -450,22 +450,28 @@ void Sandbox::DrawInspector() {
 	else if (m_selectionType == SelectionType::Sound) {
 		auto* sound = static_cast<SoundAsset*>(m_selectedObject);
 
-		auto spawnLambda = [this](dalia::SoundHandle handle, const std::string& filepath, dalia::SoundType soundType) {
-			std::filesystem::path fullpath = filepath;
-			std::string baseName = fullpath.stem().string();
+		sound->DrawInspectorUI(m_ui);
 
-			static uint32_t playbackSpawnCounter = 0;
-			char nameBuffer[128];
-			snprintf(nameBuffer, sizeof(nameBuffer), "%s %u", baseName.c_str(), playbackSpawnCounter++);
+		if (sound->GetLoadState() == SoundLoadState::Loaded) {
+			ImGui::Separator();
 
-			auto playback = std::make_unique<PlaybackInstance>(&m_engine, handle, nameBuffer);
-			if (playback->GetResult() == dalia::Result::Ok) {
-				playback->SetSoundType(soundType);
-				m_playbackInstances.push_back(std::move(playback));
+			if (ImGui::Button("Create Playback Instance", ImVec2(-1, 30))) {
+				std::filesystem::path fullpath = sound->GetFilePath();
+				std::string baseName = fullpath.stem().string();
+
+				static uint32_t playbackSpawnCounter = 0;
+				char nameBuffer[128];
+				snprintf(nameBuffer, sizeof(nameBuffer), "%s %u", baseName.c_str(), playbackSpawnCounter++);
+
+				auto playback = std::make_unique<PlaybackInstance>(&m_engine, sound->GetHandle(), nameBuffer);
+				if (playback->GetResult() == dalia::Result::Ok) {
+					playback->SetSoundType(sound->GetType());
+					m_selectedObject = playback.get();
+					m_selectionType = SelectionType::Playback;
+					m_playbackInstances.push_back(std::move(playback));
+				}
 			}
-		};
-
-		sound->DrawInspectorUI(m_ui, spawnLambda);
+		}
 
 		ImGui::Separator();
 		ImGui::PushStyleColor(ImGuiCol_Button, {0.8f, 0.2f, 0.2f, 1.0f});

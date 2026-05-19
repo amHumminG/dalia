@@ -27,7 +27,7 @@ SoundAsset::~SoundAsset() {
 	m_engine->UnloadSound(m_handle);
 }
 
-void SoundAsset::DrawInspectorUI(const UIContext& ui, std::function<void(dalia::SoundHandle, const std::string&, dalia::SoundType)> onSpawnPlayback) {
+void SoundAsset::DrawInspectorUI(const UIContext& ui) {
 	ImGui::PushID(this);
 
 	ImGui::PushFont(ui.headerFont);
@@ -59,12 +59,6 @@ void SoundAsset::DrawInspectorUI(const UIContext& ui, std::function<void(dalia::
 	}
 	else if (m_loadState == SoundLoadState::Loaded) {
 		ImGui::TextColored({0.0f, 1.0f, 0.0f, 1.0f}, "LOADED");
-
-		ImGui::Separator();
-
-		if (ImGui::Button("Create Playback Instance", ImVec2(-1, 30))) {
-			if (onSpawnPlayback) onSpawnPlayback(m_handle, m_filepath, m_type);
-		}
 	}
 
 	ImGui::PopID();
