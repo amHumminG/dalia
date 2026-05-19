@@ -660,9 +660,12 @@ void Sandbox::DrawAssetBrowser() {
 				m_showDuplicateSoundWarning = true;
 			}
 			else {
-
 				auto sound = std::make_unique<SoundAsset>(&m_engine, type, path);
-				if (sound->GetResult() == dalia::Result::Ok) m_sounds.push_back(std::move(sound));
+				if (sound->GetResult() == dalia::Result::Ok) {
+					m_selectedObject = sound.get();
+					m_selectionType = SelectionType::Sound;
+					m_sounds.push_back(std::move(sound));
+				}
 				m_newSoundPathBuffer[0] = '\0';
 				m_showDuplicateSoundWarning = false;
 			}
