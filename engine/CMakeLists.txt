@@ -76,6 +76,8 @@ set(ENGINE_FILES
     src/resources/AssetRegistry.cpp
     src/resources/AssetRegistry.h
     src/resources/StreamSound.h
+    src/mixer/PeakLimiter.h
+    src/mixer/PeakLimiter.cpp
 )
 
 add_library(dalia_engine STATIC ${ENGINE_FILES})

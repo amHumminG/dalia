@@ -3,6 +3,7 @@
 #include "core/Constants.h"
 #include "mixer/ParameterBridge.h"
 #include "mixer/Speakers.h"
+#include "mixer/PeakLimiter.h"
 
 #include <span>
 #include <memory>
@@ -13,7 +14,6 @@ namespace dalia {
     class RtEventQueue;
     class IoStreamRequestQueue;
 
-	// template <typename T> struct ParameterBridge;
     struct Voice;
 	struct VoiceParams;
     struct StreamContext;
@@ -98,6 +98,8 @@ namespace dalia {
         uint32_t m_outSampleRate = 0;
 
     	VirtualSpeaker m_speakerMatrix[CHANNELS_MAX];
+
+    	PeakLimiter m_masterPeakLimiter;
 
     	float m_globalDopplerFactor = 1.0f;
 

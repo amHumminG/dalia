@@ -131,24 +131,6 @@ namespace dalia {
 		}
 	}
 
-	static inline void ApplySoftClipper(float* DALIA_RESTRICT buffer, uint32_t sampleCount) {
-		constexpr float THRESHOLD = 0.8f;
-		constexpr float CEILING = 1.0f;
-		constexpr float HEADROOM = CEILING - THRESHOLD;
-
-		for (uint32_t i = 0; i < sampleCount; i++) {
-			float sample = buffer[i];
-			float sampleAbs = std::abs(sample);
-
-			if (sampleAbs > THRESHOLD) {
-				float sign = (sample > 0.0f) ? 1.0f : -1.0f;
-				float over = sampleAbs - THRESHOLD;
-				float compressed = THRESHOLD + (over / (1.0f + (over / HEADROOM)));
-				buffer[i] = sign * compressed;
-			}
-		}
-	}
-
 	static float GetDistanceAttenuationGain(float distance, float minDistance, float maxDistance, AttenuationCurve model) {
 		if (maxDistance <= minDistance) {
 			if (distance <= minDistance) return 1.0f;
@@ -386,6 +368,7 @@ namespace dalia {
 		m_smoothingCoefficient = 1.0f - std::exp(-2.0f * PI * SMOOTHING_CUTOFF_HZ / config.outSampleRate);
 		m_fadeStep = CalculateLinearFadeStep(FADE_TIME_GAIN, m_outSampleRate);
 		ConfigureSpeakerLayout(config.speakerLayout);
+		m_masterPeakLimiter.Init(m_outSampleRate);
     }
 
     void RtSystem::Tick(float* output, uint32_t frameCount) {
@@ -648,8 +631,15 @@ namespace dalia {
         }
 
         float* masterBuffer = m_busBufferPool.data();
-		ApplySoftClipper(masterBuffer, sampleCount);
-        std::copy_n(masterBuffer, sampleCount, output);
+
+		m_masterPeakLimiter.ProcessBuffer(masterBuffer, frameCount, m_outChannels); // Limit peaks
+
+		// Hard clamp output
+		for (uint32_t i = 0; i < sampleCount; i++) {
+			masterBuffer[i] = std::clamp(masterBuffer[i], -1.0f, 1.0f);
+		}
+
+        std::copy_n(masterBuffer, sampleCount, output); // Output to OS
 	}
 
 	void RtSystem::ResolveVoiceStates() {
