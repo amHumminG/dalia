@@ -4,7 +4,7 @@ A real-time, low-latency, data-oriented audio engine for games and game engines 
 *Note: DALIA is currently only supported on Windows (WASAPI).*
 
 ## Features
-* **Deterministic and Configurable Memory Usage:** All internal pools are pre-allocated at startup per configuration. No dynamic allocations at runtime.
+* **Configurable Memory Usage:** All internal pools are pre-allocated at startup per configuration. No dynamic allocations at runtime.
 * **Lock-Free Asset Management:** Asynchronous, reference-counted asset loading and double-buffered OGG/Vorbis streaming.
 * **3D Spatialization:**
   * Configurable coordinate systems (left/right-handed).
@@ -15,6 +15,8 @@ A real-time, low-latency, data-oriented audio engine for games and game engines 
   * Directed acyclic graph bus routing.
   * 4 hot-swappable DSP effect slots per bus.
 * **Real-Time Playback Parameter Control:** Volume, pitch, pan, looping, spatialization, position, attenuation curve, min/max distance, velocity, doppler effect, and more.
+
+Visit the [DALIA documentation site](https://amhumming.github.io/dalia/) for more in-depth details.
 
 ## Building from Source (CMake)
 
