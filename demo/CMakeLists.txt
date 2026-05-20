@@ -25,7 +25,12 @@ FetchContent_Declare(
     GIT_TAG master
 )
 
-FetchContent_MakeAvailable(raylib imgui rlimgui imguizmo)
+FetchContent_MakeAvailable(raylib imgui rlimgui)
+
+FetchContent_GetProperties(imguizmo)
+if (NOT imguizmo_POPULATED)
+    FetchContent_Populate(imguizmo)
+endif ()
 
 # Define ImGui and rlImGui as libraries
 add_library(imgui_lib_demo STATIC
@@ -76,7 +81,7 @@ SET(DEMO_FILES
 add_executable(dalia_demo ${DEMO_FILES})
 
 target_link_libraries(dalia_demo
-    PRIVATE dalia_engine
+    PRIVATE dalia::engine
     PRIVATE rlimgui_lib_demo
     PRIVATE imguizmo_lib
     PRIVATE raylib

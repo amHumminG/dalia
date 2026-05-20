@@ -77,7 +77,7 @@ target_include_directories(dalia_studio
     PRIVATE src
 )
 target_link_libraries(dalia_studio
-    PRIVATE dalia_engine
+    PRIVATE dalia::engine
     PRIVATE dalia_common
     PRIVATE rlimgui_lib
     PRIVATE raylib

@@ -94,3 +94,4 @@ target_link_libraries(dalia_engine
     PRIVATE avrt  # Backend: MMCSS
 )
 
+add_library(dalia::engine ALIAS dalia_engine)
