@@ -1,5 +1,5 @@
 # DALIA
-A real-time, low-latency, data-oriented audio engine/middleware for C++ games and game-engines.
+A real-time, low-latency, data-oriented audio engine for games and game engines written in C++.
 
 *Note: DALIA is currently only supported on Windows (WASAPI).*
 
