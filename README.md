@@ -16,6 +16,8 @@ A real-time, low-latency, data-oriented audio engine for games and game engines 
   * 4 hot-swappable DSP effect slots per bus.
 * **Real-Time Playback Parameter Control:** Volume, pitch, pan, looping, spatialization, position, attenuation curve, min/max distance, velocity, doppler effect, and more.
 
+Visit the [DALIA documentation site](https://amhumming.github.io/dalia/) for more in-depth details.
+
 ## Building from Source (CMake)
 
 ### Requirements
