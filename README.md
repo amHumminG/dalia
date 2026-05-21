@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/assets/dalia_engine.png" width="600" alt="DALIA Engine Logo">
+  <img src="docs/assets/dalia_engine_logo_transparent.png" width="600" alt="DALIA Engine Logo">
   <br><br>
   A real-time, low-latency, data-oriented audio engine for games and game engines written in C++.
 </p>
