@@ -1,7 +1,10 @@
-# DALIA
-A real-time, low-latency, data-oriented audio engine for games and game engines written in C++.
+<p align="center">
+  <img src="docs/assets/dalia_engine_logo.png" width="600" alt="DALIA Engine Logo">
+  <br><br>
+  A real-time, low-latency, data-oriented audio engine for games and game engines written in C++.
+</p>
 
-*Note: DALIA is currently only supported on Windows (WASAPI).*
+---
 
 ## Features
 * **Configurable Memory Usage:** All internal pools are pre-allocated at startup per configuration. No dynamic allocations at runtime.
@@ -16,7 +19,8 @@ A real-time, low-latency, data-oriented audio engine for games and game engines 
   * 4 hot-swappable DSP effect slots per bus.
 * **Real-Time Playback Parameter Control:** Volume, pitch, pan, looping, spatialization, position, attenuation curve, min/max distance, velocity, doppler effect, and more.
 
-Visit the [DALIA documentation site](https://amhumming.github.io/dalia/) for more in-depth details.
+DALIA is currently only supported on Windows (WASAPI).
+Check out the [documentation](https://amhumming.github.io/dalia/) for more in-depth details.
 
 ## Building from Source (CMake)
 
