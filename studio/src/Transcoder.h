@@ -5,7 +5,7 @@
 #include "Soundbank.h"
 
 
-namespace  dalia::studio {
+namespace dalia::studio {
 
     struct AudioData {
         std::string name;

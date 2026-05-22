@@ -1,6 +1,6 @@
 #include "SoundbankWriter.h"
 
-namespace dalia {
+namespace dalia::stuido {
     SoundbankWriter::SoundbankWriter(const char *path) {
         m_outFile.open(path, std::ios::binary);
 

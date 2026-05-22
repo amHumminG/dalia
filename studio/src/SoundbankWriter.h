@@ -8,7 +8,7 @@
 #include "StringID.h"
 
 
-namespace dalia {
+namespace dalia::studio {
     class SoundbankWriter {
     public:
         SoundbankWriter(const char* location);
