@@ -61,3 +61,4 @@ plugins:
           full-doc: True
           doxy-cfg:
             RECURSIVE: True
+            EXTRACT_ALL: True
