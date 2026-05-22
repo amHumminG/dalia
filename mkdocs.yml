@@ -37,7 +37,10 @@ nav:
       - Mixing & Routing: guide/mixing.md
       - Playback Control: guide/playback.md
       - Spatialization: guide/spatialization.md
-  - API Reference: api/index.md
+  - API Reference:
+      - Classes & Structs: api/annotated.md
+      - NameSpaces: api/namespaces
+      - Files: api/files.md
 
 markdown_extensions:
   - admonition
