@@ -39,7 +39,7 @@ nav:
       - Spatialization: guide/spatialization.md
   - API Reference:
       - Classes & Structs: api/annotated.md
-      - NameSpaces: api/namespaces
+      - NameSpaces: api/namespaces.md
       - Files: api/files.md
 
 markdown_extensions:
