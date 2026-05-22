@@ -12,17 +12,20 @@ namespace dalia {
 	/// destroyed.
 	struct EffectHandle {
     public:
-		/// @return true if the handle has referenced an effect at some point. Otherwise, false.
-		bool IsValid() const { return rawId != 0; }
+		EffectHandle() = default;
+		explicit EffectHandle(uint64_t rawId) : m_rawId(rawId) {}
 
-        bool operator==(const EffectHandle& other) const { return rawId == other.rawId; }
-        bool operator!=(const EffectHandle& other) const { return rawId != other.rawId; }
+		/// @return true if the handle has referenced an effect at some point. Otherwise, false.
+		bool IsValid() const { return m_rawId != 0; }
+
+        bool operator==(const EffectHandle& other) const { return m_rawId == other.m_rawId; }
+        bool operator!=(const EffectHandle& other) const { return m_rawId != other.m_rawId; }
 
         /// @return The type of effect the handle is referencing.
-        EffectType GetType() const { return static_cast<EffectType>(rawId >> 56); }
+        EffectType GetType() const { return static_cast<EffectType>(m_rawId >> 56); }
 
 		/// @return The underlying raw id of the handle.
-        uint64_t GetRawId() const { return rawId; }
+        uint64_t GetRawId() const { return m_rawId; }
 
     private:
         friend class Engine;
@@ -35,20 +38,20 @@ namespace dalia {
             uint64_t generationBits = (static_cast<uint64_t>(generation) & 0xFFFFFF) << 32;
             uint64_t indexBits = static_cast<uint64_t>(index);
 
-            handle.rawId = typeBits | generationBits | indexBits;
+            handle.m_rawId = typeBits | generationBits | indexBits;
             return handle;
         }
 
         static EffectHandle FromRawId(uint64_t rawId) {
             EffectHandle handle;
-            handle.rawId = rawId;
+            handle.m_rawId = rawId;
             return handle;
         }
 
-		uint32_t GetIndex() const { return static_cast<uint32_t>(rawId & 0xFFFFFFFF); }
-		uint32_t GetGeneration() const { return static_cast<uint32_t>((rawId >> 32) & 0xFFFFFF); }
+		uint32_t GetIndex() const { return static_cast<uint32_t>(m_rawId & 0xFFFFFFFF); }
+		uint32_t GetGeneration() const { return static_cast<uint32_t>((m_rawId >> 32) & 0xFFFFFF); }
 
-        uint64_t rawId = 0;
+        uint64_t m_rawId = 0;
     };
 
     constexpr EffectHandle InvalidEffectHandle{};

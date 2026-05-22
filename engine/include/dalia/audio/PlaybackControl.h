@@ -9,14 +9,17 @@ namespace dalia {
 	/// referencing stops.
 	struct PlaybackHandle {
 	public:
-		/// @return true if the handle has referenced an active playback instance at some point. Otherwise, false.
-		bool IsValid() const { return rawId != 0; }
+		PlaybackHandle() = default;
+		explicit PlaybackHandle(uint64_t rawId) : m_rawId(rawId) {}
 
-		bool operator==(const PlaybackHandle& other) const { return rawId == other.rawId; }
-		bool operator!=(const PlaybackHandle& other) const { return rawId != other.rawId; }
+		/// @return true if the handle has referenced an active playback instance at some point. Otherwise, false.
+		bool IsValid() const { return m_rawId != 0; }
+
+		bool operator==(const PlaybackHandle& other) const { return m_rawId == other.m_rawId; }
+		bool operator!=(const PlaybackHandle& other) const { return m_rawId != other.m_rawId; }
 
 		/// @return The underlying raw id of the handle.
-		uint64_t GetRawId() const { return rawId; }
+		uint64_t GetRawId() const { return m_rawId; }
 
 	private:
 		friend class Engine;
@@ -24,14 +27,14 @@ namespace dalia {
 
 		static PlaybackHandle Create(uint32_t index, uint32_t generation) {
 			PlaybackHandle handle;
-			handle.rawId = (static_cast<uint64_t>(generation) << 32) | index;
+			handle.m_rawId = (static_cast<uint64_t>(generation) << 32) | index;
 			return handle;
 		}
 
-		uint32_t GetIndex() const { return static_cast<uint32_t>(rawId & 0xFFFFFFFF); }
-		uint32_t GetGeneration() const { return static_cast<uint32_t>(rawId >> 32); }
+		uint32_t GetIndex() const { return static_cast<uint32_t>(m_rawId & 0xFFFFFFFF); }
+		uint32_t GetGeneration() const { return static_cast<uint32_t>(m_rawId >> 32); }
 
-		uint64_t rawId = 0;
+		uint64_t m_rawId = 0;
 	};
 
 	constexpr PlaybackHandle InvalidPlaybackHandle{};
