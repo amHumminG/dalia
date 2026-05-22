@@ -6,6 +6,14 @@ repo_name: amHumminG/dalia
 
 theme:
   name: material
+
+  logo: assets/dalia_engine_logo_transparent.png
+  favicon: assets/dalia_icon_transparent.png
+
+  font:
+    text: Inter
+    code: JetBrains Mono
+
   features:
     - navigation.tabs
     - navigation.sections
@@ -13,6 +21,7 @@ theme:
     - search.suggest
     - search.highlight
     - content.code.copy
+    -
   palette:
     - scheme: slate
       primary: blue
