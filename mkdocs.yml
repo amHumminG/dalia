@@ -1,4 +1,4 @@
-site_name: DALIA Audio Engine
+site_name: DALIA Engine
 site_description: A real-time, low-latency, data-oriented audio engine for games and game engines written in C++.
 site_author: Arvid Wahlgren
 repo_url: https://github.com/amHumminG/dalia
@@ -7,7 +7,7 @@ repo_name: amHumminG/dalia
 theme:
   name: material
 
-  logo: assets/dalia_engine_logo_transparent.png
+  logo: assets/dalia_icon_transparent.png
   favicon: assets/dalia_icon_transparent.png
 
   font:
@@ -21,20 +21,41 @@ theme:
     - search.suggest
     - search.highlight
     - content.code.copy
-    -
+
   palette:
     - scheme: slate
-      primary: blue
-      accent: blue
+      primary: black
+      accent: red
 
 # Sidebar nav menu
 nav:
   - Introduction: index.md
+  - Getting Started: getting-started.md
+  - Architecture: architecture.md
+  - Guide:
+      - Asset Management: guide/asset-management.md
+      - Mixing & Routing: guide/mixing.md
+      - Playback Control: guide/playback.md
+      - Spatialization: guide/spatialization.md
+  - API Reference: api/index.md
 
 markdown_extensions:
   - admonition
+  - toc:
+      permalink: true
   - pymdownx.highlight:
       anchor_linenums: true
   - pymdownx.inlinehilite
   - pymdownx.snippets
   - pymdownx.superfences
+
+extra_css:
+  - stylesheets/extra.css
+
+plugins:
+  - search
+  - mkdoxy:
+      projects:
+        api:
+          src-dirs: engine/include/dalia
+          full-doc: True

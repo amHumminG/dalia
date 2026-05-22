@@ -1,9 +1,12 @@
-name: Publish Documentation
+name: Build and Deploy Documentation
+
+# Only trigger on pushes to main
 on:
   push:
     branches:
       - main
 
+# Action has permission to write to gh pages
 permissions:
   contents: write
 
@@ -14,13 +17,18 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Install Doxygen
+        run: sudo apt-get update && sudo apt-get install -y doxygen
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: 3.x
 
-      - name: Install MkDocs Material
-        run: pip install mkdocs-material
+      - name: Install MkDocs and MkDoxy
+        run: |
+          pip install mkdocs-material 
+          pip install mkdoxy
 
       - name: Build and Deploy to GitHub Pages
         run: mkdocs gh-deploy --force

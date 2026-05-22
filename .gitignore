@@ -7,6 +7,9 @@ out/
 [Rr]elease/
 Generated\ Files/
 
+# Auto generated docs (MkDoxy)
+/docs/api/
+
 # Compiled Binaries & Libraries
 *.exe
 *.pdb

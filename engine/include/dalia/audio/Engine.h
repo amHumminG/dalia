@@ -61,7 +61,7 @@ namespace dalia {
 		/// @retval Result::Ok					The engine was successfully initialized and is ready for use.
 		/// @retval Result::AlreadyInitialized	Attempted to initialize an already initialized engine.
 		/// @retval Result::DeviceFailed		The operating system failed to initialize or start the audio device.
-		Result Init(const EngineConfig& config);
+		Result Init(const EngineConfig& config = EngineConfig{});
 
 		/// @brief Halts all audio processing, terminates all background threads and frees allocated engine memory.
 		///
