@@ -29,7 +29,7 @@ theme:
 
 # Sidebar nav menu
 nav:
-  - Introduction: index.md
+  - Home: index.md
   - Getting Started: getting-started.md
   - Architecture: architecture.md
   - Guide:
