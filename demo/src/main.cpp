@@ -1,26 +1,9 @@
-// Raylib / ImGui
-#include "raylib.h"
-#include "raymath.h"
-#include "rlImGui.h"
-#include "imgui.h"
-
-#include "dalia.h"
-
-#include <iostream>
+#include "Sandbox.h"
 
 int main() {
-	using namespace dalia;
 
-	// Testing Engine
-	{
-		std::cout << "Testing Engine Init/Deinit" << std::endl;
+	Sandbox sandbox;
+	sandbox.Run();
 
-		Engine engine;
-		EngineConfig config;
-		config.logLevel = LogLevel::Debug;
-		Result result = engine.Init(config);
-		result = engine.Deinit();
-	}
-
-	return 0;
+    return 0;
 }

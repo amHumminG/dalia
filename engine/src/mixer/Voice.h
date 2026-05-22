@@ -1,79 +1,174 @@
 #pragma once
+
 #include "dalia/audio/PlaybackControl.h"
+#include "dalia/audio/SoundControl.h"
+#include "core/Constants.h"
+#include "core/Math.h"
+#include "mixer/Resampler.h"
+
 #include <cstdint>
-#include <span>
 
 namespace dalia {
 
-    class Bus;
-
-    enum class VoiceSourceType {
-        None,
-        Resident,   // Played from RAM
-        Stream      // Streamed from soundbank (double buffered)
-    };
-
     enum class VoiceState : uint8_t {
-        None,
+        Free,
         Inactive,
         Playing,
         Paused,
-        Stopping
+        Stopped
     };
 
+	struct VoiceParams {
+		float volumeDb = VOLUME_DB_DEFAULT;
+		float pitch = PITCH_DEFAULT;
+		float stereoPan = PAN_STEREO_DEFAULT;
+
+		bool isLooping = false;
+		bool isSpatial = false;
+
+		// Only used if isSpatial is true
+		DistanceMode distanceMode = DistanceMode::FromListener;
+		AttenuationCurve attenuationCurve = AttenuationCurve::InverseSquare;
+		math::Vector3 position{0.0f, 0.0f, 0.0f};
+		float minDistance = MIN_DIST_DEFAULT;
+		float maxDistance = MAX_DIST_DEFAULT;
+
+		bool useDoppler = false;
+		float dopplerFactor = 1.0f;
+		math::Vector3 velocity{0.0f, 0.0f, 0.0f};
+
+		ListenerMask listenerMask = MASK_ALL_LISTENERS;
+	};
+
     struct Voice {
-        uint32_t generation = 0;
+        uint32_t gen = START_GENERATION;
 
-        VoiceState state = VoiceState::None;
+        VoiceState currentState = VoiceState::Free;
+    	VoiceState targetState = VoiceState::Free;
 
-        // FIXME: Reference to sound in soundbank (probably unnecessary here)
-        uint32_t assetID = 0;
+        PlaybackExitCondition exitCondition = PlaybackExitCondition::NaturalEnd;
+    	bool isExiting = false;
 
-        // Bus routing
-        uint32_t parentBusIndex;
+        // Routing
+        uint32_t currentBusIndex = MASTER_BUS_INDEX;
+    	uint32_t targetBusIndex = MASTER_BUS_INDEX;
 
-        // Playback
-        bool isPlaying = false;
-        bool isLooping = false;
-        float volume = 1.0f;
-        float pitch = 1.0f;
-        float pan = 0.0f;
-        uint32_t channels = 2;  // This is probably read from the soundbank
-        float cursor = 0.0f;    // Frame or sample position?
+    	// Seeking
+    	bool hasPendingSeek = false;
+    	uint32_t pendingSeekFrame = 0;
 
-        VoiceSourceType sourceType = VoiceSourceType::None;
-        std::span<float> buffer;
-        uint16_t streamingContextIndex;
-        // The StreamingContext should be assigned by the game thread and sent to the audio thread via the play command
+        // Mixing Properties
+    	ResamplerState resamplerState;
 
-        // To be used before a new sound is played by voice
+    	float currentFadeGain = GAIN_DEFAULT; // Owned by the voice (used for micro-fading)
+    	float targetFadeGain = GAIN_DEFAULT;  // Owned by the resolver (used for micro-fading)
+
+    	float currentGainMatrix[CHANNELS_MAX][CHANNELS_MAX];
+    	float targetGainMatrix[CHANNELS_MAX][CHANNELS_MAX];
+
+    	float currentPitch = 1.0f; // Final resolved pitch after doppler has been applied
+
+    	VoiceParams params;
+    	bool isParamsDirty = false;
+
+        uint32_t channels = 0;
+        uint32_t sampleRate = 0;
+        double cursor = 0.0;
+
+        SoundType soundType = SoundType::None;
+        union {
+            struct {
+                const float* pcmData;
+                uint32_t frameCount;
+            } resident;
+
+            struct {
+                uint32_t streamContextIndex;
+                uint32_t frontBufferIndex;
+            } stream;
+        } data = {};
+
+        // Use this when releasing a voice
         void Reset() {
-            parentBusIndex = 0;
-            isPlaying = false;
-            isLooping = false;
-            volume = 1.0f;
-            pitch = 1.0f;
-            pan = 0.0f;
-            cursor = 0.0f;
+            gen++;
+            if (gen == NO_GENERATION) gen = START_GENERATION;
+
+        	currentState = VoiceState::Free;
+        	targetState = VoiceState::Free;
+
+        	exitCondition = PlaybackExitCondition::NaturalEnd;
+        	isExiting = false;
+
+            currentBusIndex = MASTER_BUS_INDEX;
+        	targetBusIndex = MASTER_BUS_INDEX;
+
+        	hasPendingSeek = false;
+			pendingSeekFrame = 0;
+
+        	resamplerState = ResamplerState{};
+
+        	currentFadeGain = GAIN_DEFAULT;
+        	targetFadeGain = GAIN_DEFAULT;
+
+        	for (uint32_t inC = 0; inC < CHANNELS_MAX; inC++) {
+        		for (uint32_t outC = 0; outC < CHANNELS_MAX; outC++) {
+        			currentGainMatrix[inC][outC] = GAIN_SILENCE;
+        			targetGainMatrix[inC][outC]  = GAIN_SILENCE;
+        		}
+        	}
+
+        	params = VoiceParams{};
+        	isParamsDirty = false;
+
+            channels = 0;
+            sampleRate = 0;
+            cursor = 0.0;
+
+            soundType = SoundType::None;
+            data = {};
         }
     };
 
     struct VoiceMirror {
-        uint32_t generation = 0;
-        bool isBusy = false;
-        uint32_t parentBusIndex;
-        VoiceState state = VoiceState::None;
-        void* callbackOnFinished = nullptr;
-        AudioEventCallback callback = nullptr;
-        void* userData = nullptr;
-        // We probably keep other voice data here too (volume etc.)
+        // --- API Thread Only Stuff ---
+        bool pendingLoad = false; // Pending playback due to asset loading
+        PlaybackExitCallback onStopCallback = nullptr;
+        uint64_t assetRawId;
+
+        // --- Voice Lifecycle ---
+        uint32_t gen = START_GENERATION;
+        VoiceState state = VoiceState::Free;
+
+        // Routing
+        uint32_t parentBusIndex = MASTER_BUS_INDEX;
+
+    	VoiceParams params;
+    	bool isParamsDirty = false;
+
+        // Asset
+        uint32_t frameCount = 0;
+        uint32_t channels = 0;
+        uint32_t sampleRate = 0;
+        SoundType soundType;
 
         void Reset() {
-            isBusy = false;
-            state = VoiceState::None;
-            callbackOnFinished = nullptr;
-            callback = nullptr;
-            userData = nullptr;
+            pendingLoad = false;
+            onStopCallback = nullptr;
+            assetRawId = 0;
+
+            gen++;
+            if (gen == NO_GENERATION) gen = START_GENERATION;
+            state = VoiceState::Free;
+
+        	parentBusIndex = MASTER_BUS_INDEX;
+
+        	params = VoiceParams{};
+        	isParamsDirty = false;
+
+        	frameCount = 0;
+        	channels = 0;
+        	sampleRate = 0;
+            soundType = SoundType::None;
         }
     };
 }

@@ -12,14 +12,25 @@ FetchContent_Declare(
 FetchContent_Declare(
     imgui
     GIT_REPOSITORY https://github.com/ocornut/imgui.git
-    GIT_TAG v1.92.6
+    GIT_TAG docking
 )
 FetchContent_Declare(
     rlimgui
     GIT_REPOSITORY https://github.com/raylib-extras/rlImGui.git
     GIT_TAG main
 )
+FetchContent_Declare(
+    imguizmo
+    GIT_REPOSITORY https://github.com/CedricGuillemet/ImGuizmo.git
+    GIT_TAG master
+)
+
 FetchContent_MakeAvailable(raylib imgui rlimgui)
+
+FetchContent_GetProperties(imguizmo)
+if (NOT imguizmo_POPULATED)
+    FetchContent_Populate(imguizmo)
+endif ()
 
 # Define ImGui and rlImGui as libraries
 add_library(imgui_lib_demo STATIC
@@ -30,29 +41,57 @@ add_library(imgui_lib_demo STATIC
     ${imgui_SOURCE_DIR}/imgui_demo.cpp
 )
 target_include_directories(imgui_lib_demo SYSTEM PUBLIC ${imgui_SOURCE_DIR})
+target_compile_definitions(imgui_lib_demo PRIVATE NDEBUG) # Turn off asserts (Quick fix for imguizmo. Will do for now)
 
 add_library(rlimgui_lib_demo STATIC
     ${rlimgui_SOURCE_DIR}/rlImGui.cpp
 )
 target_include_directories(rlimgui_lib_demo SYSTEM PUBLIC ${rlimgui_SOURCE_DIR})
-target_link_libraries(rlimgui_lib_demo PUBLIC raylib imgui_lib)
+target_link_libraries(rlimgui_lib_demo PUBLIC raylib imgui_lib_demo)
 
-# Output
-add_executable(dalia_demo src/main.cpp)
+add_library(imguizmo_lib STATIC
+    ${imguizmo_SOURCE_DIR}/src/ImGuizmo.cpp
+)
+target_include_directories(imguizmo_lib SYSTEM PUBLIC ${imguizmo_SOURCE_DIR}/src)
+target_link_libraries(imguizmo_lib PUBLIC imgui_lib_demo)
+
+SET(DEMO_FILES
+    src/main.cpp
+    src/Sandbox.cpp
+    src/Sandbox.h
+    src/Panel.h
+    src/PlaybackInstance.cpp
+    src/PlaybackInstance.h
+    src/Listener.cpp
+    src/Listener.h
+    src/SoundAsset.cpp
+    src/SoundAsset.h
+    src/MixingBus.cpp
+    src/MixingBus.h
+    src/UI.h
+    src/DrawHelper.h
+    src/DrawHelper.cpp
+    src/Movement.h
+    src/Movement.cpp
+    src/Effect.h
+    src/BiquadEffect.cpp
+    src/BiquadEffect.h
+)
+
+add_executable(dalia_demo ${DEMO_FILES})
+
 target_link_libraries(dalia_demo
-    PRIVATE dalia_engine
+    PRIVATE dalia::engine
     PRIVATE rlimgui_lib_demo
+    PRIVATE imguizmo_lib
     PRIVATE raylib
 )
 
-# Copy existing assets directory to .exe directory (maybe not great if the directory is big)
-if(EXISTS "${CMAKE_SOURCE_DIR}/assets")
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/assets")
     add_custom_command(TARGET dalia_demo POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_directory
-        "${CMAKE_SOURCE_DIR}/assets"
+        "${CMAKE_CURRENT_SOURCE_DIR}/assets"
         "$<TARGET_FILE_DIR:dalia_demo>/assets"
         COMMENT "Copying assets to build directory..."
     )
-else()
-    message(STATUS "No assets directory found. Skipping copy.")
 endif()

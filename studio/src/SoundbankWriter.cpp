@@ -1,4 +1,4 @@
-#include "SoundbankWriter.h"
+#include "common/SoundbankWriter.h"
 
 namespace dalia::stuido {
     SoundbankWriter::SoundbankWriter(const char *path) {

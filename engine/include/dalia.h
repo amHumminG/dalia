@@ -4,6 +4,8 @@
 
 #include "dalia/audio/Engine.h"
 #include "dalia/audio/PlaybackControl.h"
+#include "dalia/audio/SoundControl.h"
+#include "dalia/audio/EffectControl.h"
 
 #include "dalia/core/LogLevel.h"
 #include "dalia/core/Result.h"

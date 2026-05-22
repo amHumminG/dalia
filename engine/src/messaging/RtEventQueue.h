@@ -1,19 +1,19 @@
 #pragma once
 #include "core/SPSCRingBuffer.h"
+#include "dalia/audio/PlaybackControl.h"
  
 namespace dalia {
 
-	struct RtEvent {
+	struct  RtEvent {
 		enum class Type {
 			None,
 
-			// General
-			MixOrderSwapped,
-
 			// Voice Lifecycle
-			VoiceFinished,	// Finished by reaching EOF
-			VoiceStopped,	// Manually stopped by user command
-			VoiceKilled		// Killed by the engine
+			VoiceStopped,
+
+			// Effects
+			EffectActive,
+			EffectDetached,
 		};
 
 		Type type = Type::None;
@@ -23,37 +23,35 @@ namespace dalia {
 			struct {
 				uint32_t index;
 				uint32_t generation;
-			} voiceState;
+				PlaybackExitCondition exitCondition;
+			} voice;
+
+			struct {
+				uint64_t handleRawId;
+			} effect;
 
 		} data = {};
 
-		static RtEvent MixOrderSwapped() {
-			RtEvent ev;
-			ev.type = RtEvent::Type::MixOrderSwapped;
-			return ev;
-		}
-
-		static RtEvent VoiceFinished(uint32_t index, uint32_t generation) {
-			RtEvent ev;
-			ev.type = Type::MixOrderSwapped;
-			ev.data.voiceState.index = index;
-			ev.data.voiceState.generation = generation;
-			return ev;
-		}
-
-		static RtEvent VoiceStopped(uint32_t index, uint32_t generation) {
+		static RtEvent VoiceStopped(uint32_t index, uint32_t generation, PlaybackExitCondition exitCondition) {
 			RtEvent ev;
 			ev.type = Type::VoiceStopped;
-			ev.data.voiceState.index = index;
-			ev.data.voiceState.generation = generation;
+			ev.data.voice.index = index;
+			ev.data.voice.generation = generation;
+			ev.data.voice.exitCondition = exitCondition;
 			return ev;
 		}
 
-		static RtEvent VoiceKilled(uint32_t index, uint32_t generation) {
+		static RtEvent EffectActive(uint64_t handleRawId) {
 			RtEvent ev;
-			ev.type = Type::VoiceKilled;
-			ev.data.voiceState.index = index;
-			ev.data.voiceState.generation = generation;
+			ev.type = Type::EffectActive;
+			ev.data.effect.handleRawId = handleRawId;
+			return ev;
+		}
+
+		static RtEvent EffectDetached(uint64_t handleRawId) {
+			RtEvent ev;
+			ev.type = Type::EffectDetached;
+			ev.data.effect.handleRawId = handleRawId;
 			return ev;
 		}
 	};

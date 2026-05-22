@@ -1,5 +1,9 @@
 #pragma once
+
+#include "core/Constants.h"
 #include "core/SPSCRingBuffer.h"
+#include "dalia/audio/EffectControl.h"
+
 #include <vector>
 
 namespace dalia {
@@ -8,24 +12,44 @@ namespace dalia {
 		enum class Type : uint8_t {
 			None,
 
-			// General
-			SwapMixOrder,
+			// Listener
+			SetListenerActive,
+			SetListenerInactive,
 
-			// Voice Lifecycle
-			PrepareVoice,
+			// Voice
+			AllocateVoice,
+			DeallocateVoice,
+			PrepareVoiceStreaming,
+			PrepareVoiceResident,
+			SeekVoice,
 			PlayVoice,
 			PauseVoice,
 			StopVoice,
+			SetVoiceParent,
 
-			// Voice Parameters
-			SetVoiceVolume,
-			SetVoicePitch,
-			SetVoicePan,
-			SetVoicePosition,
-			SetVoiceVelocity
+			// Bus
+			AllocateBus,
+			DeallocateBus,
+			SetBusParent,
+			SetBusGain, // This will be removed and replaced by a parameter bridge in the future (probably)
+
+			// Effects
+			AllocateBiquad,
+			SetBiquadParams,
+
+			AttachEffect,
+			FadeDetachEffect,
+			ForceDetachEffect,
+			DeallocateEffect,
+
+			// Misc
+			SetGlobalDopplerFactor
 		};
 
 		Type type = Type::None;
+
+		uint32_t targetIndex;
+		uint32_t targetGen;
 
 		// Payload
 		union {
@@ -35,73 +59,248 @@ namespace dalia {
 			} mixOrder;
 
 			struct {
-				uint32_t index;
-				uint32_t generation;
-				uint32_t assetId; // Assuming this is how we store assets in loaded soundbanks
-			} voicePrep;
+				uint32_t parentIndex;
+			} setParent;
 
 			struct {
-				uint32_t index;
-				uint32_t generation;
-			} voiceState;
+				const float* pcmData;
+				uint32_t frameCount;
+				uint32_t channels;
+				uint32_t sampleRate;
+			} prepResident;
 
 			struct {
-				uint32_t index;
-				uint32_t generation;
+				uint32_t streamIndex;
+				uint32_t channels;
+				uint32_t sampleRate;
+			} prepStreaming;
+
+			struct {
+				uint32_t seekFrame;
+			} seek;
+
+			struct {
+				bool value;
+			} boolVal;
+
+			struct {
 				float value;
-			} voiceFloat;
+			} floatVal;
 
 			struct {
-				uint32_t index;
-				uint32_t generation;
-				float x, y, z;
-			} voiceVector3;
+				BiquadFilterType type;
+				BiquadConfig config;
+			} biquad;
+
+			struct {
+				EffectType type;
+				uint32_t busIndex;
+				uint32_t effectSlot;
+			} effect;
 
 		} data = {};
 
-		static RtCommand SwapMixOrder(uint32_t* ptr, uint32_t nodeCount) {
-			RtCommand cmd;
-			cmd.type = RtCommand::Type::SwapMixOrder;
-			cmd.data.mixOrder.ptr = ptr;
-			cmd.data.mixOrder.nodeCount = nodeCount;
+		static RtCommand SetListenerActive(uint32_t index) {
+			RtCommand cmd{};
+			cmd.type = Type::SetListenerActive;
+			cmd.targetIndex = index;
 			return cmd;
 		}
 
-		static RtCommand PrepareVoice(uint32_t index, uint32_t generation, uint32_t assetId) {
-			RtCommand cmd;
-			cmd.type = Type::PrepareVoice;
-			cmd.data.voicePrep.index = index;
-			cmd.data.voicePrep.generation = generation;
-			cmd.data.voicePrep.assetId = assetId;
+		static RtCommand SetListenerInactive(uint32_t index) {
+			RtCommand cmd{};
+			cmd.type = Type::SetListenerInactive;
+			cmd.targetIndex = index;
 			return cmd;
 		}
 
-		static RtCommand PlayVoice(uint32_t index, uint32_t generation) {
-			RtCommand cmd;
-			cmd.data.voiceState.index = index;
-			cmd.data.voiceState.generation = generation;
+		static RtCommand AllocateVoice(uint32_t index, uint32_t gen) {
+			RtCommand cmd{};
+			cmd.type = Type::AllocateVoice;
+			cmd.targetIndex = index;
+			cmd.targetGen = gen;
 			return cmd;
 		}
 
-		static RtCommand PauseVoice(uint32_t index, uint32_t generation) {
-			RtCommand cmd;
-			cmd.data.voiceState.index = index;
-			cmd.data.voiceState.generation = generation;
+		static RtCommand DeallocateVoice(uint32_t index, uint32_t gen) {
+			RtCommand cmd{};
+			cmd.type = Type::DeallocateVoice;
+			cmd.targetIndex = index;
+			cmd.targetGen = gen;
 			return cmd;
 		}
 
-		static RtCommand StopVoice(uint32_t index, uint32_t generation) {
-			RtCommand cmd;
-			cmd.data.voiceState.index = index;
-			cmd.data.voiceState.generation = generation;
+		static RtCommand PrepareVoiceResident(uint32_t index, uint32_t gen, const float* dataPtr,
+			uint32_t frameCount, uint32_t channels, uint32_t sampleRate) {
+			RtCommand cmd{};
+			cmd.type = Type::PrepareVoiceResident;
+			cmd.targetIndex = index;
+			cmd.targetGen = gen;
+
+			cmd.data.prepResident.pcmData = dataPtr;
+			cmd.data.prepResident.frameCount = frameCount;
+			cmd.data.prepResident.channels = channels;
+			cmd.data.prepResident.sampleRate = sampleRate;
 			return cmd;
 		}
 
-		static RtCommand SetVolume(uint32_t index, uint32_t generation, float value) {
-			RtCommand cmd;
-			cmd.data.voiceFloat.index = index;
-			cmd.data.voiceFloat.generation = generation;
-			cmd.data.voiceFloat.value = value;
+		static RtCommand PrepareVoiceStreaming(uint32_t index, uint32_t gen, uint32_t streamIndex,
+			uint32_t channels, uint32_t sampleRate) {
+			RtCommand cmd{};
+			cmd.type = Type::PrepareVoiceStreaming;
+			cmd.targetIndex = index;
+			cmd.targetGen = gen;
+			cmd.data.prepStreaming.streamIndex = streamIndex;
+
+			cmd.data.prepStreaming.channels = channels;
+			cmd.data.prepStreaming.sampleRate = sampleRate;
+			return cmd;
+		}
+
+		static RtCommand SeekVoice(uint32_t index, uint32_t gen, uint32_t seekFrame) {
+			RtCommand cmd{};
+			cmd.type = Type::SeekVoice;
+			cmd.targetIndex = index;
+			cmd.targetGen = gen;
+			cmd.data.seek.seekFrame = seekFrame;
+			return cmd;
+		}
+
+		static RtCommand PlayVoice(uint32_t index, uint32_t gen) {
+			RtCommand cmd{};
+			cmd.type = Type::PlayVoice;
+			cmd.targetIndex = index;
+			cmd.targetGen = gen;
+			return cmd;
+		}
+
+		static RtCommand PauseVoice(uint32_t index, uint32_t gen) {
+			RtCommand cmd{};
+			cmd.type = Type::PauseVoice;
+			cmd.targetIndex = index;
+			cmd.targetGen = gen;
+			return cmd;
+		}
+
+		static RtCommand StopVoice(uint32_t index, uint32_t gen) {
+			RtCommand cmd{};
+			cmd.type = Type::StopVoice;
+			cmd.targetIndex = index;
+			cmd.targetGen = gen;
+			return cmd;
+		}
+
+		static RtCommand SetVoiceParent(uint32_t index, uint32_t gen, uint32_t parentBusIndex) {
+			RtCommand cmd{};
+			cmd.type = Type::SetVoiceParent;
+			cmd.targetIndex = index;
+			cmd.targetGen = gen;
+			cmd.data.setParent.parentIndex = parentBusIndex;
+			return cmd;
+		}
+
+		static RtCommand AllocateBus(uint32_t index, uint32_t parentIndex) {
+			RtCommand cmd{};
+			cmd.type = Type::AllocateBus;
+			cmd.targetIndex = index;
+			cmd.data.setParent.parentIndex = parentIndex;
+			return cmd;
+		}
+
+		static RtCommand DeallocateBus(uint32_t index) {
+			RtCommand cmd{};
+			cmd.type = Type::DeallocateBus;
+			cmd.targetIndex = index;
+			return cmd;
+		}
+
+		static RtCommand SetBusParent(uint32_t index, uint32_t parentIndex) {
+			RtCommand cmd{};
+			cmd.type = Type::SetBusParent;
+			cmd.targetIndex = index;
+			cmd.data.setParent.parentIndex = parentIndex;
+			return cmd;
+		}
+
+		static RtCommand SetBusGain(uint32_t index, float gain) {
+			RtCommand cmd{};
+			cmd.type = Type::SetBusGain;
+			cmd.targetIndex = index;
+			cmd.data.floatVal.value = gain;
+			return cmd;
+		}
+
+		static RtCommand AllocateBiquad(uint32_t index, uint32_t gen, BiquadFilterType type, const BiquadConfig& config) {
+			RtCommand cmd{};
+			cmd.type = Type::AllocateBiquad;
+			cmd.targetIndex = index;
+			cmd.targetGen = gen;
+			cmd.data.biquad.type = type;
+			cmd.data.biquad.config = config;
+			return cmd;
+		}
+
+		static RtCommand SetBiquadParams(uint32_t index, uint32_t gen, const BiquadConfig& config) {
+			RtCommand cmd{};
+			cmd.type = Type::SetBiquadParams;
+			cmd.targetIndex = index;
+			cmd.targetGen = gen;
+			cmd.data.biquad.config = config;
+			return cmd;
+		}
+
+		static_assert(std::is_trivially_copyable_v<BiquadConfig>,
+			"BiquadConfig must remain trivially copyable for use in RtCommands");
+
+		static RtCommand AttachEffect(uint32_t index, uint32_t gen, EffectType type, uint32_t busIndex,
+			uint32_t effectSlot) {
+			RtCommand cmd{};
+			cmd.type = Type::AttachEffect;
+			cmd.targetIndex = index;
+			cmd.targetGen = gen;
+			cmd.data.effect.type = type;
+			cmd.data.effect.busIndex = busIndex;
+			cmd.data.effect.effectSlot = effectSlot;
+			return cmd;
+		}
+
+		static RtCommand FadeDetachEffect(uint32_t index, uint32_t gen, EffectType type, uint32_t busIndex,
+			uint32_t effectSlot) {
+			RtCommand cmd{};
+			cmd.type = Type::FadeDetachEffect;
+			cmd.targetIndex = index;
+			cmd.targetGen = gen;
+			cmd.data.effect.type = type;
+			cmd.data.effect.busIndex = busIndex;
+			cmd.data.effect.effectSlot = effectSlot;
+			return cmd;
+		}
+
+		static RtCommand ForceDetachEffect(uint32_t index, uint32_t gen, EffectType type, uint32_t busIndex,
+			uint32_t effectSlot) {
+			RtCommand cmd{};
+			cmd.type = Type::ForceDetachEffect;
+			cmd.targetIndex = index;
+			cmd.targetGen = gen;
+			cmd.data.effect.type = type;
+			cmd.data.effect.busIndex = busIndex;
+			cmd.data.effect.effectSlot = effectSlot;
+			return cmd;
+		}
+
+		static RtCommand DeallocateEffect(uint32_t index, uint32_t gen, EffectType type) {
+			RtCommand cmd{};
+			cmd.type = Type::DeallocateEffect;
+			cmd.targetIndex = index;
+			cmd.targetGen = gen;
+			cmd.data.effect.type = type;
+			return cmd;
+		}
+
+		static RtCommand SetGlobalDopplerFactor(float value) {
+			RtCommand cmd{};
+			cmd.type = Type::SetGlobalDopplerFactor;
+			cmd.data.floatVal.value = value;
 			return cmd;
 		}
 	};
