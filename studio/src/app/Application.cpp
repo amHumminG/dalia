@@ -15,7 +15,10 @@
 
 namespace dalia::studio {
 
+    static Application* s_Instance = nullptr;
+
     Application::Application(int width, int height, const std::string& title) {
+        s_Instance = this;
         SetConfigFlags(FLAG_WINDOW_RESIZABLE | FLAG_VSYNC_HINT | FLAG_MSAA_4X_HINT);
         InitWindow(width, height, title.c_str());
         Image icon = LoadImage("assets/images/dalia_icon.png");
@@ -39,6 +42,7 @@ namespace dalia::studio {
 
         // Setup project (this should be done in CreateProject or LoadProject later on)
         m_project = std::make_unique<Project>();
+        m_project->m_name = "Test1";
         m_commands = std::make_unique<CommandStack>();
 
         // Setup panels
@@ -52,8 +56,31 @@ namespace dalia::studio {
         CloseWindow();
     }
 
+    Application& Application::Get() {
+        return *s_Instance;
+    }
+
+    void Application::SubmitToMainThread(std::function<void()> function) {
+        std::scoped_lock<std::mutex> lock(m_mainThreadQueueMutex);
+        m_mainThreadQueue.push_back(function);
+    }
+
+    void Application::ExecuteMainThreadQueue() {
+        std::vector<std::function<void()>> queueCopy;
+        {
+            std::scoped_lock<std::mutex> lock(m_mainThreadQueueMutex);
+            queueCopy = m_mainThreadQueue;
+            m_mainThreadQueue.clear();
+        }
+
+        for (auto& func : queueCopy) {
+            func();
+        }
+    }
+
     void Application::Run() {
         while (!WindowShouldClose()) {
+            ExecuteMainThreadQueue();
             Update();
             Render();
         }

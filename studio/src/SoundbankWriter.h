@@ -4,7 +4,7 @@
 #include <iosfwd>
 #include <vector>
 
-#include "Soundbank.h"
+#include "common/Soundbank.h"
 #include "common/StringID.h"
 
 

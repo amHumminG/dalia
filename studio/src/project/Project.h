@@ -3,8 +3,15 @@
 #include <string>
 #include <algorithm>
 #include <memory>
+#include <string>
 
 namespace dalia::studio {
+
+    enum class AssetStatus : uint32_t {
+        Importing = 1,
+        Ready = 2,
+        Error = 3
+    };
 
     struct SoundAsset {
         uint32_t id;
@@ -19,12 +26,15 @@ namespace dalia::studio {
 
         // Editor-only data
         bool isDirty = false;
+        AssetStatus status = AssetStatus::Importing;
     };
 
     class Project {
     public:
         Project() = default;
         ~Project() = default;
+
+        std::string m_name;
 
         SoundAsset* ImportSound(const std::string& filePath);
         SoundAsset* GetAsset(uint32_t assetId);

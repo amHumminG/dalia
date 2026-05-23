@@ -1,17 +1,44 @@
 #include "project/Project.h"
 #include <filesystem>
+#include <iostream>
+
+#include "Transcoder.h"
+#include "app/Application.h"
 
 namespace dalia::studio {
 
     SoundAsset* Project::ImportSound(const std::string& filePath) {
         auto asset = std::make_unique<SoundAsset>();
         asset->id = GenerateId();
-        asset->filePath = filePath;
 
         // Give initial name based on filename
         asset->name = ExtractNameFromPath(filePath);
 
+        //TODO: Transcode and move to cache
+        std::filesystem::path cachePath = std::filesystem::current_path() / "cache" / m_name / (std::to_string(asset->id) + ".ogg");
+        asset->filePath = cachePath.string();
+        std::cout << asset->filePath << std::endl;
+
+        asset->status = AssetStatus::Importing;
+
+        SoundAsset* assetPtr = asset.get();
         m_assets.push_back(std::move(asset));
+
+        uint32_t currentId = asset->id;
+        Transcoder::TranscodeToOggAsync(filePath, cachePath, [this, currentId](bool success) {
+            Application::Get().SubmitToMainThread([this, currentId, success]() {
+                if (SoundAsset* safeAsset = GetAsset(currentId)) {
+                    if (success) {
+                        safeAsset->status = AssetStatus::Ready;
+                    }else {
+                        safeAsset->status = AssetStatus::Error;
+                    }
+                } else {
+                    std::cout << "Asset " << currentId << " was deleted during transcode.\n";
+                }
+            });
+        });
+
         return m_assets.back().get();
     }
 
