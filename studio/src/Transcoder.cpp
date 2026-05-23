@@ -99,7 +99,6 @@ namespace dalia::studio {
         // --- SETUP OUTPUT ---
         avformat_alloc_output_context2(&out_fmt_ctx, nullptr, "ogg", outPath.c_str());
         if (!out_fmt_ctx) goto cleanup;
-
         {
             const AVCodec* encoder = avcodec_find_encoder(AV_CODEC_ID_VORBIS);
             if (!encoder) goto cleanup;
@@ -108,7 +107,8 @@ namespace dalia::studio {
             if (!enc_ctx) goto cleanup;
 
             enc_ctx->sample_fmt = AV_SAMPLE_FMT_FLTP;
-            enc_ctx->sample_rate = dec_ctx->sample_rate;
+            // TODO: Maybe not hardcoded?
+            enc_ctx->sample_rate = 48000;
             av_channel_layout_copy(&enc_ctx->ch_layout, &dec_ctx->ch_layout);
 
             if (enc_ctx->ch_layout.nb_channels == 0) {

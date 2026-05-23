@@ -20,6 +20,7 @@ namespace dalia::studio {
         ~Application();
 
         static Application& Get();
+        static Application* GetInstance();
 
         void SubmitToMainThread(std::function<void()> function);
 

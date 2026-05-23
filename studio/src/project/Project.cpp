@@ -1,6 +1,7 @@
 #include "project/Project.h"
 #include <filesystem>
 #include <iostream>
+#include <windows.h>
 
 #include "Transcoder.h"
 #include "app/Application.h"
@@ -14,29 +15,29 @@ namespace dalia::studio {
         // Give initial name based on filename
         asset->name = ExtractNameFromPath(filePath);
 
-        //TODO: Transcode and move to cache
-        std::filesystem::path cachePath = std::filesystem::current_path() / "cache" / m_name / (std::to_string(asset->id) + ".ogg");
+        //TODO: make better solutions for basebath
+        wchar_t path[MAX_PATH] = { 0 };
+        GetModuleFileNameW(NULL, path, MAX_PATH);
+        std::filesystem::path base = std::filesystem::path(path).parent_path();
+
+        std::filesystem::path cachePath = base / "cache" / m_name / (std::to_string(asset->id) + ".ogg");
         asset->filePath = cachePath.string();
         std::cout << asset->filePath << std::endl;
 
         asset->status = AssetStatus::Importing;
+        uint32_t currentId = asset->id;
 
-        SoundAsset* assetPtr = asset.get();
         m_assets.push_back(std::move(asset));
 
-        uint32_t currentId = asset->id;
+
         Transcoder::TranscodeToOggAsync(filePath, cachePath, [this, currentId](bool success) {
-            Application::Get().SubmitToMainThread([this, currentId, success]() {
-                if (SoundAsset* safeAsset = GetAsset(currentId)) {
-                    if (success) {
-                        safeAsset->status = AssetStatus::Ready;
-                    }else {
-                        safeAsset->status = AssetStatus::Error;
+            if (Application* app = Application::GetInstance()) {
+                app->SubmitToMainThread([this, currentId, success]() {
+                    if (SoundAsset* safeAsset = GetAsset(currentId)) {
+                        safeAsset->status = success ? AssetStatus::Ready : AssetStatus::Error;
                     }
-                } else {
-                    std::cout << "Asset " << currentId << " was deleted during transcode.\n";
-                }
-            });
+                });
+            }
         });
 
         return m_assets.back().get();

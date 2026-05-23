@@ -52,8 +52,13 @@ namespace dalia::studio {
     }
 
     Application::~Application() {
+        s_Instance = nullptr;
         rlImGuiShutdown();
         CloseWindow();
+    }
+
+    Application* Application::GetInstance() {
+        return s_Instance;
     }
 
     Application& Application::Get() {
