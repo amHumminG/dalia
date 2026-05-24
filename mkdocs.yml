@@ -25,7 +25,7 @@ theme:
   palette:
     - scheme: slate
       primary: black
-      accent: red
+      accent: blue
 
 # Sidebar nav menu
 nav:
