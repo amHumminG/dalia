@@ -8,7 +8,7 @@
 
 <div class="grid cards" markdown>
 
--   :material-clock-fast:{ .lg .middle } __Build and Setup__
+-   :material-hammer:{ .lg .middle } __Build and Setup__
 
     ---
 
