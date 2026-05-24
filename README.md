@@ -1,7 +1,7 @@
 <p align="center">
   <img src="docs/assets/dalia_engine_logo_transparent.png" width="600" alt="DALIA Engine Logo">
   <br><br>
-  A real-time, low-latency, data-oriented audio engine for games and game engines written in C++.
+    A real-time, low-latency, audio engine for C++ game development.
 </p>
 
 ---
@@ -20,15 +20,25 @@
 * **Real-Time Playback Parameter Control:** Volume, pitch, pan, looping, spatialization, position, attenuation curve, min/max distance, velocity, doppler effect, and more.
 
 DALIA is currently only supported on Windows (WASAPI).
-Check out the [documentation](https://amhumming.github.io/dalia/) for more in-depth details.
+Check out the [documentation](https://amhumming.github.io/dalia/) for more details.
 
-## Building from Source (CMake)
+## The Demo
+DALIA includes a standalone sandbox application designed to showcase and test the engine's features. If you want to
+test what the engine is capable of without having to write any code you can try it out by following the build
+instructions provided below and running the compiled demo executable.
+
+<p align="center">
+  <img src="docs/assets/dalia_demo_screenshot.png" alt="DALIA demo screenshot">
+</p>
+
+## Building from Source
 
 ### Requirements
 * CMake 3.20+
 * Compiler with C++20 support
 
-If you want to compile DALIA directly to run the Demo or Studio UI, use the commands below.
+If you want to compile DALIA directly to run the Demo or Studio UI, use the commands below. Note that DALIA Studio tool
+is currently not in a usable state.
 
 ```bash
 git clone https://github.com/amHumminG/dalia.git
@@ -54,13 +64,13 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(dalia)
 
-target_link_libraries(YourProject PRIVATE dalia::engine)
+target_link_libraries(YourTarget PRIVATE dalia::engine)
 ```
 
 **Via Git Submodule:**
 ```cmake
 add_subdirectory(third_party/dalia)
-target_link_libraries(YourProject PRIVATE dalia::engine)
+target_link_libraries(YourTarget PRIVATE dalia::engine)
 ```
 
 ## License
