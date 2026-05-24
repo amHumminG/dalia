@@ -18,6 +18,11 @@ Sandbox::Sandbox()
 	SetConfigFlags(FLAG_WINDOW_RESIZABLE);
 	InitWindow(1280, 720, "Dalia Engine Sandbox");
 
+	// Set window icon
+	Image icon = LoadImage("assets/images/dalia_icon_small_transparent.png");
+	SetWindowIcon(icon);
+	UnloadImage(icon);
+
 	int monitor = GetCurrentMonitor();
 	int monitorWidth = GetMonitorWidth(monitor);
 	int monitorHeight = GetMonitorHeight(monitor);
