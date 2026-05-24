@@ -1,8 +1,27 @@
 # Getting Started
 
-!!! note
+!!! info "Platform Support"
     DALIA currently only supports Windows (WASAPI).
 
+## Building the Standalone Tools
+If you want to compile DALIA directly to run the Demo or the Studio tool (rather than linking it to your own project), 
+you can build it from source.
+
+**Requirements**
+* CMake 3.20+
+* Compiler with C++20 support
+
+```bash
+git clone https://github.com/amHumminG/dalia.git
+cd dalia
+
+cmake -B build
+cmake --build build --config Release
+```
+*The compiled executables will be located in the `/build` directory*
+
+!!! note "Under Development"
+    The DALIA Studio tool is currently in active development and is not yet in a usable state.
 
 ## Integration and Setup
 DALIA automatically detects when it is built as a subproject and will exclude the demo and studio applications from the

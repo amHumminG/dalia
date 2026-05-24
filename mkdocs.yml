@@ -43,6 +43,7 @@ nav:
       - Files: api/files.md
 
 markdown_extensions:
+  - attr_list
   - admonition
   - toc:
       permalink: true
@@ -51,6 +52,9 @@ markdown_extensions:
   - pymdownx.inlinehilite
   - pymdownx.snippets
   - pymdownx.superfences
+  - pymdownx.emoji:
+      emoji_index: !!python/name:materialx.emoji.twemoji
+      emoji_generator: !!python/name:materialx.emoji.to_svg
 
 extra_css:
   - stylesheets/extra.css
