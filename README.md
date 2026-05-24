@@ -75,3 +75,16 @@ target_link_libraries(YourTarget PRIVATE dalia::engine)
 
 ## License
 DALIA is licensed under the [MIT License](LICENSE).
+
+## Acknowledgements
+
+The core engine relies on a single public-domain header:
+* [stb_vorbis](https://github.com/nothings/stb) for OGG/Vorbis decoding.
+
+The Demo and Studio applications are built using the following open-source projects:
+* [raylib](https://github.com/raysan5/raylib) (zlib License)
+* [Dear ImGui](https://github.com/ocornut/imgui) (MIT License)
+* [rlImGui](https://github.com/raylib-extras/rlImGui) (zlib License)
+* [ImGuizmo](https://github.com/CedricGuillemet/ImGuizmo) (MIT License)
+
+*(Note: These UI and rendering libraries are excluded from your build when DALIA is linked as a subproject).*
