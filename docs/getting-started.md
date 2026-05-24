@@ -8,6 +8,7 @@ If you want to compile DALIA directly to run the Demo or the Studio tool (rather
 you can build it from source.
 
 **Requirements**
+
 * CMake 3.20+
 * Compiler with C++20 support
 
