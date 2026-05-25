@@ -1,8 +1,8 @@
-<p align="center">
+<div align="center">
   <img src="docs/assets/dalia_engine_logo_transparent.png" width="600" alt="DALIA Engine Logo">
   <br><br>
-    A real-time, low-latency, audio engine for C++ game development.
-</p>
+  <i>Dedicated Abstraction Layer for Interactive Audio in C++</i>
+</div>
 
 ---
 
