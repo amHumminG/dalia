@@ -34,8 +34,8 @@ nav:
   - Architecture: architecture.md
   - Guide:
       - Asset Management: guide/asset-management.md
+      - Playback Control: guide/playback-control.md
       - Mixing & Routing: guide/mixing.md
-      - Playback Control: guide/playback.md
       - Spatialization: guide/spatialization.md
   - API Reference:
       - Classes & Structs: api/annotated.md
