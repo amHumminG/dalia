@@ -49,6 +49,11 @@ target_link_libraries(YourTarget PRIVATE dalia::engine)
 
 ## Using the API
 
+### Error Handling
+Almost every function in the DALIA API returns a `Result` enum. If an operation fails, the engine will return an error
+code. It is advised to always check the return values of engine calls. You can convert any `Result` into a readable
+string for logging using the `GetResultString()` function.
+
 ### Initialization and Shutdown
 The `Engine` class is the central context that controls everything DALIA related. It is advised to only create
 one instance of this class as it spawns multiple background threads. It is recommended to keep your `Engine`
@@ -56,24 +61,24 @@ instance alive for the entire lifetime of your application. When you wish to des
 `Engine::Shutdown()` function. This will trigger the engine to release all resources and background threads.
 
 Before an instance of `Engine` can be used to play sounds, it must be initialized. To do this, although optional,
-it is recommended to create a `EngineConfig`. This config can be used to specify how the memory-footprint of the 
+it is recommended to create an `EngineConfig`. This config can be used to specify how the memory-footprint of the 
 engine along with some other settings. For simplicity, we will leave the config to use its default values in this guide.
 ```c++
 #include <dalia.h>
 #include <iostream>
 
 int main() {
-    dalia::Engine audioEngine;
+    dalia::Engine engine;
     
     dalia::EngineConfig config;
-    dalia::Result res = audioEngine.Init(config);
+    dalia::Result res = engine.Init(config);
     if (res != dalia::Result::Ok) {
         // All result codes can be converted into c-strings like this
         std::cerr << "Failed to initialize audio engine. Error code: " << dalia::GetResultString(res) << std::endl;
         return -1;
     }
     
-    audioEngine.Shutdown();
+    engine.Shutdown();
 }
 ```
 
@@ -86,20 +91,45 @@ It is therefore advised to call the `Engine::Update()` function **after** all ot
 // Your main game loop
 void GameLoop() {
     while (isRunning) {
-        audioEngine.Update();
+        engine.Update();
     }
 }
 ```
+
+### Logging
+The `Engine` provides an internal logging system. The logs are accumulated from all background threads and get posted
+by the engine during the `Engine::Update()` tick. By default, the engine prints log messages directly to the standard
+output with the verbosity set to `LogLevel::Warning`. The `LogLevel` is hierarchical. This means that setting the level
+to `LogLevel::Warning` will log all warnings, as well as any more severe messages
+(`LogLevel::Error` and `LogLevel::Critical`), while filtering out lower-level messages like `LogLevel::Info`.
+
+If you want to route these logs to a custom destination (such as a text file, a dev-console, or your own central logger),
+you can hook into this system by providing a custom sink function via the `EngineConfig` when initializing the engine.
+
+```c++
+// Define the logging sink
+void CustomLogSink(dalia::LogLevel level, const char* context, const char* message) {
+    // Handle the log message however you want
+}
+
+// Pass to engine when initializing
+dalia::EngineConfig config;
+config.logLevel = dalia::LogLevel::Info;
+config.logCallback = CustomLogSink;
+
+engine.Init(config);
+```
+*Note: The `context` string describes which internal system of the engine the log originates from.*
 
 ### Loading and Playing a Sound
 DALIA handles all asset loading asynchronously. However, you don't need to wait for the load operation to finish
 (although that is possible if you provide a callback to the load function). If you trigger a playback for an asset that
 is still loading, the engine will safely queue the request and play it the moment the load has finished.
 
-Most resources and instances in the DALIA API are managed using handles. Handles are unique to identifiers and become
-invalid as soon as the instance it is referencing is released, destroyed, finished. Under the hood, all handles are
-represented using `uint64_t` id's. The underlying id of any handle can be acquired using its `GetRawId()` function.
-Handles can also be created from a raw `uint64_t` id.
+Most resources and instances in the DALIA API are managed using handles. Handles are unique identifiers and become
+invalid as soon as the instance it is referencing is released, destroyed, or finished. Under the hood, all handles are
+represented using `uint64_t` IDs. The underlying ID of any handle can be acquired using its `GetRawId()` function.
+Handles can also be created from a raw `uint64_t` ID.
 
 Sounds can be loaded as two types: `Resident` or `Stream`. 
 * `Resident` sounds will be fully loaded into RAM. This allows them to be played with very low latency and is perfect for shorter sound effects. 
@@ -107,14 +137,14 @@ Sounds can be loaded as two types: `Resident` or `Stream`.
 ```c++
 // Request the sound to be loaded into memory
 dalia::SoundHandle sound;
-audioEngine.LoadSoundAsync(sound, dalia::Sound::Type::Resident, "assets/audio/explosion.ogg");
+engine.LoadSoundAsync(sound, dalia::SoundType::Resident, "assets/explosion.ogg");
 
-// Create a playback instance of for the sound
+// Create a playback instance for the sound
 dalia::PlaybackHandle playback;
-audioEngine.CreatePlayback(playback, sound);
+engine.CreatePlayback(playback, sound);
 
 // Start playback
-audioEngine.PlayPlayback(playback);
+engine.PlayPlayback(playback);
 ```
 
 !!! note
