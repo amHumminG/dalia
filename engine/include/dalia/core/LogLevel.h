@@ -13,5 +13,5 @@ namespace dalia {
 		None		= 5,
 	};
 
-	using LogCallback = std::function<void(LogLevel level, const char* category, const char* message)>;
+	using LogCallback = std::function<void(LogLevel level, const char* context, const char* message)>;
 }

@@ -50,7 +50,7 @@ namespace dalia {
 
 	/// @brief A function that, if provided when creating a playback instance, will be called when the playback
 	/// instance is stopped.
-	using PlaybackExitCallback = std::function<void(PlaybackHandle handle, PlaybackExitCondition exitCondition)>;
+	using PlaybackExitCallback = std::function<void(PlaybackHandle playback, PlaybackExitCondition exitCondition)>;
 
 	/// @brief Curve used to calculate distance attenuation.
 	enum class AttenuationCurve : uint8_t {
