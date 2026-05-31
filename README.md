@@ -8,7 +8,7 @@
 
 ## Features
 * **Configurable Memory Usage:** All internal pools are pre-allocated at startup per configuration. No dynamic allocations at runtime.
-* **Lock-Free Asset Management:** Asynchronous, reference-counted asset loading and double-buffered OGG/Vorbis streaming.
+* **Asset Management:** Asynchronous, reference-counted asset loading and double-buffered OGG/Vorbis streaming.
 * **3D Spatialization:**
   * Configurable coordinate systems (left/right-handed).
   * Multi-listener support with bitmask routing (for split-screen/local co-op).
