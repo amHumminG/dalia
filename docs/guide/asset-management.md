@@ -29,8 +29,8 @@ DALIA performs all sound loading asynchronously on background threads. Therefore
 the calling thread. Successfully calling a load function will provide you with a `SoundHandle`. This handle must be
 tracked in order to play and later on, unload the sound.
 ```c++
-dalia::SoundHandle explosion;
-engine->LoadSoundAsync(explosion, dalia::SoundType::Resident, "assets/explosion.ogg");
+dalia::SoundHandle explosionSound;
+engine->LoadSoundAsync(explosionSound, dalia::SoundType::Resident, "assets/explosion.ogg");
 ```
 
 !!! info "Playback Deferral"
@@ -42,12 +42,32 @@ A callback function can be passed to any load call to the engine. This function 
 loaded (or failed to load). The load result will be accessible as a function parameter. The invocation is triggered
 during the `Engine::Update()` tick.
 
+When calling a load function, you can also optionally pass a pointer to retrieve a unique request ID. this ID is
+passed directly into the callback, allowing your asset manager to track exactly which load request has finished.
+*Note: If the requested sound is already loaded in, the engine will populate the request ID parameter with
+`INVALID_REQUEST_ID` (`0`), as no new asynchronous operation was required.*
+```c++
+// Define the callback
+void OnSoundLoaded(uint32_t requestId, dalia::Result result) {
+    if (result == dalia::Result::Ok) {
+        // The asset successfully loaded
+    }
+    else {
+        // Handle load error
+    }
+}
+
+// Load the sound
+uint32_t requestId;
+engine->LoadSoundAsync(explosionSound, dalia::SoundType::Resident, "assets/explosion.ogg", OnSoundLoaded, &requestId);
+```
+
 ## Reference Counting & Unloading
 DALIA pre-allocates all of its memory pools at startup. When you load a sound, you are claiming a spot in that pool.
 Sounds are reference-counted via their filepaths. Calling `LoadSoundAsync` twice on `"explosion.ogg"` with the same
 `SoundType` will simply increase the internal reference count of the existing loaded sound and hand back its handle.
 ```c++
-engine->UnloadSound(explosion);
+engine->UnloadSound(explosionSound);
 ```
 Because sounds are reference-counted, `UnloadSound` must be called the same number of times as `LoadSoundAsync` for the
 sound to be unloaded.
