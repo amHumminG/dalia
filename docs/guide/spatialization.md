@@ -1,7 +1,5 @@
 # Spatialization
 
-Most game audio exists in a 3D world. This is where playback spatialization comes in.
-
 ## Spatial Playback Instances
 A playback instance is non-spatial by default. To make it spatial, you must explicitly enable it for that instance.
 ```c++
