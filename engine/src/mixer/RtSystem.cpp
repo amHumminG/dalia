@@ -381,18 +381,6 @@ namespace dalia {
         RtCommand cmd;
         while (m_rtCommands->Pop(cmd)) {
             switch (cmd.type) {
-            	case RtCommand::Type::SetListenerActive: {
-					Listener& listener = m_listenerPool[cmd.targetIndex];
-
-            		listener.isActive = true;
-            		break;
-            	}
-            	case RtCommand::Type::SetListenerInactive: {
-            		Listener& listener = m_listenerPool[cmd.targetIndex];
-
-            		listener.isActive = false;
-            		break;
-            	}
 				case RtCommand::Type::AllocateVoice: {
 	            	Voice& voice = m_voicePool[cmd.targetIndex];
 
@@ -588,8 +576,8 @@ namespace dalia {
 		}
 
 		ListenerParams lParams;
-		for (uint32_t lIndex = 0; lIndex < m_listenerPool.size(); lIndex++) {
-			if (m_listenerPool[lIndex].isActive && m_listenerParamBridges[lIndex].ConsumeUpdate(lParams)) {
+		for (uint32_t lIndex = 0; lIndex < m_listenerParamBridges.size(); lIndex++) {
+			if (m_listenerParamBridges[lIndex].ConsumeUpdate(lParams)) {
 				m_listenerPool[lIndex].params = lParams;
 			}
 		}
@@ -767,7 +755,7 @@ namespace dalia {
 
 			for (uint32_t lIndex = 0; lIndex < m_listenerPool.size(); lIndex++) {
 				Listener& listener = m_listenerPool[lIndex];
-				if (!listener.isActive) continue; // Maybe evaluate this somewhere else for better branch prediction?
+				if (!listener.params.isActive) continue; // We could evaluate elsewhere for better branch prediction?
 				if (!(voice.params.listenerMask & (1 << lIndex))) continue;
 
 				float distance;

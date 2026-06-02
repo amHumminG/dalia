@@ -541,9 +541,9 @@ namespace dalia {
 
 		// --- Listener Setup ---
 		Listener& l = m_state->listenerPool[0];
-		l.isActive = true;
+		l.params.isActive = true;
 		ListenerMirror& lMirror = m_state->listenerPoolMirror[0];
-		lMirror.isActive = true;
+		lMirror.params.isActive = true;
 
 		// --- BACKEND (HAL) SETUP ---
 #ifdef _WIN32
@@ -671,7 +671,7 @@ namespace dalia {
 			ProcessIoLoadEvent(m_state, loadEv);
 		}
 
-		// Update voice params if necessary
+		// Update voice params
 		for (uint32_t vIndex = 0; vIndex < m_state->voiceCapacity; vIndex++) {
 			VoiceMirror& vMirror = m_state->voicePoolMirror[vIndex];
 			if (vMirror.state == VoiceState::Free || !vMirror.isParamsDirty) continue;
@@ -680,9 +680,10 @@ namespace dalia {
 			vMirror.isParamsDirty = false;
 		}
 
+		// Update listener params
 		for (uint32_t lIndex = 0; lIndex < m_state->listenerCapacity; lIndex++) {
 			ListenerMirror& lMirror = m_state->listenerPoolMirror[lIndex];
-			if (!lMirror.isActive || !lMirror.isParamsDirty) continue;
+			if (!lMirror.isParamsDirty) continue;
 
 			m_state->listenerParamBridges[lIndex].PushUpdate(lMirror.params);
 			lMirror.isParamsDirty = false;
@@ -1809,10 +1810,9 @@ namespace dalia {
 		}
 
 		ListenerMirror& lMirror = m_state->listenerPoolMirror[listenerIndex];
-		lMirror.isActive = active;
+		lMirror.params.isActive = active;
 		lMirror.isParamsDirty = true;
 
-		m_state->rtCommands->Enqueue(RtCommand::SetListenerActive(listenerIndex));
 		if (active) DALIA_LOG_DEBUG(LOG_CTX_API, "Set listener %u active", listenerIndex);
 		else DALIA_LOG_DEBUG(LOG_CTX_API, "Set listener %u inactive", listenerIndex);
 

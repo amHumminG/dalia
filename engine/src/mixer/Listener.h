@@ -7,6 +7,8 @@
 namespace dalia {
 
 	struct ListenerParams {
+		bool isActive = false;
+
 		math::Vector3 position{0.0f, 0.0f, 0.0f};				// Panning/Distance attenuation
 		math::Vector3 distanceProbePosition{0.0f, 0.0f, 0.0f};	// Probe position (for distance if activated)
 
@@ -17,14 +19,10 @@ namespace dalia {
 	};
 
 	struct Listener {
-		bool isActive = false;
-
 		ListenerParams params;
 	};
 
 	struct ListenerMirror {
-		bool isActive = false;
-
 		ListenerParams params;
 		bool isParamsDirty = false;
 	};

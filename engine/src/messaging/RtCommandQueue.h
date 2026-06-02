@@ -12,10 +12,6 @@ namespace dalia {
 		enum class Type : uint8_t {
 			None,
 
-			// Listener
-			SetListenerActive,
-			SetListenerInactive,
-
 			// Voice
 			AllocateVoice,
 			DeallocateVoice,
@@ -99,20 +95,6 @@ namespace dalia {
 			} effect;
 
 		} data = {};
-
-		static RtCommand SetListenerActive(uint32_t index) {
-			RtCommand cmd{};
-			cmd.type = Type::SetListenerActive;
-			cmd.targetIndex = index;
-			return cmd;
-		}
-
-		static RtCommand SetListenerInactive(uint32_t index) {
-			RtCommand cmd{};
-			cmd.type = Type::SetListenerInactive;
-			cmd.targetIndex = index;
-			return cmd;
-		}
 
 		static RtCommand AllocateVoice(uint32_t index, uint32_t gen) {
 			RtCommand cmd{};

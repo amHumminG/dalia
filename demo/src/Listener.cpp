@@ -162,11 +162,9 @@ void Listener::DrawInspectorUI(const UIContext& ui) {
 
 	dalia::Result res;
 
-	if (m_index != 0) {
-		if (ImGui::Checkbox("Active", &m_isActive)) {
-			res = m_engine->SetListenerActive(m_index, m_isActive);
-			if (res != dalia::Result::Ok) m_result = res;
-		}
+	if (ImGui::Checkbox("Active", &m_isActive)) {
+		res = m_engine->SetListenerActive(m_index, m_isActive);
+		if (res != dalia::Result::Ok) m_result = res;
 	}
 
 	if (m_isActive) {
