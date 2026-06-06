@@ -19,7 +19,7 @@ namespace dalia {
     };
 
 	struct VoiceParams {
-		float volumeDb = VOLUME_DB_DEFAULT;
+		float gain = GAIN_DEFAULT;
 		float pitch = PITCH_DEFAULT;
 		float stereoPan = PAN_STEREO_DEFAULT;
 

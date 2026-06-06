@@ -707,7 +707,7 @@ namespace dalia {
 			Voice& voice = m_voicePool[vIndex];
 			if (voice.currentState != VoiceState::Playing) continue;
 
-			float baseGain = math::DbToGain(voice.params.volumeDb);
+			float baseGain = voice.params.gain;
 
 			for (uint32_t inC = 0; inC < CHANNELS_MAX; inC++) {
 				for (uint32_t outC = 0; outC < CHANNELS_MAX; outC++) {

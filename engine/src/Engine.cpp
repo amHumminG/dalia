@@ -1542,11 +1542,11 @@ namespace dalia {
 		Result res = ResolveVoiceMirror(m_state, vIndex, vGeneration, vMirror);
 		if (res != Result::Ok) return res;
 
-		float clampedVolume = std::clamp(volumeDb, VOLUME_DB_MIN, VOLUME_DB_MAX);
-		vMirror->params.volumeDb = clampedVolume;
+		float clampedVolumeDb = std::clamp(volumeDb, VOLUME_DB_MIN, VOLUME_DB_MAX);
+		vMirror->params.gain = math::DbToGain(clampedVolumeDb);
 		vMirror->isParamsDirty = true;
 
-		DALIA_LOG_DEBUG(LOG_CTX_API, "Set Voice %u volume to %.2f.", vIndex, clampedVolume);
+		DALIA_LOG_DEBUG(LOG_CTX_API, "Set Voice %u volume to %.2f.", vIndex, clampedVolumeDb);
 
 		return Result::Ok;
 	}
