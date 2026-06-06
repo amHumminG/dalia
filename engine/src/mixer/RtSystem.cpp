@@ -640,7 +640,10 @@ namespace dalia {
 
 			// Garbage collection
 			if (voice.currentState == VoiceState::Stopped || voice.currentBusIndex == NO_PARENT) {
-				if (voice.currentBusIndex) voice.exitCondition = PlaybackExitCondition::ExplicitStop;
+				if (voice.currentBusIndex == NO_PARENT && voice.currentState != VoiceState::Stopped) {
+					// Voice was orphaned
+					voice.exitCondition == PlaybackExitCondition::ExplicitStop;
+				}
 				FreeVoice(vIndex);
 				continue;
 			}
@@ -696,7 +699,12 @@ namespace dalia {
 				}
 
 				// Handle state change
-				if (voice.currentState != voice.targetState) voice.currentState = voice.targetState;
+				if (voice.currentState != voice.targetState) {
+					if (voice.targetState == VoiceState::Stopped) {
+						voice.exitCondition = PlaybackExitCondition::ExplicitStop;
+					}
+					voice.currentState = voice.targetState;
+				}
 			}
 
 			if (!requiresSilence && voice.currentState == VoiceState::Playing) voice.targetFadeGain = 1.0f;
