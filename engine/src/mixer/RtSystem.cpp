@@ -351,20 +351,21 @@ namespace dalia {
 		m_maxSamplesPerPeriod(config.maxSamplesPerPeriod),
 		m_outChannels(config.outChannels),
 		m_outSampleRate(config.outSampleRate),
+		m_rtCommands(config.rtCommands),
+		m_rtEvents(config.rtEvents),
+		m_ioStreamRequests(config.ioStreamRequests),
+		m_streamPool(config.streamPool),
 		m_voicePool(config.voicePool),
 		m_voiceParamBridges(config.voiceParamBridges),
-        m_streamPool(config.streamPool),
+		m_listenerPool(config.listenerPool),
+		m_listenerParamBridges(config.listenerParamBridges),
         m_busPool(config.busPool),
+		m_busParamBridges(config.busParamBridges),
 		m_busBufferPool(config.busBufferPool),
-        m_rtCommands(config.rtCommands),
-        m_rtEvents(config.rtEvents),
-        m_ioStreamRequests(config.ioStreamRequests),
+		m_biquadFilterPool(config.biquadFilterPool),
 		m_mixGraphCompiler(config.mixGraphCompiler),
 		m_mixOrder(config.mixOrder),
-		m_dspScratchBuffer(config.dspScratchBuffer),
-		m_biquadFilterPool(config.biquadFilterPool),
-		m_listenerPool(config.listenerPool),
-		m_listenerParamBridges(config.listenerParamBridges) {
+		m_dspScratchBuffer(config.dspScratchBuffer) {
 		m_smoothingCoefficient = 1.0f - std::exp(-2.0f * PI * SMOOTHING_CUTOFF_HZ / config.outSampleRate);
 		m_fadeStep = CalculateLinearFadeStep(FADE_TIME_GAIN, m_outSampleRate);
 		ConfigureSpeakerLayout(config.speakerLayout);
@@ -486,13 +487,6 @@ namespace dalia {
 	            	m_busPool[bIndex].targetParentIndex = bIndexParent;
 		            break;
 	            }
-				case RtCommand::Type::SetBusGain: {
-	            	uint32_t bIndex = cmd.targetIndex;
-	            	float newGain = cmd.data.floatVal.value;
-
-	            	m_busPool[bIndex].targetGain = newGain;
-	            	break;
-				}
 				case RtCommand::Type::AllocateBiquad: {
 	            	BiquadFilter& biquad = m_biquadFilterPool[cmd.targetIndex];
 	            	biquad.generation = cmd.targetGen;
@@ -579,6 +573,13 @@ namespace dalia {
 		for (uint32_t lIndex = 0; lIndex < m_listenerParamBridges.size(); lIndex++) {
 			if (m_listenerParamBridges[lIndex].ConsumeUpdate(lParams)) {
 				m_listenerPool[lIndex].params = lParams;
+			}
+		}
+
+		BusParams bParams;
+		for (uint32_t bIndex = 0; bIndex < m_busParamBridges.size(); bIndex++) {
+			if (m_busParamBridges[bIndex].ConsumeUpdate(bParams)) {
+				m_busPool[bIndex].params = bParams;
 			}
 		}
     }
@@ -908,10 +909,7 @@ namespace dalia {
 				// Boundary check
 				if (block.framesAvailable < sourceFramesNeeded) {
 					bool keepPlaying = HandleVoiceBoundary(voice, m_streamPool.data(), m_ioStreamRequests);
-					if (!keepPlaying) {
-						voice.currentState = VoiceState::Stopped;
-						break;
-					}
+					if (!keepPlaying) break;
 				}
 			}
 		}
@@ -983,7 +981,7 @@ namespace dalia {
 
 		ApplyGainAndFade(
 			buffer, frameCount, m_outChannels,
-			bus.currentGain, bus.targetGain, m_smoothingCoefficient,
+			bus.currentGain, bus.params.gain, m_smoothingCoefficient,
 			bus.currentFadeGain, bus.targetFadeGain, m_fadeStep
 		);
 

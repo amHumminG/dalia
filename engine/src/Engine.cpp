@@ -19,7 +19,9 @@
 #include "messaging/IoLoadRequestQueue.h"
 #include "messaging/IoLoadEventQueue.h"
 
-#include "mixer/ParameterBridge.h"
+#include "core/StateSyncPool.h"
+#include "core/AsyncPool.h"
+#include "core/ParameterBridge.h"
 #include "mixer/Voice.h"
 #include "mixer/StreamContext.h"
 #include "mixer/Bus.h"
@@ -77,84 +79,82 @@ namespace dalia {
 	struct EngineInternalState {
 		bool initialized = false;
 
-		// --- Output Thingies ---
+		// Output Settings
 		std::unique_ptr<IAudioBackend> backend; // HAL
 
+		SpeakerLayout speakerLayout;
 		uint32_t maxSamplesPerPeriod = 0;
 		uint32_t outChannels = 0;
 		uint32_t outSampleRate = 0;
 
 		CoordinateSystem coordinateSystem;
 
-		SpeakerLayout speakerLayout;
-
-		// --- Messaging Queues ---
+		// Messaging Queues
 		std::unique_ptr<RtCommandQueue>			rtCommands;
 		std::unique_ptr<RtEventQueue>			rtEvents;
 		std::unique_ptr<IoStreamRequestQueue>	ioStreamRequests;
 		std::unique_ptr<IoLoadRequestQueue>		ioLoadRequests;
 		std::unique_ptr<IoLoadEventQueue>		ioLoadEvents;
 
-		// --- Resource Capacities ---
-		uint32_t voiceCapacity	= 0;
+		// Resource Capacities
 		uint32_t streamCapacity	= 0;
+		uint32_t voiceCapacity	= 0;
+		uint32_t listenerCapacity = 0;
 		uint32_t busCapacity	= 0;
 
-		uint32_t listenerCapacity = 0;
+		// Streams
+		AsyncPool<StreamContext> streams;
 
-		// --- Pools ---
-		std::unique_ptr<Voice[]>				voicePool;
-		std::unique_ptr<VoiceMirror[]>			voicePoolMirror;
-		std::unique_ptr<ParameterBridge<VoiceParams>[]>	voiceParamBridges;
+		// Voices
+		StateSyncPool<Voice, VoiceMirror, VoiceParams> voices;
 
-		std::unique_ptr<StreamContext[]>		streamPool;
+		// Listeners
+		StateSyncPool<Listener, ListenerMirror, ListenerParams> listeners;
 
-		std::unique_ptr<Bus[]>					busPool;
-		std::unique_ptr<float[]>				busBufferPool;
-		std::unique_ptr<BusMirror[]>			busPoolMirror;
-		std::unordered_map<BusID, uint32_t>		busHashMap;
+		// Buses
+		StateSyncPool<Bus, BusMirror, BusParams> buses;
+		std::unordered_map<BusID, uint32_t>		busMap;
 #if DALIA_DEBUG
-		std::unordered_map<BusID, std::string>	busDebugNames; // Not currently used
+		std::unordered_map<BusID, std::string>	busDebugNameMap; // Unused
 #endif
+		std::unique_ptr<float[]>				busBufferPool;
 
-		std::unique_ptr<Listener[]>				listenerPool;
-		std::unique_ptr<ListenerMirror[]>		listenerPoolMirror;
-		std::unique_ptr<ParameterBridge<ListenerParams>[]>	listenerParamBridges;
-
-		// --- Availability Containers ---
-		std::unique_ptr<FixedStack<uint32_t>>		freeVoices;
-		std::unique_ptr<SPSCRingBuffer<uint32_t>>	freeStreams;
-		std::unique_ptr<FixedStack<uint32_t>>		freeBuses;
-
-		// --- Effects ---
-		std::unique_ptr<float[]> dspScratchBuffer;
-
+		// Effects
 		std::unordered_map<uint64_t, EffectRouting> effectRoutingTable; // Maps effect handles to bus routing
 
 		std::unique_ptr<BiquadFilter[]> biquadFilterPool;
 		std::unique_ptr<HandleManager> biquadHM;
 
+		// Mixing & DSP
 		std::unique_ptr<MixGraphCompiler> mixGraphCompiler;
 		std::unique_ptr<uint32_t[]> mixOrder;
 
-		// --- Resources ---
+		std::unique_ptr<float[]> dspScratchBuffer;
+
+		// Assets
 		std::unique_ptr<AssetRegistry> assetRegistry;
 		uint32_t nextIoLoadRequestId = 1;
 		std::unordered_map<uint32_t, AssetLoadCallback> loadCallbacks;
 
-		// Deferred Unloads
+		// Deferred Unloads & Playbacks
 		std::vector<PendingSoundUnload> pendingSoundUnloads;
-
-		// Deferred playback
 		std::vector<PendingPlayback> pendingPlaybacks;
 
+		// Systems
 		std::unique_ptr<RtSystem> rtSystem;
 		std::unique_ptr<IoStreamSystem> ioStreamSystem;
 		std::unique_ptr<IoLoadSystem> ioLoadSystem;
 
 		EngineInternalState(const EngineConfig& config)
-			: coordinateSystem(config.coordinateSystem), voiceCapacity(config.voiceCapacity), streamCapacity(config.streamCapacity), busCapacity(config.busCapacity),
-			listenerCapacity(std::clamp(config.listenerCapacity, LISTENERS_MIN, LISTENERS_MAX)) {
+			: coordinateSystem(config.coordinateSystem),
+			streamCapacity(config.streamCapacity),
+			voiceCapacity(config.voiceCapacity),
+			listenerCapacity(std::clamp(config.listenerCapacity, LISTENERS_MIN, LISTENERS_MAX)),
+			busCapacity(config.busCapacity),
+			streams(config.streamCapacity),
+			voices(config.voiceCapacity),
+			listeners(std::clamp(config.listenerCapacity, LISTENERS_MIN, LISTENERS_MAX)),
+			buses(config.busCapacity) {
 			// Message Queues
 			rtCommands			= std::make_unique<RtCommandQueue>(config.rtCommandQueueCapacity);
 			rtEvents			= std::make_unique<RtEventQueue>(config.rtEventQueueCapacity);
@@ -162,36 +162,16 @@ namespace dalia {
 			ioLoadRequests		= std::make_unique<IoLoadRequestQueue>(config.ioLoadRequestQueueCapacity);
 			ioLoadEvents		= std::make_unique<IoLoadEventQueue>(config.ioLoadEventQueueCapacity);
 
-			// Pools
-			voicePool			= std::make_unique<Voice[]>(voiceCapacity);
-			voicePoolMirror		= std::make_unique<VoiceMirror[]>(voiceCapacity);
-			voiceParamBridges	= std::make_unique<ParameterBridge<VoiceParams>[]>(voiceCapacity);
-			streamPool			= std::make_unique<StreamContext[]>(streamCapacity);
-			busPool				= std::make_unique<Bus[]>(busCapacity);
-			busPoolMirror		= std::make_unique<BusMirror[]>(busCapacity);
-
-			listenerPool		= std::make_unique<Listener[]>(listenerCapacity);
-			listenerPoolMirror  = std::make_unique<ListenerMirror[]>(listenerCapacity);
-			listenerParamBridges = std::make_unique<ParameterBridge<ListenerParams>[]>(listenerCapacity);
-
 			// Effects
 			biquadFilterPool	= std::make_unique<BiquadFilter[]>(config.biquadCapacity);
-
 			biquadHM			= std::make_unique<HandleManager>(config.biquadCapacity);
 
+			// Mixing
 			mixGraphCompiler	= std::make_unique<MixGraphCompiler>(config.busCapacity);
 			mixOrder			= std::make_unique<uint32_t[]>(config.busCapacity);
 
 			// Resources
 			assetRegistry	= std::make_unique<AssetRegistry>(config.residentSoundCapacity, config.streamSoundCapacity);
-
-			// Availability Containers
-			freeVoices	= std::make_unique<FixedStack<uint32_t>>(voiceCapacity);
-			freeStreams = std::make_unique<SPSCRingBuffer<uint32_t>>(streamCapacity);
-			freeBuses	= std::make_unique<FixedStack<uint32_t>>(busCapacity);
-			for (int i = voiceCapacity - 1; i >= 0; i--)	freeVoices->Push(i);
-			for (int i = 0; i < streamCapacity; i++)	freeStreams->Push(i);     // Queue, dont push in reverse
-			for (int i = busCapacity - 1; i >= 1; i--)		freeBuses->Push(i);   // Skip Master (index 0)
 		}
 
 		uint32_t GenerateIoLoadRequestId() {return nextIoLoadRequestId++; }
@@ -216,7 +196,7 @@ namespace dalia {
 	static inline Result ResolveVoiceMirror(EngineInternalState* state, uint32_t index, uint32_t generation, VoiceMirror*& outMirror) {
 		if (index >= state->voiceCapacity) return Result::InvalidHandle;
 
-		VoiceMirror* mirror = &state->voicePoolMirror[index];
+		VoiceMirror* mirror = &state->voices.GetMirror(index);
 		if (mirror->gen != generation) return Result::ExpiredHandle;
 
 		outMirror = mirror;
@@ -226,23 +206,23 @@ namespace dalia {
 	static inline Result ResolveBusIndex(EngineInternalState* state, const char* identifier, uint32_t& outIndex) {
 		const BusID bId(identifier);
 
-		auto it = state->busHashMap.find(bId);
-		if (it == state->busHashMap.end()) return Result::BusNotFound;
+		auto it = state->busMap.find(bId);
+		if (it == state->busMap.end()) return Result::BusNotFound;
 
 		outIndex = it->second;
 		return Result::Ok;
 	}
 
 	static inline Result DispatchStreamPrepare(EngineInternalState* state, const char* filepath, uint32_t& streamIndex) {
-		if (!state->freeStreams->Pop(streamIndex)) return Result::StreamPoolExhausted;
+		if (!state->streams.Allocate(streamIndex)) return Result::StreamPoolExhausted;
 
 		// Send I/O request to prepare stream
-		state->streamPool[streamIndex].state.store(StreamState::Preparing, std::memory_order_release);
-		IoStreamRequest req = IoStreamRequest::PrepareStream(streamIndex,state->streamPool[streamIndex].gen ,filepath);
+		state->streams.Get(streamIndex).state.store(StreamState::Preparing, std::memory_order_release);
+		IoStreamRequest req = IoStreamRequest::PrepareStream(streamIndex,state->streams.Get(streamIndex).gen ,filepath);
 		if (!state->ioStreamRequests->Push(req)) {
 			// Rollback
-			state->streamPool[streamIndex].state.store(StreamState::Free, std::memory_order_release);
-			state->freeStreams->Push(streamIndex);
+			state->streams.Get(streamIndex).state.store(StreamState::Free, std::memory_order_release);
+			state->streams.Free(streamIndex);
 
 			return Result::IoStreamRequestQueueFull;
 		}
@@ -295,21 +275,21 @@ namespace dalia {
 	static void ProcessRtEvent(EngineInternalState* state,  RtEvent& ev) {
 		switch (ev.type) {
 			case RtEvent::Type::VoiceStopped: {
-				uint32_t index = ev.data.voice.index;
-				uint32_t generation = ev.data.voice.generation;
+				uint32_t vIndex = ev.data.voice.index;
+				uint32_t vGen = ev.data.voice.generation;
 				VoiceMirror* vMirror;
-				Result res = ResolveVoiceMirror(state, index, generation, vMirror);
+				Result res = ResolveVoiceMirror(state, vIndex, vGen, vMirror);
 
 				if (res == Result::Ok) { // Voice is still valid
 					PlaybackExitCallback callback = vMirror->onStopCallback;
 					vMirror->Reset();
-					state->freeVoices->Push(index);
+					state->voices.Free(vIndex);
 
-					DALIA_LOG_DEBUG(LOG_CTX_CORE, "Freed voice %d.", index);
-					if (callback) callback(state->ForgePlaybackHandle(index, generation), ev.data.voice.exitCondition);
+					DALIA_LOG_DEBUG(LOG_CTX_CORE, "Freed voice %d.", vIndex);
+					if (callback) callback(state->ForgePlaybackHandle(vIndex, vGen), ev.data.voice.exitCondition);
 
 					// --- Check garbage collection ---
-					VoiceID stoppedVoice = {index, generation};
+					VoiceID stoppedVoice = {vIndex, vGen};
 					for (auto it = state->pendingSoundUnloads.begin(); it != state->pendingSoundUnloads.end(); ) {
 						auto& waitingList = it->voicesToStop;
 
@@ -347,10 +327,9 @@ namespace dalia {
 				auto it = state->effectRoutingTable.find(ev.data.effect.handleRawId);
 				if (it != state->effectRoutingTable.end()) {
 					EffectRouting routing = it->second;
-					auto& mirroredHandle = state->busPoolMirror[routing.busIndex].effectSlots[routing.effectSlot];
+					auto& mirroredHandle = state->buses.GetMirror(routing.busIndex).effectSlots[routing.effectSlot];
 					if (mirroredHandle.GetRawId() == ev.data.effect.handleRawId) {
-						// Detach the handle if it's still in the same slot
-						mirroredHandle = InvalidEffectHandle;
+						mirroredHandle = InvalidEffectHandle; // Detach the handle if it's still in the same slot
 					}
 
 					state->effectRoutingTable.erase(it);
@@ -421,7 +400,7 @@ namespace dalia {
 									}
 
 									vMirror->Reset();
-									state->freeVoices->Push(vIndex);
+									state->voices.Free(vIndex);
 									it = state->pendingPlaybacks.erase(it);
 
 									continue;
@@ -486,7 +465,7 @@ namespace dalia {
 
 							state->rtCommands->Enqueue(RtCommand::DeallocateVoice(vIndex, vGen));
 							vMirror->Reset();
-							state->freeVoices->Push(vIndex);
+							state->voices.Free(vIndex);
 						}
 
 						it = state->pendingPlaybacks.erase(it);
@@ -528,22 +507,18 @@ namespace dalia {
 		m_state = new EngineInternalState(config);
 
 		// --- Master Bus Setup ---
-		m_state->busPoolMirror[MASTER_BUS_INDEX].refCount = 1;
+		m_state->buses.GetMirror(MASTER_BUS_INDEX).refCount = 1;
+		m_state->buses.Get(MASTER_BUS_INDEX).isActive = true;
 
 		constexpr BusID masterId("Master");
-		m_state->busHashMap[masterId] = MASTER_BUS_INDEX;
+		m_state->busMap[masterId] = MASTER_BUS_INDEX;
 #if DALIA_DEBUG
-		m_state->busDebugNames[masterId] = "Master";
+		m_state->busDebugNameMap[masterId] = "Master";
 #endif
 
-		Bus& master = m_state->busPool[MASTER_BUS_INDEX];
-		master.isActive = true;
-
-		// --- Listener Setup ---
-		Listener& l = m_state->listenerPool[0];
-		l.params.isActive = true;
-		ListenerMirror& lMirror = m_state->listenerPoolMirror[0];
-		lMirror.params.isActive = true;
+		// --- Listener 0 Setup ---
+		m_state->listeners.Get(0).params.isActive = true;
+		m_state->listeners.GetMirror(0).params.isActive = true;
 
 		// --- BACKEND (HAL) SETUP ---
 #ifdef _WIN32
@@ -590,34 +565,35 @@ namespace dalia {
 
 		// --- SYSTEMS SETUP ---
 		RtSystemConfig rtConfig;
-		rtConfig.coordinateSystem	= m_state->coordinateSystem;
-		rtConfig.speakerLayout		= m_state->speakerLayout;
-		rtConfig.maxSamplesPerPeriod = m_state->maxSamplesPerPeriod;
-		rtConfig.outChannels		= m_state->outChannels;
-		rtConfig.outSampleRate		= m_state->outSampleRate;
-		rtConfig.rtCommands			= m_state->rtCommands.get();
-		rtConfig.rtEvents			= m_state->rtEvents.get();
-		rtConfig.ioStreamRequests	= m_state->ioStreamRequests.get();
-		rtConfig.voicePool			= std::span(m_state->voicePool.get(), m_state->voiceCapacity);
-		rtConfig.voiceParamBridges  = std::span(m_state->voiceParamBridges.get(), m_state->voiceCapacity);
-		rtConfig.streamPool			= std::span(m_state->streamPool.get(), m_state->streamCapacity);
-		rtConfig.busPool			= std::span(m_state->busPool.get(), m_state->busCapacity);
-		rtConfig.busBufferPool		= std::span(m_state->busBufferPool.get(), busBufferPoolSize);
-		rtConfig.mixGraphCompiler	= m_state->mixGraphCompiler.get();
-		rtConfig.mixOrder			= std::span(m_state->mixOrder.get(), m_state->busCapacity);
-		rtConfig.listenerPool		= std::span(m_state->listenerPool.get(), m_state->listenerCapacity);
-		rtConfig.listenerParamBridges = std::span(m_state->listenerParamBridges.get(), m_state->listenerCapacity);
-		rtConfig.dspScratchBuffer	= std::span(m_state->dspScratchBuffer.get(), m_state->maxSamplesPerPeriod);
-		rtConfig.biquadFilterPool	= std::span(m_state->biquadFilterPool.get(), m_state->biquadHM->GetCapacity());
+		rtConfig.coordinateSystem		= m_state->coordinateSystem;
+		rtConfig.speakerLayout			= m_state->speakerLayout;
+		rtConfig.maxSamplesPerPeriod	= m_state->maxSamplesPerPeriod;
+		rtConfig.outChannels			= m_state->outChannels;
+		rtConfig.outSampleRate			= m_state->outSampleRate;
+		rtConfig.rtCommands				= m_state->rtCommands.get();
+		rtConfig.rtEvents				= m_state->rtEvents.get();
+		rtConfig.ioStreamRequests		= m_state->ioStreamRequests.get();
+		rtConfig.streamPool				= m_state->streams.GetSpan();
+		rtConfig.listenerPool			= m_state->listeners.GetSpan();
+		rtConfig.listenerParamBridges	= m_state->listeners.GetParamBridgeSpan();
+		rtConfig.voicePool				= m_state->voices.GetSpan();
+		rtConfig.voiceParamBridges		= m_state->voices.GetParamBridgeSpan();
+		rtConfig.busPool				= m_state->buses.GetSpan();
+		rtConfig.busParamBridges		= m_state->buses.GetParamBridgeSpan();
+		rtConfig.busBufferPool			= std::span(m_state->busBufferPool.get(), busBufferPoolSize);
+		rtConfig.mixGraphCompiler		= m_state->mixGraphCompiler.get();
+		rtConfig.mixOrder				= std::span(m_state->mixOrder.get(), m_state->busCapacity);
+		rtConfig.dspScratchBuffer		= std::span(m_state->dspScratchBuffer.get(), m_state->maxSamplesPerPeriod);
+		rtConfig.biquadFilterPool		= std::span(m_state->biquadFilterPool.get(), m_state->biquadHM->GetCapacity());
 		m_state->rtSystem = std::make_unique<RtSystem>(rtConfig);
 
-		m_state->backend->AttachSystem(m_state->rtSystem.get()); // Hand it to backend for ticking
+		m_state->backend->AttachSystem(m_state->rtSystem.get()); // Attach audio system to backend
 
 		IoStreamSystemConfig ioStreamingConfig;
 		ioStreamingConfig.outSampleRate		= m_state->outSampleRate;
 		ioStreamingConfig.ioStreamRequests	= m_state->ioStreamRequests.get();
-		ioStreamingConfig.streamPool		= std::span(m_state->streamPool.get(), m_state->streamCapacity);
-		ioStreamingConfig.freeStreams		= m_state->freeStreams.get();
+		ioStreamingConfig.streamPool		= m_state->streams.GetSpan();
+		ioStreamingConfig.freeStreams		= m_state->streams.GetFreeList();
 		m_state->ioStreamSystem	= std::make_unique<IoStreamSystem>(ioStreamingConfig);
 
 		IoLoadSystemConfig ioLoadSystemConfig;
@@ -662,31 +638,34 @@ namespace dalia {
 
 		// --- Process Event Inbox ---
 		RtEvent RtEv;
-		while (m_state->rtEvents->Pop(RtEv)) {
-			ProcessRtEvent(m_state, RtEv);
-		}
+		while (m_state->rtEvents->Pop(RtEv)) ProcessRtEvent(m_state, RtEv);
 
 		IoLoadEvent loadEv;
-		while (m_state->ioLoadEvents->Pop(loadEv)) {
-			ProcessIoLoadEvent(m_state, loadEv);
-		}
+		while (m_state->ioLoadEvents->Pop(loadEv)) ProcessIoLoadEvent(m_state, loadEv);
 
-		// Update voice params
+		// --- Update Parameter Bridges ---
 		for (uint32_t vIndex = 0; vIndex < m_state->voiceCapacity; vIndex++) {
-			VoiceMirror& vMirror = m_state->voicePoolMirror[vIndex];
+			VoiceMirror& vMirror = m_state->voices.GetMirror(vIndex);
 			if (vMirror.state == VoiceState::Free || !vMirror.isParamsDirty) continue;
 
-			m_state->voiceParamBridges[vIndex].PushUpdate(vMirror.params);
+			m_state->voices.GetParamBridge(vIndex).PushUpdate(vMirror.params);
 			vMirror.isParamsDirty = false;
 		}
 
-		// Update listener params
 		for (uint32_t lIndex = 0; lIndex < m_state->listenerCapacity; lIndex++) {
-			ListenerMirror& lMirror = m_state->listenerPoolMirror[lIndex];
+			ListenerMirror& lMirror = m_state->listeners.GetMirror(lIndex);
 			if (!lMirror.isParamsDirty) continue;
 
-			m_state->listenerParamBridges[lIndex].PushUpdate(lMirror.params);
+			m_state->listeners.GetParamBridge(lIndex).PushUpdate(lMirror.params);
 			lMirror.isParamsDirty = false;
+		}
+
+		for (uint32_t bIndex = 0; bIndex < m_state->busCapacity; bIndex++) {
+			BusMirror& bMirror = m_state->buses.GetMirror(bIndex);
+			if (!bMirror.isParamsDirty) continue;
+
+			m_state->buses.GetParamBridge(bIndex).PushUpdate(bMirror.params);
+			bMirror.isParamsDirty = false;
 		}
 
 		m_state->rtCommands->Dispatch(); // Send all commands accumulated from this frame to the audio thread
@@ -792,7 +771,7 @@ namespace dalia {
 			// Remove pending playbacks for the sound
 			for (auto it = m_state->pendingPlaybacks.begin(); it != m_state->pendingPlaybacks.end(); ) {
 				if (it->assetRawId == soundHandle.GetRawId()) {
-					VoiceMirror& vMirror = m_state->voicePoolMirror[it->voiceIndex];
+					VoiceMirror& vMirror = m_state->voices.GetMirror(it->voiceIndex);
 
 					if (vMirror.onStopCallback) {
 						PlaybackHandle playback = PlaybackHandle::Create(it->voiceIndex, it->voiceGen);
@@ -800,7 +779,7 @@ namespace dalia {
 					}
 
 					vMirror.Reset();
-					m_state->freeVoices->Push(it->voiceIndex);
+					m_state->voices.Free(it->voiceIndex);
 
 					DALIA_LOG_DEBUG(LOG_CTX_API, "Aborted deferred playback for voice %d due to early unload.",
 						it->voiceIndex);
@@ -811,7 +790,7 @@ namespace dalia {
 
 			// Command active voices using the asset to stop
 			for (uint32_t i = 0; i < m_state->voiceCapacity; i++) {
-				VoiceMirror& vMirror = m_state->voicePoolMirror[i];
+				VoiceMirror& vMirror = m_state->voices.GetMirror(i);
 
 				if (vMirror.state != VoiceState::Free && vMirror.assetRawId == soundHandle.GetRawId()) {
 					pendingUnload.voicesToStop.push_back(VoiceID(i, vMirror.gen));
@@ -847,7 +826,7 @@ namespace dalia {
 		// Fetch bus
 		Result res = ResolveBusIndex(m_state, identifier, bIndex);
 		if (res == Result::Ok) {
-			BusMirror& bMirror  = m_state->busPoolMirror[bIndex];
+			BusMirror& bMirror  = m_state->buses.GetMirror(bIndex);
 			bMirror.refCount++;
 
 			if (parentFound && bMirror.parentBusIndex != bIndexParent) {
@@ -864,19 +843,19 @@ namespace dalia {
 		}
 
 		// Bus does not exist yet
-		if (!m_state->freeBuses->Pop(bIndex)) {
+		if (!m_state->buses.Allocate(bIndex)) {
 			DALIA_LOG_ERR(LOG_CTX_API, "Failed to create bus (%s). Bus pool exhausted.", identifier);
 			return Result::BusPoolExhausted;
 		}
 
-		BusMirror& bMirror = m_state->busPoolMirror[bIndex];
+		BusMirror& bMirror = m_state->buses.GetMirror(bIndex);
 		bMirror.refCount = 1;
 		bMirror.parentBusIndex = bIndexParent;
 
 		const BusID bId(identifier);
-		m_state->busHashMap[bId] = bIndex;
+		m_state->busMap[bId] = bIndex;
 #if DALIA_DEBUG
-		m_state->busDebugNames[bId] = identifier;
+		m_state->busDebugNameMap[bId] = identifier;
 #endif
 
 		DALIA_LOG_DEBUG(LOG_CTX_API, "Created bus with routing: %s (index: %d) -> %s (index: %d).",
@@ -889,8 +868,8 @@ namespace dalia {
 	Result Engine::DestroyBus(const char* identifier) {
 		if (!IsInitialized(m_state)) return Result::NotInitialized;
 
-		auto it = m_state->busHashMap.find(BusID(identifier));
-		if (it == m_state->busHashMap.end()) {
+		auto it = m_state->busMap.find(BusID(identifier));
+		if (it == m_state->busMap.end()) {
 			DALIA_LOG_ERR(LOG_CTX_API, "Failed to destroy bus (%s). Bus does not exist.", identifier);
 			return Result::BusNotFound;
 		}
@@ -901,8 +880,7 @@ namespace dalia {
 			return Result::Error;
 		}
 
-		BusMirror& bMirror = m_state->busPoolMirror[bIndex];
-
+		BusMirror& bMirror = m_state->buses.GetMirror(bIndex);
 		if (bMirror.refCount > 1) {
 			bMirror.refCount--;
 			return Result::Ok;
@@ -913,7 +891,7 @@ namespace dalia {
 		// Remove parent from child buses
 		uint32_t orphanedBuses = 0;
 		for (uint32_t i = 0; i < m_state->busCapacity; i++) {
-			BusMirror* bMirrorChild = &m_state->busPoolMirror[i];
+			BusMirror* bMirrorChild = &m_state->buses.GetMirror(i);
 			if (bMirrorChild->parentBusIndex == bIndex) {
 				bMirrorChild->parentBusIndex = NO_PARENT;
 				m_state->rtCommands->Enqueue(RtCommand::SetBusParent(i, NO_PARENT));
@@ -926,7 +904,7 @@ namespace dalia {
 
 		uint32_t orphanedPlaybacks = 0;
 		for (uint32_t i = 0; i < m_state->voiceCapacity; i++) {
-			VoiceMirror& vMirrorChild = m_state->voicePoolMirror[i];
+			VoiceMirror& vMirrorChild = m_state->voices.GetMirror(i);
 			if (vMirrorChild.parentBusIndex == bIndex) {
 				vMirrorChild.parentBusIndex = NO_PARENT;
 				m_state->rtCommands->Enqueue(RtCommand::SetVoiceParent(i, vMirrorChild.gen, NO_PARENT));
@@ -938,12 +916,12 @@ namespace dalia {
 			identifier, orphanedPlaybacks);
 
 		bMirror.Reset();
-		m_state->busHashMap.erase(it);
+		m_state->busMap.erase(it);
 #if DALIA_DEBUG
-		m_state->busDebugNames.erase(BusID(identifier));
+		m_state->busDebugNameMap.erase(BusID(identifier));
 #endif
 
-		m_state->freeBuses->Push(bIndex);
+		m_state->buses.Free(bIndex);
 
 		DALIA_LOG_DEBUG(LOG_CTX_API, "Destroyed bus %s (index: %d).", identifier, bIndex);
 		m_state->rtCommands->Enqueue(RtCommand::DeallocateBus(bIndex));
@@ -986,10 +964,10 @@ namespace dalia {
 					identifier, parentIdentifier);
 				return Result::InvalidRouting;
 			}
-			currentAncestor = m_state->busPoolMirror[currentAncestor].parentBusIndex;
+			currentAncestor = m_state->buses.GetMirror(currentAncestor).parentBusIndex;
 		}
 
-		BusMirror& bMirror = m_state->busPoolMirror[bIndex];
+		BusMirror& bMirror = m_state->buses.GetMirror(bIndex);
 		if (bMirror.parentBusIndex == bIndexParent) {
 			DALIA_LOG_WARN(LOG_CTX_API, "Attempting to route bus (%s -> %s). %s is already routed to %s.",
 				identifier, parentIdentifier, identifier, parentIdentifier);
@@ -1015,10 +993,11 @@ namespace dalia {
 			return res;
 		}
 
+		BusMirror& bMirror = m_state->buses.GetMirror(bIndex);
 		float clampedVolumeDb = std::clamp(volumeDb, VOLUME_DB_MIN, VOLUME_DB_MAX);
-		m_state->busPoolMirror[bIndex].volumeDb = clampedVolumeDb;
+		bMirror.params.gain = math::DbToGain(clampedVolumeDb);
+		bMirror.isParamsDirty = true;
 
-		m_state->rtCommands->Enqueue(RtCommand::SetBusGain(bIndex, math::DbToGain(clampedVolumeDb)));
 		DALIA_LOG_DEBUG(LOG_CTX_API, "Set bus (%s) volume to %.2f dB.", identifier, clampedVolumeDb);
 
 		return Result::Ok;
@@ -1120,7 +1099,7 @@ namespace dalia {
 		auto it = m_state->effectRoutingTable.find(effect.GetRawId());
 		if (it != m_state->effectRoutingTable.end()) {
 			EffectRouting routing = it->second;
-			BusMirror& bMirror = m_state->busPoolMirror[routing.busIndex];
+			BusMirror& bMirror = m_state->buses.GetMirror(routing.busIndex);
 			bMirror.effectSlots[routing.effectSlot] = InvalidEffectHandle;
 
 			RtCommand cmd = RtCommand::ForceDetachEffect(
@@ -1140,7 +1119,7 @@ namespace dalia {
 		}
 
 		// Check effect slot
-		BusMirror& bMirror = m_state->busPoolMirror[bIndex];
+		BusMirror& bMirror = m_state->buses.GetMirror(bIndex);
 		if (bMirror.effectSlots[effectSlot].IsValid()) {
 			DALIA_LOG_WARN(LOG_CTX_API, "Detaching effect from bus %s (slot %d). Attaching new effect to slot.",
 				busIdentifier, effectSlot);
@@ -1236,7 +1215,7 @@ namespace dalia {
 		auto it = m_state->effectRoutingTable.find(effect.GetRawId());
 		if (it != m_state->effectRoutingTable.end()) {
 			EffectRouting routing = it->second;
-			BusMirror& bMirror = m_state->busPoolMirror[routing.busIndex];
+			BusMirror& bMirror = m_state->buses.GetMirror(routing.busIndex);
 			bMirror.effectSlots[routing.effectSlot] = InvalidEffectHandle;
 
 			RtCommand detachCmd = RtCommand::ForceDetachEffect(
@@ -1295,13 +1274,13 @@ namespace dalia {
 		}
 
 		uint32_t vIndex;
-		if (!m_state->freeVoices->Pop(vIndex)) {
+		if (!m_state->voices.Allocate(vIndex)) {
 			DALIA_LOG_ERR(LOG_CTX_API, "Failed to create playback instance. Voice pool exhausted.");
 			return Result::VoicePoolExhausted;
 		}
 
 		// Prime voice mirror
-		VoiceMirror& vMirror = m_state->voicePoolMirror[vIndex];
+		VoiceMirror& vMirror = m_state->voices.GetMirror(vIndex);
 		vMirror.state = VoiceState::Inactive;
 		vMirror.assetRawId = soundHandle.GetRawId();
 		vMirror.frameCount = frameCount;
@@ -1342,7 +1321,7 @@ namespace dalia {
 			Result streamRes = DispatchStreamPrepare(m_state, streamSound->filepath, streamIndex);
 			if (streamRes != Result::Ok) {
 				vMirror.Reset();
-				m_state->freeVoices->Push(vIndex);
+				m_state->voices.Free(vIndex);
 
 				if (streamRes == Result::StreamPoolExhausted) {
 					DALIA_LOG_ERR(LOG_CTX_API, "Failed to prepare stream instance. Stream pool exhausted.");
@@ -1486,7 +1465,7 @@ namespace dalia {
 					}
 
 					vMirror->Reset();
-					m_state->freeVoices->Push(vIndex);
+					m_state->voices.Free(vIndex);
 					DALIA_LOG_DEBUG(LOG_CTX_API, "Stopped voice %d before it started playing.", vIndex);
 					m_state->pendingPlaybacks.erase(it);
 					return Result::Ok;
@@ -1809,7 +1788,7 @@ namespace dalia {
 			return Result::ListenerNotFound;
 		}
 
-		ListenerMirror& lMirror = m_state->listenerPoolMirror[listenerIndex];
+		ListenerMirror& lMirror = m_state->listeners.GetMirror(listenerIndex);
 		lMirror.params.isActive = active;
 		lMirror.isParamsDirty = true;
 
@@ -1828,8 +1807,7 @@ namespace dalia {
 			return Result::ListenerNotFound;
 		}
 
-		ListenerMirror& lMirror = m_state->listenerPoolMirror[listenerIndex];
-
+		ListenerMirror& lMirror = m_state->listeners.GetMirror(listenerIndex);
 		lMirror.params.position					= FromPublic(attributes.position);
 		lMirror.params.distanceProbePosition	= FromPublic(attributes.distanceProbePosition);
 		lMirror.params.forward					= math::Vector3::Normalize(FromPublic(attributes.forward));
@@ -1849,8 +1827,7 @@ namespace dalia {
 			return Result::ListenerNotFound;
 		}
 
-		ListenerMirror& lMirror = m_state->listenerPoolMirror[listenerIndex];
-
+		ListenerMirror& lMirror = m_state->listeners.GetMirror(listenerIndex);;
 		lMirror.params.position = FromPublic(position);
 		lMirror.isParamsDirty = true;
 
@@ -1866,8 +1843,7 @@ namespace dalia {
 			return Result::ListenerNotFound;
 		}
 
-		ListenerMirror& lMirror = m_state->listenerPoolMirror[listenerIndex];
-
+		ListenerMirror& lMirror = m_state->listeners.GetMirror(listenerIndex);
 		lMirror.params.distanceProbePosition = FromPublic(distanceProbePosition);
 		lMirror.isParamsDirty = true;
 
@@ -1883,8 +1859,7 @@ namespace dalia {
 			return Result::ListenerNotFound;
 		}
 
-		ListenerMirror& lMirror = m_state->listenerPoolMirror[listenerIndex];
-
+		ListenerMirror& lMirror = m_state->listeners.GetMirror(listenerIndex);
 		lMirror.params.forward	= math::Vector3::Normalize(FromPublic(forward));
 		lMirror.params.up		= math::Vector3::Normalize(FromPublic(up));
 		lMirror.isParamsDirty = true;
@@ -1901,8 +1876,7 @@ namespace dalia {
 			return Result::ListenerNotFound;
 		}
 
-		ListenerMirror& lMirror = m_state->listenerPoolMirror[listenerIndex];
-
+		ListenerMirror& lMirror = m_state->listeners.GetMirror(listenerIndex);
 		lMirror.params.velocity = FromPublic(velocity);
 		lMirror.isParamsDirty = true;
 

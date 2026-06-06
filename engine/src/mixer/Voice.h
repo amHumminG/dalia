@@ -69,7 +69,6 @@ namespace dalia {
     	float currentPitch = 1.0f; // Final resolved pitch after doppler has been applied
 
     	VoiceParams params;
-    	bool isParamsDirty = false;
 
         uint32_t channels = 0;
         uint32_t sampleRate = 0;
@@ -118,7 +117,6 @@ namespace dalia {
         	}
 
         	params = VoiceParams{};
-        	isParamsDirty = false;
 
             channels = 0;
             sampleRate = 0;

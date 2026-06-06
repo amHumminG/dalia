@@ -1,7 +1,7 @@
 #pragma once
 
 #include "core/Constants.h"
-#include "mixer/ParameterBridge.h"
+#include "../core/ParameterBridge.h"
 #include "mixer/Speakers.h"
 #include "mixer/PeakLimiter.h"
 
@@ -14,14 +14,15 @@ namespace dalia {
     class RtEventQueue;
     class IoStreamRequestQueue;
 
-    struct Voice;
-	struct VoiceParams;
-    struct StreamContext;
-    struct Bus;
-    class EffectHandle;
-    struct EffectSlot;
 	struct Listener;
 	struct ListenerParams;
+	struct StreamContext;
+    struct Voice;
+	struct VoiceParams;
+    struct Bus;
+	struct BusParams;
+    class EffectHandle;
+    struct EffectSlot;
 
 	enum class CoordinateSystem : uint8_t;
 	enum class SpeakerLayout;
@@ -34,33 +35,34 @@ namespace dalia {
 
     struct RtSystemConfig {
     	CoordinateSystem coordinateSystem;
+    	float globalDopplerFactor = 1.0f;
 
         SpeakerLayout speakerLayout;
-
     	uint32_t maxSamplesPerPeriod = 0;
         uint32_t outChannels = 0;
         uint32_t outSampleRate = 0;
-
-    	float globalDopplerFactor = 1.0f;
 
         RtCommandQueue* rtCommands              = nullptr;
         RtEventQueue* rtEvents                  = nullptr;
         IoStreamRequestQueue* ioStreamRequests  = nullptr;
 
+    	std::span<StreamContext> streamPool;
+
         std::span<Voice> voicePool;
     	std::span<ParameterBridge<VoiceParams>> voiceParamBridges;
-        std::span<StreamContext> streamPool;
-        std::span<Bus> busPool;
-        std::span<float> busBufferPool;
-
-    	MixGraphCompiler* mixGraphCompiler		= nullptr;
-    	std::span<uint32_t> mixOrder;
 
     	std::span<Listener> listenerPool;
     	std::span<ParameterBridge<ListenerParams>> listenerParamBridges;
 
+        std::span<Bus> busPool;
+    	std::span<ParameterBridge<BusParams>> busParamBridges;
+        std::span<float> busBufferPool;
+
+    	std::span<BiquadFilter> biquadFilterPool;
+
+    	MixGraphCompiler* mixGraphCompiler		= nullptr;
+    	std::span<uint32_t> mixOrder;
         std::span<float> dspScratchBuffer;
-        std::span<BiquadFilter> biquadFilterPool;
     };
 
     class RtSystem {
@@ -89,43 +91,52 @@ namespace dalia {
 
     	void ConfigureSpeakerLayout(SpeakerLayout layout); // Returns the spatial speaker count
 
-    	CoordinateSystem m_coordinateSystem;
+    	PeakLimiter m_masterPeakLimiter;
+    	float m_smoothingCoefficient = 0.0f; // Used for volume and gain smoothing
+    	float m_fadeStep = 0.0f;			 // Per sample step for gain fading
 
+    	// Global User Settings
+    	CoordinateSystem m_coordinateSystem;
+    	float m_globalDopplerFactor = 1.0f;
+
+    	// Output Settings
     	SpeakerLayout m_speakerLayout;
+    	VirtualSpeaker m_speakerMatrix[CHANNELS_MAX];
     	uint32_t m_spatialSpeakerCount = 0;
     	uint32_t m_maxSamplesPerPeriod = 0;
         uint32_t m_outChannels = 0;
         uint32_t m_outSampleRate = 0;
 
-    	VirtualSpeaker m_speakerMatrix[CHANNELS_MAX];
-
-    	PeakLimiter m_masterPeakLimiter;
-
-    	float m_globalDopplerFactor = 1.0f;
-
-        float m_smoothingCoefficient = 0.0f; // Used for volume and gain smoothing
-    	float m_fadeStep = 0.0f; // Per sample step for gain fading
-
+    	// Messaging
         RtCommandQueue* m_rtCommands				= nullptr;
         RtEventQueue* m_rtEvents					= nullptr;
         IoStreamRequestQueue* m_ioStreamRequests	= nullptr;
 
+    	// Streams
+    	std::span<StreamContext> m_streamPool;
+
+    	// Voices
         std::span<Voice> m_voicePool;
     	std::span<ParameterBridge<VoiceParams>> m_voiceParamBridges;
-        std::span<StreamContext> m_streamPool;
-        std::span<Bus> m_busPool;
-        std::span<float> m_busBufferPool;
 
-        std::span<float> m_dspScratchBuffer;
-        std::span<BiquadFilter> m_biquadFilterPool;
-
-		MixGraphCompiler* m_mixGraphCompiler = nullptr;
-		std::span<uint32_t>	m_mixOrder;
-
+    	// Listeners
     	std::span<Listener> m_listenerPool;
     	std::span<ParameterBridge<ListenerParams>> m_listenerParamBridges;
 
+    	// Buses
+        std::span<Bus> m_busPool;
+    	std::span<ParameterBridge<BusParams>> m_busParamBridges;
+        std::span<float> m_busBufferPool;
+
+    	// Effects
+    	std::span<BiquadFilter> m_biquadFilterPool;
+
+    	// Mixing Graph & DSP
+		MixGraphCompiler* m_mixGraphCompiler = nullptr;
+		std::span<uint32_t>	m_mixOrder;
     	uint32_t m_mixOrderSize = 0;
     	bool m_isMixOrderDirty = true;
+
+    	std::span<float> m_dspScratchBuffer;
     };
 }

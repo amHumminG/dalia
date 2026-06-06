@@ -27,7 +27,6 @@ namespace dalia {
 			AllocateBus,
 			DeallocateBus,
 			SetBusParent,
-			SetBusGain, // This will be removed and replaced by a parameter bridge in the future (probably)
 
 			// Effects
 			AllocateBiquad,
@@ -201,14 +200,6 @@ namespace dalia {
 			cmd.type = Type::SetBusParent;
 			cmd.targetIndex = index;
 			cmd.data.setParent.parentIndex = parentIndex;
-			return cmd;
-		}
-
-		static RtCommand SetBusGain(uint32_t index, float gain) {
-			RtCommand cmd{};
-			cmd.type = Type::SetBusGain;
-			cmd.targetIndex = index;
-			cmd.data.floatVal.value = gain;
 			return cmd;
 		}
 

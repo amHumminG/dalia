@@ -25,6 +25,11 @@ namespace dalia {
         }
     };
 
+	struct BusParams {
+		float gain = GAIN_DEFAULT;
+
+	};
+
     struct Bus {
     	bool isActive = false;
 
@@ -37,6 +42,8 @@ namespace dalia {
 
         float targetGain = GAIN_DEFAULT;
         float currentGain = GAIN_DEFAULT;
+
+    	BusParams params;
 
         EffectSlot effectSlots[MAX_EFFECTS_PER_BUS];
 
@@ -62,8 +69,9 @@ namespace dalia {
         uint32_t refCount = 0;
         uint32_t parentBusIndex = NO_PARENT;
 
-        // Mixing Properties
-        float volumeDb = VOLUME_DB_DEFAULT;
+        BusParams params;
+    	bool isParamsDirty = false;
+
         EffectHandle effectSlots[MAX_EFFECTS_PER_BUS] = {
             InvalidEffectHandle,
             InvalidEffectHandle,
@@ -75,7 +83,9 @@ namespace dalia {
             refCount = 0;
             parentBusIndex = NO_PARENT;
 
-            volumeDb = VOLUME_DB_DEFAULT;
+            params = BusParams{};
+        	isParamsDirty = false;
+
             for (int i = 0; i < MAX_EFFECTS_PER_BUS; i++) {
                 effectSlots[i] = InvalidEffectHandle;
             }
