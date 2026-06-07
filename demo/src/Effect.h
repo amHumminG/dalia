@@ -27,7 +27,6 @@ public:
 	dalia::Result GetResult() const { return m_result; }
 
 	dalia::EffectHandle GetHandle() const { return m_handle; }
-	dalia::EffectType GetType() const { return m_handle.GetType(); }
 
 	void SetName(const std::string& name) { m_name = name; }
 	std::string GetName() const { return m_name; }

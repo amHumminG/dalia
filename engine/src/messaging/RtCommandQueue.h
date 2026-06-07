@@ -14,7 +14,7 @@ namespace dalia {
 
 			// Voice
 			AllocateVoice,
-			DeallocateVoice,
+			FreeVoice,
 			PrepareVoiceStreaming,
 			PrepareVoiceResident,
 			SeekVoice,
@@ -25,17 +25,15 @@ namespace dalia {
 
 			// Bus
 			AllocateBus,
-			DeallocateBus,
+			FreeBus,
 			SetBusParent,
 
 			// Effects
-			AllocateBiquad,
-			SetBiquadParams,
-
+			AllocateEffect,
+			FreeEffect,
 			AttachEffect,
 			FadeDetachEffect,
 			ForceDetachEffect,
-			DeallocateEffect,
 
 			// Misc
 			SetGlobalDopplerFactor
@@ -66,6 +64,7 @@ namespace dalia {
 
 			struct {
 				uint32_t streamIndex;
+				uint32_t streamGen;
 				uint32_t channels;
 				uint32_t sampleRate;
 			} prepStreaming;
@@ -83,12 +82,7 @@ namespace dalia {
 			} floatVal;
 
 			struct {
-				BiquadFilterType type;
-				BiquadConfig config;
-			} biquad;
-
-			struct {
-				EffectType type;
+				uint32_t variantIndex;
 				uint32_t busIndex;
 				uint32_t effectSlot;
 			} effect;
@@ -103,9 +97,9 @@ namespace dalia {
 			return cmd;
 		}
 
-		static RtCommand DeallocateVoice(uint32_t index, uint32_t gen) {
+		static RtCommand FreeVoice(uint32_t index, uint32_t gen) {
 			RtCommand cmd{};
-			cmd.type = Type::DeallocateVoice;
+			cmd.type = Type::FreeVoice;
 			cmd.targetIndex = index;
 			cmd.targetGen = gen;
 			return cmd;
@@ -125,13 +119,14 @@ namespace dalia {
 			return cmd;
 		}
 
-		static RtCommand PrepareVoiceStreaming(uint32_t index, uint32_t gen, uint32_t streamIndex,
+		static RtCommand PrepareVoiceStreaming(uint32_t index, uint32_t gen, uint32_t streamIndex, uint32_t streamGen,
 			uint32_t channels, uint32_t sampleRate) {
 			RtCommand cmd{};
 			cmd.type = Type::PrepareVoiceStreaming;
 			cmd.targetIndex = index;
 			cmd.targetGen = gen;
 			cmd.data.prepStreaming.streamIndex = streamIndex;
+			cmd.data.prepStreaming.streamGen = streamGen;
 
 			cmd.data.prepStreaming.channels = channels;
 			cmd.data.prepStreaming.sampleRate = sampleRate;
@@ -188,9 +183,9 @@ namespace dalia {
 			return cmd;
 		}
 
-		static RtCommand DeallocateBus(uint32_t index) {
+		static RtCommand FreeBus(uint32_t index) {
 			RtCommand cmd{};
-			cmd.type = Type::DeallocateBus;
+			cmd.type = Type::FreeBus;
 			cmd.targetIndex = index;
 			return cmd;
 		}
@@ -203,70 +198,50 @@ namespace dalia {
 			return cmd;
 		}
 
-		static RtCommand AllocateBiquad(uint32_t index, uint32_t gen, BiquadFilterType type, const BiquadConfig& config) {
+		static RtCommand AllocateEffect(uint32_t index, uint32_t gen, uint32_t variantIndex) {
 			RtCommand cmd{};
-			cmd.type = Type::AllocateBiquad;
+			cmd.type = Type::AllocateEffect;
 			cmd.targetIndex = index;
 			cmd.targetGen = gen;
-			cmd.data.biquad.type = type;
-			cmd.data.biquad.config = config;
+			cmd.data.effect.variantIndex = variantIndex;
 			return cmd;
 		}
 
-		static RtCommand SetBiquadParams(uint32_t index, uint32_t gen, const BiquadConfig& config) {
+		static RtCommand FreeEffect(uint32_t index, uint32_t gen) {
 			RtCommand cmd{};
-			cmd.type = Type::SetBiquadParams;
+			cmd.type = Type::FreeEffect;
 			cmd.targetIndex = index;
 			cmd.targetGen = gen;
-			cmd.data.biquad.config = config;
 			return cmd;
 		}
 
-		static_assert(std::is_trivially_copyable_v<BiquadConfig>,
-			"BiquadConfig must remain trivially copyable for use in RtCommands");
-
-		static RtCommand AttachEffect(uint32_t index, uint32_t gen, EffectType type, uint32_t busIndex,
-			uint32_t effectSlot) {
+		static RtCommand AttachEffect(uint32_t index, uint32_t gen, uint32_t busIndex, uint32_t effectSlot) {
 			RtCommand cmd{};
 			cmd.type = Type::AttachEffect;
 			cmd.targetIndex = index;
 			cmd.targetGen = gen;
-			cmd.data.effect.type = type;
 			cmd.data.effect.busIndex = busIndex;
 			cmd.data.effect.effectSlot = effectSlot;
 			return cmd;
 		}
 
-		static RtCommand FadeDetachEffect(uint32_t index, uint32_t gen, EffectType type, uint32_t busIndex,
-			uint32_t effectSlot) {
+		static RtCommand FadeDetachEffect(uint32_t index, uint32_t gen, uint32_t busIndex, uint32_t effectSlot) {
 			RtCommand cmd{};
 			cmd.type = Type::FadeDetachEffect;
 			cmd.targetIndex = index;
 			cmd.targetGen = gen;
-			cmd.data.effect.type = type;
 			cmd.data.effect.busIndex = busIndex;
 			cmd.data.effect.effectSlot = effectSlot;
 			return cmd;
 		}
 
-		static RtCommand ForceDetachEffect(uint32_t index, uint32_t gen, EffectType type, uint32_t busIndex,
-			uint32_t effectSlot) {
+		static RtCommand ForceDetachEffect(uint32_t index, uint32_t gen, uint32_t busIndex, uint32_t effectSlot) {
 			RtCommand cmd{};
 			cmd.type = Type::ForceDetachEffect;
 			cmd.targetIndex = index;
 			cmd.targetGen = gen;
-			cmd.data.effect.type = type;
 			cmd.data.effect.busIndex = busIndex;
 			cmd.data.effect.effectSlot = effectSlot;
-			return cmd;
-		}
-
-		static RtCommand DeallocateEffect(uint32_t index, uint32_t gen, EffectType type) {
-			RtCommand cmd{};
-			cmd.type = Type::DeallocateEffect;
-			cmd.targetIndex = index;
-			cmd.targetGen = gen;
-			cmd.data.effect.type = type;
 			return cmd;
 		}
 

@@ -80,6 +80,7 @@ set(ENGINE_FILES
     src/mixer/PeakLimiter.cpp
     src/core/StateSyncPool.h
     src/core/AsyncPool.h
+    src/mixer/effects/Effect.h
 )
 
 add_library(dalia_engine STATIC ${ENGINE_FILES})

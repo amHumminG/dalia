@@ -21,6 +21,7 @@ namespace dalia {
 		bool Allocate(uint32_t& outIndex) { return m_freeList.Pop(outIndex); }
 		bool Free(uint32_t index) { return m_freeList.Push(index); }
 
+		uint32_t GetCapacity() { return m_capacity; }
 		T& Get(uint32_t index) { return m_pool[index]; }
 
 		std::span<T> GetSpan() {

@@ -101,7 +101,7 @@ namespace dalia {
                 }
                 else {
                     DALIA_LOG_ERR(LOG_CTX_IO, "Failed to open stream for %s. %s.",
-                        filepath, GetStbVorbisErrorString(error));
+                        filepath, utility::GetStbVorbisErrorString(error));
                     stream.state.store(StreamState::Error, std::memory_order_release);
                 }
 

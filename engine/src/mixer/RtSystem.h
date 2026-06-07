@@ -1,12 +1,12 @@
 #pragma once
 
 #include "core/Constants.h"
-#include "../core/ParameterBridge.h"
+#include "core/ParameterBridge.h"
 #include "mixer/Speakers.h"
 #include "mixer/PeakLimiter.h"
+#include "mixer/effects/Effect.h"
 
 #include <span>
-#include <memory>
 
 namespace dalia {
 
@@ -29,9 +29,6 @@ namespace dalia {
 	struct VirtualSpeaker;
 
 	class MixGraphCompiler;
-
-    enum class EffectType : uint8_t;
-    struct BiquadFilter;
 
     struct RtSystemConfig {
     	CoordinateSystem coordinateSystem;
@@ -58,7 +55,8 @@ namespace dalia {
     	std::span<ParameterBridge<BusParams>> busParamBridges;
         std::span<float> busBufferPool;
 
-    	std::span<BiquadFilter> biquadFilterPool;
+    	std::span<Effect> effectPool;
+    	std::span<ParameterBridge<EffectParams>> effectParamBridges;
 
     	MixGraphCompiler* mixGraphCompiler		= nullptr;
     	std::span<uint32_t> mixOrder;
@@ -84,10 +82,10 @@ namespace dalia {
         void RenderBus(uint32_t busIndex, uint32_t frameCount);
         void ApplyBusEffect(float* busBuffer, EffectSlot& slot, uint32_t frameCount);
 
-        void AttachEffect(EffectHandle effect, uint32_t busIndex, uint32_t effectSlot);
-        void DetachEffect(EffectHandle effect, uint32_t busIndex, uint32_t effectSlot);
-        void FadeOutEffect(EffectHandle effect, uint32_t busIndex, uint32_t effectSlot);
-        void FlushEffect(EffectType type, uint32_t index, uint32_t gen);
+        void AttachEffect(EffectHandle handle, uint32_t busIndex, uint32_t effectSlot);
+        void DetachEffect(EffectHandle handle, uint32_t busIndex, uint32_t effectSlot);
+        void FadeOutEffect(EffectHandle handle, uint32_t busIndex, uint32_t effectSlot);
+        void FlushEffect(Effect& effect);
 
     	void ConfigureSpeakerLayout(SpeakerLayout layout); // Returns the spatial speaker count
 
@@ -129,7 +127,8 @@ namespace dalia {
         std::span<float> m_busBufferPool;
 
     	// Effects
-    	std::span<BiquadFilter> m_biquadFilterPool;
+    	std::span<Effect> m_effectPool;
+    	std::span<ParameterBridge<EffectParams>> m_effectParamBridges;
 
     	// Mixing Graph & DSP
 		MixGraphCompiler* m_mixGraphCompiler = nullptr;

@@ -3,11 +3,13 @@
 #include "core/Logger.h"
 #include "core/Constants.h"
 #include "core/Math.h"
+#include "core/Utility.h"
 
 #include "mixer/Voice.h"
 #include "mixer/StreamContext.h"
 #include "mixer/Bus.h"
 #include "mixer/Listener.h"
+#include "mixer/effects/Effect.h"
 #include "mixer/MixGraphCompiler.h"
 
 #include "messaging/RtCommandQueue.h"
@@ -362,7 +364,8 @@ namespace dalia {
         m_busPool(config.busPool),
 		m_busParamBridges(config.busParamBridges),
 		m_busBufferPool(config.busBufferPool),
-		m_biquadFilterPool(config.biquadFilterPool),
+		m_effectPool(config.effectPool),
+		m_effectParamBridges(config.effectParamBridges),
 		m_mixGraphCompiler(config.mixGraphCompiler),
 		m_mixOrder(config.mixOrder),
 		m_dspScratchBuffer(config.dspScratchBuffer) {
@@ -390,7 +393,7 @@ namespace dalia {
 	            	voice.targetState = VoiceState::Inactive;
 		            break;
 	            }
-				case RtCommand::Type::DeallocateVoice: {
+				case RtCommand::Type::FreeVoice: {
 	            	Voice& voice = m_voicePool[cmd.targetIndex];
 	            	if (voice.gen != cmd.targetGen) break;
 
@@ -419,6 +422,7 @@ namespace dalia {
 	            	voice.soundType = SoundType::Stream;
 
 	            	voice.data.stream.streamContextIndex = cmd.data.prepStreaming.streamIndex;
+					voice.data.stream.streamContextGen = cmd.data.prepStreaming.streamGen;
 	            	voice.data.stream.frontBufferIndex = 0;
 
 					voice.channels = cmd.data.prepStreaming.channels;
@@ -472,7 +476,7 @@ namespace dalia {
 					m_isMixOrderDirty = true;
 	            	break;
 	            }
-				case RtCommand::Type::DeallocateBus: {
+				case RtCommand::Type::FreeBus: {
 	            	uint32_t bIndex = cmd.targetIndex;
 
 	            	m_busPool[bIndex].Reset();
@@ -487,68 +491,30 @@ namespace dalia {
 	            	m_busPool[bIndex].targetParentIndex = bIndexParent;
 		            break;
 	            }
-				case RtCommand::Type::AllocateBiquad: {
-	            	BiquadFilter& biquad = m_biquadFilterPool[cmd.targetIndex];
-	            	biquad.generation = cmd.targetGen;
-	            	biquad.type = cmd.data.biquad.type;
+				case RtCommand::Type::AllocateEffect: {
+					Effect& effect = m_effectPool[cmd.targetIndex];
 
-					biquad.targetFrequency = cmd.data.biquad.config.frequency;
-					biquad.currentFrequency = cmd.data.biquad.config.frequency;
-	            	biquad.targetResonance = cmd.data.biquad.config.resonance;
-	            	biquad.currentResonance = cmd.data.biquad.config.resonance;
-	            	CalculateBiquadCoefficients(biquad, static_cast<float>(m_outSampleRate));
+					effect.gen = cmd.targetGen;
+					utility::EmplaceVariantByIndex(effect.dsp, cmd.data.effect.variantIndex);
 	            	break;
 				}
-				case RtCommand::Type::SetBiquadParams: {
-	            	BiquadFilter& biquad = m_biquadFilterPool[cmd.targetIndex];
-	            	if (biquad.generation != cmd.targetGen) break;
-
-	            	biquad.targetFrequency = cmd.data.biquad.config.frequency;
-	            	biquad.targetResonance = cmd.data.biquad.config.resonance;
-	            	break;
-				}
+            	case RtCommand::Type::FreeEffect: {
+					Effect& effect = m_effectPool[cmd.targetIndex];
+					if (effect.gen == cmd.targetGen) effect.Reset();
+            	}
 				case RtCommand::Type::AttachEffect: {
-	            	EffectHandle effect = EffectHandle::Create(
-	            		cmd.targetIndex,
-	            		cmd.targetGen,
-	            		cmd.data.effect.type
-	            	);
-
+	            	EffectHandle effect = EffectHandle::Create(cmd.targetIndex, cmd.targetGen);
 					AttachEffect(effect, cmd.data.effect.busIndex, cmd.data.effect.effectSlot);
 	            	break;
 				}
 				case RtCommand::Type::FadeDetachEffect: {
-	            	EffectHandle effect = EffectHandle::Create(
-						cmd.targetIndex,
-						cmd.targetGen,
-						cmd.data.effect.type
-					);
-
+					EffectHandle effect = EffectHandle::Create(cmd.targetIndex, cmd.targetGen);
 	            	FadeOutEffect(effect, cmd.data.effect.busIndex, cmd.data.effect.effectSlot);
 	            	break;
 				}
 				case RtCommand::Type::ForceDetachEffect: {
-	            	EffectHandle effect = EffectHandle::Create(
-						cmd.targetIndex,
-						cmd.targetGen,
-						cmd.data.effect.type
-					);
-
+					EffectHandle effect = EffectHandle::Create(cmd.targetIndex, cmd.targetGen);
 	            	DetachEffect(effect, cmd.data.effect.busIndex, cmd.data.effect.effectSlot);
-	            	break;
-				}
-				case RtCommand::Type::DeallocateEffect: {
-	            	uint32_t efIndex = cmd.targetIndex;
-	            	uint32_t efGen = cmd.targetGen;
-	            	EffectType efType = cmd.data.effect.type;
-
-	            	switch (efType) {
-	            		case EffectType::None: break;
-	            		case EffectType::Biquad:
-	            			if (m_biquadFilterPool[efIndex].generation == efGen) m_biquadFilterPool[efIndex].Reset();
-	            			break;
-	            		default: break;
-	            	}
 	            	break;
 				}
             	case RtCommand::Type::SetGlobalDopplerFactor: {
@@ -580,6 +546,24 @@ namespace dalia {
 		for (uint32_t bIndex = 0; bIndex < m_busParamBridges.size(); bIndex++) {
 			if (m_busParamBridges[bIndex].ConsumeUpdate(bParams)) {
 				m_busPool[bIndex].params = bParams;
+			}
+		}
+
+		EffectParams eParams;
+		for (uint32_t eIndex = 0; eIndex < m_effectParamBridges.size(); eIndex++) {
+			if (m_effectParamBridges[eIndex].ConsumeUpdate(eParams)) {
+				Effect& effect = m_effectPool[eIndex];
+
+				std::visit([&effect](auto&& config) {
+					using ConfigType = std::decay_t<decltype(config)>;
+
+					if constexpr (!std::is_same_v<ConfigType, std::monostate>) {
+						using DSPType = typename DSPMapper<ConfigType>::Type; // Lookup the DSP class for this config
+						if (std::holds_alternative<DSPType>(effect.dsp)) {
+							std::get<DSPType>(effect.dsp).SetConfig(config); // Pass the config to the DSP object
+						}
+					}
+				}, eParams);
 			}
 		}
     }
@@ -1000,18 +984,28 @@ namespace dalia {
     }
 
     void RtSystem::ApplyBusEffect(float* busBuffer, EffectSlot& slot, uint32_t frameCount) {
+		uint32_t eIndex = slot.handle.GetIndex();
+		Effect& effect = m_effectPool[eIndex];
+
+		if (effect.gen != slot.handle.GetGeneration()) {
+			slot.Reset();
+			return;
+		}
+
 		float fadeDurationInSeconds = 0.01f;
 		float fadeDelta = 1.0f / (m_outSampleRate * fadeDurationInSeconds);
 		uint32_t sampleCount = frameCount * m_outChannels;
 
 		std::memcpy(m_dspScratchBuffer.data(), busBuffer, sampleCount * sizeof(float));
-		switch (slot.effect.GetType()) {
-			case EffectType::None: break;
-			case EffectType::Biquad:
-				BiquadFilter& biquad = m_biquadFilterPool[slot.effect.GetIndex()];
-				ProcessBiquad(m_dspScratchBuffer.data(), frameCount, m_outChannels, biquad, m_outSampleRate);
-				break;
-		}
+
+		// Process DSP
+		std::visit([&](auto& dsp) {
+			using DSPType = std::decay_t<decltype(dsp)>;
+
+			if constexpr (!std::is_same_v<DSPType, std::monostate>) {
+				dsp.Process(m_dspScratchBuffer.data(), frameCount, m_outChannels, m_outSampleRate);
+			}
+		}, effect.dsp);
 
 		if (slot.state == EffectState::Active) {
 			std::memcpy(busBuffer, m_dspScratchBuffer.data(), sampleCount * sizeof(float));
@@ -1033,43 +1027,46 @@ namespace dalia {
 
 			if (slot.state == EffectState::FadingIn && slot.currentMix >= 1.0f) {
 				slot.state = EffectState::Active;
-				m_rtEvents->Push(RtEvent::EffectActive(slot.effect.GetRawId()));
+				m_rtEvents->Push(RtEvent::EffectActive(slot.handle.GetRawId()));
 			}
 			else if (slot.state == EffectState::FadingOut && slot.currentMix <= 0.0f) {
-				slot.Reset(); // Detach effect
-				m_rtEvents->Push(RtEvent::EffectDetached(slot.effect.GetRawId()));
+				m_rtEvents->Push(RtEvent::EffectDetached(slot.handle.GetRawId()));
+				slot.Reset();
 			}
 		}
     }
 
-    void RtSystem::AttachEffect(EffectHandle effect, uint32_t busIndex, uint32_t effectSlot) {
-		FlushEffect(effect.GetType(), effect.GetIndex(), effect.GetGeneration()); // Remove history
+    void RtSystem::AttachEffect(EffectHandle handle, uint32_t busIndex, uint32_t effectSlot) {
+		Effect& effect = m_effectPool[handle.GetIndex()];
+		if (effect.gen != handle.GetGeneration()) return;
+
+		FlushEffect(effect); // Remove history
 
 		EffectSlot& slot = m_busPool[busIndex].effectSlots[effectSlot];
-		slot.effect = effect;
+		slot.handle = handle;
 		slot.currentMix = 0.0f;
 		slot.state = EffectState::FadingIn;
     }
 
-    void RtSystem::DetachEffect(EffectHandle effect, uint32_t busIndex,
+    void RtSystem::DetachEffect(EffectHandle handle, uint32_t busIndex,
     	uint32_t effectSlot) {
 		EffectSlot& slot = m_busPool[busIndex].effectSlots[effectSlot];
-		if (slot.effect == effect) slot.Reset();
+		if (slot.handle == handle) slot.Reset();
     }
 
-    void RtSystem::FadeOutEffect(EffectHandle effect, uint32_t busIndex, uint32_t effectSlot) {
+    void RtSystem::FadeOutEffect(EffectHandle handle, uint32_t busIndex, uint32_t effectSlot) {
 		EffectSlot& slot = m_busPool[busIndex].effectSlots[effectSlot];
-		if (slot.effect == effect && slot.state != EffectState::None) slot.state = EffectState::FadingOut;
+		if (slot.handle == handle && slot.state != EffectState::None) slot.state = EffectState::FadingOut;
     }
 
-    void RtSystem::FlushEffect(EffectType type, uint32_t index, uint32_t gen) {
-		switch (type) {
-		case EffectType::None: break;
-		case EffectType::Biquad:
-			if (m_biquadFilterPool[index].generation == gen) m_biquadFilterPool[index].Flush();
-			break;
-		default: break;
-		}
+    void RtSystem::FlushEffect(Effect& effect) {
+		std::visit([&](auto& dsp) {
+			using DSPType = std::decay_t<decltype(dsp)>;
+
+			if constexpr (!std::is_same_v<DSPType, std::monostate>) {
+				dsp.Flush();
+			}
+		}, effect.dsp);
     }
 
     void RtSystem::ConfigureSpeakerLayout(SpeakerLayout layout) {

@@ -24,6 +24,7 @@ namespace dalia {
 		bool Allocate(uint32_t& outIndex) { return m_freeList.Pop(outIndex); }
 		void Free(uint32_t index) { m_freeList.Push(index); }
 
+		uint32_t GetCapacity() { return m_capacity; }
 		T& Get(uint32_t index) { return m_pool[index]; }
 		TMirror& GetMirror(uint32_t index) { return m_mirrorPool[index]; }
 		ParameterBridge<TParams>& GetParamBridge(uint32_t index) { return m_paramBridgePool[index]; }

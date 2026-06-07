@@ -17,14 +17,14 @@ namespace dalia {
 
 		CoordinateSystem coordinateSystem = CoordinateSystem::RightHanded;
 
-		uint32_t residentSoundCapacity = 256; // Maybe this should be higher?
+		uint32_t residentSoundCapacity = 256;
 		uint32_t streamSoundCapacity = 256;
 
 		uint32_t voiceCapacity		= 128;
-		uint32_t maxActiveVoices	= 64;
+		uint32_t maxActiveVoices	= 64; // Currently unused
 		uint32_t streamCapacity		= 32;
 		uint32_t busCapacity		= 64;
-		uint32_t biquadCapacity		= 32;
+		uint32_t effectCapacity		= 32;
 
 		uint32_t listenerCapacity	= 1; // Min 1, max 4
 
@@ -120,7 +120,7 @@ namespace dalia {
 		/// Because of this, one must also unload a sound the same number of times as it has been loaded in order to
 		/// properly unload it from the engine.
 		///
-		/// @param[out] sound			The handle to the sound.
+		/// @param[out] sound			The handle to be populated.
 		/// @param[in]  type			Specifies if the sound should be fully decoded into memory (Resident) or
 		///								streamed directly from disk (Stream).
 		/// @param[in]  filepath		The string path to the audio asset.
@@ -228,31 +228,38 @@ namespace dalia {
 		// ============================================================================
 #pragma region EFFECTS_MANAGEMENT
 
-		/// @brief Creates a new Biquad filter effect.
+		/// @brief Allocates a new DSP effect instance and initializes it with the provided configuration.
 		///
-		/// The effect is unattached upon creation.
+		/// This function is used to create all effects. The type of effect this function creates depends on the type
+		/// of effect configuration that is passed into it.
 		///
-		/// @param[out] effect	The handle to the effect.
-		/// @param[in] type		The mathematical curve of the filter.
-		/// @param[in] config	The initial DSP parameters of the filter. The DSP parameters are automatically clamped.
-		///						Frequencies are clamped between 20Hz and 20kHz and Resonance is clamped between 0.1
-		///						and 10.0.
+		/// @tparam TConfig		The configuration struct containing the effect settings.
+		/// @param[out] effect	The handle to be populated.
+		/// @param[in] config	The initial configuration.
 		///
-		/// @retval Result::Ok							The filter was successfully created.
-		/// @retval Result::NotInitialized				The engine is not initialized.
-		/// @retval Result::BiquadFilterPoolExhausted	The allocated Biquad filter capacity has been reached.
-		Result CreateBiquadFilter(EffectHandle& effect, BiquadFilterType type, const BiquadConfig& config);
+		/// @retval Result::Ok						The effect was successfully created.
+		/// @retval Result::NotInitialized			The engine is not initialized.
+		/// @retval Result::EffectPoolExhausted		The allocated effect capacity has been reached.
+		template <typename TConfig>
+		requires requires(TConfig a) {a.Sanitize(); }
+		Result CreateEffect(EffectHandle& effect, const TConfig& config);
 
-		/// @brief Updates the DSP parameters of an existing Biquad filter.
+		/// @brief Updates the configuration of an effect instance.
 		///
-		/// @param[in] effect The handle to the effect.
-		/// @param[in] config The new DSP parameters for the Biquad filter.
+		/// @note [Config Typing] The passed configuration type must match the configuration type of the effect
+		/// instance that the provided handle is referencing.
 		///
-		/// @retval Result::Ok
-		/// @retval Result::NotInitialized	The engine is not initialized.
-		/// @retval Result::InvalidHandle	The effect handle is not recognized or is for a different effect type.
-		/// @retval Result::ExpiredHandle	The effect handle points to an already destroyed effect.
-		Result SetBiquadParams(EffectHandle effect, const BiquadConfig& config);
+		/// @tparam TConfig		The configuration struct containing the effect settings.
+		/// @param[in] effect	The handle to the effect instance.
+		/// @param[in] config	The new configuration.
+		///
+		/// @retval Result::Ok						The effect configuration was successfully updated.
+		/// @retval Result::NotInitialized			The engine is not initialized.
+		/// @retval Result::InvalidHandle			The effect handle is not recognized.
+		/// @retval Result::ExpiredHandle			The effect handle points to an already destroyed effect.
+		template <typename TConfig>
+		requires requires(TConfig a) {a.Sanitize(); }
+		Result SetEffectConfig(EffectHandle effect, const TConfig& config);
 
 		/// @brief Inserts an allocated effect into the processing chain of a specified bus.
 		///
@@ -268,7 +275,7 @@ namespace dalia {
 		/// existing effect will be forcefully detached and replaced by the new effect. Doing so is generally not
 		/// recommended for the same reasons mentioned above.
 		///
-		/// @param[in] effect			The handle to the effect.
+		/// @param[in] effect			The handle to the effect instance.
 		/// @param[in] busIdentifier	The unique string identifier of the target bus.
 		/// @param[in] effectSlot		The index in the effect rack of the bus (0 to 3).
 		///
@@ -284,7 +291,7 @@ namespace dalia {
 		///
 		/// @note [Effect Lifetime] Detaching an effect does not destroy it.
 		///
-		/// @param[in] effect The handle to the effect.
+		/// @param[in] effect The handle to the effect instance.
 		///
 		/// @retval Result::Ok					The effect was successfully detached.
 		/// @retval Result::NotInitialized		The engine is not initialized.
@@ -300,7 +307,7 @@ namespace dalia {
 		/// generally not recommended as it can cause a pop in the audio output due to bypassing the built-in effect
 		/// fade-out.
 		///
-		/// @param[in] effect The handle to the effect.
+		/// @param[in] effect The handle to the effect instance.
 		///
 		/// @retval Result::Ok				The effect was successfully destroyed.
 		/// @retval Result::NotInitialized	The engine is not initialized.
@@ -327,7 +334,7 @@ namespace dalia {
 		/// @note [Playback Lifecycle] Playback instances are immediately invalidated upon stopping. Because of this,
 		/// always check the return value of any playback modifying methods to make sure the handle is still valid.
 		///
-		/// @param[out] playback	The handle to the playback instance.
+		/// @param[out] playback	The handle to be populated.
 		/// @param[in] sound		The handle to the sound.
 		/// @param[in] callback		Optional. If provided, this function will be called when the playback terminates.
 		///

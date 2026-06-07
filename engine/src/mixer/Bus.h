@@ -14,12 +14,12 @@ namespace dalia {
     };
 
     struct EffectSlot {
-        EffectHandle effect = InvalidEffectHandle;
+        EffectHandle handle = InvalidEffectHandle;
         EffectState state = EffectState::None;
         float currentMix = 0.0f;
 
         void Reset() {
-            effect = InvalidEffectHandle;
+            handle = InvalidEffectHandle;
             state = EffectState::None;
             currentMix = 0.0f;
         }
