@@ -626,7 +626,7 @@ namespace dalia {
 			if (voice.currentState == VoiceState::Stopped || voice.currentBusIndex == NO_PARENT) {
 				if (voice.currentBusIndex == NO_PARENT && voice.currentState != VoiceState::Stopped) {
 					// Voice was orphaned
-					voice.exitCondition == PlaybackExitCondition::ExplicitStop;
+					voice.exitCondition = PlaybackExitCondition::ExplicitStop;
 				}
 				FreeVoice(vIndex);
 				continue;
