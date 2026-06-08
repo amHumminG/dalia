@@ -751,37 +751,37 @@ namespace dalia {
 		return Result::Ok;
 	}
 
-	Result Engine::UnloadSound(SoundHandle soundHandle) {
+	Result Engine::UnloadSound(SoundHandle sound) {
 		if (!IsInitialized(m_state)) return Result::NotInitialized;
 
-		SoundType soundType = soundHandle.GetType();
+		SoundType soundType = sound.GetType();
 		uint32_t soundRefCount;
 		uint32_t soundPathHash;
 
 		if (soundType == SoundType::Resident) {
-			ResidentSound* sound = m_state->assetRegistry->GetResidentSound(soundHandle);
-			if (!sound) return Result::InvalidHandle;
-			if (sound->refCount > 0) sound->refCount--;
-			soundRefCount = sound->refCount;
-			soundPathHash = sound->pathHash;
+			ResidentSound* residentSound = m_state->assetRegistry->GetResidentSound(sound);
+			if (!residentSound) return Result::InvalidHandle;
+			if (residentSound->refCount > 0) residentSound->refCount--;
+			soundRefCount = residentSound->refCount;
+			soundPathHash = residentSound->pathHash;
 		}
 		else {
-			StreamSound* sound = m_state->assetRegistry->GetStreamSound(soundHandle);
-			if (!sound) return Result::InvalidHandle;
-			if (sound->refCount > 0) sound->refCount--;
-			soundRefCount = sound->refCount;
-			soundPathHash = sound->pathHash;
+			StreamSound* streamSound = m_state->assetRegistry->GetStreamSound(sound);
+			if (!streamSound) return Result::InvalidHandle;
+			if (streamSound->refCount > 0) streamSound->refCount--;
+			soundRefCount = streamSound->refCount;
+			soundPathHash = streamSound->pathHash;
 		}
 
 		if (soundRefCount == 0) {
 			m_state->assetRegistry->UnregisterLoadedSound(SoundID::FromHash(soundPathHash));
 
 			PendingSoundUnload pendingUnload;
-			pendingUnload.handle = soundHandle;
+			pendingUnload.handle = sound;
 
 			// Remove pending playbacks for the sound
 			for (auto it = m_state->pendingPlaybacks.begin(); it != m_state->pendingPlaybacks.end(); ) {
-				if (it->assetRawId == soundHandle.GetRawId()) {
+				if (it->assetRawId == sound.GetRawId()) {
 					VoiceMirror& vMirror = m_state->voices.GetMirror(it->voiceIndex);
 
 					if (vMirror.onStopCallback) {
@@ -803,7 +803,7 @@ namespace dalia {
 			for (uint32_t i = 0; i < m_state->voiceCapacity; i++) {
 				VoiceMirror& vMirror = m_state->voices.GetMirror(i);
 
-				if (vMirror.state != VoiceState::Free && vMirror.assetRawId == soundHandle.GetRawId()) {
+				if (vMirror.state != VoiceState::Free && vMirror.assetRawId == sound.GetRawId()) {
 					pendingUnload.voicesToStop.push_back(VoiceID(i, vMirror.gen));
 
 					m_state->rtCommands->Enqueue(RtCommand::StopVoice(i, vMirror.gen));
@@ -815,9 +815,28 @@ namespace dalia {
 				m_state->pendingSoundUnloads.push_back(std::move(pendingUnload));
 			}
 			else {
-				m_state->assetRegistry->FreeSound(soundHandle);
-				DALIA_LOG_DEBUG(LOG_CTX_API, "Unloaded sound with handle %d.", soundHandle.GetRawId());
+				m_state->assetRegistry->FreeSound(sound);
+				DALIA_LOG_DEBUG(LOG_CTX_API, "Unloaded sound with handle %d.", sound.GetRawId());
 			}
+		}
+
+		return Result::Ok;
+	}
+
+	Result Engine::GetSoundLength(SoundHandle sound, double& lengthInSeconds) {
+		if (!IsInitialized(m_state)) return Result::NotInitialized;
+
+		SoundType soundType = sound.GetType();
+
+		if (soundType == SoundType::Resident) {
+			ResidentSound* residentSound = m_state->assetRegistry->GetResidentSound(sound);
+			if (!residentSound) return Result::InvalidHandle;
+			lengthInSeconds = residentSound->lengthInSeconds;
+		}
+		else {
+			StreamSound* streamSound = m_state->assetRegistry->GetStreamSound(sound);
+			if (!streamSound) return Result::InvalidHandle;
+			lengthInSeconds = streamSound->lengthInSeconds;
 		}
 
 		return Result::Ok;

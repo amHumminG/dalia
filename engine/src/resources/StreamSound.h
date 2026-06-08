@@ -25,6 +25,8 @@ namespace dalia {
         uint32_t channels = 0;
         uint32_t sampleRate = 0;
 
+    	double lengthInSeconds = 0.0;
+
         void Reset() {
             state.store(LoadState::Unloaded, std::memory_order_relaxed);
             refCount = 0;

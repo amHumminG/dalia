@@ -142,12 +142,22 @@ namespace dalia {
 		/// the exit condition ExplicitStop. The engine will also immediately abort all pending playback requests with
 		/// the same exit condition.
 		///
-		/// @param[in] soundHandle The handle to the sound.
+		/// @param[in] sound The handle to the sound asset.
 		///
 		/// @retval Result::Ok				The sound was successfully unloaded or its reference count was decremented.
 		/// @retval Result::NotInitialized	The engine is not initialized.
 		/// @retval Result::InvalidHandle	The sound handle is not recognized, or has already been freed.
-		Result UnloadSound(SoundHandle soundHandle);
+		Result UnloadSound(SoundHandle sound);
+
+		/// @brief Fetches the total duration (in seconds) of a loaded sound.
+		///
+		/// @param[in] sound			The handle to the sound asset.
+		/// @param[out] lengthInSeconds	The variable to be populated with the length of the sound asset.
+		///
+		/// @retval Result::Ok				The sound length was successfully fetched.
+		/// @retval Result::NotInitialized	The engine is not initialized.
+		/// @retval Result::InvalidHandle	The sound handle is not recognized, or has already been freed.
+		Result GetSoundLength(SoundHandle sound, double& lengthInSeconds);
 
 #pragma endregion ASSET_MANAGEMENT
 
