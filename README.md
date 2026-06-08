@@ -22,13 +22,13 @@
 DALIA is currently only supported on Windows (WASAPI).
 Check out the [documentation](https://amhumming.github.io/dalia/) for more details.
 
-## The Demo
-DALIA includes a standalone sandbox application designed to showcase and test the engine's features. If you want to
+## Sandbox
+The standalone sandbox application is designed to showcase and test the engine's features. If you want to
 test what the engine is capable of without having to write any code you can try it out by following the build
-instructions provided below and running the compiled demo executable.
+instructions provided below and running the compiled sandbox executable.
 
 <p align="center">
-  <img src="docs/assets/dalia_demo_screenshot.png" alt="DALIA demo screenshot">
+  <img src="docs/assets/dalia_sandbox_screenshot.png" alt="DALIA sandbox screenshot">
 </p>
 
 ## Building from Source
@@ -37,7 +37,7 @@ instructions provided below and running the compiled demo executable.
 * CMake 3.20+
 * Compiler with C++20 support
 
-If you want to compile DALIA directly to run the Demo or Studio UI, use the commands below. Note that DALIA Studio tool
+If you want to compile DALIA directly to run the Sandbox or Studio UI, use the commands below. Note that DALIA Studio tool
 is currently not in a usable state.
 
 ```bash
@@ -51,7 +51,7 @@ cmake --build build --config Release
 *The compiled executables will be located in the `/build` directory*
 
 ## Integration
-DALIA automatically detects when it is built as a subproject and will exclude the demo and studio applications from the 
+DALIA automatically detects when it is built as a subproject and will exclude the sandbox and studio applications from the 
 build.
 
 **Via FetchContent:**
@@ -81,7 +81,7 @@ DALIA is licensed under the [MIT License](LICENSE).
 The core engine relies on a single public-domain header:
 * [stb_vorbis](https://github.com/nothings/stb) for OGG/Vorbis decoding.
 
-The Demo and Studio applications are built using the following open-source projects:
+The sandbox and studio applications are built using the following open-source projects:
 * [raylib](https://github.com/raysan5/raylib) (zlib License)
 * [Dear ImGui](https://github.com/ocornut/imgui) (MIT License)
 * [rlImGui](https://github.com/raylib-extras/rlImGui) (zlib License)
