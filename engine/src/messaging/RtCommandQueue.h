@@ -82,7 +82,7 @@ namespace dalia {
 			} floatVal;
 
 			struct {
-				uint32_t variantIndex;
+				EffectType type;
 				uint32_t busIndex;
 				uint32_t effectSlot;
 			} effect;
@@ -198,48 +198,55 @@ namespace dalia {
 			return cmd;
 		}
 
-		static RtCommand AllocateEffect(uint32_t index, uint32_t gen, uint32_t variantIndex) {
+		static RtCommand AllocateEffect(EffectType type, uint32_t index, uint32_t gen) {
 			RtCommand cmd{};
 			cmd.type = Type::AllocateEffect;
 			cmd.targetIndex = index;
 			cmd.targetGen = gen;
-			cmd.data.effect.variantIndex = variantIndex;
+			cmd.data.effect.type = type;
 			return cmd;
 		}
 
-		static RtCommand FreeEffect(uint32_t index, uint32_t gen) {
+		static RtCommand FreeEffect(uint32_t index, uint32_t gen, EffectType type) {
 			RtCommand cmd{};
 			cmd.type = Type::FreeEffect;
 			cmd.targetIndex = index;
 			cmd.targetGen = gen;
+			cmd.data.effect.type = type;
 			return cmd;
 		}
 
-		static RtCommand AttachEffect(uint32_t index, uint32_t gen, uint32_t busIndex, uint32_t effectSlot) {
+		static RtCommand AttachEffect(uint32_t index, uint32_t gen, EffectType type,
+			uint32_t busIndex, uint32_t effectSlot) {
 			RtCommand cmd{};
 			cmd.type = Type::AttachEffect;
 			cmd.targetIndex = index;
 			cmd.targetGen = gen;
+			cmd.data.effect.type = type;
 			cmd.data.effect.busIndex = busIndex;
 			cmd.data.effect.effectSlot = effectSlot;
 			return cmd;
 		}
 
-		static RtCommand FadeDetachEffect(uint32_t index, uint32_t gen, uint32_t busIndex, uint32_t effectSlot) {
+		static RtCommand FadeDetachEffect(uint32_t index, uint32_t gen, EffectType type,
+			uint32_t busIndex, uint32_t effectSlot) {
 			RtCommand cmd{};
 			cmd.type = Type::FadeDetachEffect;
 			cmd.targetIndex = index;
 			cmd.targetGen = gen;
+			cmd.data.effect.type = type;
 			cmd.data.effect.busIndex = busIndex;
 			cmd.data.effect.effectSlot = effectSlot;
 			return cmd;
 		}
 
-		static RtCommand ForceDetachEffect(uint32_t index, uint32_t gen, uint32_t busIndex, uint32_t effectSlot) {
+		static RtCommand ForceDetachEffect(uint32_t index, uint32_t gen, EffectType type,
+			uint32_t busIndex, uint32_t effectSlot) {
 			RtCommand cmd{};
 			cmd.type = Type::ForceDetachEffect;
 			cmd.targetIndex = index;
 			cmd.targetGen = gen;
+			cmd.data.effect.type = type;
 			cmd.data.effect.busIndex = busIndex;
 			cmd.data.effect.effectSlot = effectSlot;
 			return cmd;

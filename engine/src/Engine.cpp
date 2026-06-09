@@ -25,7 +25,7 @@
 #include "mixer/Voice.h"
 #include "mixer/StreamContext.h"
 #include "mixer/Bus.h"
-#include "mixer/effects/Effect.h"
+#include "mixer/effects/Biquad.h"
 #include "mixer/MixGraphCompiler.h"
 #include "mixer/Listener.h"
 #include "mixer/RtSystem.h"
@@ -101,7 +101,8 @@ namespace dalia {
 		uint32_t voiceCapacity		= 0;
 		uint32_t listenerCapacity	= 0;
 		uint32_t busCapacity		= 0;
-		uint32_t effectCapacity		= 0;
+
+		uint32_t biquadCapacity		= 0;
 
 		// Streams
 		AsyncPool<StreamContext> streams;
@@ -123,7 +124,7 @@ namespace dalia {
 		// Effects
 		std::unordered_map<uint64_t, EffectRouting> effectRoutingTable; // Maps effect handles to bus routing
 
-		StateSyncPool<Effect, EffectMirror, EffectParams> effects;
+		StateSyncPool<Biquad, BiquadMirror, BiquadParams> biquads;
 
 		// Mixing & DSP
 		std::unique_ptr<MixGraphCompiler> mixGraphCompiler;
@@ -151,12 +152,12 @@ namespace dalia {
 			voiceCapacity(config.voiceCapacity),
 			listenerCapacity(std::clamp(config.listenerCapacity, LISTENERS_MIN, LISTENERS_MAX)),
 			busCapacity(config.busCapacity),
-			effectCapacity(config.effectCapacity),
+			biquadCapacity(config.BiquadCapacity),
 			streams(config.streamCapacity),
 			voices(config.voiceCapacity),
 			listeners(std::clamp(config.listenerCapacity, LISTENERS_MIN, LISTENERS_MAX)),
 			buses(config.busCapacity),
-			effects(config.effectCapacity) {
+			biquads(config.BiquadCapacity) {
 			// Message Queues
 			rtCommands			= std::make_unique<RtCommandQueue>(config.rtCommandQueueCapacity);
 			rtEvents			= std::make_unique<RtEventQueue>(config.rtEventQueueCapacity);
@@ -201,17 +202,6 @@ namespace dalia {
 			return Result::Ok;
 		}
 
-		Result ResolveMirror(uint32_t index, uint32_t gen, EffectMirror*& mirror) {
-			if (index >= effectCapacity) return Result::InvalidHandle;
-
-			EffectMirror& eMirror = effects.GetMirror(index);
-			if (eMirror.gen != gen) return Result::ExpiredHandle;
-			if (std::holds_alternative<std::monostate>(eMirror.params)) return Result::ExpiredHandle;
-
-			mirror = &eMirror;
-			return Result::Ok;
-		}
-
 		Result ResolveMirror(const char* busIdentifier, BusMirror*& mirror) {
 			const BusID bId(busIdentifier);
 			auto it = busMap.find(bId);
@@ -236,8 +226,19 @@ namespace dalia {
 		}
 
 		Result Validate(EffectHandle handle) {
-			EffectMirror* dummy = nullptr;
-			return ResolveMirror(handle.GetIndex(), handle.GetGeneration(), dummy);
+			uint32_t eIndex = handle.GetIndex();
+			uint32_t eGen = handle.GetGeneration();
+
+			switch (handle.GetType()) {
+				case EffectType::Biquad:
+					if (eIndex >= biquadCapacity || biquads.GetMirror(eIndex).gen != eGen) {
+						return Result::InvalidHandle;
+					}
+					return Result::Ok;
+
+				default:
+					return Result::InvalidHandle;
+			}
 		}
 
 		Result Validate(const char* busIdentifier) {
@@ -583,8 +584,8 @@ namespace dalia {
 		rtConfig.busPool				= m_state->buses.GetSpan();
 		rtConfig.busParamBridges		= m_state->buses.GetParamBridgeSpan();
 		rtConfig.busBufferPool			= std::span(m_state->busBufferPool.get(), busBufferPoolSize);
-		rtConfig.effectPool				= m_state->effects.GetSpan();
-		rtConfig.effectParamBridges		= m_state->effects.GetParamBridgeSpan();
+		rtConfig.biquadPool				= m_state->biquads.GetSpan();
+		rtConfig.biquadParamBridges		= m_state->biquads.GetParamBridgeSpan();
 		rtConfig.mixGraphCompiler		= m_state->mixGraphCompiler.get();
 		rtConfig.mixOrder				= std::span(m_state->mixOrder.get(), m_state->busCapacity);
 		rtConfig.dspScratchBuffer		= std::span(m_state->dspScratchBuffer.get(), m_state->maxSamplesPerPeriod);
@@ -671,11 +672,11 @@ namespace dalia {
 			bMirror.isParamsDirty = false;
 		}
 
-		for (uint32_t eIndex = 0; eIndex < m_state->effectCapacity; eIndex++) {
-			EffectMirror& eMirror = m_state->effects.GetMirror(eIndex);
+		for (uint32_t eIndex = 0; eIndex < m_state->biquadCapacity; eIndex++) {
+			BiquadMirror& eMirror = m_state->biquads.GetMirror(eIndex);
 			if (!eMirror.isParamsDirty) continue;
 
-			m_state->effects.GetParamBridge(eIndex).PushUpdate(eMirror.params);
+			m_state->biquads.GetParamBridge(eIndex).PushUpdate(eMirror.params);
 			eMirror.isParamsDirty = false;
 		}
 
@@ -1032,57 +1033,79 @@ namespace dalia {
 		return Result::Ok;
 	}
 
-	template <typename TConfig>
-	requires requires(TConfig a) {a.Sanitize(); }
-	Result Engine::CreateEffect(EffectHandle& effect, const TConfig& config) {
+	template <typename TParams>
+	requires requires(TParams p) {p.Sanitize(); }
+	Result Engine::CreateEffect(EffectHandle& effect, const TParams& params) {
 		if (!IsInitialized(m_state)) return Result::NotInitialized;
 
-		uint32_t eIndex;
-		if (!m_state->effects.Allocate(eIndex)) return Result::EffectPoolExhausted;
+		uint32_t eIndex = 0;
+		uint32_t eGen = NO_GENERATION;
 
-		uint32_t eGen = m_state->effects.GetMirror(eIndex).gen;
-		effect = EffectHandle::Create(eIndex, eGen);
+		TParams sanitizedParams = params;
+		sanitizedParams.Sanitize();
 
-		EffectMirror& eMirror = m_state->effects.GetMirror(eIndex);
-		TConfig sanitizedConfig = config;
-		sanitizedConfig.Sanitize();
-		eMirror.params = sanitizedConfig;
-		eMirror.isParamsDirty = true;
+		if constexpr (std::is_same_v<TParams, BiquadParams>) {
+			if (!m_state->biquads.Allocate(eIndex)) {
+				DALIA_LOG_ERR(LOG_CTX_API, "Failed effect (biquad). Capacity reached.");
+				return Result::EffectPoolExhausted;
+			}
 
-		uint32_t variantIndex = eMirror.params.index();
-		m_state->rtCommands->Enqueue(RtCommand::AllocateEffect(eIndex, eGen, variantIndex));
+			BiquadMirror& mirror = m_state->biquads.GetMirror(eIndex);
+			eGen = mirror.gen;
+
+			effect = EffectHandle::Create(eIndex, eGen, EffectType::Biquad);
+			mirror.params = sanitizedParams;
+			mirror.isParamsDirty = true;
+		}
+		else {
+			static_assert(sizeof(TParams) == 0, "Unsupported effect parameters passed to CreateEffect.");
+		}
+
+		m_state->rtCommands->Enqueue(RtCommand::AllocateEffect(EffectType::Biquad, eIndex, eGen));
 
 		DALIA_LOG_DEBUG(LOG_CTX_API, "Created effect (index: %u, gen: %u).", eIndex, eGen);
-
 		return Result::Ok;
 	}
 
-	template <typename TConfig>
-	requires requires(TConfig a) {a.Sanitize(); }
-	Result Engine::SetEffectConfig(EffectHandle effect, const TConfig& config) {
+	template <typename TParams>
+	requires requires(TParams p) {p.Sanitize(); }
+	Result Engine::SetEffectParams(EffectHandle effect, const TParams& params) {
 		if (!IsInitialized(m_state)) return Result::NotInitialized;
 
-		EffectMirror* eMirror;
-		Result res = m_state->ResolveMirror(effect.GetIndex(), effect.GetGeneration(), eMirror);
-		if (res != Result::Ok) {
-			DALIA_LOG_ERR(LOG_CTX_API, "Failed to set effect config. Invalid or expired effect handle.");
-			return res;
+		uint32_t eIndex = effect.GetIndex();
+		uint32_t eGen = effect.GetGeneration();
+		EffectType eType = effect.GetType();
+
+		TParams sanitizedParams = params;
+		sanitizedParams.Sanitize();
+
+		if constexpr (std::is_same_v<TParams, BiquadParams>) {
+			if (eType != EffectType::Biquad || eIndex >= m_state->biquadCapacity) {
+				DALIA_LOG_ERR(LOG_CTX_API, "Failed to set effect params. Invalid effect handle.");
+				return Result::InvalidHandle;
+			}
+
+			BiquadMirror& eMirror = m_state->biquads.GetMirror(eIndex);
+			if (eMirror.gen != eGen) {
+				DALIA_LOG_ERR(LOG_CTX_API, "Failed to set effect params. Expired effect handle.");
+				return Result::ExpiredHandle;
+			}
+
+			eMirror.params = sanitizedParams;
+			eMirror.isParamsDirty = true;
+		}
+		else {
+			static_assert(sizeof(TParams) == 0, "Unsupported effect parameters passed to SetEffectParams.");
 		}
 
-		TConfig sanitizedConfig = config;
-		sanitizedConfig.Sanitize();
-		eMirror->params = sanitizedConfig;
-		eMirror->isParamsDirty = true;
-
-		DALIA_LOG_DEBUG(LOG_CTX_API, "Set effect config for handle rawId: 0x%016llx.", effect.GetRawId());
+		DALIA_LOG_DEBUG(LOG_CTX_API, "Set effect params for handle with rawId: 0x%016llx.", effect.GetRawId());
 		return Result::Ok;
 	}
 
 	Result Engine::AttachEffect(EffectHandle effect, const char* busIdentifier, uint32_t effectSlot) {
 		if (!IsInitialized(m_state)) return Result::NotInitialized;
 
-		EffectMirror* eMirror;
-		Result res = m_state->ResolveMirror(effect.GetIndex(), effect.GetGeneration(), eMirror);
+		Result res = m_state->Validate(effect);
 		if (res != Result::Ok) {
 			DALIA_LOG_ERR(LOG_CTX_API, "Failed to attach effect to bus %s (slot %d). Invalid or expired effect handle.",
 				busIdentifier, effectSlot);
@@ -1116,6 +1139,7 @@ namespace dalia {
 			RtCommand cmd = RtCommand::ForceDetachEffect(
 				effect.GetIndex(),
 				effect.GetGeneration(),
+				effect.GetType(),
 				routing.busIndex,
 				routing.effectSlot
 			);
@@ -1141,6 +1165,7 @@ namespace dalia {
 			RtCommand detachCmd = RtCommand::ForceDetachEffect(
 				oldEffect.GetIndex(),
 				oldEffect.GetGeneration(),
+				oldEffect.GetType(),
 				bIndex,
 				effectSlot
 			);
@@ -1153,6 +1178,7 @@ namespace dalia {
 		RtCommand cmd = RtCommand::AttachEffect(
 			effect.GetIndex(),
 			effect.GetGeneration(),
+			effect.GetType(),
 			bIndex,
 			effectSlot
 		);
@@ -1182,6 +1208,7 @@ namespace dalia {
 			RtCommand cmd = RtCommand::FadeDetachEffect(
 				effect.GetIndex(),
 				effect.GetGeneration(),
+				effect.GetType(),
 				routing.busIndex,
 				routing.effectSlot
 			);
@@ -1209,10 +1236,17 @@ namespace dalia {
 		}
 
 		// Free the effect
-		uint32_t eIndex = m_state->GetEffectIndex(effect);
-		m_state->effects.GetMirror(eIndex).Reset();
-		m_state->effects.Free(eIndex);
+		uint32_t eIndex = effect.GetIndex();
 
+		switch (effect.GetType()) {
+			case EffectType::Biquad:
+				m_state->biquads.GetMirror(eIndex).Reset();
+				m_state->biquads.Free(eIndex);
+				break;
+
+			default:
+				break;
+		}
 		// Detach if attached
 		auto it = m_state->effectRoutingTable.find(effect.GetRawId());
 		if (it != m_state->effectRoutingTable.end()) {
@@ -1223,6 +1257,7 @@ namespace dalia {
 			RtCommand detachCmd = RtCommand::ForceDetachEffect(
 				effect.GetIndex(),
 				effect.GetGeneration(),
+				effect.GetType(),
 				routing.busIndex,
 				routing.effectSlot
 			);
@@ -1234,7 +1269,7 @@ namespace dalia {
 			m_state->effectRoutingTable.erase(it);
 		}
 
-		RtCommand cmd = RtCommand::FreeEffect(effect.GetIndex(), effect.GetGeneration());
+		RtCommand cmd = RtCommand::FreeEffect(effect.GetIndex(), effect.GetGeneration(), effect.GetType());
 		m_state->rtCommands->Enqueue(cmd);
 
 		DALIA_LOG_DEBUG(LOG_CTX_API, "Destroyed effect (handle rawId: 0x%016llx).", effect.GetRawId());
@@ -1903,6 +1938,6 @@ namespace dalia {
 	// --- Template Instantiations ---
 
 	// Biquad Filter
-	template Result Engine::CreateEffect<BiquadConfig>(EffectHandle&, const BiquadConfig&);
-	template Result Engine::SetEffectConfig<BiquadConfig>(EffectHandle, const BiquadConfig&);
+	template Result Engine::CreateEffect<BiquadParams>(EffectHandle&, const BiquadParams&);
+	template Result Engine::SetEffectParams<BiquadParams>(EffectHandle, const BiquadParams&);
 }

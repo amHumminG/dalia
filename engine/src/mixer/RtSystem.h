@@ -4,7 +4,6 @@
 #include "core/ParameterBridge.h"
 #include "mixer/Speakers.h"
 #include "mixer/PeakLimiter.h"
-#include "mixer/effects/Effect.h"
 
 #include <span>
 
@@ -21,11 +20,13 @@ namespace dalia {
 	struct VoiceParams;
     struct Bus;
 	struct BusParams;
-    class EffectHandle;
+	struct Biquad;
+	struct BiquadParams;
+    struct EffectHandle;
     struct EffectSlot;
 
 	enum class CoordinateSystem : uint8_t;
-	enum class SpeakerLayout;
+	enum class SpeakerLayout : uint8_t;
 	struct VirtualSpeaker;
 
 	class MixGraphCompiler;
@@ -55,8 +56,8 @@ namespace dalia {
     	std::span<ParameterBridge<BusParams>> busParamBridges;
         std::span<float> busBufferPool;
 
-    	std::span<Effect> effectPool;
-    	std::span<ParameterBridge<EffectParams>> effectParamBridges;
+    	std::span<Biquad> biquadPool;
+    	std::span<ParameterBridge<BiquadParams>> biquadParamBridges;
 
     	MixGraphCompiler* mixGraphCompiler		= nullptr;
     	std::span<uint32_t> mixOrder;
@@ -80,12 +81,11 @@ namespace dalia {
 
     	bool ResolveBusState(Bus& bus);
         void RenderBus(uint32_t busIndex, uint32_t frameCount);
-        void ApplyBusEffect(float* busBuffer, EffectSlot& slot, uint32_t frameCount);
+        void ApplyBusEffect(float* buffer, EffectSlot& slot, uint32_t frameCount);
 
         void AttachEffect(EffectHandle handle, uint32_t busIndex, uint32_t effectSlot);
         void DetachEffect(EffectHandle handle, uint32_t busIndex, uint32_t effectSlot);
         void FadeOutEffect(EffectHandle handle, uint32_t busIndex, uint32_t effectSlot);
-        void FlushEffect(Effect& effect);
 
     	void ConfigureSpeakerLayout(SpeakerLayout layout); // Returns the spatial speaker count
 
@@ -127,8 +127,8 @@ namespace dalia {
         std::span<float> m_busBufferPool;
 
     	// Effects
-    	std::span<Effect> m_effectPool;
-    	std::span<ParameterBridge<EffectParams>> m_effectParamBridges;
+    	std::span<Biquad> m_biquadPool;
+    	std::span<ParameterBridge<BiquadParams>> m_biquadParamBridges;
 
     	// Mixing Graph & DSP
 		MixGraphCompiler* m_mixGraphCompiler = nullptr;

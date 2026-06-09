@@ -35,7 +35,7 @@ void BiquadEffect::DrawInspectorUI(const UIContext& ui) {
 	if (ImGui::RadioButton("LowPass", &filterTypeInt, 0) ||
 		ImGui::RadioButton("HighPass", &filterTypeInt, 1) ||
 		ImGui::RadioButton("BandPass", &filterTypeInt, 2)) {
-		m_config.type = static_cast<dalia::BiquadFilterType>(filterTypeInt);
+		m_config.type = static_cast<dalia::BiquadParams::Type>(filterTypeInt);
 		paramsChanged = true;
 	}
 
@@ -47,7 +47,7 @@ void BiquadEffect::DrawInspectorUI(const UIContext& ui) {
 		paramsChanged = true;
 	}
 
-	if (paramsChanged) m_result = m_engine->SetEffectConfig(m_handle, m_config);
+	if (paramsChanged) m_result = m_engine->SetEffectParams(m_handle, m_config);
 
 	ImGui::PopID();
 }

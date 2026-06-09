@@ -9,6 +9,6 @@ public:
 	void DrawInspectorUI(const UIContext& ui) override;
 
 private:
-	dalia::BiquadConfig m_config;
+	dalia::BiquadParams m_config;
 
 };

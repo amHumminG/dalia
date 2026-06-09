@@ -24,7 +24,9 @@ namespace dalia {
 		uint32_t maxActiveVoices	= 64; // Currently unused
 		uint32_t streamCapacity		= 32;
 		uint32_t busCapacity		= 64;
-		uint32_t effectCapacity		= 32;
+
+		// Effects
+		uint32_t BiquadCapacity		= 32;
 
 		uint32_t listenerCapacity	= 1; // Min 1, max 4
 
@@ -238,38 +240,38 @@ namespace dalia {
 		// ============================================================================
 #pragma region EFFECTS_MANAGEMENT
 
-		/// @brief Allocates a new DSP effect instance and initializes it with the provided configuration.
+		/// @brief Allocates a new DSP effect instance and initializes it with the provided parameters.
 		///
 		/// This function is used to create all effects. The type of effect this function creates depends on the type
-		/// of effect configuration that is passed into it.
+		/// of effect parameters that is passed into it.
 		///
-		/// @tparam TConfig		The configuration struct containing the effect settings.
+		/// @tparam TParams		The parameter struct containing the effect settings.
 		/// @param[out] effect	The handle to be populated.
-		/// @param[in] config	The initial configuration.
+		/// @param[in] params	The initial parameters.
 		///
 		/// @retval Result::Ok						The effect was successfully created.
 		/// @retval Result::NotInitialized			The engine is not initialized.
 		/// @retval Result::EffectPoolExhausted		The allocated effect capacity has been reached.
-		template <typename TConfig>
-		requires requires(TConfig a) {a.Sanitize(); }
-		Result CreateEffect(EffectHandle& effect, const TConfig& config);
+		template <typename TParams>
+		requires requires(TParams p) {p.Sanitize(); }
+		Result CreateEffect(EffectHandle& effect, const TParams& params);
 
-		/// @brief Updates the configuration of an effect instance.
+		/// @brief Updates the parameters of an effect instance.
 		///
-		/// @note [Config Typing] The passed configuration type must match the configuration type of the effect
+		/// @note [Params Typing] The params type must match the params type of the effect
 		/// instance that the provided handle is referencing.
 		///
-		/// @tparam TConfig		The configuration struct containing the effect settings.
+		/// @tparam TParams		The parameter struct containing the effect settings.
 		/// @param[in] effect	The handle to the effect instance.
-		/// @param[in] config	The new configuration.
+		/// @param[in] params	The new parameters.
 		///
-		/// @retval Result::Ok						The effect configuration was successfully updated.
+		/// @retval Result::Ok						The effect parameters were successfully updated.
 		/// @retval Result::NotInitialized			The engine is not initialized.
 		/// @retval Result::InvalidHandle			The effect handle is not recognized.
 		/// @retval Result::ExpiredHandle			The effect handle points to an already destroyed effect.
-		template <typename TConfig>
-		requires requires(TConfig a) {a.Sanitize(); }
-		Result SetEffectConfig(EffectHandle effect, const TConfig& config);
+		template <typename TParams>
+		requires requires(TParams p) {p.Sanitize(); }
+		Result SetEffectParams(EffectHandle effect, const TParams& params);
 
 		/// @brief Inserts an allocated effect into the processing chain of a specified bus.
 		///

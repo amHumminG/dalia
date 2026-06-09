@@ -1,5 +1,7 @@
 #include "RtSystem.h"
 
+#include "dalia/audio/EffectControl.h"
+
 #include "core/Logger.h"
 #include "core/Constants.h"
 #include "core/Math.h"
@@ -9,19 +11,17 @@
 #include "mixer/StreamContext.h"
 #include "mixer/Bus.h"
 #include "mixer/Listener.h"
-#include "mixer/effects/Effect.h"
 #include "mixer/MixGraphCompiler.h"
 
 #include "messaging/RtCommandQueue.h"
 #include "messaging/RtEventQueue.h"
 #include "messaging/IoStreamRequestQueue.h"
 
-#include "effects/BiquadFilter.h"
+#include "effects/Biquad.h"
 
 #include "dalia/audio/SoundControl.h"
 
 #include <cmath>
-
 
 namespace dalia {
 
@@ -110,8 +110,14 @@ namespace dalia {
 	}
 
 	// Applies a cross-fade between a dry and wet buffer over a block of frames
-	static inline void ApplyBlockCrossFade(float* inOutDryBuffer, const float* inWetBuffer, uint32_t frameCount,
-		uint32_t channels, float& currentMix, float targetMix, float mixDelta) {
+	static inline void ApplyBlockCrossFade(
+		float* DALIA_RESTRICT inOutDryBuffer,
+		const float* DALIA_RESTRICT inWetBuffer,
+		uint32_t frameCount,
+		uint32_t channels,
+		float& currentMix,
+		float targetMix,
+		float mixDelta) {
 		for (uint32_t frame = 0; frame < frameCount; frame++) {
 			// Increment mix coefficient
 			if (currentMix < targetMix) {
@@ -364,8 +370,8 @@ namespace dalia {
         m_busPool(config.busPool),
 		m_busParamBridges(config.busParamBridges),
 		m_busBufferPool(config.busBufferPool),
-		m_effectPool(config.effectPool),
-		m_effectParamBridges(config.effectParamBridges),
+		m_biquadPool(config.biquadPool),
+		m_biquadParamBridges(config.biquadParamBridges),
 		m_mixGraphCompiler(config.mixGraphCompiler),
 		m_mixOrder(config.mixOrder),
 		m_dspScratchBuffer(config.dspScratchBuffer) {
@@ -492,28 +498,47 @@ namespace dalia {
 		            break;
 	            }
 				case RtCommand::Type::AllocateEffect: {
-					Effect& effect = m_effectPool[cmd.targetIndex];
+					uint32_t eIndex = cmd.targetIndex;
+					uint32_t eGen = cmd.targetGen;
 
-					effect.gen = cmd.targetGen;
-					utility::EmplaceVariantByIndex(effect.dsp, cmd.data.effect.variantIndex);
+					switch (cmd.data.effect.type) {
+						case EffectType::Biquad: {
+							Biquad& biquad = m_biquadPool[eIndex];
+							biquad.gen = eGen;
+							break;
+						}
+						default:
+							break;
+					}
 	            	break;
 				}
             	case RtCommand::Type::FreeEffect: {
-					Effect& effect = m_effectPool[cmd.targetIndex];
-					if (effect.gen == cmd.targetGen) effect.Reset();
+					uint32_t eIndex = cmd.targetIndex;
+					uint32_t eGen = cmd.targetGen;
+
+					switch (cmd.data.effect.type) {
+						case EffectType::Biquad: {
+							Biquad& biquad = m_biquadPool[eIndex];
+							if (biquad.gen == eGen) biquad.Reset();
+							break;
+						}
+						default:
+							break;
+					}
+					break;
             	}
 				case RtCommand::Type::AttachEffect: {
-	            	EffectHandle effect = EffectHandle::Create(cmd.targetIndex, cmd.targetGen);
+	            	EffectHandle effect = EffectHandle::Create(cmd.targetIndex, cmd.targetGen, cmd.data.effect.type);
 					AttachEffect(effect, cmd.data.effect.busIndex, cmd.data.effect.effectSlot);
 	            	break;
 				}
 				case RtCommand::Type::FadeDetachEffect: {
-					EffectHandle effect = EffectHandle::Create(cmd.targetIndex, cmd.targetGen);
+					EffectHandle effect = EffectHandle::Create(cmd.targetIndex, cmd.targetGen, cmd.data.effect.type);
 	            	FadeOutEffect(effect, cmd.data.effect.busIndex, cmd.data.effect.effectSlot);
 	            	break;
 				}
 				case RtCommand::Type::ForceDetachEffect: {
-					EffectHandle effect = EffectHandle::Create(cmd.targetIndex, cmd.targetGen);
+					EffectHandle effect = EffectHandle::Create(cmd.targetIndex, cmd.targetGen, cmd.data.effect.type);
 	            	DetachEffect(effect, cmd.data.effect.busIndex, cmd.data.effect.effectSlot);
 	            	break;
 				}
@@ -549,21 +574,10 @@ namespace dalia {
 			}
 		}
 
-		EffectParams eParams;
-		for (uint32_t eIndex = 0; eIndex < m_effectParamBridges.size(); eIndex++) {
-			if (m_effectParamBridges[eIndex].ConsumeUpdate(eParams)) {
-				Effect& effect = m_effectPool[eIndex];
-
-				std::visit([&effect](auto&& config) {
-					using ConfigType = std::decay_t<decltype(config)>;
-
-					if constexpr (!std::is_same_v<ConfigType, std::monostate>) {
-						using DSPType = typename DSPMapper<ConfigType>::Type; // Lookup the DSP class for this config
-						if (std::holds_alternative<DSPType>(effect.dsp)) {
-							std::get<DSPType>(effect.dsp).SetConfig(config); // Pass the config to the DSP object
-						}
-					}
-				}, eParams);
+		BiquadParams bqParams;
+		for (uint32_t i = 0; i < m_biquadParamBridges.size(); i++) {
+			if (m_biquadParamBridges[i].ConsumeUpdate(bqParams)) {
+				m_biquadPool[i].SetParams(bqParams);
 			}
 		}
     }
@@ -919,7 +933,7 @@ namespace dalia {
     		));
     	}
 
-		// TODO: Remove these logs some time
+		// TODO: These should be sent back to the API thread as events
     	if (voice.exitCondition == PlaybackExitCondition::NaturalEnd) {
     		DALIA_LOG_DEBUG(LOG_CTX_MIXER, "Voice %d finished naturally.", vIndex);
     	}
@@ -983,41 +997,41 @@ namespace dalia {
     	}
     }
 
-    void RtSystem::ApplyBusEffect(float* busBuffer, EffectSlot& slot, uint32_t frameCount) {
+    void RtSystem::ApplyBusEffect(float* buffer, EffectSlot& slot, uint32_t frameCount) {
 		uint32_t eIndex = slot.handle.GetIndex();
-		Effect& effect = m_effectPool[eIndex];
+		EffectType eType = slot.handle.GetType();
 
-		if (effect.gen != slot.handle.GetGeneration()) {
-			slot.Reset();
-			return;
-		}
-
-		float fadeDurationInSeconds = 0.01f;
-		float fadeDelta = 1.0f / (m_outSampleRate * fadeDurationInSeconds);
+		float* processBuffer = buffer;
 		uint32_t sampleCount = frameCount * m_outChannels;
 
-		std::memcpy(m_dspScratchBuffer.data(), busBuffer, sampleCount * sizeof(float));
+		if (slot.state != EffectState::Active) {
+			std::memcpy(m_dspScratchBuffer.data(), buffer, sampleCount * sizeof(float));
+			processBuffer = m_dspScratchBuffer.data();
+		}
+
+		switch (eType) {
+			case EffectType::Biquad: {
+				Biquad& biquad = m_biquadPool[eIndex];
+				biquad.Process(processBuffer, frameCount, m_outChannels, m_outSampleRate);
+
+				break;
+			}
+			default:
+				break;
+		}
 
 		// Process DSP
-		std::visit([&](auto& dsp) {
-			using DSPType = std::decay_t<decltype(dsp)>;
+		if (slot.state != EffectState::Active) {
+			float fadeDurationInSeconds = 0.01f;
+			float fadeDelta = 1.0f / (static_cast<float>(m_outSampleRate) * fadeDurationInSeconds);
 
-			if constexpr (!std::is_same_v<DSPType, std::monostate>) {
-				dsp.Process(m_dspScratchBuffer.data(), frameCount, m_outChannels, m_outSampleRate);
-			}
-		}, effect.dsp);
-
-		if (slot.state == EffectState::Active) {
-			std::memcpy(busBuffer, m_dspScratchBuffer.data(), sampleCount * sizeof(float));
-		}
-		else {
 			float targetMix = 0.0f;
 			if (slot.state == EffectState::FadingIn) targetMix = 1.0f;
 			else if (slot.state == EffectState::FadingOut) targetMix = 0.0f;
 
 			ApplyBlockCrossFade(
-				busBuffer,
-				m_dspScratchBuffer.data(),
+				buffer,
+				processBuffer,
 				frameCount,
 				m_outChannels,
 				slot.currentMix,
@@ -1037,15 +1051,26 @@ namespace dalia {
     }
 
     void RtSystem::AttachEffect(EffectHandle handle, uint32_t busIndex, uint32_t effectSlot) {
-		Effect& effect = m_effectPool[handle.GetIndex()];
-		if (effect.gen != handle.GetGeneration()) return;
+		uint32_t eIndex = handle.GetIndex();
+		uint32_t eGen = handle.GetGeneration();
+		EffectType eType = handle.GetType();
 
-		FlushEffect(effect); // Remove history
+		switch (eType) {
+			case EffectType::Biquad: {
+				Biquad& biquad = m_biquadPool[eIndex];
+				if (biquad.gen != eGen) return;
+
+				biquad.Flush();
+				break;
+			}
+			default:
+				return;
+		}
 
 		EffectSlot& slot = m_busPool[busIndex].effectSlots[effectSlot];
 		slot.handle = handle;
-		slot.currentMix = 0.0f;
 		slot.state = EffectState::FadingIn;
+		slot.currentMix = 0.0f;
     }
 
     void RtSystem::DetachEffect(EffectHandle handle, uint32_t busIndex,
@@ -1057,16 +1082,6 @@ namespace dalia {
     void RtSystem::FadeOutEffect(EffectHandle handle, uint32_t busIndex, uint32_t effectSlot) {
 		EffectSlot& slot = m_busPool[busIndex].effectSlots[effectSlot];
 		if (slot.handle == handle && slot.state != EffectState::None) slot.state = EffectState::FadingOut;
-    }
-
-    void RtSystem::FlushEffect(Effect& effect) {
-		std::visit([&](auto& dsp) {
-			using DSPType = std::decay_t<decltype(dsp)>;
-
-			if constexpr (!std::is_same_v<DSPType, std::monostate>) {
-				dsp.Flush();
-			}
-		}, effect.dsp);
     }
 
     void RtSystem::ConfigureSpeakerLayout(SpeakerLayout layout) {

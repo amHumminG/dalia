@@ -32,6 +32,7 @@ namespace dalia {
     constexpr float EPSILON_PAN = 1e-5f;
     constexpr float EPSILON_FREQUENCY = 1e-1f;
     constexpr float EPSILON_RESONANCE = 1e-3f;
+	constexpr float EPSILON_DSP = 1e-5f;
 
     constexpr float FADE_TIME_GAIN = 0.02f;			// Time (in seconds) to fade gain from 0.0 to 1.0
     constexpr float SMOOTHING_CUTOFF_HZ = 15.0f;    // Determines the smoothing time for some gain changes
