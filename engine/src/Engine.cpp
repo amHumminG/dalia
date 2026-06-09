@@ -510,6 +510,8 @@ namespace dalia {
 		m_state = new EngineInternalState(config);
 
 		// --- Master Bus Setup ---
+		uint32_t masterIndex;
+		m_state->buses.Allocate(masterIndex);
 		m_state->buses.GetMirror(MASTER_BUS_INDEX).refCount = 1;
 		m_state->buses.Get(MASTER_BUS_INDEX).isActive = true;
 
@@ -555,7 +557,6 @@ namespace dalia {
 		m_state->outChannels		= m_state->backend->GetChannelCount();
 		m_state->outSampleRate		= m_state->backend->GetSampleRate();
 		uint32_t bufferSizeInFrames = m_state->backend->GetBufferCapacityInFrames();
-
 
 		DALIA_LOG_DEBUG(LOG_CTX_API, "Backend period size: %d.", m_state->backend->GetPeriodSizeInFrames());
 		DALIA_LOG_DEBUG(LOG_CTX_API, "Backend buffer size: %d.", bufferSizeInFrames);
