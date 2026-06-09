@@ -92,7 +92,7 @@ namespace dalia {
 
                     m_ioLoadEvents->Push(IoLoadEvent::SoundLoadFailed(req.requestId, Result::FileReadError));
                     DALIA_LOG_ERR(LOG_CTX_IO, "Failed to load sound from %s. %s.", req.data.soundFromFile.filepath,
-                        utility::GetStbVorbisErrorString(error));
+                        GetStbVorbisErrorString(error));
 
                     return;
                 }

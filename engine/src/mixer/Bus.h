@@ -1,6 +1,8 @@
 #pragma once
+
 #include "core/Constants.h"
 #include "dalia/audio/EffectControl.h"
+#include "dsp/Slew.h"
 
 namespace dalia {
 
@@ -55,9 +57,6 @@ namespace dalia {
 
         	currentFadeGain = 1.0f;
         	targetFadeGain = 1.0f;
-
-            targetGain = GAIN_DEFAULT;
-            currentGain = GAIN_DEFAULT;
 
             for (int i = 0; i < MAX_EFFECTS_PER_BUS; i++) {
                 effectSlots[i].Reset();

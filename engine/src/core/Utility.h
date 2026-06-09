@@ -3,7 +3,7 @@
 #include <variant>
 #include <cstddef>
 
-namespace dalia::utility {
+namespace dalia {
 
     const char* GetStbVorbisErrorString(int error);
 

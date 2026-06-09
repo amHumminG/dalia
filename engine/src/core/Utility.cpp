@@ -5,7 +5,7 @@
 #endif
 #include <stb_vorbis.c>
 
-namespace dalia::utility {
+namespace dalia {
 
     // A helper function to translate stb_vorbis error codes into readable strings
     const char* GetStbVorbisErrorString(int error) {

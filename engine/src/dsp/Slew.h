@@ -1,6 +1,6 @@
 #pragma once
 
-namespace dalia {
+namespace dalia::dsp {
 
 	struct SlewFloat {
 		float current = 0.0f;

@@ -1,9 +1,9 @@
 #pragma once
 
 #include "dalia/audio/EffectControl.h"
-#include "mixer/DspUtility.h"
-
 #include "core/Constants.h"
+#include "dsp/Slew.h"
+
 #include <cstdint>
 
 namespace dalia {
@@ -14,8 +14,8 @@ namespace dalia {
     	bool forceRecalculate = false; // Set true if type changes
 
     	BiquadParams::Type type = BiquadParams::Type::LowPass;
-    	SlewFloat frequencySlew;
-    	SlewFloat resonanceSlew;
+    	dsp::SlewFloat frequencySlew;
+    	dsp::SlewFloat resonanceSlew;
 
     	double b0 = 1.0, b1 = 0.0, b2 = 0.0;
     	double a1 = 0.0, a2 = 0.0;
