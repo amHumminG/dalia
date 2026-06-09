@@ -75,8 +75,8 @@ namespace dalia {
 		forceRecalculate = false;
 
 		type = BiquadParams::Type::LowPass;
-		frequencySlew = SlewFloat{};
-		resonanceSlew = SlewFloat{};
+		frequencySlew = dsp::SlewFloat{};
+		resonanceSlew = dsp::SlewFloat{};
 
 		b0 = 1.0, b1 = 0.0, b2 = 0.0;
 		a1 = 0.0, a2 = 0.0;

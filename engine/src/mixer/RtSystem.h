@@ -74,13 +74,15 @@ namespace dalia {
     	void ProcessParams();
         void Render(float* output, uint32_t frameCount);
 
+    	bool CompileMixGraph();
+
     	void ResolveVoiceStates();
     	void ResolveVoiceAcoustics();
         uint32_t RenderVoices(uint32_t frameCount);
         void FreeVoice(uint32_t voiceIndex);
 
-    	bool ResolveBusState(Bus& bus);
-        void RenderBus(uint32_t busIndex, uint32_t frameCount);
+    	bool ResolveBusStates();
+        uint32_t RenderBuses(uint32_t frameCount);
         void ApplyBusEffect(float* buffer, EffectSlot& slot, uint32_t frameCount);
 
         void AttachEffect(EffectHandle handle, uint32_t busIndex, uint32_t effectSlot);

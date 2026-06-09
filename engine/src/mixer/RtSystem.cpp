@@ -38,8 +38,8 @@ namespace dalia {
 		}
 	}
 
-	static inline float* GetBusBuffer(float* busBufferPool, uint32_t busIndex, uint32_t frameCount) {
-		return busBufferPool + (busIndex * frameCount * CHANNELS_MAX);
+	static inline float* GetBusBuffer(float* busBufferPool, uint32_t busIndex, uint32_t maxSamplesPerPeriod) {
+		return busBufferPool + (busIndex * maxSamplesPerPeriod * CHANNELS_MAX);
 	}
 
 	static inline void StepMatrixGains(
@@ -585,43 +585,31 @@ namespace dalia {
     void RtSystem::Render(float* output, uint32_t frameCount) {
         const uint32_t sampleCount = frameCount * m_outChannels;
 
-    	// Bus preprocessing
+		// Memory initialization
 		std::memset(m_busBufferPool.data(), 0, m_busBufferPool.size() * sizeof(float));
-		for (uint32_t bIndex = 0; bIndex < m_busPool.size(); bIndex++) {
-			Bus& bus = m_busPool[bIndex];
-			if (bus.isActive) m_isMixOrderDirty |= ResolveBusState(bus);
-		}
 
-		if (m_isMixOrderDirty) {
-			m_mixOrderSize = m_mixGraphCompiler->Compile( m_busPool, m_mixOrder);
-			m_isMixOrderDirty = false;
-			DALIA_LOG_DEBUG(LOG_CTX_MIXER, "Recompiled bus graph.");
-		}
-
-		if (m_mixOrderSize == 0) {
-			// TODO: Send an RtEvent back to API thread to log cycle detection
-			DALIA_LOG_ERR(LOG_CTX_MIXER, "Mix graph cycle detected!"); // TODO: remove this log
-
-			std::memset(output, 0, sampleCount * sizeof(float));
-			return;
-		}
-
-        // --- Voice Pass ---
+		// State resolvers
 		ResolveVoiceAcoustics();
 		ResolveVoiceStates();
+		m_isMixOrderDirty |= ResolveBusStates();
+
+		// Graph compilation
+		if (m_isMixOrderDirty) {
+			if (!CompileMixGraph()) {
+				std::memset(output, 0, sampleCount * sizeof(float));
+				return;
+			}
+			m_isMixOrderDirty = false;
+		}
+
+        // Render passes
 		RenderVoices(frameCount);
+		RenderBuses(frameCount);
 
-        // --- Bus Pass ---
-		std::span activeMixOrder = m_mixOrder.subspan(0, m_mixOrderSize);
-        for (uint32_t bIndex : activeMixOrder) {
-            RenderBus(bIndex, frameCount);
-        }
-
-        float* masterBuffer = m_busBufferPool.data();
-
+		// Output
+        float* masterBuffer = GetBusBuffer(m_busBufferPool.data(), MASTER_BUS_INDEX, m_maxSamplesPerPeriod);
 		m_masterPeakLimiter.ProcessBuffer(masterBuffer, frameCount, m_outChannels); // Limit peaks
 
-		// Hard clamp output
 		for (uint32_t i = 0; i < sampleCount; i++) {
 			masterBuffer[i] = std::clamp(masterBuffer[i], -1.0f, 1.0f);
 		}
@@ -629,7 +617,19 @@ namespace dalia {
         std::copy_n(masterBuffer, sampleCount, output); // Output to OS
 	}
 
-	void RtSystem::ResolveVoiceStates() {
+    bool RtSystem::CompileMixGraph() {
+		m_mixOrderSize = m_mixGraphCompiler->Compile(m_busPool, m_mixOrder);
+
+		if (m_mixOrderSize == 0) {
+			DALIA_LOG_ERR(LOG_CTX_MIXER, "Mix graph cycle detected"); // TODO: make this an event
+			return false;
+		}
+
+		DALIA_LOG_DEBUG(LOG_CTX_MIXER, "Recompiled bus graph."); // TODO: Make this an event
+		return true;
+    }
+
+    void RtSystem::ResolveVoiceStates() {
 		for (uint32_t vIndex = 0; vIndex < m_voicePool.size(); vIndex++) {
 			Voice& voice = m_voicePool[vIndex];
 
@@ -856,7 +856,7 @@ namespace dalia {
 			if (voice.currentState != VoiceState::Playing) continue;
 
 			voicesRendered++;
-			float* busBuffer = GetBusBuffer(m_busBufferPool.data(), voice.currentBusIndex, frameCount);
+			float* busBuffer = GetBusBuffer(m_busBufferPool.data(), voice.currentBusIndex, m_maxSamplesPerPeriod);
 			uint32_t framesMixed = 0;
 
 			float phaseInc = voice.currentPitch * (static_cast<float>(voice.sampleRate) / static_cast<float>(m_outSampleRate));
@@ -951,50 +951,65 @@ namespace dalia {
     	voice.Reset();
     }
 
-    bool RtSystem::ResolveBusState(Bus& bus) {
-		bool requiresSilence = false;
+    bool RtSystem::ResolveBusStates() {
 		bool topologyChanged = false;
 
-		// Do we need to duck?
-		if (bus.currentParentIndex != bus.targetParentIndex) requiresSilence = true;
+		for (uint32_t bIndex = 0; bIndex < m_busPool.size(); bIndex++) {
+			Bus& bus = m_busPool[bIndex];
+			if (!bus.isActive) continue;
 
-		if (requiresSilence) bus.targetFadeGain = GAIN_SILENCE;
+			bool requiresSilence = false;
 
-		if (math::NearlyEqual(bus.currentFadeGain, 0.0f, EPSILON_GAIN)) {
-			// Bus is silent
+			// Do we need to duck?
+			if (bus.currentParentIndex != bus.targetParentIndex) requiresSilence = true;
 
-			if (bus.currentParentIndex != bus.targetParentIndex) {
-				bus.currentParentIndex = bus.targetParentIndex;
-				DALIA_LOG_DEBUG(LOG_CTX_MIXER, "Re-routed bus to target");
-				topologyChanged = true;
+			if (requiresSilence) bus.targetFadeGain = GAIN_SILENCE;
+
+			if (math::NearlyEqual(bus.currentFadeGain, 0.0f, EPSILON_GAIN)) {
+				// Bus is silent
+
+				if (bus.currentParentIndex != bus.targetParentIndex) {
+					bus.currentParentIndex = bus.targetParentIndex;
+					DALIA_LOG_DEBUG(LOG_CTX_MIXER, "Re-routed bus to target");
+					topologyChanged = true;
+				}
 			}
-		}
 
-		if (!requiresSilence) bus.targetFadeGain = GAIN_DEFAULT;
+			if (!requiresSilence) bus.targetFadeGain = GAIN_DEFAULT;
+		}
 
 		return topologyChanged;
     }
 
-    void RtSystem::RenderBus(uint32_t busIndex, uint32_t frameCount) {
-    	Bus& bus = m_busPool[busIndex];
-		float* buffer = GetBusBuffer(m_busBufferPool.data(), busIndex, frameCount);
+    uint32_t RtSystem::RenderBuses(uint32_t frameCount) {
+		std::span activeMixOrder = m_mixOrder.subspan(0, m_mixOrderSize);
+		uint32_t busesRendered = 0;
 
-		for (uint32_t i = 0; i < MAX_EFFECTS_PER_BUS; i++) {
-			EffectSlot& slot = bus.effectSlots[i];
-			if (slot.state == EffectState::None) continue;
-			ApplyBusEffect(buffer, slot, frameCount);
+		for (uint32_t bIndex : activeMixOrder) {
+			busesRendered++;
+
+			Bus& bus = m_busPool[bIndex];
+			float* buffer = GetBusBuffer(m_busBufferPool.data(), bIndex, m_maxSamplesPerPeriod);
+
+			for (uint32_t i = 0; i < MAX_EFFECTS_PER_BUS; i++) {
+				EffectSlot& slot = bus.effectSlots[i];
+				if (slot.state == EffectState::None) continue;
+				ApplyBusEffect(buffer, slot, frameCount);
+			}
+
+			ApplyGainAndFade(
+				buffer, frameCount, m_outChannels,
+				bus.currentGain, bus.params.gain, m_smoothingCoefficient,
+				bus.currentFadeGain, bus.targetFadeGain, m_fadeStep
+			);
+
+			if (bus.currentParentIndex != NO_PARENT) {
+				float* parentBuffer = GetBusBuffer(m_busBufferPool.data(), bus.currentParentIndex, m_maxSamplesPerPeriod);
+				MixToBuffer(parentBuffer, buffer, frameCount * m_outChannels);
+			}
 		}
 
-		ApplyGainAndFade(
-			buffer, frameCount, m_outChannels,
-			bus.currentGain, bus.params.gain, m_smoothingCoefficient,
-			bus.currentFadeGain, bus.targetFadeGain, m_fadeStep
-		);
-
-    	if (bus.currentParentIndex != NO_PARENT) {
-    		float* parentBuffer = m_busBufferPool.data() + (bus.currentParentIndex * m_maxSamplesPerPeriod);
-    		MixToBuffer(parentBuffer, buffer, frameCount * m_outChannels);
-    	}
+		return busesRendered;
     }
 
     void RtSystem::ApplyBusEffect(float* buffer, EffectSlot& slot, uint32_t frameCount) {
