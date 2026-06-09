@@ -24,7 +24,7 @@ namespace dalia {
 		VoicePoolExhausted			= -103,
 		StreamPoolExhausted			= -104,
 		BusPoolExhausted			= -105,
-		BiquadFilterPoolExhausted	= -106,
+		EffectPoolExhausted			= -106,
 
 		// Messaging Errors
 		RtCommandQueueFull			= -200,
@@ -68,7 +68,7 @@ namespace dalia {
 			case Result::VoicePoolExhausted: return "Voice pool exhausted";
 			case Result::StreamPoolExhausted: return "Stream pool exhausted";
 			case Result::BusPoolExhausted: return "Bus pool exhausted";
-			case Result::BiquadFilterPoolExhausted: return "Biquad filter pool exhausted";
+			case Result::EffectPoolExhausted: return "Effect pool exhausted";
 
 			case Result::RtCommandQueueFull: return "Real-time command queue full";
 			case Result::RtEventQueueFull: return "Real-time event queue full";

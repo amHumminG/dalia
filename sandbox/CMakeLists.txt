@@ -25,12 +25,7 @@ FetchContent_Declare(
     GIT_TAG master
 )
 
-FetchContent_MakeAvailable(raylib imgui rlimgui)
-
-FetchContent_GetProperties(imguizmo)
-if (NOT imguizmo_POPULATED)
-    FetchContent_Populate(imguizmo)
-endif ()
+FetchContent_MakeAvailable(raylib imgui rlimgui imguizmo)
 
 # Define ImGui and rlImGui as libraries
 add_library(imgui_lib_demo STATIC
@@ -78,9 +73,9 @@ SET(DEMO_FILES
     src/BiquadEffect.h
 )
 
-add_executable(dalia_demo ${DEMO_FILES})
+add_executable(dalia_sandbox ${DEMO_FILES})
 
-target_link_libraries(dalia_demo
+target_link_libraries(dalia_sandbox
     PRIVATE dalia::engine
     PRIVATE rlimgui_lib_demo
     PRIVATE imguizmo_lib
@@ -88,10 +83,10 @@ target_link_libraries(dalia_demo
 )
 
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/assets")
-    add_custom_command(TARGET dalia_demo POST_BUILD
+    add_custom_command(TARGET dalia_sandbox POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_directory
         "${CMAKE_CURRENT_SOURCE_DIR}/assets"
-        "$<TARGET_FILE_DIR:dalia_demo>/assets"
+        "$<TARGET_FILE_DIR:dalia_sandbox>/assets"
         COMMENT "Copying assets to build directory..."
     )
 endif()

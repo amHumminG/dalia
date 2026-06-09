@@ -32,10 +32,8 @@ tracked in order to play and later on, unload the sound.
 dalia::SoundHandle explosionSound;
 engine->LoadSoundAsync(explosionSound, dalia::SoundType::Resident, "assets/explosion.ogg");
 ```
-
-!!! info "Playback Deferral"
-    If you attempt to create and start a playback instance using a sound that is still loading, the engine will safely 
-    defer the playback start until the sound has been fully loaded.
+*Note: If you attempt to create and start a playback instance using a sound that is still loading, the engine will safely 
+defer the playback start until the sound has been fully loaded.*
 
 ### Load Callbacks
 A callback function can be passed to any load call to the engine. This function will be invoked when the asset has been

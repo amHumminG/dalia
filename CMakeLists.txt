@@ -12,7 +12,7 @@ else()
 endif()
 
 option(DALIA_BUILD_STUDIO "Build the DALIA Studio editor" ${DALIA_IS_TOP_LEVEL})
-option(DALIA_BUILD_DEMO "Build the DALIA Engine demo" ${DALIA_IS_TOP_LEVEL})
+option(DALIA_BUILD_SANDBOX "Build the DALIA Engine sandbox" ${DALIA_IS_TOP_LEVEL})
 
 add_subdirectory(common)
 add_subdirectory(engine)
@@ -21,6 +21,6 @@ if (DALIA_BUILD_STUDIO)
     add_subdirectory(studio)
 endif()
 
-if (DALIA_BUILD_DEMO)
-    add_subdirectory(demo)
+if (DALIA_BUILD_SANDBOX)
+    add_subdirectory(sandbox)
 endif()

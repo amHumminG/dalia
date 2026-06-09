@@ -10,6 +10,7 @@ SoundAsset::SoundAsset(dalia::Engine* engine, dalia::SoundType type, const std::
 	auto loadCallback = [this](uint32_t requestId, dalia::Result loadResult) {
 		if (loadResult == dalia::Result::Ok) {
 			this->m_loadState = SoundLoadState::Loaded;
+			m_engine->GetSoundLength(m_handle, m_lengthInSeconds);
 		}
 		else {
 			this->m_loadState = SoundLoadState::Failed;
@@ -60,6 +61,11 @@ void SoundAsset::DrawInspectorUI(const UIContext& ui) {
 	else if (m_loadState == SoundLoadState::Loaded) {
 		ImGui::TextColored({0.0f, 1.0f, 0.0f, 1.0f}, "LOADED");
 	}
+
+	ImGui::Text("Length: %u min %u s",
+		static_cast<uint32_t>(m_lengthInSeconds / 60.0),
+		static_cast<uint32_t>(m_lengthInSeconds) % 60
+	);
 
 	ImGui::PopID();
 }

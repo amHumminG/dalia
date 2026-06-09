@@ -24,6 +24,7 @@ public:
 	SoundLoadState GetLoadState() const { return m_loadState; }
 	std::string GetFilePath() const { return m_filepath; }
 	dalia::SoundType GetType() const { return m_type; }
+	double GetLenghtInSeconds() const { return m_lengthInSeconds; }
 
 private:
 	dalia::Engine* m_engine = nullptr;
@@ -36,4 +37,6 @@ private:
 	dalia::SoundType m_type = dalia::SoundType::None;
 
 	SoundLoadState m_loadState = SoundLoadState::Loading;
+
+	double m_lengthInSeconds = 0.0;
 };

@@ -107,6 +107,7 @@ namespace dalia {
                     residentSound->channels = info.channels;
                     residentSound->sampleRate = info.sample_rate;
                     residentSound->frameCount = totalFrames;
+                	residentSound->lengthInSeconds = static_cast<double>(totalFrames) / info.sample_rate;
 
                     // Decode file into sound data vector
                     int framesDecoded = stb_vorbis_get_samples_float_interleaved(
@@ -136,6 +137,7 @@ namespace dalia {
                     streamSound->channels = info.channels;
                     streamSound->sampleRate = info.sample_rate;
                     streamSound->frameCount = totalFrames;
+                	streamSound->lengthInSeconds = static_cast<double>(totalFrames) / info.sample_rate;
                     strncpy_s(streamSound->filepath, MAX_IO_PATH_SIZE, req.data.soundFromFile.filepath, _TRUNCATE);
                 }
                 stb_vorbis_close(decoder);

@@ -1243,20 +1243,13 @@ void Sandbox::DrawEffectBrowser() {
 
 	if (ImGui::CollapsingHeader("Biquad Filter", ImGuiTreeNodeFlags_DefaultOpen)) {
 		static int biquadCount = 0;
-		static int filterTypeInt = 0;
-		ImGui::RadioButton("LowPass", &filterTypeInt, 0);
-		ImGui::SameLine();
-		ImGui::RadioButton("HighPass", &filterTypeInt, 1);
-		ImGui::SameLine();
-		ImGui::RadioButton("BandPass", &filterTypeInt, 2);
 
 		if (ImGui::Button("Create Biquad Filter", ImVec2(-1.0f, 30.0f))) {
 			biquadCount++;
 			std::string typeNames[] = { "LowPass", "HighPass", "BandPass" };
-			std::string filterName = "Biquad " + std::to_string(biquadCount) + " (" + typeNames[filterTypeInt] + ")";
-			auto type = static_cast<dalia::BiquadFilterType>(filterTypeInt);
+			std::string filterName = "Biquad " + std::to_string(biquadCount);
 
-			auto newBiquad = std::make_unique<BiquadEffect>(&m_engine, filterName, type);
+			auto newBiquad = std::make_unique<BiquadEffect>(&m_engine, filterName);
 			m_selectedObject = newBiquad.get();
 			m_selectionType = SelectionType::Effect;
 

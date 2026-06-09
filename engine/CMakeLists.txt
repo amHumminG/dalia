@@ -64,10 +64,10 @@ set(ENGINE_FILES
     src/mixer/RtSystem.h
     src/mixer/MixGraphCompiler.cpp
     src/mixer/MixGraphCompiler.h
-    src/mixer/effects/BiquadFilter.h
-    src/mixer/effects/BiquadFilter.cpp
+    src/mixer/effects/Biquad.h
+    src/mixer/effects/Biquad.cpp
     src/mixer/Listener.h
-    src/mixer/ParameterBridge.h
+    src/core/ParameterBridge.h
     src/mixer/Speakers.h
     src/mixer/Resampler.h
     src/mixer/Resampler.cpp
@@ -78,6 +78,10 @@ set(ENGINE_FILES
     src/resources/StreamSound.h
     src/mixer/PeakLimiter.h
     src/mixer/PeakLimiter.cpp
+    src/core/StateSyncPool.h
+    src/core/AsyncPool.h
+    src/dsp/Slew.h
+    src/dsp/Slew.cpp
 )
 
 add_library(dalia_engine STATIC ${ENGINE_FILES})

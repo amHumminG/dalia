@@ -2,12 +2,11 @@
 
 #include "imgui.h"
 
-BiquadEffect::BiquadEffect(dalia::Engine* engine, const std::string& name, dalia::BiquadFilterType filterType)
-	: m_filterType(filterType) {
+BiquadEffect::BiquadEffect(dalia::Engine* engine, const std::string& name) {
 	m_engine = engine;
 	m_name = name;
 
-	m_result = engine->CreateBiquadFilter(m_handle, filterType, m_config);
+	m_result = engine->CreateEffect(m_handle, m_config);
 	if (m_result != dalia::Result::Ok) return;
 }
 
@@ -32,6 +31,14 @@ void BiquadEffect::DrawInspectorUI(const UIContext& ui) {
 	// Parameters
 	bool paramsChanged = false;
 
+	int filterTypeInt = static_cast<int>(m_config.type);
+	if (ImGui::RadioButton("LowPass", &filterTypeInt, 0) ||
+		ImGui::RadioButton("HighPass", &filterTypeInt, 1) ||
+		ImGui::RadioButton("BandPass", &filterTypeInt, 2)) {
+		m_config.type = static_cast<dalia::BiquadParams::Type>(filterTypeInt);
+		paramsChanged = true;
+	}
+
 	if (ImGui::SliderFloat("Frequency", &m_config.frequency, 20.0f, 20000.0f, "%.0f Hz", ImGuiSliderFlags_Logarithmic)) {
 		paramsChanged = true;
 	}
@@ -40,7 +47,7 @@ void BiquadEffect::DrawInspectorUI(const UIContext& ui) {
 		paramsChanged = true;
 	}
 
-	if (paramsChanged) m_result = m_engine->SetBiquadParams(m_handle, m_config);
+	if (paramsChanged) m_result = m_engine->SetEffectParams(m_handle, m_config);
 
 	ImGui::PopID();
 }

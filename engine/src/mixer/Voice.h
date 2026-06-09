@@ -19,7 +19,7 @@ namespace dalia {
     };
 
 	struct VoiceParams {
-		float volumeDb = VOLUME_DB_DEFAULT;
+		float gain = GAIN_DEFAULT;
 		float pitch = PITCH_DEFAULT;
 		float stereoPan = PAN_STEREO_DEFAULT;
 
@@ -41,7 +41,7 @@ namespace dalia {
 	};
 
     struct Voice {
-        uint32_t gen = START_GENERATION;
+        uint32_t gen = NO_GENERATION;
 
         VoiceState currentState = VoiceState::Free;
     	VoiceState targetState = VoiceState::Free;
@@ -69,7 +69,6 @@ namespace dalia {
     	float currentPitch = 1.0f; // Final resolved pitch after doppler has been applied
 
     	VoiceParams params;
-    	bool isParamsDirty = false;
 
         uint32_t channels = 0;
         uint32_t sampleRate = 0;
@@ -84,15 +83,14 @@ namespace dalia {
 
             struct {
                 uint32_t streamContextIndex;
+            	uint32_t streamContextGen;
                 uint32_t frontBufferIndex;
             } stream;
         } data = {};
 
         // Use this when releasing a voice
         void Reset() {
-            gen++;
-            if (gen == NO_GENERATION) gen = START_GENERATION;
-
+        	gen = NO_GENERATION;
         	currentState = VoiceState::Free;
         	targetState = VoiceState::Free;
 
@@ -118,7 +116,6 @@ namespace dalia {
         	}
 
         	params = VoiceParams{};
-        	isParamsDirty = false;
 
             channels = 0;
             sampleRate = 0;

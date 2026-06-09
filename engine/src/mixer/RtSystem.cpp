@@ -1,8 +1,11 @@
 #include "RtSystem.h"
 
+#include "dalia/audio/EffectControl.h"
+
 #include "core/Logger.h"
 #include "core/Constants.h"
 #include "core/Math.h"
+#include "core/Utility.h"
 
 #include "mixer/Voice.h"
 #include "mixer/StreamContext.h"
@@ -14,12 +17,11 @@
 #include "messaging/RtEventQueue.h"
 #include "messaging/IoStreamRequestQueue.h"
 
-#include "effects/BiquadFilter.h"
+#include "effects/Biquad.h"
 
 #include "dalia/audio/SoundControl.h"
 
 #include <cmath>
-
 
 namespace dalia {
 
@@ -36,8 +38,8 @@ namespace dalia {
 		}
 	}
 
-	static inline float* GetBusBuffer(float* busBufferPool, uint32_t busIndex, uint32_t frameCount) {
-		return busBufferPool + (busIndex * frameCount * CHANNELS_MAX);
+	static inline float* GetBusBuffer(float* busBufferPool, uint32_t busIndex, uint32_t maxSamplesPerPeriod) {
+		return busBufferPool + (busIndex * maxSamplesPerPeriod * CHANNELS_MAX);
 	}
 
 	static inline void StepMatrixGains(
@@ -108,8 +110,14 @@ namespace dalia {
 	}
 
 	// Applies a cross-fade between a dry and wet buffer over a block of frames
-	static inline void ApplyBlockCrossFade(float* inOutDryBuffer, const float* inWetBuffer, uint32_t frameCount,
-		uint32_t channels, float& currentMix, float targetMix, float mixDelta) {
+	static inline void ApplyBlockCrossFade(
+		float* DALIA_RESTRICT inOutDryBuffer,
+		const float* DALIA_RESTRICT inWetBuffer,
+		uint32_t frameCount,
+		uint32_t channels,
+		float& currentMix,
+		float targetMix,
+		float mixDelta) {
 		for (uint32_t frame = 0; frame < frameCount; frame++) {
 			// Increment mix coefficient
 			if (currentMix < targetMix) {
@@ -351,20 +359,22 @@ namespace dalia {
 		m_maxSamplesPerPeriod(config.maxSamplesPerPeriod),
 		m_outChannels(config.outChannels),
 		m_outSampleRate(config.outSampleRate),
+		m_rtCommands(config.rtCommands),
+		m_rtEvents(config.rtEvents),
+		m_ioStreamRequests(config.ioStreamRequests),
+		m_streamPool(config.streamPool),
 		m_voicePool(config.voicePool),
 		m_voiceParamBridges(config.voiceParamBridges),
-        m_streamPool(config.streamPool),
+		m_listenerPool(config.listenerPool),
+		m_listenerParamBridges(config.listenerParamBridges),
         m_busPool(config.busPool),
+		m_busParamBridges(config.busParamBridges),
 		m_busBufferPool(config.busBufferPool),
-        m_rtCommands(config.rtCommands),
-        m_rtEvents(config.rtEvents),
-        m_ioStreamRequests(config.ioStreamRequests),
+		m_biquadPool(config.biquadPool),
+		m_biquadParamBridges(config.biquadParamBridges),
 		m_mixGraphCompiler(config.mixGraphCompiler),
 		m_mixOrder(config.mixOrder),
-		m_dspScratchBuffer(config.dspScratchBuffer),
-		m_biquadFilterPool(config.biquadFilterPool),
-		m_listenerPool(config.listenerPool),
-		m_listenerParamBridges(config.listenerParamBridges) {
+		m_dspScratchBuffer(config.dspScratchBuffer) {
 		m_smoothingCoefficient = 1.0f - std::exp(-2.0f * PI * SMOOTHING_CUTOFF_HZ / config.outSampleRate);
 		m_fadeStep = CalculateLinearFadeStep(FADE_TIME_GAIN, m_outSampleRate);
 		ConfigureSpeakerLayout(config.speakerLayout);
@@ -389,7 +399,7 @@ namespace dalia {
 	            	voice.targetState = VoiceState::Inactive;
 		            break;
 	            }
-				case RtCommand::Type::DeallocateVoice: {
+				case RtCommand::Type::FreeVoice: {
 	            	Voice& voice = m_voicePool[cmd.targetIndex];
 	            	if (voice.gen != cmd.targetGen) break;
 
@@ -418,6 +428,7 @@ namespace dalia {
 	            	voice.soundType = SoundType::Stream;
 
 	            	voice.data.stream.streamContextIndex = cmd.data.prepStreaming.streamIndex;
+					voice.data.stream.streamContextGen = cmd.data.prepStreaming.streamGen;
 	            	voice.data.stream.frontBufferIndex = 0;
 
 					voice.channels = cmd.data.prepStreaming.channels;
@@ -471,7 +482,7 @@ namespace dalia {
 					m_isMixOrderDirty = true;
 	            	break;
 	            }
-				case RtCommand::Type::DeallocateBus: {
+				case RtCommand::Type::FreeBus: {
 	            	uint32_t bIndex = cmd.targetIndex;
 
 	            	m_busPool[bIndex].Reset();
@@ -486,75 +497,49 @@ namespace dalia {
 	            	m_busPool[bIndex].targetParentIndex = bIndexParent;
 		            break;
 	            }
-				case RtCommand::Type::SetBusGain: {
-	            	uint32_t bIndex = cmd.targetIndex;
-	            	float newGain = cmd.data.floatVal.value;
+				case RtCommand::Type::AllocateEffect: {
+					uint32_t eIndex = cmd.targetIndex;
+					uint32_t eGen = cmd.targetGen;
 
-	            	m_busPool[bIndex].targetGain = newGain;
+					switch (cmd.data.effect.type) {
+						case EffectType::Biquad: {
+							Biquad& biquad = m_biquadPool[eIndex];
+							biquad.gen = eGen;
+							break;
+						}
+						default:
+							break;
+					}
 	            	break;
 				}
-				case RtCommand::Type::AllocateBiquad: {
-	            	BiquadFilter& biquad = m_biquadFilterPool[cmd.targetIndex];
-	            	biquad.generation = cmd.targetGen;
-	            	biquad.type = cmd.data.biquad.type;
+            	case RtCommand::Type::FreeEffect: {
+					uint32_t eIndex = cmd.targetIndex;
+					uint32_t eGen = cmd.targetGen;
 
-					biquad.targetFrequency = cmd.data.biquad.config.frequency;
-					biquad.currentFrequency = cmd.data.biquad.config.frequency;
-	            	biquad.targetResonance = cmd.data.biquad.config.resonance;
-	            	biquad.currentResonance = cmd.data.biquad.config.resonance;
-	            	CalculateBiquadCoefficients(biquad, static_cast<float>(m_outSampleRate));
-	            	break;
-				}
-				case RtCommand::Type::SetBiquadParams: {
-	            	BiquadFilter& biquad = m_biquadFilterPool[cmd.targetIndex];
-	            	if (biquad.generation != cmd.targetGen) break;
-
-	            	biquad.targetFrequency = cmd.data.biquad.config.frequency;
-	            	biquad.targetResonance = cmd.data.biquad.config.resonance;
-	            	break;
-				}
+					switch (cmd.data.effect.type) {
+						case EffectType::Biquad: {
+							Biquad& biquad = m_biquadPool[eIndex];
+							if (biquad.gen == eGen) biquad.Reset();
+							break;
+						}
+						default:
+							break;
+					}
+					break;
+            	}
 				case RtCommand::Type::AttachEffect: {
-	            	EffectHandle effect = EffectHandle::Create(
-	            		cmd.targetIndex,
-	            		cmd.targetGen,
-	            		cmd.data.effect.type
-	            	);
-
+	            	EffectHandle effect = EffectHandle::Create(cmd.targetIndex, cmd.targetGen, cmd.data.effect.type);
 					AttachEffect(effect, cmd.data.effect.busIndex, cmd.data.effect.effectSlot);
 	            	break;
 				}
 				case RtCommand::Type::FadeDetachEffect: {
-	            	EffectHandle effect = EffectHandle::Create(
-						cmd.targetIndex,
-						cmd.targetGen,
-						cmd.data.effect.type
-					);
-
+					EffectHandle effect = EffectHandle::Create(cmd.targetIndex, cmd.targetGen, cmd.data.effect.type);
 	            	FadeOutEffect(effect, cmd.data.effect.busIndex, cmd.data.effect.effectSlot);
 	            	break;
 				}
 				case RtCommand::Type::ForceDetachEffect: {
-	            	EffectHandle effect = EffectHandle::Create(
-						cmd.targetIndex,
-						cmd.targetGen,
-						cmd.data.effect.type
-					);
-
+					EffectHandle effect = EffectHandle::Create(cmd.targetIndex, cmd.targetGen, cmd.data.effect.type);
 	            	DetachEffect(effect, cmd.data.effect.busIndex, cmd.data.effect.effectSlot);
-	            	break;
-				}
-				case RtCommand::Type::DeallocateEffect: {
-	            	uint32_t efIndex = cmd.targetIndex;
-	            	uint32_t efGen = cmd.targetGen;
-	            	EffectType efType = cmd.data.effect.type;
-
-	            	switch (efType) {
-	            		case EffectType::None: break;
-	            		case EffectType::Biquad:
-	            			if (m_biquadFilterPool[efIndex].generation == efGen) m_biquadFilterPool[efIndex].Reset();
-	            			break;
-	            		default: break;
-	            	}
 	            	break;
 				}
             	case RtCommand::Type::SetGlobalDopplerFactor: {
@@ -581,48 +566,50 @@ namespace dalia {
 				m_listenerPool[lIndex].params = lParams;
 			}
 		}
+
+		BusParams bParams;
+		for (uint32_t bIndex = 0; bIndex < m_busParamBridges.size(); bIndex++) {
+			if (m_busParamBridges[bIndex].ConsumeUpdate(bParams)) {
+				m_busPool[bIndex].params = bParams;
+			}
+		}
+
+		BiquadParams bqParams;
+		for (uint32_t i = 0; i < m_biquadParamBridges.size(); i++) {
+			if (m_biquadParamBridges[i].ConsumeUpdate(bqParams)) {
+				m_biquadPool[i].SetParams(bqParams);
+			}
+		}
     }
 
     void RtSystem::Render(float* output, uint32_t frameCount) {
         const uint32_t sampleCount = frameCount * m_outChannels;
 
-    	// Bus preprocessing
+		// Memory initialization
 		std::memset(m_busBufferPool.data(), 0, m_busBufferPool.size() * sizeof(float));
-		for (uint32_t bIndex = 0; bIndex < m_busPool.size(); bIndex++) {
-			Bus& bus = m_busPool[bIndex];
-			if (bus.isActive) m_isMixOrderDirty |= ResolveBusState(bus);
-		}
 
-		if (m_isMixOrderDirty) {
-			m_mixOrderSize = m_mixGraphCompiler->Compile( m_busPool, m_mixOrder);
-			m_isMixOrderDirty = false;
-			DALIA_LOG_DEBUG(LOG_CTX_MIXER, "Recompiled bus graph.");
-		}
-
-		if (m_mixOrderSize == 0) {
-			// TODO: Send an RtEvent back to API thread to log cycle detection
-			DALIA_LOG_ERR(LOG_CTX_MIXER, "Mix graph cycle detected!"); // TODO: remove this log
-
-			std::memset(output, 0, sampleCount * sizeof(float));
-			return;
-		}
-
-        // --- Voice Pass ---
+		// State resolvers
 		ResolveVoiceAcoustics();
 		ResolveVoiceStates();
+		m_isMixOrderDirty |= ResolveBusStates();
+
+		// Graph compilation
+		if (m_isMixOrderDirty) {
+			if (!CompileMixGraph()) {
+				std::memset(output, 0, sampleCount * sizeof(float));
+				return;
+			}
+			m_isMixOrderDirty = false;
+		}
+
+        // Render passes
 		RenderVoices(frameCount);
+		RenderBuses(frameCount);
 
-        // --- Bus Pass ---
-		std::span activeMixOrder = m_mixOrder.subspan(0, m_mixOrderSize);
-        for (uint32_t bIndex : activeMixOrder) {
-            RenderBus(bIndex, frameCount);
-        }
-
-        float* masterBuffer = m_busBufferPool.data();
-
+		// Output
+        float* masterBuffer = GetBusBuffer(m_busBufferPool.data(), MASTER_BUS_INDEX, m_maxSamplesPerPeriod);
 		m_masterPeakLimiter.ProcessBuffer(masterBuffer, frameCount, m_outChannels); // Limit peaks
 
-		// Hard clamp output
 		for (uint32_t i = 0; i < sampleCount; i++) {
 			masterBuffer[i] = std::clamp(masterBuffer[i], -1.0f, 1.0f);
 		}
@@ -630,7 +617,19 @@ namespace dalia {
         std::copy_n(masterBuffer, sampleCount, output); // Output to OS
 	}
 
-	void RtSystem::ResolveVoiceStates() {
+    bool RtSystem::CompileMixGraph() {
+		m_mixOrderSize = m_mixGraphCompiler->Compile(m_busPool, m_mixOrder);
+
+		if (m_mixOrderSize == 0) {
+			DALIA_LOG_ERR(LOG_CTX_MIXER, "Mix graph cycle detected"); // TODO: make this an event
+			return false;
+		}
+
+		DALIA_LOG_DEBUG(LOG_CTX_MIXER, "Recompiled bus graph."); // TODO: Make this an event
+		return true;
+    }
+
+    void RtSystem::ResolveVoiceStates() {
 		for (uint32_t vIndex = 0; vIndex < m_voicePool.size(); vIndex++) {
 			Voice& voice = m_voicePool[vIndex];
 
@@ -639,7 +638,10 @@ namespace dalia {
 
 			// Garbage collection
 			if (voice.currentState == VoiceState::Stopped || voice.currentBusIndex == NO_PARENT) {
-				if (voice.currentBusIndex) voice.exitCondition = PlaybackExitCondition::ExplicitStop;
+				if (voice.currentBusIndex == NO_PARENT && voice.currentState != VoiceState::Stopped) {
+					// Voice was orphaned
+					voice.exitCondition = PlaybackExitCondition::ExplicitStop;
+				}
 				FreeVoice(vIndex);
 				continue;
 			}
@@ -695,7 +697,12 @@ namespace dalia {
 				}
 
 				// Handle state change
-				if (voice.currentState != voice.targetState) voice.currentState = voice.targetState;
+				if (voice.currentState != voice.targetState) {
+					if (voice.targetState == VoiceState::Stopped) {
+						voice.exitCondition = PlaybackExitCondition::ExplicitStop;
+					}
+					voice.currentState = voice.targetState;
+				}
 			}
 
 			if (!requiresSilence && voice.currentState == VoiceState::Playing) voice.targetFadeGain = 1.0f;
@@ -707,7 +714,7 @@ namespace dalia {
 			Voice& voice = m_voicePool[vIndex];
 			if (voice.currentState != VoiceState::Playing) continue;
 
-			float baseGain = math::DbToGain(voice.params.volumeDb);
+			float baseGain = voice.params.gain;
 
 			for (uint32_t inC = 0; inC < CHANNELS_MAX; inC++) {
 				for (uint32_t outC = 0; outC < CHANNELS_MAX; outC++) {
@@ -849,7 +856,7 @@ namespace dalia {
 			if (voice.currentState != VoiceState::Playing) continue;
 
 			voicesRendered++;
-			float* busBuffer = GetBusBuffer(m_busBufferPool.data(), voice.currentBusIndex, frameCount);
+			float* busBuffer = GetBusBuffer(m_busBufferPool.data(), voice.currentBusIndex, m_maxSamplesPerPeriod);
 			uint32_t framesMixed = 0;
 
 			float phaseInc = voice.currentPitch * (static_cast<float>(voice.sampleRate) / static_cast<float>(m_outSampleRate));
@@ -908,10 +915,7 @@ namespace dalia {
 				// Boundary check
 				if (block.framesAvailable < sourceFramesNeeded) {
 					bool keepPlaying = HandleVoiceBoundary(voice, m_streamPool.data(), m_ioStreamRequests);
-					if (!keepPlaying) {
-						voice.currentState = VoiceState::Stopped;
-						break;
-					}
+					if (!keepPlaying) break;
 				}
 			}
 		}
@@ -929,7 +933,7 @@ namespace dalia {
     		));
     	}
 
-		// TODO: Remove these logs some time
+		// TODO: These should be sent back to the API thread as events
     	if (voice.exitCondition == PlaybackExitCondition::NaturalEnd) {
     		DALIA_LOG_DEBUG(LOG_CTX_MIXER, "Voice %d finished naturally.", vIndex);
     	}
@@ -947,77 +951,102 @@ namespace dalia {
     	voice.Reset();
     }
 
-    bool RtSystem::ResolveBusState(Bus& bus) {
-		bool requiresSilence = false;
+    bool RtSystem::ResolveBusStates() {
 		bool topologyChanged = false;
 
-		// Do we need to duck?
-		if (bus.currentParentIndex != bus.targetParentIndex) requiresSilence = true;
+		for (uint32_t bIndex = 0; bIndex < m_busPool.size(); bIndex++) {
+			Bus& bus = m_busPool[bIndex];
+			if (!bus.isActive) continue;
 
-		if (requiresSilence) bus.targetFadeGain = GAIN_SILENCE;
+			bool requiresSilence = false;
 
-		if (math::NearlyEqual(bus.currentFadeGain, 0.0f, EPSILON_GAIN)) {
-			// Bus is silent
+			// Do we need to duck?
+			if (bus.currentParentIndex != bus.targetParentIndex) requiresSilence = true;
 
-			if (bus.currentParentIndex != bus.targetParentIndex) {
-				bus.currentParentIndex = bus.targetParentIndex;
-				DALIA_LOG_DEBUG(LOG_CTX_MIXER, "Re-routed bus to target");
-				topologyChanged = true;
+			if (requiresSilence) bus.targetFadeGain = GAIN_SILENCE;
+
+			if (math::NearlyEqual(bus.currentFadeGain, 0.0f, EPSILON_GAIN)) {
+				// Bus is silent
+
+				if (bus.currentParentIndex != bus.targetParentIndex) {
+					bus.currentParentIndex = bus.targetParentIndex;
+					DALIA_LOG_DEBUG(LOG_CTX_MIXER, "Re-routed bus to target");
+					topologyChanged = true;
+				}
 			}
-		}
 
-		if (!requiresSilence) bus.targetFadeGain = GAIN_DEFAULT;
+			if (!requiresSilence) bus.targetFadeGain = GAIN_DEFAULT;
+		}
 
 		return topologyChanged;
     }
 
-    void RtSystem::RenderBus(uint32_t busIndex, uint32_t frameCount) {
-    	Bus& bus = m_busPool[busIndex];
-		float* buffer = GetBusBuffer(m_busBufferPool.data(), busIndex, frameCount);
+    uint32_t RtSystem::RenderBuses(uint32_t frameCount) {
+		std::span activeMixOrder = m_mixOrder.subspan(0, m_mixOrderSize);
+		uint32_t busesRendered = 0;
 
-		for (uint32_t i = 0; i < MAX_EFFECTS_PER_BUS; i++) {
-			EffectSlot& slot = bus.effectSlots[i];
-			if (slot.state == EffectState::None) continue;
-			ApplyBusEffect(buffer, slot, frameCount);
+		for (uint32_t bIndex : activeMixOrder) {
+			busesRendered++;
+
+			Bus& bus = m_busPool[bIndex];
+			float* buffer = GetBusBuffer(m_busBufferPool.data(), bIndex, m_maxSamplesPerPeriod);
+
+			for (uint32_t i = 0; i < MAX_EFFECTS_PER_BUS; i++) {
+				EffectSlot& slot = bus.effectSlots[i];
+				if (slot.state == EffectState::None) continue;
+				ApplyBusEffect(buffer, slot, frameCount);
+			}
+
+			ApplyGainAndFade(
+				buffer, frameCount, m_outChannels,
+				bus.currentGain, bus.params.gain, m_smoothingCoefficient,
+				bus.currentFadeGain, bus.targetFadeGain, m_fadeStep
+			);
+
+			if (bus.currentParentIndex != NO_PARENT) {
+				float* parentBuffer = GetBusBuffer(m_busBufferPool.data(), bus.currentParentIndex, m_maxSamplesPerPeriod);
+				MixToBuffer(parentBuffer, buffer, frameCount * m_outChannels);
+			}
 		}
 
-		ApplyGainAndFade(
-			buffer, frameCount, m_outChannels,
-			bus.currentGain, bus.targetGain, m_smoothingCoefficient,
-			bus.currentFadeGain, bus.targetFadeGain, m_fadeStep
-		);
-
-    	if (bus.currentParentIndex != NO_PARENT) {
-    		float* parentBuffer = m_busBufferPool.data() + (bus.currentParentIndex * m_maxSamplesPerPeriod);
-    		MixToBuffer(parentBuffer, buffer, frameCount * m_outChannels);
-    	}
+		return busesRendered;
     }
 
-    void RtSystem::ApplyBusEffect(float* busBuffer, EffectSlot& slot, uint32_t frameCount) {
-		float fadeDurationInSeconds = 0.01f;
-		float fadeDelta = 1.0f / (m_outSampleRate * fadeDurationInSeconds);
+    void RtSystem::ApplyBusEffect(float* buffer, EffectSlot& slot, uint32_t frameCount) {
+		uint32_t eIndex = slot.handle.GetIndex();
+		EffectType eType = slot.handle.GetType();
+
+		float* processBuffer = buffer;
 		uint32_t sampleCount = frameCount * m_outChannels;
 
-		std::memcpy(m_dspScratchBuffer.data(), busBuffer, sampleCount * sizeof(float));
-		switch (slot.effect.GetType()) {
-			case EffectType::None: break;
-			case EffectType::Biquad:
-				BiquadFilter& biquad = m_biquadFilterPool[slot.effect.GetIndex()];
-				ProcessBiquad(m_dspScratchBuffer.data(), frameCount, m_outChannels, biquad, m_outSampleRate);
+		if (slot.state != EffectState::Active) {
+			std::memcpy(m_dspScratchBuffer.data(), buffer, sampleCount * sizeof(float));
+			processBuffer = m_dspScratchBuffer.data();
+		}
+
+		switch (eType) {
+			case EffectType::Biquad: {
+				Biquad& biquad = m_biquadPool[eIndex];
+				biquad.Process(processBuffer, frameCount, m_outChannels, m_outSampleRate);
+
+				break;
+			}
+			default:
 				break;
 		}
 
-		if (slot.state == EffectState::Active) {
-			std::memcpy(busBuffer, m_dspScratchBuffer.data(), sampleCount * sizeof(float));
-		}
-		else {
+		// Process DSP
+		if (slot.state != EffectState::Active) {
+			float fadeDurationInSeconds = 0.01f;
+			float fadeDelta = 1.0f / (static_cast<float>(m_outSampleRate) * fadeDurationInSeconds);
+
 			float targetMix = 0.0f;
 			if (slot.state == EffectState::FadingIn) targetMix = 1.0f;
 			else if (slot.state == EffectState::FadingOut) targetMix = 0.0f;
 
 			ApplyBlockCrossFade(
-				busBuffer,
-				m_dspScratchBuffer.data(),
+				buffer,
+				processBuffer,
 				frameCount,
 				m_outChannels,
 				slot.currentMix,
@@ -1027,43 +1056,47 @@ namespace dalia {
 
 			if (slot.state == EffectState::FadingIn && slot.currentMix >= 1.0f) {
 				slot.state = EffectState::Active;
-				m_rtEvents->Push(RtEvent::EffectActive(slot.effect.GetRawId()));
+				m_rtEvents->Push(RtEvent::EffectActive(slot.handle.GetRawId()));
 			}
 			else if (slot.state == EffectState::FadingOut && slot.currentMix <= 0.0f) {
-				slot.Reset(); // Detach effect
-				m_rtEvents->Push(RtEvent::EffectDetached(slot.effect.GetRawId()));
+				m_rtEvents->Push(RtEvent::EffectDetached(slot.handle.GetRawId()));
+				slot.Reset();
 			}
 		}
     }
 
-    void RtSystem::AttachEffect(EffectHandle effect, uint32_t busIndex, uint32_t effectSlot) {
-		FlushEffect(effect.GetType(), effect.GetIndex(), effect.GetGeneration()); // Remove history
+    void RtSystem::AttachEffect(EffectHandle handle, uint32_t busIndex, uint32_t effectSlot) {
+		uint32_t eIndex = handle.GetIndex();
+		uint32_t eGen = handle.GetGeneration();
+		EffectType eType = handle.GetType();
+
+		switch (eType) {
+			case EffectType::Biquad: {
+				Biquad& biquad = m_biquadPool[eIndex];
+				if (biquad.gen != eGen) return;
+
+				biquad.Flush();
+				break;
+			}
+			default:
+				return;
+		}
 
 		EffectSlot& slot = m_busPool[busIndex].effectSlots[effectSlot];
-		slot.effect = effect;
-		slot.currentMix = 0.0f;
+		slot.handle = handle;
 		slot.state = EffectState::FadingIn;
+		slot.currentMix = 0.0f;
     }
 
-    void RtSystem::DetachEffect(EffectHandle effect, uint32_t busIndex,
+    void RtSystem::DetachEffect(EffectHandle handle, uint32_t busIndex,
     	uint32_t effectSlot) {
 		EffectSlot& slot = m_busPool[busIndex].effectSlots[effectSlot];
-		if (slot.effect == effect) slot.Reset();
+		if (slot.handle == handle) slot.Reset();
     }
 
-    void RtSystem::FadeOutEffect(EffectHandle effect, uint32_t busIndex, uint32_t effectSlot) {
+    void RtSystem::FadeOutEffect(EffectHandle handle, uint32_t busIndex, uint32_t effectSlot) {
 		EffectSlot& slot = m_busPool[busIndex].effectSlots[effectSlot];
-		if (slot.effect == effect && slot.state != EffectState::None) slot.state = EffectState::FadingOut;
-    }
-
-    void RtSystem::FlushEffect(EffectType type, uint32_t index, uint32_t gen) {
-		switch (type) {
-		case EffectType::None: break;
-		case EffectType::Biquad:
-			if (m_biquadFilterPool[index].generation == gen) m_biquadFilterPool[index].Flush();
-			break;
-		default: break;
-		}
+		if (slot.handle == handle && slot.state != EffectState::None) slot.state = EffectState::FadingOut;
     }
 
     void RtSystem::ConfigureSpeakerLayout(SpeakerLayout layout) {

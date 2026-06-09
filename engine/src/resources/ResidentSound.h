@@ -21,6 +21,8 @@ namespace dalia {
         uint32_t channels = 0;
         uint32_t sampleRate = 0;
 
+    	double lengthInSeconds = 0.0;
+
         std::span<float> GetBuffer() { return std::span(pcmData.data(), pcmData.size()); }
 
         void Reset() {

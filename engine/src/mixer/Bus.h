@@ -1,6 +1,8 @@
 #pragma once
+
 #include "core/Constants.h"
 #include "dalia/audio/EffectControl.h"
+#include "dsp/Slew.h"
 
 namespace dalia {
 
@@ -14,16 +16,21 @@ namespace dalia {
     };
 
     struct EffectSlot {
-        EffectHandle effect = InvalidEffectHandle;
+        EffectHandle handle = InvalidEffectHandle;
         EffectState state = EffectState::None;
         float currentMix = 0.0f;
 
         void Reset() {
-            effect = InvalidEffectHandle;
+            handle = InvalidEffectHandle;
             state = EffectState::None;
             currentMix = 0.0f;
         }
     };
+
+	struct BusParams {
+		float gain = GAIN_DEFAULT;
+
+	};
 
     struct Bus {
     	bool isActive = false;
@@ -38,6 +45,8 @@ namespace dalia {
         float targetGain = GAIN_DEFAULT;
         float currentGain = GAIN_DEFAULT;
 
+    	BusParams params;
+
         EffectSlot effectSlots[MAX_EFFECTS_PER_BUS];
 
         void Reset() {
@@ -49,9 +58,6 @@ namespace dalia {
         	currentFadeGain = 1.0f;
         	targetFadeGain = 1.0f;
 
-            targetGain = GAIN_DEFAULT;
-            currentGain = GAIN_DEFAULT;
-
             for (int i = 0; i < MAX_EFFECTS_PER_BUS; i++) {
                 effectSlots[i].Reset();
             }
@@ -62,8 +68,9 @@ namespace dalia {
         uint32_t refCount = 0;
         uint32_t parentBusIndex = NO_PARENT;
 
-        // Mixing Properties
-        float volumeDb = VOLUME_DB_DEFAULT;
+        BusParams params;
+    	bool isParamsDirty = false;
+
         EffectHandle effectSlots[MAX_EFFECTS_PER_BUS] = {
             InvalidEffectHandle,
             InvalidEffectHandle,
@@ -75,7 +82,9 @@ namespace dalia {
             refCount = 0;
             parentBusIndex = NO_PARENT;
 
-            volumeDb = VOLUME_DB_DEFAULT;
+            params = BusParams{};
+        	isParamsDirty = false;
+
             for (int i = 0; i < MAX_EFFECTS_PER_BUS; i++) {
                 effectSlots[i] = InvalidEffectHandle;
             }

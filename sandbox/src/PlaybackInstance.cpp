@@ -15,6 +15,9 @@ PlaybackInstance::PlaybackInstance(dalia::Engine* engine, dalia::SoundHandle sou
 	};
 
 	m_result = m_engine->CreatePlayback(m_handle, sound, exitCallback);
+	if (m_result == dalia::Result::Ok) {
+		m_engine->GetSoundLength(sound, m_soundLength);
+	}
 }
 
 PlaybackInstance::~PlaybackInstance() {
@@ -143,6 +146,11 @@ void PlaybackInstance::DrawInspectorUI(const UIContext& ui) {
 			if (res != dalia::Result::Ok) m_result = res;
 		}
 	}
+
+	ImGui::Text("Length: %u min %u s",
+		static_cast<uint32_t>(m_soundLength / 60.0),
+		static_cast<uint32_t>(m_soundLength) % 60
+	);
 
 	ImGui::InputDouble("Time (s)", &m_seekTime, 1.0, 10.0, "%.1f");
 	ImGui::SameLine();

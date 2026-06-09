@@ -37,10 +37,10 @@ namespace dalia {
 
         // Called by the io-thread on request by the audio thread upon voice finish
         void Reset() {
-            gen.fetch_add(1, std::memory_order_release);
-            if (gen.load(std::memory_order_acquire) == NO_GENERATION) {
-                gen.store(START_GENERATION, std::memory_order_release);
-            }
+        	uint32_t nextGen = gen.load(std::memory_order_relaxed) + 1;
+        	if (nextGen == NO_GENERATION) nextGen = START_GENERATION;
+        	gen.store(nextGen, std::memory_order_release);
+
             state.store(StreamState::Free, std::memory_order_release);
 
             std::fill_n(&buffers[0][0], (2 * DOUBLE_BUFFER_SIZE), 0.0f);

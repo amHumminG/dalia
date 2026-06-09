@@ -4,7 +4,7 @@
 
 namespace dalia {
 
-	enum class SpeakerLayout {
+	enum class SpeakerLayout : uint8_t {
 		Mono,
 		Stereo,
 		Surround51,

@@ -55,6 +55,7 @@ private:
 	PlaybackState m_state = PlaybackState::Inactive;
 	dalia::PlaybackExitCondition m_exitCondition = dalia::PlaybackExitCondition::None;
 
+	double m_soundLength = 0.0;
 	double m_seekTime = 0.0;
 
 	// Bus
