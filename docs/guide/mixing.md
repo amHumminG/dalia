@@ -61,13 +61,14 @@ effect slots in the order `0`, `1`, `2`, `3`.
 ### Creating an Effect
 Effects must first be created and configured before being attached to a bus. Let's create a Lowpass filter.
 ```c++
-dalia::BiquadConfig lowpassConfig;
-lowpassConfig.type = dalia::BiquadFilterType::LowPass;
-lowpassConfig.frequency = 800.0f; // Cut off frequencies above 800Hz
-lowpassConfig.resonance = 1.0f;
+// Filter that cuts off frequencies above 800Hz
+dalia::BiquadParams lowpassParams;
+lowpassParams.type = dalia::BiquadParams::Type::LowPass;
+lowpassParams.frequency = 800.0f;
+lowpassParams.resonance = 1.0f;
 
 dalia::EffectHandle lowpassFilter;
-engine->CreateEffect(lowpassFilter, lowpassConfig);
+engine->CreateEffect(lowpassFilter, lowpassParams);
 ```
 
 ### Attaching and Hot-Swapping
@@ -84,10 +85,10 @@ It is advised to only attach and detach effects when a bus is not actively playi
 ### Modifying and Detaching
 The parameters of an effect can be altered at any time, even when it is actively processing audio.
 ```c++
-lowpassConfig.frequency = 400.0f;
-engine->SetEffectConfig(lowpassFilter, lowpassConfig); // Lower the frequency cutoff to 400Hz
+lowpassParams.frequency = 400.0f;
+engine->SetEffectParams(lowpassFilter, lowpassParams); // Lower the frequency cutoff to 400Hz
 ```
-*Note: Changing the BiquadFilterType of an active filter alters its DSP topology instantly. Unlike frequency and 
+*Note: Changing the `BiquadParams::Type` of an active filter alters its DSP topology instantly. Unlike frequency and 
 resonance, discrete topology changes are not smoothed and will cause an audible pop if audio is currently passing 
 through. It is highly recommended to only change filter types during silence or when the filter is not attached.*
 
