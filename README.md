@@ -7,7 +7,8 @@
 ---
 
 ## Features
-* **Configurable Memory Usage:** All internal pools are pre-allocated at startup per configuration. No dynamic allocations at runtime.
+* **Configurable Memory Usage:** All internal pools are pre-allocated at startup per configuration. No dynamic allocations 
+* at runtime except for resident sound loading (on a background thread).
 * **Asset Management:** Asynchronous, reference-counted asset loading and double-buffered OGG/Vorbis streaming.
 * **3D Spatialization:**
   * Configurable coordinate systems (left/right-handed).
@@ -38,7 +39,7 @@ instructions provided below and running the compiled sandbox executable.
 * Compiler with C++20 support
 
 If you want to compile DALIA directly to run the Sandbox or Studio UI, use the commands below. Note that DALIA Studio tool
-is currently not in a usable state.
+is currently not in a usable state and is therefore excluded from the build by default.
 
 ```bash
 git clone https://github.com/amHumminG/dalia.git

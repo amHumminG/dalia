@@ -11,7 +11,7 @@ else()
     set(DALIA_IS_TOP_LEVEL OFF)
 endif()
 
-option(DALIA_BUILD_STUDIO "Build the DALIA Studio editor" ${DALIA_IS_TOP_LEVEL})
+option(DALIA_BUILD_STUDIO "Build the DALIA Studio editor" OFF})
 option(DALIA_BUILD_SANDBOX "Build the DALIA Engine sandbox" ${DALIA_IS_TOP_LEVEL})
 
 add_subdirectory(common)
