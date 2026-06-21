@@ -1,7 +1,7 @@
 # Architecture
 
 ## Threading Model
-DALIA uses splits its processing across four threads in total (one of them being the thread that the API is 
+DALIA splits its processing across four threads in total (one of them being the thread that the API is 
 being called from). The engine delegates its workload to three internal subsystems. To do this efficiently without 
 locking any of the priority threads (the API thread and the audio thread), DALIA makes use of lock-free queues 
 for most of its inter-thread communication.
@@ -15,7 +15,7 @@ call to the engine is made, it is packaged into a command struct and pushed into
 threads for processing.
 
 The **Audio Thread** (`RtSystem`) is a real-time, high-priority thread driven by the OS. This thread pops and processes 
-commands of the command queue and renders the audio frame.
+commands from the command queue and renders the audio frame.
 
 The **IO Streaming Thread** (`IoStreamSystem`) is a background worker thread that upon request, fills stream buffers 
 with PCM data.
@@ -35,13 +35,13 @@ memory-pools into the three subsystems (`RtSystem`, `IoStreamSystem`, and `IoLoa
 provided to them by the internal state.
 
 ## Mixing Graph
-The core of DALIA's DSP pipeline is a Directed Acyclic Graph (DAG). In order to route audio dynamically, every node
+The DSP pipeline is a Directed Acyclic Graph (DAG). In order to route audio dynamically, every node
 (voice or bus) holds a reference (more specifically an index) to its parent node. 
 
 ### Mixing Hierarchy Diagram
 ![DALIA Mixing Hierarchy Diagram](assets/diagrams/dalia_mixing_hierarchy_diagram.svg)
 
-This system is designed for CPU cache efficiency. The engine maintains a flat, topology sorted array of active nodes.
+This system is designed for CPU cache efficiency. The engine maintains a flat, topologically sorted array of active nodes.
 During an audio frame, the audio thread simply runs through this contiguous array, accumulating audio data into the
 correct parent buffers. To achieve this, the engine intentionally trades memory for CPU performance by pre-allocating
 intermediate buffers for every bus during initialization.

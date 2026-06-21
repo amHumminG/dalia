@@ -12,7 +12,7 @@ engine->CreatePlayback(explosionPlayback, explosionSound);
 ### Exit Callbacks
 You can optionally pass a `PlaybackExitCallback` function when creating the playback instance. This callback will be
 triggered during the `Engine::Update()` tick when the sound exits. A playback exit could happen for a number of reasons. 
-All conditions are covered by the `PlaybackExitCondition` enum. If you want to trigger something if a playback instance
+All conditions are covered by the `PlaybackExitCondition` enum. If you want to trigger something when a playback instance
 finishes naturally, just check the value of the `PlaybackExitCondition` parameter. The `PlaybackHandle` parameter will 
 hold the handle to the playback instance that just stopped. This is especially useful if you intend to use the same
 callback for multiple playback instances.
@@ -54,7 +54,7 @@ engine->SetPlaybackVolumeDb(explosionPlayback, -4.0f); // Reduce volume by 4dB
 
 engine->SetPlaybackPitch(explosionPlayback, 1.3f); // Play 30% faster and higher
 ```
-For standard 2D playback, you can pan the sound between the left and right speakers. The pan value is normalized from
+For standard non-spatial playback, you can pan the sound between the left and right speakers. The pan value is normalized from
 `-1.0` (full left) to `1.0` (full right), with `0.0` representing the middle.
 ```c++
 engine->SetPlaybackStereoPan(explosionPlayback, 0.5f); // Pan slightly to the right

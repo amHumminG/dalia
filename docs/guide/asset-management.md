@@ -13,7 +13,7 @@ When you load a file into the engine, the sound type has to be specified.
 A `Resident` sound is fully decoded into PCM data and loaded entirely into RAM. This type fits for most short sounds 
 (typically effects) that play frequently or trigger randomly. As it is fully decoded on load, playback does not add
 any additional CPU overhead on top of sound mixing. The tradeoff is memory. This type of sound consumes a significant
-amount of RAM (scaling with length, sample rate, and channels of the file). It is therefore not advised to load longer
+amount of RAM (scaling with the length, sample rate, and channels of the file). It is therefore not advised to load longer
 sounds with this type.
 
 ### Stream
@@ -21,7 +21,9 @@ A `Stream` sound is streamed from a file. The loading operation itself is theref
 buffered. Because of this, playing a `Stream` sound adds a tiny bit of CPU overhead during playback as one of the 
 background threads has to continuously refill the buffers. The advantage is that it uses very little memory, and that
 the memory usage stays consistent regardless of the file size. This type of sound is recommended for music, ambiance,
-and voice-overs.
+and voice-overs. It is also worth noting that as of right now, there is no way to prime a stream sound. This means that
+there will be a small delay between calling play on the sound (for the first time) and playback starting. This happens
+because the internal buffers have to be filled before playback can start.
 
 ## Asynchronous Loading
 
@@ -41,7 +43,7 @@ loaded (or failed to load). The load result will be accessible as a function par
 during the `Engine::Update()` tick.
 
 When calling a load function, you can also optionally pass a pointer to retrieve a unique request ID. this ID is
-passed directly into the callback, allowing your asset manager to track exactly which load request has finished.
+passed directly into the callback, allowing an asset manager to track exactly which load request has finished.
 *Note: If the requested sound is already loaded in, the engine will populate the request ID parameter with
 `INVALID_REQUEST_ID` (`0`), as no new asynchronous operation was required.*
 ```c++
