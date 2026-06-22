@@ -20,7 +20,7 @@ namespace dalia {
 
 	struct VoiceParams {
 		float gain = GAIN_DEFAULT;
-		float pitch = PITCH_DEFAULT;
+		float playbackRate = PLAYBACK_RATE_DEFAULT;
 		float stereoPan = PAN_STEREO_DEFAULT;
 
 		bool isLooping = false;
@@ -66,7 +66,7 @@ namespace dalia {
     	float currentGainMatrix[CHANNELS_MAX][CHANNELS_MAX];
     	float targetGainMatrix[CHANNELS_MAX][CHANNELS_MAX];
 
-    	float currentPitch = 1.0f; // Final resolved pitch after doppler has been applied
+    	float finalPlaybackRate = PLAYBACK_RATE_DEFAULT; // Final resolved playback rate after doppler has been applied
 
     	VoiceParams params;
 
@@ -114,6 +114,8 @@ namespace dalia {
         			targetGainMatrix[inC][outC]  = GAIN_SILENCE;
         		}
         	}
+
+        	finalPlaybackRate = PLAYBACK_RATE_DEFAULT;
 
         	params = VoiceParams{};
 

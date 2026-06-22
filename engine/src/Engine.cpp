@@ -1571,7 +1571,7 @@ namespace dalia {
 		return Result::Ok;
 	}
 
-	Result Engine::SetPlaybackPitch(PlaybackHandle playback, float pitch) {
+	Result Engine::SetPlaybackRate(PlaybackHandle playback, float rate) {
 		if (!IsInitialized(m_state)) return Result::NotInitialized;
 
 		if (!playback.IsValid()) return Result::InvalidHandle;
@@ -1582,11 +1582,11 @@ namespace dalia {
 		Result res = m_state->ResolveMirror(vIndex, vGen, vMirror);
 		if (res != Result::Ok) return res;
 
-		float clampedPitch = std::clamp(pitch, PITCH_MIN, PITCH_MAX);
-		vMirror->params.pitch = clampedPitch;
+		float clampedRate = std::clamp(rate, PLAYBACK_RATE_MIN, PLAYBACK_RATE_MAX);
+		vMirror->params.playbackRate = clampedRate;
 		vMirror->isParamsDirty = true;
 
-		DALIA_LOG_DEBUG(LOG_CTX_API, "Set Voice %u pitch to %.2f.", vIndex, clampedPitch);
+		DALIA_LOG_DEBUG(LOG_CTX_API, "Set Voice %u playback rate to %.2f.", vIndex, clampedRate);
 
 		return Result::Ok;
 	}

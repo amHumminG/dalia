@@ -722,7 +722,7 @@ namespace dalia {
 				}
 			}
 
-			voice.currentPitch = voice.params.pitch;
+			voice.finalPlaybackRate = voice.params.playbackRate;
 
 			if (!voice.params.isSpatial) {
 				// --- NOT SPATIAL ---
@@ -806,7 +806,7 @@ namespace dalia {
 				);
 			}
 
-			// Pitch Evaluation
+			// Final Playback Rate Evaluation
 			float totalDopplerFactor = voice.params.dopplerFactor * m_globalDopplerFactor;
 			if (voice.params.useDoppler && totalDopplerFactor > 0.0f) {
 				math::Vector3 listenerToEmitter = voice.params.position - bestListenerParams.position;
@@ -828,7 +828,7 @@ namespace dalia {
 
 					float dopplerMultiplier = (SPEED_OF_SOUND + listenerRadial) / (SPEED_OF_SOUND + emitterRadial);
 
-					voice.currentPitch = std::clamp(voice.currentPitch * dopplerMultiplier, PITCH_MIN, PITCH_MAX);
+					voice.finalPlaybackRate = std::clamp(voice.finalPlaybackRate * dopplerMultiplier, PLAYBACK_RATE_MIN, PLAYBACK_RATE_MAX);
 				}
 			}
 
@@ -859,7 +859,7 @@ namespace dalia {
 			float* busBuffer = GetBusBuffer(m_busBufferPool.data(), voice.currentBusIndex, m_maxSamplesPerPeriod);
 			uint32_t framesMixed = 0;
 
-			float phaseInc = voice.currentPitch * (static_cast<float>(voice.sampleRate) / static_cast<float>(m_outSampleRate));
+			float phaseInc = voice.finalPlaybackRate * (static_cast<float>(voice.sampleRate) / static_cast<float>(m_outSampleRate));
 
 			while (framesMixed < frameCount) {
 				uint32_t outputFramesNeeded = frameCount - framesMixed;

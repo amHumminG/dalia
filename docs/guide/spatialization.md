@@ -76,7 +76,7 @@ engine->SetPlaybackDistanceMode(explosionPlayback, dalia::DistanceMode::FromDist
 ```
 
 ## The Doppler Effect
-The Doppler effect simulates the change in pitch when a sound source moves relative to the listener. To use the Doppler
+The Doppler effect simulates the change in frequency when a sound source moves relative to the listener. To use the Doppler
 effect, both the playback instance and the listener must be supplying their velocities to the engine every frame.
 
 ### Enabling Doppler

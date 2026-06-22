@@ -14,11 +14,11 @@
   * Configurable coordinate systems (left/right-handed).
   * Multi-listener support with bitmask routing (for split-screen/local co-op).
   * Distance probes (split distance-attenuation and panning origins for 3rd-person cameras).
-  * Doppler shifting with global and per-playback scaling.
+  * Doppler frequency shifts with global and per-playback scaling.
 * **Dynamic Mixing Hierarchy:**
   * Directed acyclic graph bus routing.
   * 4 hot-swappable DSP effect slots per bus.
-* **Real-Time Playback Parameter Control:** Volume, pitch, pan, looping, spatialization, position, attenuation curve, min/max distance, velocity, doppler effect, and more.
+* **Real-Time Playback Parameter Control:** Volume, playback rate, pan, looping, spatialization, position, attenuation curve, min/max distance, velocity, doppler effect, and more.
 
 DALIA is currently only supported on Windows (WASAPI).
 Check out the [documentation](https://amhumming.github.io/dalia/) for more details.

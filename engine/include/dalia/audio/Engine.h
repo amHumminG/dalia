@@ -442,17 +442,17 @@ namespace dalia {
 		/// @retval Result::ExpiredHandle		The playback handle has already stopped playing.
 		Result SetPlaybackVolumeDb(PlaybackHandle playback, float volumeDb);
 
-		/// @brief Sets the pitch of a playback instance.
+		/// @brief Sets the playback rate (speed) of a playback instance.
 		///
 		/// @param[in] playback The handle to the playback instance.
-		/// @param[in] pitch	The new pitch. This is clamped internally between 0.1 and 4.0 to prevent performance
-		///						issues.
+		/// @param[in] rate		The new playback rate. This is clamped internally between 0.1 and 4.0 to prevent
+		///						performance issues.
 		///
-		/// @retval Result::Ok					The pitch of the playback instance was successfully set.
+		/// @retval Result::Ok					The playback rate of the playback instance was successfully set.
 		/// @retval Result::NotInitialized		The engine is not initialized.
 		/// @retval Result::InvalidHandle		The playback handle is not recognized.
 		/// @retval Result::ExpiredHandle		The playback handle has already stopped playing.
-		Result SetPlaybackPitch(PlaybackHandle playback, float pitch);
+		Result SetPlaybackRate(PlaybackHandle playback, float rate);
 
 		/// @brief Sets the stereo pan of a playback instance.
 		///
@@ -553,11 +553,11 @@ namespace dalia {
 		///
 		/// @note[Spatial only] This only affects playback instances that have spatialization enabled.
 		///
-		/// @note[Requirements] In order for the doppler pitch shifting to be used, both listener and playback velocity
+		/// @note[Requirements] In order for the doppler effect to be calculated, both listener and playback velocity
 		///						must be supplied to the engine every frame.
 		///
 		/// @param[in] playback		The handle to the playback instance.
-		/// @param[in] useDoppler	True to enable Doppler pitch shifting, false to disable it.
+		/// @param[in] useDoppler	True to enable Doppler frequency shifts, false to disable it.
 		///
 		/// @retval Result::Ok					The playback Doppler effect was successfully enabled or disabled.
 		/// @retval Result::NotInitialized		The engine is not initialized.
@@ -567,7 +567,7 @@ namespace dalia {
 
 		/// @brief Sets the scaling factor for the Doppler effect for a playback instance.
 		///
-		/// @note[Spatial only] This only affects playback instances that have spatialization and Doppler pitch-shifting
+		/// @note[Spatial only] This only affects playback instances that have spatialization and the Doppler effect
 		///						enabled.
 		///
 		/// @param[in] playback			The handle to the playback instance.

@@ -45,14 +45,14 @@ except those that have stopped (including the inactive state before the playback
 desired starting parameters for a playback instance before calling `Engine::PlayPlayback()`. Doing this guarantees that
 all parameters are applied simultaneously when the voice starts playing.
 
-### Volume, Pitch, and Stereo Pan
-Volume is measured in decibels (dB), where `0.0` is unity gain (the original volume of the sound file). Pitch is a
-multiplier, where `1.0` is the original speed, `2.0` is twice as fast (and an octave higher), and `0.5` is half the
+### Volume, Playback Rate, and Stereo Pan
+Volume is measured in decibels (dB), where `0.0` is unity gain (the original volume of the sound file). Playback Rate is 
+a multiplier, where `1.0` is the original speed, `2.0` is twice as fast (and an octave higher), and `0.5` is half the
 original speed (and an octave lower).
 ```c++
 engine->SetPlaybackVolumeDb(explosionPlayback, -4.0f); // Reduce volume by 4dB
 
-engine->SetPlaybackPitch(explosionPlayback, 1.3f); // Play 30% faster and higher
+engine->SetPlaybackRate(explosionPlayback, 1.3f); // Play 30% faster and higher
 ```
 For standard non-spatial playback, you can pan the sound between the left and right speakers. The pan value is normalized from
 `-1.0` (full left) to `1.0` (full right), with `0.0` representing the middle.

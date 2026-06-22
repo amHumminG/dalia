@@ -63,7 +63,7 @@ private:
 	char m_routeInputBuffer[128] = "";
 
 	float m_volumeDb = 0.0f;
-	float m_pitch = 1.0f;
+	float m_playbackRate = 1.0f;
 	float m_stereoPan = 0.0f;
 
 	bool m_isLooping = false;

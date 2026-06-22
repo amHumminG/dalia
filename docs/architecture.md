@@ -51,7 +51,7 @@ intermediate buffers for every bus during initialization.
 
 Every audio frame is evaluated in two passes: The **Voice Pass** and the **Bus Pass**.
 During the Voice Pass, the engine iterates over all active, playing voices. It reads their audio data and applies
-transformations (volume, pitch, spatialization, and more), and mixes the output into their parent bus.
+transformations (volume, playback rate, spatialization, and more), and mixes the output into their parent bus.
 With the voice data fully accumulated, the Bus Pass runs through the topology sorted bus hierarchy. For each bus, it
 processes any attached DSP effects, applies volume and mixes the output into its parent bus. This pass finishes when 
 all output data is mixed into the Master output.

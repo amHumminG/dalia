@@ -186,8 +186,8 @@ void PlaybackInstance::DrawInspectorUI(const UIContext& ui) {
 		if (res != dalia::Result::Ok) m_result = res;
 	}
 
-	if (ImGui::SliderFloat("Pitch", &m_pitch, 0.1f, 4.0f)) {
-		res = m_engine->SetPlaybackPitch(m_handle, m_pitch);
+	if (ImGui::SliderFloat("Playback Rate", &m_playbackRate, 0.1f, 4.0f)) {
+		res = m_engine->SetPlaybackRate(m_handle, m_playbackRate);
 		if (res != dalia::Result::Ok) m_result = res;
 	}
 
