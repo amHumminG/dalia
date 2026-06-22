@@ -21,7 +21,7 @@ A `Stream` sound is streamed from a file. The loading operation itself is theref
 buffered. Because of this, playing a `Stream` sound adds a tiny bit of CPU overhead during playback as one of the 
 background threads has to continuously refill the buffers. The advantage is that it uses very little memory, and that
 the memory usage stays consistent regardless of the file size. This type of sound is recommended for music, ambiance,
-and voice-overs. It is also worth noting that as of right now, there is no way to prime a stream sound. This means that
+and voice-overs. It is worth noting that as of right now, there is no way to prime a stream sound. This means that
 there will be a small delay between calling play on the sound (for the first time) and playback starting. This happens
 because the internal buffers have to be filled before playback can start.
 

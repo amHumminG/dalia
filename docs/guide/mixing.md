@@ -2,8 +2,8 @@
 
 ## The Mixing Hierarchy
 The mixing hierarchy exists to allow for dynamic runtime mixing. The hierarchy consists of buses. A bus is an audio node
-that takes multiple input audio streams, mixes them together, and outputs a single combined stream. Buses are managed
-entirely via string identifiers.
+that takes multiple input audio streams, mixes them together, and outputs a single combined stream. Buses are managed 
+via string identifiers.
 
 ### The Master Bus
 The `Engine` creates a permanently allocated `Master` bus on initialization. This bus serves as the root node for the
@@ -26,8 +26,8 @@ A bus can be re-routed at any point using `Engine::RouteBus()`:
 ```c++
 engine->RouteBus("UI", "Master"); // Routing bus with identifier "UI" into "Master"
 ```
-However, the mixing hierarchy has built-in cycle
-protection. The engine will always guarantee that the routing remains a Directed Acyclic Graph (DAG). Attempts to create
+The mixing hierarchy has built-in cycle
+protection. The engine guarantees that the routing graph remains a Directed Acyclic Graph (DAG). Attempts to create
 a routing cycle will therefore always fail and return `Result::InvalidRouting`.
 
 To destroy a bus, simply call `Engine::DestroyBus()`. As buses are reference counted, this function must be called the
