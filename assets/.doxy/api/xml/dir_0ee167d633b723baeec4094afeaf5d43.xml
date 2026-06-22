@@ -1,0 +1,15 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.9.8" xml:lang="en-US">
+  <compounddef id="dir_0ee167d633b723baeec4094afeaf5d43" kind="dir">
+    <compoundname>engine/include/dalia/audio</compoundname>
+    <innerfile refid="EffectControl_8h">EffectControl.h</innerfile>
+    <innerfile refid="Engine_8h">Engine.h</innerfile>
+    <innerfile refid="PlaybackControl_8h">PlaybackControl.h</innerfile>
+    <innerfile refid="SoundControl_8h">SoundControl.h</innerfile>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <location file="engine/include/dalia/audio/"/>
+  </compounddef>
+</doxygen>

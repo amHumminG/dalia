@@ -1,0 +1,843 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.9.8" xml:lang="en-US">
+  <compounddef id="namespacedalia" kind="namespace" language="C++">
+    <compoundname>dalia</compoundname>
+    <innerclass refid="structdalia_1_1BiquadParams" prot="public">dalia::BiquadParams</innerclass>
+    <innerclass refid="structdalia_1_1EffectHandle" prot="public">dalia::EffectHandle</innerclass>
+    <innerclass refid="classdalia_1_1Engine" prot="public">dalia::Engine</innerclass>
+    <innerclass refid="structdalia_1_1EngineConfig" prot="public">dalia::EngineConfig</innerclass>
+    <innerclass refid="structdalia_1_1Listener3DAttributes" prot="public">dalia::Listener3DAttributes</innerclass>
+    <innerclass refid="structdalia_1_1PlaybackHandle" prot="public">dalia::PlaybackHandle</innerclass>
+    <innerclass refid="structdalia_1_1SoundHandle" prot="public">dalia::SoundHandle</innerclass>
+    <innerclass refid="structdalia_1_1Vec3" prot="public">dalia::Vec3</innerclass>
+    <sectiondef kind="enum">
+      <memberdef kind="enum" id="namespacedalia_1ad13a8e277604ee81ccc919a057bcae1e" prot="public" static="no" strong="yes">
+        <type>uint8_t</type>
+        <name>EffectType</name>
+        <qualifiedname>dalia::EffectType</qualifiedname>
+        <enumvalue id="namespacedalia_1ad13a8e277604ee81ccc919a057bcae1ea6adf97f83acf6453d4a6a4b1070f3754" prot="public">
+          <name>None</name>
+          <briefdescription>
+          </briefdescription>
+          <detaileddescription>
+          </detaileddescription>
+        </enumvalue>
+        <enumvalue id="namespacedalia_1ad13a8e277604ee81ccc919a057bcae1ea5cd0384f784aa370f4c1c0b557835ca8" prot="public">
+          <name>Biquad</name>
+          <briefdescription>
+          </briefdescription>
+          <detaileddescription>
+          </detaileddescription>
+        </enumvalue>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/EffectControl.h" line="6" column="1" bodyfile="engine/include/dalia/audio/EffectControl.h" bodystart="6" bodyend="9"/>
+      </memberdef>
+      <memberdef kind="enum" id="namespacedalia_1a5eaf1ed282132ac2afbff1574d6c0336" prot="public" static="no" strong="yes">
+        <type>uint8_t</type>
+        <name>PlaybackExitCondition</name>
+        <qualifiedname>dalia::PlaybackExitCondition</qualifiedname>
+        <enumvalue id="namespacedalia_1a5eaf1ed282132ac2afbff1574d6c0336a6adf97f83acf6453d4a6a4b1070f3754" prot="public">
+          <name>None</name>
+          <initializer>= 0</initializer>
+          <briefdescription>
+          </briefdescription>
+          <detaileddescription>
+          </detaileddescription>
+        </enumvalue>
+        <enumvalue id="namespacedalia_1a5eaf1ed282132ac2afbff1574d6c0336a179179e9afc711040c308e30d2ae35ac" prot="public">
+          <name>NaturalEnd</name>
+          <initializer>= 1</initializer>
+          <briefdescription>
+          </briefdescription>
+          <detaileddescription>
+          </detaileddescription>
+        </enumvalue>
+        <enumvalue id="namespacedalia_1a5eaf1ed282132ac2afbff1574d6c0336a64cca6536e2b32f9dbb64c6e17e447b2" prot="public">
+          <name>ExplicitStop</name>
+          <initializer>= 2</initializer>
+          <briefdescription>
+          </briefdescription>
+          <detaileddescription>
+          </detaileddescription>
+        </enumvalue>
+        <enumvalue id="namespacedalia_1a5eaf1ed282132ac2afbff1574d6c0336af756efe6580f590fd25d2f57c998d948" prot="public">
+          <name>Evicted</name>
+          <initializer>= 3</initializer>
+          <briefdescription>
+          </briefdescription>
+          <detaileddescription>
+          </detaileddescription>
+        </enumvalue>
+        <enumvalue id="namespacedalia_1a5eaf1ed282132ac2afbff1574d6c0336a902b0d55fddef6f8d651fe1035b7d4bd" prot="public">
+          <name>Error</name>
+          <initializer>= 4</initializer>
+          <briefdescription>
+          </briefdescription>
+          <detaileddescription>
+          </detaileddescription>
+        </enumvalue>
+        <briefdescription>
+<para>The condition under which a playback instance was stopped. </para>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/PlaybackControl.h" line="43" column="1" bodyfile="engine/include/dalia/audio/PlaybackControl.h" bodystart="43" bodyend="49"/>
+      </memberdef>
+      <memberdef kind="enum" id="namespacedalia_1a4c457a3406e132cdd206279b1827f73f" prot="public" static="no" strong="yes">
+        <type>uint8_t</type>
+        <name>AttenuationCurve</name>
+        <qualifiedname>dalia::AttenuationCurve</qualifiedname>
+        <enumvalue id="namespacedalia_1a4c457a3406e132cdd206279b1827f73face3511fe6e3cab696c0e1a62d445cd01" prot="public">
+          <name>InverseSquare</name>
+          <briefdescription>
+          </briefdescription>
+          <detaileddescription>
+          </detaileddescription>
+        </enumvalue>
+        <enumvalue id="namespacedalia_1a4c457a3406e132cdd206279b1827f73fa32a843da6ea40ab3b17a3421ccdf671b" prot="public">
+          <name>Linear</name>
+          <briefdescription>
+          </briefdescription>
+          <detaileddescription>
+          </detaileddescription>
+        </enumvalue>
+        <enumvalue id="namespacedalia_1a4c457a3406e132cdd206279b1827f73fa8b2972385ed28d0e199ae2985d6fea4c" prot="public">
+          <name>Quadratic</name>
+          <briefdescription>
+          </briefdescription>
+          <detaileddescription>
+          </detaileddescription>
+        </enumvalue>
+        <briefdescription>
+<para>Curve used to calculate distance attenuation. </para>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/PlaybackControl.h" line="56" column="1" bodyfile="engine/include/dalia/audio/PlaybackControl.h" bodystart="56" bodyend="60"/>
+      </memberdef>
+      <memberdef kind="enum" id="namespacedalia_1ab240c6866fcf8d2aa499ae0164f1fe7c" prot="public" static="no" strong="yes">
+        <type>uint8_t</type>
+        <name>DistanceMode</name>
+        <qualifiedname>dalia::DistanceMode</qualifiedname>
+        <enumvalue id="namespacedalia_1ab240c6866fcf8d2aa499ae0164f1fe7ca7cfa5f69d0128a0212d2426b667c2dac" prot="public">
+          <name>FromListener</name>
+          <briefdescription>
+          </briefdescription>
+          <detaileddescription>
+          </detaileddescription>
+        </enumvalue>
+        <enumvalue id="namespacedalia_1ab240c6866fcf8d2aa499ae0164f1fe7cabd308a293992c705800187aa73f4b9e2" prot="public">
+          <name>FromDistanceProbe</name>
+          <briefdescription>
+          </briefdescription>
+          <detaileddescription>
+          </detaileddescription>
+        </enumvalue>
+        <briefdescription>
+<para>Mode used to determine what listener position to use when calculating distance attenuation. </para>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/PlaybackControl.h" line="63" column="1" bodyfile="engine/include/dalia/audio/PlaybackControl.h" bodystart="63" bodyend="66"/>
+      </memberdef>
+      <memberdef kind="enum" id="namespacedalia_1aa0c5c389cc67006c3550a3697096e391" prot="public" static="no" strong="yes">
+        <type>uint8_t</type>
+        <name>CoordinateSystem</name>
+        <qualifiedname>dalia::CoordinateSystem</qualifiedname>
+        <enumvalue id="namespacedalia_1aa0c5c389cc67006c3550a3697096e391a4583673c474e530a2db116199a93ba82" prot="public">
+          <name>RightHanded</name>
+          <briefdescription>
+          </briefdescription>
+          <detaileddescription>
+          </detaileddescription>
+        </enumvalue>
+        <enumvalue id="namespacedalia_1aa0c5c389cc67006c3550a3697096e391acd5d8803eaa45145192f16041a365ee8" prot="public">
+          <name>LeftHanded</name>
+          <briefdescription>
+          </briefdescription>
+          <detaileddescription>
+          </detaileddescription>
+        </enumvalue>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/PlaybackControl.h" line="127" column="1" bodyfile="engine/include/dalia/audio/PlaybackControl.h" bodystart="127" bodyend="130"/>
+      </memberdef>
+      <memberdef kind="enum" id="namespacedalia_1aeae4a70bf40c2732cf099bd25d505e83" prot="public" static="no" strong="yes">
+        <type>uint8_t</type>
+        <name>SoundType</name>
+        <qualifiedname>dalia::SoundType</qualifiedname>
+        <enumvalue id="namespacedalia_1aeae4a70bf40c2732cf099bd25d505e83a6adf97f83acf6453d4a6a4b1070f3754" prot="public">
+          <name>None</name>
+          <initializer>= 0</initializer>
+          <briefdescription>
+          </briefdescription>
+          <detaileddescription>
+          </detaileddescription>
+        </enumvalue>
+        <enumvalue id="namespacedalia_1aeae4a70bf40c2732cf099bd25d505e83abad08a863dfd6ade28fd8ef69b15005a" prot="public">
+          <name>Resident</name>
+          <initializer>= 1</initializer>
+          <briefdescription>
+          </briefdescription>
+          <detaileddescription>
+          </detaileddescription>
+        </enumvalue>
+        <enumvalue id="namespacedalia_1aeae4a70bf40c2732cf099bd25d505e83aeae835e83c0494a376229f254f7d3392" prot="public">
+          <name>Stream</name>
+          <initializer>= 2</initializer>
+          <briefdescription>
+          </briefdescription>
+          <detaileddescription>
+          </detaileddescription>
+        </enumvalue>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/SoundControl.h" line="10" column="5" bodyfile="engine/include/dalia/audio/SoundControl.h" bodystart="10" bodyend="14"/>
+      </memberdef>
+      <memberdef kind="enum" id="namespacedalia_1a40292ca92ab9ebce52df2a4544a27c61" prot="public" static="no" strong="yes">
+        <type>int</type>
+        <name>LogLevel</name>
+        <qualifiedname>dalia::LogLevel</qualifiedname>
+        <enumvalue id="namespacedalia_1a40292ca92ab9ebce52df2a4544a27c61aa603905470e2a5b8c13e96b579ef0dba" prot="public">
+          <name>Debug</name>
+          <initializer>= 0</initializer>
+          <briefdescription>
+          </briefdescription>
+          <detaileddescription>
+          </detaileddescription>
+        </enumvalue>
+        <enumvalue id="namespacedalia_1a40292ca92ab9ebce52df2a4544a27c61a4059b0251f66a18cb56f544728796875" prot="public">
+          <name>Info</name>
+          <initializer>= 1</initializer>
+          <briefdescription>
+          </briefdescription>
+          <detaileddescription>
+          </detaileddescription>
+        </enumvalue>
+        <enumvalue id="namespacedalia_1a40292ca92ab9ebce52df2a4544a27c61a0eaadb4fcb48a0a0ed7bc9868be9fbaa" prot="public">
+          <name>Warning</name>
+          <initializer>= 2</initializer>
+          <briefdescription>
+          </briefdescription>
+          <detaileddescription>
+          </detaileddescription>
+        </enumvalue>
+        <enumvalue id="namespacedalia_1a40292ca92ab9ebce52df2a4544a27c61a902b0d55fddef6f8d651fe1035b7d4bd" prot="public">
+          <name>Error</name>
+          <initializer>= 3</initializer>
+          <briefdescription>
+          </briefdescription>
+          <detaileddescription>
+          </detaileddescription>
+        </enumvalue>
+        <enumvalue id="namespacedalia_1a40292ca92ab9ebce52df2a4544a27c61a278d01e5af56273bae1bb99a98b370cd" prot="public">
+          <name>Critical</name>
+          <initializer>= 4</initializer>
+          <briefdescription>
+          </briefdescription>
+          <detaileddescription>
+          </detaileddescription>
+        </enumvalue>
+        <enumvalue id="namespacedalia_1a40292ca92ab9ebce52df2a4544a27c61a6adf97f83acf6453d4a6a4b1070f3754" prot="public">
+          <name>None</name>
+          <initializer>= 5</initializer>
+          <briefdescription>
+          </briefdescription>
+          <detaileddescription>
+          </detaileddescription>
+        </enumvalue>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/core/LogLevel.h" line="7" column="1" bodyfile="engine/include/dalia/core/LogLevel.h" bodystart="7" bodyend="14"/>
+      </memberdef>
+      <memberdef kind="enum" id="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909" prot="public" static="no" strong="yes">
+        <type>int</type>
+        <name>Result</name>
+        <qualifiedname>dalia::Result</qualifiedname>
+        <enumvalue id="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909aa60852f204ed8028c1c58808b746d115" prot="public">
+          <name>Ok</name>
+          <initializer>= 0</initializer>
+          <briefdescription>
+          </briefdescription>
+          <detaileddescription>
+          </detaileddescription>
+        </enumvalue>
+        <enumvalue id="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909a902b0d55fddef6f8d651fe1035b7d4bd" prot="public">
+          <name>Error</name>
+          <initializer>= -1</initializer>
+          <briefdescription>
+          </briefdescription>
+          <detaileddescription>
+          </detaileddescription>
+        </enumvalue>
+        <enumvalue id="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909a9646ad3a1c3e708b4fa8b4b4270fbab6" prot="public">
+          <name>NotInitialized</name>
+          <initializer>= -2</initializer>
+          <briefdescription>
+          </briefdescription>
+          <detaileddescription>
+          </detaileddescription>
+        </enumvalue>
+        <enumvalue id="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909aac5706c6b4c156062a2be0889a9e7946" prot="public">
+          <name>AlreadyInitialized</name>
+          <initializer>= -3</initializer>
+          <briefdescription>
+          </briefdescription>
+          <detaileddescription>
+          </detaileddescription>
+        </enumvalue>
+        <enumvalue id="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909a2d0e462e9958ce7bb443e70023241dfe" prot="public">
+          <name>InvalidHandle</name>
+          <initializer>= -4</initializer>
+          <briefdescription>
+          </briefdescription>
+          <detaileddescription>
+          </detaileddescription>
+        </enumvalue>
+        <enumvalue id="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909a4adb1b076d1ab0f1202673245fa77017" prot="public">
+          <name>ExpiredHandle</name>
+          <initializer>= -5</initializer>
+          <briefdescription>
+          </briefdescription>
+          <detaileddescription>
+          </detaileddescription>
+        </enumvalue>
+        <enumvalue id="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909a0004ce2e7826ed26d7c56786c65e098e" prot="public">
+          <name>BusNotFound</name>
+          <initializer>= -6</initializer>
+          <briefdescription>
+          </briefdescription>
+          <detaileddescription>
+          </detaileddescription>
+        </enumvalue>
+        <enumvalue id="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909a6646544c19956602eb5df4cba95b777f" prot="public">
+          <name>InvalidRouting</name>
+          <initializer>= -7</initializer>
+          <briefdescription>
+          </briefdescription>
+          <detaileddescription>
+          </detaileddescription>
+        </enumvalue>
+        <enumvalue id="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909a43503371060944c3b30df6987c380001" prot="public">
+          <name>InvalidEffectSlot</name>
+          <initializer>= -8</initializer>
+          <briefdescription>
+          </briefdescription>
+          <detaileddescription>
+          </detaileddescription>
+        </enumvalue>
+        <enumvalue id="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909a3ece28a341e1c14caddf3b3f17ad7f9c" prot="public">
+          <name>ListenerNotFound</name>
+          <initializer>= -9</initializer>
+          <briefdescription>
+          </briefdescription>
+          <detaileddescription>
+          </detaileddescription>
+        </enumvalue>
+        <enumvalue id="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909adbe062a5b8eda05485982828234ef21a" prot="public">
+          <name>PoolExhausted</name>
+          <initializer>= -100</initializer>
+          <briefdescription>
+          </briefdescription>
+          <detaileddescription>
+          </detaileddescription>
+        </enumvalue>
+        <enumvalue id="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909a076a0a402ed68612967341df27ac63b4" prot="public">
+          <name>ResidentSoundPoolExhausted</name>
+          <initializer>= -101</initializer>
+          <briefdescription>
+          </briefdescription>
+          <detaileddescription>
+          </detaileddescription>
+        </enumvalue>
+        <enumvalue id="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909a08b5c6667753514b1b686425030ef90a" prot="public">
+          <name>StreamSoundPoolExhausted</name>
+          <initializer>= -102</initializer>
+          <briefdescription>
+          </briefdescription>
+          <detaileddescription>
+          </detaileddescription>
+        </enumvalue>
+        <enumvalue id="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909acccf1968a971068b4531488dd06ac6e3" prot="public">
+          <name>VoicePoolExhausted</name>
+          <initializer>= -103</initializer>
+          <briefdescription>
+          </briefdescription>
+          <detaileddescription>
+          </detaileddescription>
+        </enumvalue>
+        <enumvalue id="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909adf59ac6ec24608aea06f80cbaa8238a3" prot="public">
+          <name>StreamPoolExhausted</name>
+          <initializer>= -104</initializer>
+          <briefdescription>
+          </briefdescription>
+          <detaileddescription>
+          </detaileddescription>
+        </enumvalue>
+        <enumvalue id="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909a15356f8637dedeb2297e2aadd6e7e370" prot="public">
+          <name>BusPoolExhausted</name>
+          <initializer>= -105</initializer>
+          <briefdescription>
+          </briefdescription>
+          <detaileddescription>
+          </detaileddescription>
+        </enumvalue>
+        <enumvalue id="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909af943f6350dc121b135cf0f52b82ce0c6" prot="public">
+          <name>EffectPoolExhausted</name>
+          <initializer>= -106</initializer>
+          <briefdescription>
+          </briefdescription>
+          <detaileddescription>
+          </detaileddescription>
+        </enumvalue>
+        <enumvalue id="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909a8b6ae616824b4fea024d2f02f5271813" prot="public">
+          <name>RtCommandQueueFull</name>
+          <initializer>= -200</initializer>
+          <briefdescription>
+          </briefdescription>
+          <detaileddescription>
+          </detaileddescription>
+        </enumvalue>
+        <enumvalue id="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909a0228b2bdecd17080255f8f29f00edf1a" prot="public">
+          <name>RtEventQueueFull</name>
+          <initializer>= -201</initializer>
+          <briefdescription>
+          </briefdescription>
+          <detaileddescription>
+          </detaileddescription>
+        </enumvalue>
+        <enumvalue id="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909a67ed85655ee2774f289b3ae143053bd3" prot="public">
+          <name>IoStreamRequestQueueFull</name>
+          <initializer>= -202</initializer>
+          <briefdescription>
+          </briefdescription>
+          <detaileddescription>
+          </detaileddescription>
+        </enumvalue>
+        <enumvalue id="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909a12929d43fe844ad8ddc5240193d61aee" prot="public">
+          <name>IoLoadRequestQueueFull</name>
+          <initializer>= -203</initializer>
+          <briefdescription>
+          </briefdescription>
+          <detaileddescription>
+          </detaileddescription>
+        </enumvalue>
+        <enumvalue id="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909a5b1a09ef3b5482a9f57623db724f3279" prot="public">
+          <name>PlaybackCorrupted</name>
+          <initializer>= -303</initializer>
+          <briefdescription>
+          </briefdescription>
+          <detaileddescription>
+          </detaileddescription>
+        </enumvalue>
+        <enumvalue id="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909a097538fcf0b092a118f541f57961d632" prot="public">
+          <name>SoundLoadError</name>
+          <initializer>= -400</initializer>
+          <briefdescription>
+          </briefdescription>
+          <detaileddescription>
+          </detaileddescription>
+        </enumvalue>
+        <enumvalue id="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909a646be16f0222207c6f871f8cd1b50637" prot="public">
+          <name>FileReadError</name>
+          <initializer>= -401</initializer>
+          <briefdescription>
+          </briefdescription>
+          <detaileddescription>
+          </detaileddescription>
+        </enumvalue>
+        <enumvalue id="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909ac82adc7582667b6bbc1e066757aad182" prot="public">
+          <name>UnsupportedFormat</name>
+          <initializer>= -402</initializer>
+          <briefdescription>
+          </briefdescription>
+          <detaileddescription>
+          </detaileddescription>
+        </enumvalue>
+        <enumvalue id="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909ab932b91f686c2aa588adfd9a407155ca" prot="public">
+          <name>SystemError</name>
+          <initializer>= -500</initializer>
+          <briefdescription>
+          </briefdescription>
+          <detaileddescription>
+          </detaileddescription>
+        </enumvalue>
+        <enumvalue id="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909aca4cc682495b7b98382718ed77afac35" prot="public">
+          <name>DeviceNotFound</name>
+          <initializer>= -501</initializer>
+          <briefdescription>
+          </briefdescription>
+          <detaileddescription>
+          </detaileddescription>
+        </enumvalue>
+        <enumvalue id="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909a7ce1050a5ad320fcebb48a07ac6e3d08" prot="public">
+          <name>DeviceFailed</name>
+          <initializer>= -502</initializer>
+          <briefdescription>
+          </briefdescription>
+          <detaileddescription>
+          </detaileddescription>
+        </enumvalue>
+        <enumvalue id="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909ae024d4f8063052d85398fefccebc7d12" prot="public">
+          <name>ClientFailed</name>
+          <initializer>= -503</initializer>
+          <briefdescription>
+          </briefdescription>
+          <detaileddescription>
+          </detaileddescription>
+        </enumvalue>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/core/Result.h" line="5" column="1" bodyfile="engine/include/dalia/core/Result.h" bodystart="5" bodyend="49"/>
+      </memberdef>
+    </sectiondef>
+    <sectiondef kind="typedef">
+      <memberdef kind="typedef" id="namespacedalia_1a045bd73a9d8d1e25704acfbe7fd16db7" prot="public" static="no">
+        <type>std::function&lt; void(<ref refid="structdalia_1_1PlaybackHandle" kindref="compound">PlaybackHandle</ref> playback, <ref refid="namespacedalia_1a5eaf1ed282132ac2afbff1574d6c0336" kindref="member">PlaybackExitCondition</ref> exitCondition)&gt;</type>
+        <definition>using dalia::PlaybackExitCallback = typedef std::function&lt;void(PlaybackHandle playback, PlaybackExitCondition exitCondition)&gt;</definition>
+        <argsstring></argsstring>
+        <name>PlaybackExitCallback</name>
+        <qualifiedname>dalia::PlaybackExitCallback</qualifiedname>
+        <briefdescription>
+<para>A function that, if provided when creating a playback instance, will be called when the playback instance is stopped. </para>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/PlaybackControl.h" line="53" column="1" bodyfile="engine/include/dalia/audio/PlaybackControl.h" bodystart="53" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="typedef" id="namespacedalia_1a2ca8a63f16fbc9fca65623cdc3776d2b" prot="public" static="no">
+        <type>uint32_t</type>
+        <definition>using dalia::ListenerMask = typedef uint32_t</definition>
+        <argsstring></argsstring>
+        <name>ListenerMask</name>
+        <qualifiedname>dalia::ListenerMask</qualifiedname>
+        <briefdescription>
+<para>Routing mask used to target a specific listener. Can be combined to target multiple listeners using bitwise OR. </para>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/PlaybackControl.h" line="109" column="1" bodyfile="engine/include/dalia/audio/PlaybackControl.h" bodystart="109" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="typedef" id="namespacedalia_1a8b5caf23993dc23d571d3c50ec8a8f31" prot="public" static="no">
+        <type>std::function&lt; void(uint32_t requestId, <ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909" kindref="member">Result</ref> result)&gt;</type>
+        <definition>using dalia::AssetLoadCallback = typedef std::function&lt;void(uint32_t requestId, Result result)&gt;</definition>
+        <argsstring></argsstring>
+        <name>AssetLoadCallback</name>
+        <qualifiedname>dalia::AssetLoadCallback</qualifiedname>
+        <briefdescription>
+<para>A function that, if provided when loading an asset, will be called once the asset has been successfully loaded. </para>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/SoundControl.h" line="64" column="5" bodyfile="engine/include/dalia/audio/SoundControl.h" bodystart="64" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="typedef" id="namespacedalia_1a246be6eeb9ca99400da581e89d284dcd" prot="public" static="no">
+        <type>std::function&lt; void(<ref refid="namespacedalia_1a40292ca92ab9ebce52df2a4544a27c61" kindref="member">LogLevel</ref> level, const char *context, const char *message)&gt;</type>
+        <definition>using dalia::LogCallback = typedef std::function&lt;void(LogLevel level, const char* context, const char* message)&gt;</definition>
+        <argsstring></argsstring>
+        <name>LogCallback</name>
+        <qualifiedname>dalia::LogCallback</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/core/LogLevel.h" line="16" column="1" bodyfile="engine/include/dalia/core/LogLevel.h" bodystart="16" bodyend="-1"/>
+      </memberdef>
+    </sectiondef>
+    <sectiondef kind="var">
+      <memberdef kind="variable" id="namespacedalia_1ac155eac035b136ac3e0fda15423f5dea" prot="public" static="no" constexpr="yes" mutable="no">
+        <type>constexpr <ref refid="structdalia_1_1EffectHandle" kindref="compound">EffectHandle</ref></type>
+        <definition>constexpr EffectHandle dalia::InvalidEffectHandle</definition>
+        <argsstring></argsstring>
+        <name>InvalidEffectHandle</name>
+        <qualifiedname>dalia::InvalidEffectHandle</qualifiedname>
+        <initializer>{}</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/EffectControl.h" line="58" column="28" bodyfile="engine/include/dalia/audio/EffectControl.h" bodystart="58" bodyend="58"/>
+      </memberdef>
+      <memberdef kind="variable" id="namespacedalia_1ae86ed5c2b8e61cca6333af2e0a53da46" prot="public" static="no" constexpr="yes" mutable="no">
+        <type>constexpr <ref refid="structdalia_1_1PlaybackHandle" kindref="compound">PlaybackHandle</ref></type>
+        <definition>constexpr PlaybackHandle dalia::InvalidPlaybackHandle</definition>
+        <argsstring></argsstring>
+        <name>InvalidPlaybackHandle</name>
+        <qualifiedname>dalia::InvalidPlaybackHandle</qualifiedname>
+        <initializer>{}</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/PlaybackControl.h" line="40" column="26" bodyfile="engine/include/dalia/audio/PlaybackControl.h" bodystart="40" bodyend="40"/>
+      </memberdef>
+      <memberdef kind="variable" id="namespacedalia_1a27f136fc18dae58a7d4a7367018879f1" prot="public" static="no" constexpr="yes" mutable="no">
+        <type>constexpr <ref refid="namespacedalia_1a2ca8a63f16fbc9fca65623cdc3776d2b" kindref="member">ListenerMask</ref></type>
+        <definition>constexpr ListenerMask dalia::MASK_NONE</definition>
+        <argsstring></argsstring>
+        <name>MASK_NONE</name>
+        <qualifiedname>dalia::MASK_NONE</qualifiedname>
+        <initializer>= 0b00000000</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/PlaybackControl.h" line="111" column="24" bodyfile="engine/include/dalia/audio/PlaybackControl.h" bodystart="111" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="namespacedalia_1a9d0ce121f1dd3f647d5850fbade59cae" prot="public" static="no" constexpr="yes" mutable="no">
+        <type>constexpr <ref refid="namespacedalia_1a2ca8a63f16fbc9fca65623cdc3776d2b" kindref="member">ListenerMask</ref></type>
+        <definition>constexpr ListenerMask dalia::MASK_LISTENER_0</definition>
+        <argsstring></argsstring>
+        <name>MASK_LISTENER_0</name>
+        <qualifiedname>dalia::MASK_LISTENER_0</qualifiedname>
+        <initializer>= 0b00000001</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/PlaybackControl.h" line="112" column="24" bodyfile="engine/include/dalia/audio/PlaybackControl.h" bodystart="112" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="namespacedalia_1ac73da665f5a29e4cdec077dacb9c1b4c" prot="public" static="no" constexpr="yes" mutable="no">
+        <type>constexpr <ref refid="namespacedalia_1a2ca8a63f16fbc9fca65623cdc3776d2b" kindref="member">ListenerMask</ref></type>
+        <definition>constexpr ListenerMask dalia::MASK_LISTENER_1</definition>
+        <argsstring></argsstring>
+        <name>MASK_LISTENER_1</name>
+        <qualifiedname>dalia::MASK_LISTENER_1</qualifiedname>
+        <initializer>= 0b00000010</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/PlaybackControl.h" line="113" column="24" bodyfile="engine/include/dalia/audio/PlaybackControl.h" bodystart="113" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="namespacedalia_1a95ce9a8dc77521d762a6a93ab6454cad" prot="public" static="no" constexpr="yes" mutable="no">
+        <type>constexpr <ref refid="namespacedalia_1a2ca8a63f16fbc9fca65623cdc3776d2b" kindref="member">ListenerMask</ref></type>
+        <definition>constexpr ListenerMask dalia::MASK_LISTENER_2</definition>
+        <argsstring></argsstring>
+        <name>MASK_LISTENER_2</name>
+        <qualifiedname>dalia::MASK_LISTENER_2</qualifiedname>
+        <initializer>= 0b00000100</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/PlaybackControl.h" line="114" column="24" bodyfile="engine/include/dalia/audio/PlaybackControl.h" bodystart="114" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="namespacedalia_1a9bcd20341d810d30b1e951e757a7f0f2" prot="public" static="no" constexpr="yes" mutable="no">
+        <type>constexpr <ref refid="namespacedalia_1a2ca8a63f16fbc9fca65623cdc3776d2b" kindref="member">ListenerMask</ref></type>
+        <definition>constexpr ListenerMask dalia::MASK_LISTENER_3</definition>
+        <argsstring></argsstring>
+        <name>MASK_LISTENER_3</name>
+        <qualifiedname>dalia::MASK_LISTENER_3</qualifiedname>
+        <initializer>= 0b00001000</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/PlaybackControl.h" line="115" column="24" bodyfile="engine/include/dalia/audio/PlaybackControl.h" bodystart="115" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="namespacedalia_1a5bb415dbf786ac9c9239d093dd563187" prot="public" static="no" constexpr="yes" mutable="no">
+        <type>constexpr <ref refid="namespacedalia_1a2ca8a63f16fbc9fca65623cdc3776d2b" kindref="member">ListenerMask</ref></type>
+        <definition>constexpr ListenerMask dalia::MASK_ALL_LISTENERS</definition>
+        <argsstring></argsstring>
+        <name>MASK_ALL_LISTENERS</name>
+        <qualifiedname>dalia::MASK_ALL_LISTENERS</qualifiedname>
+        <initializer>= 0xFFFFFFFF</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/PlaybackControl.h" line="116" column="24" bodyfile="engine/include/dalia/audio/PlaybackControl.h" bodystart="116" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="namespacedalia_1a410ba925a5414949ab94c70f0e4682dd" prot="public" static="no" constexpr="yes" mutable="no">
+        <type>constexpr uint32_t</type>
+        <definition>constexpr uint32_t dalia::INVALID_REQUEST_ID</definition>
+        <argsstring></argsstring>
+        <name>INVALID_REQUEST_ID</name>
+        <qualifiedname>dalia::INVALID_REQUEST_ID</qualifiedname>
+        <initializer>= 0</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/SoundControl.h" line="60" column="24" bodyfile="engine/include/dalia/audio/SoundControl.h" bodystart="60" bodyend="-1"/>
+      </memberdef>
+    </sectiondef>
+    <sectiondef kind="func">
+      <memberdef kind="function" id="namespacedalia_1a804bb4190a2ab334ad358aa8a97bcd60" prot="public" static="no" constexpr="yes" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>constexpr <ref refid="structdalia_1_1Listener3DAttributes" kindref="compound">Listener3DAttributes</ref></type>
+        <definition>constexpr Listener3DAttributes dalia::MakeListener3DAttributes</definition>
+        <argsstring>(const Vec3 &amp;position, const Vec3 &amp;forward, const Vec3 &amp;up, const Vec3 &amp;velocity)</argsstring>
+        <name>MakeListener3DAttributes</name>
+        <qualifiedname>dalia::MakeListener3DAttributes</qualifiedname>
+        <param>
+          <type>const <ref refid="structdalia_1_1Vec3" kindref="compound">Vec3</ref> &amp;</type>
+          <declname>position</declname>
+        </param>
+        <param>
+          <type>const <ref refid="structdalia_1_1Vec3" kindref="compound">Vec3</ref> &amp;</type>
+          <declname>forward</declname>
+        </param>
+        <param>
+          <type>const <ref refid="structdalia_1_1Vec3" kindref="compound">Vec3</ref> &amp;</type>
+          <declname>up</declname>
+        </param>
+        <param>
+          <type>const <ref refid="structdalia_1_1Vec3" kindref="compound">Vec3</ref> &amp;</type>
+          <declname>velocity</declname>
+        </param>
+        <briefdescription>
+<para>Constructs a listener transform for a listener that performs panning and attenuation logic from the same world position. </para>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/PlaybackControl.h" line="88" column="39" bodyfile="engine/include/dalia/audio/PlaybackControl.h" bodystart="88" bodyend="94"/>
+      </memberdef>
+      <memberdef kind="function" id="namespacedalia_1acdda97ac5f598e0d0d988f929a640455" prot="public" static="no" constexpr="yes" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>constexpr <ref refid="structdalia_1_1Listener3DAttributes" kindref="compound">Listener3DAttributes</ref></type>
+        <definition>constexpr Listener3DAttributes dalia::MakeListener3DAttributesSplit</definition>
+        <argsstring>(const Vec3 &amp;position, const Vec3 &amp;probePosition, const Vec3 &amp;forward, const Vec3 &amp;up, const Vec3 &amp;velocity)</argsstring>
+        <name>MakeListener3DAttributesSplit</name>
+        <qualifiedname>dalia::MakeListener3DAttributesSplit</qualifiedname>
+        <param>
+          <type>const <ref refid="structdalia_1_1Vec3" kindref="compound">Vec3</ref> &amp;</type>
+          <declname>position</declname>
+        </param>
+        <param>
+          <type>const <ref refid="structdalia_1_1Vec3" kindref="compound">Vec3</ref> &amp;</type>
+          <declname>probePosition</declname>
+        </param>
+        <param>
+          <type>const <ref refid="structdalia_1_1Vec3" kindref="compound">Vec3</ref> &amp;</type>
+          <declname>forward</declname>
+        </param>
+        <param>
+          <type>const <ref refid="structdalia_1_1Vec3" kindref="compound">Vec3</ref> &amp;</type>
+          <declname>up</declname>
+        </param>
+        <param>
+          <type>const <ref refid="structdalia_1_1Vec3" kindref="compound">Vec3</ref> &amp;</type>
+          <declname>velocity</declname>
+        </param>
+        <briefdescription>
+<para>Constructs a listener transform for a listener that performs panning and attenuation logic from two separate positions. </para>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/PlaybackControl.h" line="98" column="39" bodyfile="engine/include/dalia/audio/PlaybackControl.h" bodystart="98" bodyend="105"/>
+      </memberdef>
+      <memberdef kind="function" id="namespacedalia_1a9ac281e9de93a3893c721b3616b388fe" prot="public" static="no" constexpr="yes" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type>constexpr <ref refid="namespacedalia_1a2ca8a63f16fbc9fca65623cdc3776d2b" kindref="member">ListenerMask</ref></type>
+        <definition>constexpr ListenerMask dalia::MakeListenerMask</definition>
+        <argsstring>(uint32_t listenerIndex)</argsstring>
+        <name>MakeListenerMask</name>
+        <qualifiedname>dalia::MakeListenerMask</qualifiedname>
+        <param>
+          <type>uint32_t</type>
+          <declname>listenerIndex</declname>
+        </param>
+        <briefdescription>
+<para>Creates a routing mask targeting a specific listener. </para>
+        </briefdescription>
+        <detaileddescription>
+<para>@Note[Combining masks] Multiple masks can be combined using bitwise OR.</para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername direction="in">listenerIndex</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The zero-based index of the listener to target.</para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<simplesect kind="return"><para>A bitmask with the corresponding listener&apos;s bit enabled. </para>
+</simplesect>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/PlaybackControl.h" line="125" column="31" bodyfile="engine/include/dalia/audio/PlaybackControl.h" bodystart="125" bodyend="125"/>
+      </memberdef>
+      <memberdef kind="function" id="namespacedalia_1a01da3b4d8b21c2c015f0d10aa0efbbde" prot="public" static="no" constexpr="yes" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>constexpr const char *</type>
+        <definition>constexpr const char * dalia::GetResultString</definition>
+        <argsstring>(const Result result)</argsstring>
+        <name>GetResultString</name>
+        <qualifiedname>dalia::GetResultString</qualifiedname>
+        <param>
+          <type>const <ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909" kindref="member">Result</ref></type>
+          <declname>result</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/core/Result.h" line="51" column="22" bodyfile="engine/include/dalia/core/Result.h" bodystart="51" bodyend="91"/>
+      </memberdef>
+    </sectiondef>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <location file="engine/include/dalia/audio/EffectControl.h" line="4" column="1"/>
+  </compounddef>
+</doxygen>

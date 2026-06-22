@@ -1,0 +1,272 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.9.8" xml:lang="en-US">
+  <compounddef id="structdalia_1_1EngineConfig" kind="struct" language="C++" prot="public">
+    <compoundname>dalia::EngineConfig</compoundname>
+    <includes refid="Engine_8h" local="no">Engine.h</includes>
+    <sectiondef kind="public-attrib">
+      <memberdef kind="variable" id="structdalia_1_1EngineConfig_1a2d3fce05c77efd820e66310322c389f2" prot="public" static="no" mutable="no">
+        <type><ref refid="namespacedalia_1a40292ca92ab9ebce52df2a4544a27c61" kindref="member">LogLevel</ref></type>
+        <definition>LogLevel dalia::EngineConfig::logLevel</definition>
+        <argsstring></argsstring>
+        <name>logLevel</name>
+        <qualifiedname>dalia::EngineConfig::logLevel</qualifiedname>
+        <initializer>= <ref refid="namespacedalia_1a40292ca92ab9ebce52df2a4544a27c61a0eaadb4fcb48a0a0ed7bc9868be9fbaa" kindref="member">LogLevel::Warning</ref></initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/Engine.h" line="15" column="10" bodyfile="engine/include/dalia/audio/Engine.h" bodystart="15" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structdalia_1_1EngineConfig_1afe8a553524715a588be34a46e9924aa4" prot="public" static="no" mutable="no">
+        <type><ref refid="namespacedalia_1a246be6eeb9ca99400da581e89d284dcd" kindref="member">LogCallback</ref></type>
+        <definition>LogCallback dalia::EngineConfig::logCallback</definition>
+        <argsstring></argsstring>
+        <name>logCallback</name>
+        <qualifiedname>dalia::EngineConfig::logCallback</qualifiedname>
+        <initializer>= nullptr</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/Engine.h" line="16" column="13" bodyfile="engine/include/dalia/audio/Engine.h" bodystart="16" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structdalia_1_1EngineConfig_1a76d945ad75d2a21ce26772f643f5941d" prot="public" static="no" mutable="no">
+        <type><ref refid="namespacedalia_1aa0c5c389cc67006c3550a3697096e391" kindref="member">CoordinateSystem</ref></type>
+        <definition>CoordinateSystem dalia::EngineConfig::coordinateSystem</definition>
+        <argsstring></argsstring>
+        <name>coordinateSystem</name>
+        <qualifiedname>dalia::EngineConfig::coordinateSystem</qualifiedname>
+        <initializer>= <ref refid="namespacedalia_1aa0c5c389cc67006c3550a3697096e391a4583673c474e530a2db116199a93ba82" kindref="member">CoordinateSystem::RightHanded</ref></initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/Engine.h" line="18" column="18" bodyfile="engine/include/dalia/audio/Engine.h" bodystart="18" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structdalia_1_1EngineConfig_1a441dc72ca9fe5543fe70ef1664fb6c1d" prot="public" static="no" mutable="no">
+        <type>uint32_t</type>
+        <definition>uint32_t dalia::EngineConfig::residentSoundCapacity</definition>
+        <argsstring></argsstring>
+        <name>residentSoundCapacity</name>
+        <qualifiedname>dalia::EngineConfig::residentSoundCapacity</qualifiedname>
+        <initializer>= 256</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/Engine.h" line="20" column="10" bodyfile="engine/include/dalia/audio/Engine.h" bodystart="20" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structdalia_1_1EngineConfig_1a028d0a592e76a32a6294773d266b2c8a" prot="public" static="no" mutable="no">
+        <type>uint32_t</type>
+        <definition>uint32_t dalia::EngineConfig::streamSoundCapacity</definition>
+        <argsstring></argsstring>
+        <name>streamSoundCapacity</name>
+        <qualifiedname>dalia::EngineConfig::streamSoundCapacity</qualifiedname>
+        <initializer>= 256</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/Engine.h" line="21" column="10" bodyfile="engine/include/dalia/audio/Engine.h" bodystart="21" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structdalia_1_1EngineConfig_1a391769d44d5e4339f6ff7c674b3a2b45" prot="public" static="no" mutable="no">
+        <type>uint32_t</type>
+        <definition>uint32_t dalia::EngineConfig::voiceCapacity</definition>
+        <argsstring></argsstring>
+        <name>voiceCapacity</name>
+        <qualifiedname>dalia::EngineConfig::voiceCapacity</qualifiedname>
+        <initializer>= 128</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/Engine.h" line="23" column="10" bodyfile="engine/include/dalia/audio/Engine.h" bodystart="23" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structdalia_1_1EngineConfig_1a35638e9f9a7499a19e0b461c3e232933" prot="public" static="no" mutable="no">
+        <type>uint32_t</type>
+        <definition>uint32_t dalia::EngineConfig::maxActiveVoices</definition>
+        <argsstring></argsstring>
+        <name>maxActiveVoices</name>
+        <qualifiedname>dalia::EngineConfig::maxActiveVoices</qualifiedname>
+        <initializer>= 64</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/Engine.h" line="24" column="10" bodyfile="engine/include/dalia/audio/Engine.h" bodystart="24" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structdalia_1_1EngineConfig_1a4f0c348d6d2f9fdbad9a7c71d1bf874c" prot="public" static="no" mutable="no">
+        <type>uint32_t</type>
+        <definition>uint32_t dalia::EngineConfig::streamCapacity</definition>
+        <argsstring></argsstring>
+        <name>streamCapacity</name>
+        <qualifiedname>dalia::EngineConfig::streamCapacity</qualifiedname>
+        <initializer>= 32</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/Engine.h" line="25" column="10" bodyfile="engine/include/dalia/audio/Engine.h" bodystart="25" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structdalia_1_1EngineConfig_1a0003e8de500dbdd50a5bfceb9f8c6695" prot="public" static="no" mutable="no">
+        <type>uint32_t</type>
+        <definition>uint32_t dalia::EngineConfig::busCapacity</definition>
+        <argsstring></argsstring>
+        <name>busCapacity</name>
+        <qualifiedname>dalia::EngineConfig::busCapacity</qualifiedname>
+        <initializer>= 64</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/Engine.h" line="26" column="10" bodyfile="engine/include/dalia/audio/Engine.h" bodystart="26" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structdalia_1_1EngineConfig_1ac2e1d68fa44010692df32de984c76f2f" prot="public" static="no" mutable="no">
+        <type>uint32_t</type>
+        <definition>uint32_t dalia::EngineConfig::BiquadCapacity</definition>
+        <argsstring></argsstring>
+        <name>BiquadCapacity</name>
+        <qualifiedname>dalia::EngineConfig::BiquadCapacity</qualifiedname>
+        <initializer>= 32</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/Engine.h" line="29" column="10" bodyfile="engine/include/dalia/audio/Engine.h" bodystart="29" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structdalia_1_1EngineConfig_1a6ee54e8601a964b34ec3e213a254ab7e" prot="public" static="no" mutable="no">
+        <type>uint32_t</type>
+        <definition>uint32_t dalia::EngineConfig::listenerCapacity</definition>
+        <argsstring></argsstring>
+        <name>listenerCapacity</name>
+        <qualifiedname>dalia::EngineConfig::listenerCapacity</qualifiedname>
+        <initializer>= 1</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/Engine.h" line="31" column="10" bodyfile="engine/include/dalia/audio/Engine.h" bodystart="31" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structdalia_1_1EngineConfig_1a5b4adbe2ace04418178f547eff611c25" prot="public" static="no" mutable="no">
+        <type>size_t</type>
+        <definition>size_t dalia::EngineConfig::rtCommandQueueCapacity</definition>
+        <argsstring></argsstring>
+        <name>rtCommandQueueCapacity</name>
+        <qualifiedname>dalia::EngineConfig::rtCommandQueueCapacity</qualifiedname>
+        <initializer>= 1024</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/Engine.h" line="33" column="8" bodyfile="engine/include/dalia/audio/Engine.h" bodystart="33" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structdalia_1_1EngineConfig_1a04ef57bc3935af62713fdd1518157547" prot="public" static="no" mutable="no">
+        <type>size_t</type>
+        <definition>size_t dalia::EngineConfig::rtEventQueueCapacity</definition>
+        <argsstring></argsstring>
+        <name>rtEventQueueCapacity</name>
+        <qualifiedname>dalia::EngineConfig::rtEventQueueCapacity</qualifiedname>
+        <initializer>= 1024</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/Engine.h" line="34" column="8" bodyfile="engine/include/dalia/audio/Engine.h" bodystart="34" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structdalia_1_1EngineConfig_1a483d1d5e2670d5b3dfc9a8639b00568b" prot="public" static="no" mutable="no">
+        <type>size_t</type>
+        <definition>size_t dalia::EngineConfig::ioStreamRequestQueueCapacity</definition>
+        <argsstring></argsstring>
+        <name>ioStreamRequestQueueCapacity</name>
+        <qualifiedname>dalia::EngineConfig::ioStreamRequestQueueCapacity</qualifiedname>
+        <initializer>= 256</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/Engine.h" line="35" column="8" bodyfile="engine/include/dalia/audio/Engine.h" bodystart="35" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structdalia_1_1EngineConfig_1a0611c22c2df8dbe7cf7e7764f135409a" prot="public" static="no" mutable="no">
+        <type>size_t</type>
+        <definition>size_t dalia::EngineConfig::ioLoadRequestQueueCapacity</definition>
+        <argsstring></argsstring>
+        <name>ioLoadRequestQueueCapacity</name>
+        <qualifiedname>dalia::EngineConfig::ioLoadRequestQueueCapacity</qualifiedname>
+        <initializer>= 64</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/Engine.h" line="36" column="8" bodyfile="engine/include/dalia/audio/Engine.h" bodystart="36" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structdalia_1_1EngineConfig_1a44da6294ca9f6752151c5c0ad70ba71c" prot="public" static="no" mutable="no">
+        <type>size_t</type>
+        <definition>size_t dalia::EngineConfig::ioLoadEventQueueCapacity</definition>
+        <argsstring></argsstring>
+        <name>ioLoadEventQueueCapacity</name>
+        <qualifiedname>dalia::EngineConfig::ioLoadEventQueueCapacity</qualifiedname>
+        <initializer>= 64</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/Engine.h" line="37" column="8" bodyfile="engine/include/dalia/audio/Engine.h" bodystart="37" bodyend="-1"/>
+      </memberdef>
+    </sectiondef>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <location file="engine/include/dalia/audio/Engine.h" line="14" column="1" bodyfile="engine/include/dalia/audio/Engine.h" bodystart="14" bodyend="38"/>
+    <listofallmembers>
+      <member refid="structdalia_1_1EngineConfig_1ac2e1d68fa44010692df32de984c76f2f" prot="public" virt="non-virtual"><scope>dalia::EngineConfig</scope><name>BiquadCapacity</name></member>
+      <member refid="structdalia_1_1EngineConfig_1a0003e8de500dbdd50a5bfceb9f8c6695" prot="public" virt="non-virtual"><scope>dalia::EngineConfig</scope><name>busCapacity</name></member>
+      <member refid="structdalia_1_1EngineConfig_1a76d945ad75d2a21ce26772f643f5941d" prot="public" virt="non-virtual"><scope>dalia::EngineConfig</scope><name>coordinateSystem</name></member>
+      <member refid="structdalia_1_1EngineConfig_1a44da6294ca9f6752151c5c0ad70ba71c" prot="public" virt="non-virtual"><scope>dalia::EngineConfig</scope><name>ioLoadEventQueueCapacity</name></member>
+      <member refid="structdalia_1_1EngineConfig_1a0611c22c2df8dbe7cf7e7764f135409a" prot="public" virt="non-virtual"><scope>dalia::EngineConfig</scope><name>ioLoadRequestQueueCapacity</name></member>
+      <member refid="structdalia_1_1EngineConfig_1a483d1d5e2670d5b3dfc9a8639b00568b" prot="public" virt="non-virtual"><scope>dalia::EngineConfig</scope><name>ioStreamRequestQueueCapacity</name></member>
+      <member refid="structdalia_1_1EngineConfig_1a6ee54e8601a964b34ec3e213a254ab7e" prot="public" virt="non-virtual"><scope>dalia::EngineConfig</scope><name>listenerCapacity</name></member>
+      <member refid="structdalia_1_1EngineConfig_1afe8a553524715a588be34a46e9924aa4" prot="public" virt="non-virtual"><scope>dalia::EngineConfig</scope><name>logCallback</name></member>
+      <member refid="structdalia_1_1EngineConfig_1a2d3fce05c77efd820e66310322c389f2" prot="public" virt="non-virtual"><scope>dalia::EngineConfig</scope><name>logLevel</name></member>
+      <member refid="structdalia_1_1EngineConfig_1a35638e9f9a7499a19e0b461c3e232933" prot="public" virt="non-virtual"><scope>dalia::EngineConfig</scope><name>maxActiveVoices</name></member>
+      <member refid="structdalia_1_1EngineConfig_1a441dc72ca9fe5543fe70ef1664fb6c1d" prot="public" virt="non-virtual"><scope>dalia::EngineConfig</scope><name>residentSoundCapacity</name></member>
+      <member refid="structdalia_1_1EngineConfig_1a5b4adbe2ace04418178f547eff611c25" prot="public" virt="non-virtual"><scope>dalia::EngineConfig</scope><name>rtCommandQueueCapacity</name></member>
+      <member refid="structdalia_1_1EngineConfig_1a04ef57bc3935af62713fdd1518157547" prot="public" virt="non-virtual"><scope>dalia::EngineConfig</scope><name>rtEventQueueCapacity</name></member>
+      <member refid="structdalia_1_1EngineConfig_1a4f0c348d6d2f9fdbad9a7c71d1bf874c" prot="public" virt="non-virtual"><scope>dalia::EngineConfig</scope><name>streamCapacity</name></member>
+      <member refid="structdalia_1_1EngineConfig_1a028d0a592e76a32a6294773d266b2c8a" prot="public" virt="non-virtual"><scope>dalia::EngineConfig</scope><name>streamSoundCapacity</name></member>
+      <member refid="structdalia_1_1EngineConfig_1a391769d44d5e4339f6ff7c674b3a2b45" prot="public" virt="non-virtual"><scope>dalia::EngineConfig</scope><name>voiceCapacity</name></member>
+    </listofallmembers>
+  </compounddef>
+</doxygen>

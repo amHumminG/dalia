@@ -1,0 +1,297 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.9.8" xml:lang="en-US">
+  <compounddef id="structdalia_1_1SoundHandle" kind="struct" language="C++" prot="public">
+    <compoundname>dalia::SoundHandle</compoundname>
+    <includes refid="SoundControl_8h" local="no">SoundControl.h</includes>
+    <sectiondef kind="friend">
+      <memberdef kind="friend" id="structdalia_1_1SoundHandle_1a7b4e5fcb00301e31dcbac173d9576d79" prot="private" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>struct</type>
+        <definition>friend struct EngineInternalState</definition>
+        <argsstring></argsstring>
+        <name>EngineInternalState</name>
+        <qualifiedname>dalia::SoundHandle::EngineInternalState</qualifiedname>
+        <param>
+          <type>EngineInternalState</type>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/SoundControl.h" line="34" column="23" bodyfile="engine/include/dalia/audio/SoundControl.h" bodystart="34" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="friend" id="structdalia_1_1SoundHandle_1a78622a4072c97072cc9c8136cfc23760" prot="private" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>class</type>
+        <definition>friend class AssetRegistry</definition>
+        <argsstring></argsstring>
+        <name>AssetRegistry</name>
+        <qualifiedname>dalia::SoundHandle::AssetRegistry</qualifiedname>
+        <param>
+          <type>AssetRegistry</type>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/SoundControl.h" line="35" column="22" bodyfile="engine/include/dalia/audio/SoundControl.h" bodystart="35" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="friend" id="structdalia_1_1SoundHandle_1a5b3062a9e1c4f3e92bf6d1baec640b2a" prot="private" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>class</type>
+        <definition>friend class IoLoadSystem</definition>
+        <argsstring></argsstring>
+        <name>IoLoadSystem</name>
+        <qualifiedname>dalia::SoundHandle::IoLoadSystem</qualifiedname>
+        <param>
+          <type>IoLoadSystem</type>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/SoundControl.h" line="36" column="22" bodyfile="engine/include/dalia/audio/SoundControl.h" bodystart="36" bodyend="-1"/>
+      </memberdef>
+    </sectiondef>
+    <sectiondef kind="private-attrib">
+      <memberdef kind="variable" id="structdalia_1_1SoundHandle_1a123223ea5d9d94d9de50e5b4971c8201" prot="private" static="no" mutable="no">
+        <type>uint64_t</type>
+        <definition>uint64_t dalia::SoundHandle::m_rawId</definition>
+        <argsstring></argsstring>
+        <name>m_rawId</name>
+        <qualifiedname>dalia::SoundHandle::m_rawId</qualifiedname>
+        <initializer>= 0</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/SoundControl.h" line="57" column="18" bodyfile="engine/include/dalia/audio/SoundControl.h" bodystart="57" bodyend="-1"/>
+      </memberdef>
+    </sectiondef>
+    <sectiondef kind="public-func">
+      <memberdef kind="function" id="structdalia_1_1SoundHandle_1a19faad27c9f860b02bf1841e53b9e4f8" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type></type>
+        <definition>dalia::SoundHandle::SoundHandle</definition>
+        <argsstring>()=default</argsstring>
+        <name>SoundHandle</name>
+        <qualifiedname>dalia::SoundHandle::SoundHandle</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/SoundControl.h" line="19" column="5"/>
+      </memberdef>
+      <memberdef kind="function" id="structdalia_1_1SoundHandle_1a027ced5416455e1e22dc09a0fd435847" prot="public" static="no" const="no" explicit="yes" inline="yes" virt="non-virtual">
+        <type></type>
+        <definition>dalia::SoundHandle::SoundHandle</definition>
+        <argsstring>(uint64_t rawId)</argsstring>
+        <name>SoundHandle</name>
+        <qualifiedname>dalia::SoundHandle::SoundHandle</qualifiedname>
+        <param>
+          <type>uint64_t</type>
+          <declname>rawId</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/SoundControl.h" line="20" column="14" bodyfile="engine/include/dalia/audio/SoundControl.h" bodystart="20" bodyend="20"/>
+      </memberdef>
+      <memberdef kind="function" id="structdalia_1_1SoundHandle_1ab1cb6dedebcf124b7c4382838acb633e" prot="public" static="no" const="yes" explicit="no" inline="yes" virt="non-virtual">
+        <type>bool</type>
+        <definition>bool dalia::SoundHandle::IsValid</definition>
+        <argsstring>() const</argsstring>
+        <name>IsValid</name>
+        <qualifiedname>dalia::SoundHandle::IsValid</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para><simplesect kind="return"><para>true if the handle has referenced a loaded sound at some point. Otherwise, false. </para>
+</simplesect>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/SoundControl.h" line="23" column="14" bodyfile="engine/include/dalia/audio/SoundControl.h" bodystart="23" bodyend="23"/>
+      </memberdef>
+      <memberdef kind="function" id="structdalia_1_1SoundHandle_1a3f3894fcaa1c8ab7644bf37540fc754a" prot="public" static="no" const="yes" explicit="no" inline="yes" virt="non-virtual">
+        <type>bool</type>
+        <definition>bool dalia::SoundHandle::operator==</definition>
+        <argsstring>(const SoundHandle &amp;other) const</argsstring>
+        <name>operator==</name>
+        <qualifiedname>dalia::SoundHandle::operator==</qualifiedname>
+        <param>
+          <type>const <ref refid="structdalia_1_1SoundHandle" kindref="compound">SoundHandle</ref> &amp;</type>
+          <declname>other</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/SoundControl.h" line="24" column="14" bodyfile="engine/include/dalia/audio/SoundControl.h" bodystart="24" bodyend="24"/>
+      </memberdef>
+      <memberdef kind="function" id="structdalia_1_1SoundHandle_1a7209004a116fb7cbe16dc6afe596f91f" prot="public" static="no" const="yes" explicit="no" inline="yes" virt="non-virtual">
+        <type>bool</type>
+        <definition>bool dalia::SoundHandle::operator!=</definition>
+        <argsstring>(const SoundHandle &amp;other) const</argsstring>
+        <name>operator!=</name>
+        <qualifiedname>dalia::SoundHandle::operator!=</qualifiedname>
+        <param>
+          <type>const <ref refid="structdalia_1_1SoundHandle" kindref="compound">SoundHandle</ref> &amp;</type>
+          <declname>other</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/SoundControl.h" line="25" column="14" bodyfile="engine/include/dalia/audio/SoundControl.h" bodystart="25" bodyend="25"/>
+      </memberdef>
+      <memberdef kind="function" id="structdalia_1_1SoundHandle_1af54710317ad5632f3c40bbd4eae67732" prot="public" static="no" const="yes" explicit="no" inline="yes" virt="non-virtual">
+        <type><ref refid="namespacedalia_1aeae4a70bf40c2732cf099bd25d505e83" kindref="member">SoundType</ref></type>
+        <definition>SoundType dalia::SoundHandle::GetType</definition>
+        <argsstring>() const</argsstring>
+        <name>GetType</name>
+        <qualifiedname>dalia::SoundHandle::GetType</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para><simplesect kind="return"><para>The type of sound (stream or resident) that this handle references. </para>
+</simplesect>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/SoundControl.h" line="28" column="15" bodyfile="engine/include/dalia/audio/SoundControl.h" bodystart="28" bodyend="28"/>
+      </memberdef>
+      <memberdef kind="function" id="structdalia_1_1SoundHandle_1a0e133909be63bd0a5b79de960429ab13" prot="public" static="no" const="yes" explicit="no" inline="yes" virt="non-virtual">
+        <type>uint64_t</type>
+        <definition>uint64_t dalia::SoundHandle::GetRawId</definition>
+        <argsstring>() const</argsstring>
+        <name>GetRawId</name>
+        <qualifiedname>dalia::SoundHandle::GetRawId</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para><simplesect kind="return"><para>The underlying raw id of the handle. </para>
+</simplesect>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/SoundControl.h" line="31" column="18" bodyfile="engine/include/dalia/audio/SoundControl.h" bodystart="31" bodyend="31"/>
+      </memberdef>
+    </sectiondef>
+    <sectiondef kind="private-static-func">
+      <memberdef kind="function" id="structdalia_1_1SoundHandle_1a6cbef4929569263f2d064b4881ef5a31" prot="private" static="yes" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type><ref refid="structdalia_1_1SoundHandle" kindref="compound">SoundHandle</ref></type>
+        <definition>static SoundHandle dalia::SoundHandle::Create</definition>
+        <argsstring>(uint32_t index, uint32_t generation, SoundType type)</argsstring>
+        <name>Create</name>
+        <qualifiedname>dalia::SoundHandle::Create</qualifiedname>
+        <param>
+          <type>uint32_t</type>
+          <declname>index</declname>
+        </param>
+        <param>
+          <type>uint32_t</type>
+          <declname>generation</declname>
+        </param>
+        <param>
+          <type><ref refid="namespacedalia_1aeae4a70bf40c2732cf099bd25d505e83" kindref="member">SoundType</ref></type>
+          <declname>type</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/SoundControl.h" line="38" column="28" bodyfile="engine/include/dalia/audio/SoundControl.h" bodystart="38" bodyend="46"/>
+      </memberdef>
+      <memberdef kind="function" id="structdalia_1_1SoundHandle_1a551e8f8e9e223383f5ec6cc022ff3f6d" prot="private" static="yes" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type><ref refid="structdalia_1_1SoundHandle" kindref="compound">SoundHandle</ref></type>
+        <definition>static SoundHandle dalia::SoundHandle::FromRawId</definition>
+        <argsstring>(uint64_t rawId)</argsstring>
+        <name>FromRawId</name>
+        <qualifiedname>dalia::SoundHandle::FromRawId</qualifiedname>
+        <param>
+          <type>uint64_t</type>
+          <declname>rawId</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/SoundControl.h" line="48" column="28" bodyfile="engine/include/dalia/audio/SoundControl.h" bodystart="48" bodyend="52"/>
+      </memberdef>
+    </sectiondef>
+    <sectiondef kind="private-func">
+      <memberdef kind="function" id="structdalia_1_1SoundHandle_1a044515f39a1365e98b9a18efd7e74497" prot="private" static="no" const="yes" explicit="no" inline="yes" virt="non-virtual">
+        <type>uint32_t</type>
+        <definition>uint32_t dalia::SoundHandle::GetIndex</definition>
+        <argsstring>() const</argsstring>
+        <name>GetIndex</name>
+        <qualifiedname>dalia::SoundHandle::GetIndex</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/SoundControl.h" line="54" column="14" bodyfile="engine/include/dalia/audio/SoundControl.h" bodystart="54" bodyend="54"/>
+      </memberdef>
+      <memberdef kind="function" id="structdalia_1_1SoundHandle_1aa584da2f80253801ce82454b594f9ee2" prot="private" static="no" const="yes" explicit="no" inline="yes" virt="non-virtual">
+        <type>uint32_t</type>
+        <definition>uint32_t dalia::SoundHandle::GetGeneration</definition>
+        <argsstring>() const</argsstring>
+        <name>GetGeneration</name>
+        <qualifiedname>dalia::SoundHandle::GetGeneration</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/SoundControl.h" line="55" column="14" bodyfile="engine/include/dalia/audio/SoundControl.h" bodystart="55" bodyend="55"/>
+      </memberdef>
+    </sectiondef>
+    <briefdescription>
+<para>Handle used to manage loaded sounds. This handle expires once the sound it is referencing is unloaded. </para>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <location file="engine/include/dalia/audio/SoundControl.h" line="17" column="5" bodyfile="engine/include/dalia/audio/SoundControl.h" bodystart="17" bodyend="58"/>
+    <listofallmembers>
+      <member refid="structdalia_1_1SoundHandle_1a78622a4072c97072cc9c8136cfc23760" prot="private" virt="non-virtual"><scope>dalia::SoundHandle</scope><name>AssetRegistry</name></member>
+      <member refid="structdalia_1_1SoundHandle_1a6cbef4929569263f2d064b4881ef5a31" prot="private" virt="non-virtual"><scope>dalia::SoundHandle</scope><name>Create</name></member>
+      <member refid="structdalia_1_1SoundHandle_1a7b4e5fcb00301e31dcbac173d9576d79" prot="private" virt="non-virtual"><scope>dalia::SoundHandle</scope><name>EngineInternalState</name></member>
+      <member refid="structdalia_1_1SoundHandle_1a551e8f8e9e223383f5ec6cc022ff3f6d" prot="private" virt="non-virtual"><scope>dalia::SoundHandle</scope><name>FromRawId</name></member>
+      <member refid="structdalia_1_1SoundHandle_1aa584da2f80253801ce82454b594f9ee2" prot="private" virt="non-virtual"><scope>dalia::SoundHandle</scope><name>GetGeneration</name></member>
+      <member refid="structdalia_1_1SoundHandle_1a044515f39a1365e98b9a18efd7e74497" prot="private" virt="non-virtual"><scope>dalia::SoundHandle</scope><name>GetIndex</name></member>
+      <member refid="structdalia_1_1SoundHandle_1a0e133909be63bd0a5b79de960429ab13" prot="public" virt="non-virtual"><scope>dalia::SoundHandle</scope><name>GetRawId</name></member>
+      <member refid="structdalia_1_1SoundHandle_1af54710317ad5632f3c40bbd4eae67732" prot="public" virt="non-virtual"><scope>dalia::SoundHandle</scope><name>GetType</name></member>
+      <member refid="structdalia_1_1SoundHandle_1a5b3062a9e1c4f3e92bf6d1baec640b2a" prot="private" virt="non-virtual"><scope>dalia::SoundHandle</scope><name>IoLoadSystem</name></member>
+      <member refid="structdalia_1_1SoundHandle_1ab1cb6dedebcf124b7c4382838acb633e" prot="public" virt="non-virtual"><scope>dalia::SoundHandle</scope><name>IsValid</name></member>
+      <member refid="structdalia_1_1SoundHandle_1a123223ea5d9d94d9de50e5b4971c8201" prot="private" virt="non-virtual"><scope>dalia::SoundHandle</scope><name>m_rawId</name></member>
+      <member refid="structdalia_1_1SoundHandle_1a7209004a116fb7cbe16dc6afe596f91f" prot="public" virt="non-virtual"><scope>dalia::SoundHandle</scope><name>operator!=</name></member>
+      <member refid="structdalia_1_1SoundHandle_1a3f3894fcaa1c8ab7644bf37540fc754a" prot="public" virt="non-virtual"><scope>dalia::SoundHandle</scope><name>operator==</name></member>
+      <member refid="structdalia_1_1SoundHandle_1a19faad27c9f860b02bf1841e53b9e4f8" prot="public" virt="non-virtual"><scope>dalia::SoundHandle</scope><name>SoundHandle</name></member>
+      <member refid="structdalia_1_1SoundHandle_1a027ced5416455e1e22dc09a0fd435847" prot="public" virt="non-virtual"><scope>dalia::SoundHandle</scope><name>SoundHandle</name></member>
+    </listofallmembers>
+  </compounddef>
+</doxygen>

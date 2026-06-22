@@ -1,0 +1,2506 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="A real-time, low-latency, data-oriented audio engine for games and game engines written in C++.">
+      
+      
+        <meta name="author" content="Arvid Wahlgren">
+      
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/dalia_icon_transparent.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>Class dalia::Engine - DALIA Engine</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:300,300i,400,400i,700,700i%7CJetBrains+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Inter";--md-code-font:"JetBrains Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="black" data-md-color-accent="blue">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#class-daliaengine" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="DALIA Engine" class="md-header__button md-logo" aria-label="DALIA Engine" data-md-component="logo">
+      
+  <img src="../../assets/dalia_icon_transparent.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            DALIA Engine
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Class dalia::Engine
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="black" data-md-color-accent="blue"  aria-hidden="true"  type="radio" name="__palette" id="__palette_0">
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/amHumminG/dalia" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    amHumminG/dalia
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../getting-started/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Getting Started
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../architecture/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Architecture
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../guide/asset-management/" class="md-tabs__link">
+          
+  
+  
+  Guide
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../annotated/" class="md-tabs__link">
+          
+  
+  
+  API Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="DALIA Engine" class="md-nav__button md-logo" aria-label="DALIA Engine" data-md-component="logo">
+      
+  <img src="../../assets/dalia_icon_transparent.png" alt="logo">
+
+    </a>
+    DALIA Engine
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/amHumminG/dalia" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    amHumminG/dalia
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting-started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Guide
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Guide
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guide/asset-management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Asset Management
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guide/playback-control/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Playback Control
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guide/mixing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Mixing & Routing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guide/spatialization/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Spatialization
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    API Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../annotated/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Classes & Structs
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../namespaces/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    NameSpaces
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../files/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Files
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#public-functions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Public Functions
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#public-functions-documentation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Public Functions Documentation
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Public Functions Documentation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#function-attacheffect" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        function AttachEffect
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#function-createbus" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        function CreateBus
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#function-createeffect" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        function CreateEffect
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#function-createplayback" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        function CreatePlayback
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#function-destroybus" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        function DestroyBus
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#function-destroyeffect" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        function DestroyEffect
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#function-detacheffect" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        function DetachEffect
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#function-engine-12" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        function Engine [1/2]
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#function-engine-22" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        function Engine [2/2]
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#function-getsoundlength" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        function GetSoundLength
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#function-init" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        function Init
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#function-loadsoundasync" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        function LoadSoundAsync
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#function-pauseplayback" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        function PausePlayback
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#function-playplayback" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        function PlayPlayback
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#function-routebus" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        function RouteBus
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#function-routeplayback" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        function RoutePlayback
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#function-seekplayback" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        function SeekPlayback
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#function-setbusvolumedb" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        function SetBusVolumeDb
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#function-seteffectparams" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        function SetEffectParams
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#function-setglobaldopplerfactor" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        function SetGlobalDopplerFactor
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#function-setlistener3dattributes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        function SetListener3DAttributes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#function-setlisteneractive" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        function SetListenerActive
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#function-setlistenerdistanceprobeposition" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        function SetListenerDistanceProbePosition
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#function-setlistenerorientation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        function SetListenerOrientation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#function-setlistenerposition" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        function SetListenerPosition
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#function-setlistenervelocity" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        function SetListenerVelocity
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#function-setplaybackattenuationcurve" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        function SetPlaybackAttenuationCurve
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#function-setplaybackdistancemode" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        function SetPlaybackDistanceMode
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#function-setplaybackdopplerfactor" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        function SetPlaybackDopplerFactor
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#function-setplaybacklistenermask" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        function SetPlaybackListenerMask
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#function-setplaybacklooping" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        function SetPlaybackLooping
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#function-setplaybackminmaxdistance" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        function SetPlaybackMinMaxDistance
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#function-setplaybackposition" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        function SetPlaybackPosition
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#function-setplaybackrate" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        function SetPlaybackRate
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#function-setplaybackspatial" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        function SetPlaybackSpatial
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#function-setplaybackstereopan" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        function SetPlaybackStereoPan
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#function-setplaybackusedoppler" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        function SetPlaybackUseDoppler
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#function-setplaybackvelocity" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        function SetPlaybackVelocity
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#function-setplaybackvolumedb" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        function SetPlaybackVolumeDb
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#function-shutdown" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        function Shutdown
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#function-stopplayback" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        function StopPlayback
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#function-unloadsound" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        function UnloadSound
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#function-update" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        function Update
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#function-operator" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        function operator=
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#function-engine" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        function ~Engine
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="class-daliaengine">Class dalia::Engine<a class="headerlink" href="#class-daliaengine" title="Permanent link">&para;</a></h1>
+<p><a href="../annotated/"><strong>ClassList</strong></a> <strong>&gt;</strong> <a href="../namespacedalia/"><strong>dalia</strong></a> <strong>&gt;</strong> <a href="./"><strong>Engine</strong></a></p>
+<ul>
+<li><code>#include &lt;Engine.h&gt;</code></li>
+</ul>
+<h2 id="public-functions">Public Functions<a class="headerlink" href="#public-functions" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: right;">Type</th>
+<th style="text-align: left;">Name</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: right;"><a href="../namespacedalia/#enum-result"><strong>Result</strong></a></td>
+<td style="text-align: left;"><a href="#function-attacheffect"><strong>AttachEffect</strong></a> (<a href="../structdalia_1_1EffectHandle/"><strong>EffectHandle</strong></a> effect, const char * busIdentifier, uint32_t effectSlot) <br><em>Inserts an allocated effect into the processing chain of a specified bus.</em></td>
+</tr>
+<tr>
+<td style="text-align: right;"><a href="../namespacedalia/#enum-result"><strong>Result</strong></a></td>
+<td style="text-align: left;"><a href="#function-createbus"><strong>CreateBus</strong></a> (const char * identifier, const char * parentIdentifier="Master") <br><em>Creates a new mixing bus.</em></td>
+</tr>
+<tr>
+<td style="text-align: right;"><a href="../namespacedalia/#enum-result"><strong>Result</strong></a></td>
+<td style="text-align: left;"><a href="#function-createeffect"><strong>CreateEffect</strong></a> (<a href="../structdalia_1_1EffectHandle/"><strong>EffectHandle</strong></a> &amp; effect, const TParams &amp; params) <br><em>Allocates a new DSP effect instance and initializes it with the provided parameters.</em></td>
+</tr>
+<tr>
+<td style="text-align: right;"><a href="../namespacedalia/#enum-result"><strong>Result</strong></a></td>
+<td style="text-align: left;"><a href="#function-createplayback"><strong>CreatePlayback</strong></a> (<a href="../structdalia_1_1PlaybackHandle/"><strong>PlaybackHandle</strong></a> &amp; playback, <a href="../structdalia_1_1SoundHandle/"><strong>SoundHandle</strong></a> sound, <a href="../namespacedalia/#typedef-playbackexitcallback"><strong>PlaybackExitCallback</strong></a> callback=nullptr) <br><em>Creates a playback instance with a sound and prepares it for playback.</em></td>
+</tr>
+<tr>
+<td style="text-align: right;"><a href="../namespacedalia/#enum-result"><strong>Result</strong></a></td>
+<td style="text-align: left;"><a href="#function-destroybus"><strong>DestroyBus</strong></a> (const char * identifier) <br><em>Decrements the reference count of a bus and destroys it if the count reaches zero.</em></td>
+</tr>
+<tr>
+<td style="text-align: right;"><a href="../namespacedalia/#enum-result"><strong>Result</strong></a></td>
+<td style="text-align: left;"><a href="#function-destroyeffect"><strong>DestroyEffect</strong></a> (<a href="../structdalia_1_1EffectHandle/"><strong>EffectHandle</strong></a> effect) <br><em>Destroys an effect.</em></td>
+</tr>
+<tr>
+<td style="text-align: right;"><a href="../namespacedalia/#enum-result"><strong>Result</strong></a></td>
+<td style="text-align: left;"><a href="#function-detacheffect"><strong>DetachEffect</strong></a> (<a href="../structdalia_1_1EffectHandle/"><strong>EffectHandle</strong></a> effect) <br><em>Removes an effect from the mix graph, regardless of which bus it is routed to.</em></td>
+</tr>
+<tr>
+<td style="text-align: right;"></td>
+<td style="text-align: left;"><a href="#function-engine-12"><strong>Engine</strong></a> () <br></td>
+</tr>
+<tr>
+<td style="text-align: right;"></td>
+<td style="text-align: left;"><a href="#function-engine-22"><strong>Engine</strong></a> (const <a href="./"><strong>Engine</strong></a> &amp;) = delete<br></td>
+</tr>
+<tr>
+<td style="text-align: right;"><a href="../namespacedalia/#enum-result"><strong>Result</strong></a></td>
+<td style="text-align: left;"><a href="#function-getsoundlength"><strong>GetSoundLength</strong></a> (<a href="../structdalia_1_1SoundHandle/"><strong>SoundHandle</strong></a> sound, double &amp; lengthInSeconds) <br><em>Fetches the total duration (in seconds) of a loaded sound.</em></td>
+</tr>
+<tr>
+<td style="text-align: right;"><a href="../namespacedalia/#enum-result"><strong>Result</strong></a></td>
+<td style="text-align: left;"><a href="#function-init"><strong>Init</strong></a> (const <a href="../structdalia_1_1EngineConfig/"><strong>EngineConfig</strong></a> &amp; config=<a href="../structdalia_1_1EngineConfig/"><strong>EngineConfig</strong></a>{}) <br><em>Initializes the engine, hardware device and background threads.</em></td>
+</tr>
+<tr>
+<td style="text-align: right;"><a href="../namespacedalia/#enum-result"><strong>Result</strong></a></td>
+<td style="text-align: left;"><a href="#function-loadsoundasync"><strong>LoadSoundAsync</strong></a> (<a href="../structdalia_1_1SoundHandle/"><strong>SoundHandle</strong></a> &amp; sound, <a href="../namespacedalia/#enum-soundtype"><strong>SoundType</strong></a> type, const char * filepath, <a href="../namespacedalia/#typedef-assetloadcallback"><strong>AssetLoadCallback</strong></a> callback=nullptr, uint32_t * outRequestId=nullptr) <br><em>Asynchronously loads a sound into memory or prepares a file for streaming.</em></td>
+</tr>
+<tr>
+<td style="text-align: right;"><a href="../namespacedalia/#enum-result"><strong>Result</strong></a></td>
+<td style="text-align: left;"><a href="#function-pauseplayback"><strong>PausePlayback</strong></a> (<a href="../structdalia_1_1PlaybackHandle/"><strong>PlaybackHandle</strong></a> playback) <br><em>Pauses a playback instance.</em></td>
+</tr>
+<tr>
+<td style="text-align: right;"><a href="../namespacedalia/#enum-result"><strong>Result</strong></a></td>
+<td style="text-align: left;"><a href="#function-playplayback"><strong>PlayPlayback</strong></a> (<a href="../structdalia_1_1PlaybackHandle/"><strong>PlaybackHandle</strong></a> playback) <br><em>Starts or resumes a playback instance.</em></td>
+</tr>
+<tr>
+<td style="text-align: right;"><a href="../namespacedalia/#enum-result"><strong>Result</strong></a></td>
+<td style="text-align: left;"><a href="#function-routebus"><strong>RouteBus</strong></a> (const char * identifier, const char * parentIdentifier) <br><em>Modifies the routing topology by changing the output destination of an existing bus.</em></td>
+</tr>
+<tr>
+<td style="text-align: right;"><a href="../namespacedalia/#enum-result"><strong>Result</strong></a></td>
+<td style="text-align: left;"><a href="#function-routeplayback"><strong>RoutePlayback</strong></a> (<a href="../structdalia_1_1PlaybackHandle/"><strong>PlaybackHandle</strong></a> playback, const char * busIdentifier) <br><em>Routes a playback instance to output its audio into the specified mixing bus.</em></td>
+</tr>
+<tr>
+<td style="text-align: right;"><a href="../namespacedalia/#enum-result"><strong>Result</strong></a></td>
+<td style="text-align: left;"><a href="#function-seekplayback"><strong>SeekPlayback</strong></a> (<a href="../structdalia_1_1PlaybackHandle/"><strong>PlaybackHandle</strong></a> playback, double timeInSeconds) <br><em>Seeks a playback instance to a specified time offset.</em></td>
+</tr>
+<tr>
+<td style="text-align: right;"><a href="../namespacedalia/#enum-result"><strong>Result</strong></a></td>
+<td style="text-align: left;"><a href="#function-setbusvolumedb"><strong>SetBusVolumeDb</strong></a> (const char * identifier, float volumeDb) <br><em>Sets the mixing volume of a bus in decibels (dB).</em></td>
+</tr>
+<tr>
+<td style="text-align: right;"><a href="../namespacedalia/#enum-result"><strong>Result</strong></a></td>
+<td style="text-align: left;"><a href="#function-seteffectparams"><strong>SetEffectParams</strong></a> (<a href="../structdalia_1_1EffectHandle/"><strong>EffectHandle</strong></a> effect, const TParams &amp; params) <br><em>Updates the parameters of an effect instance.</em></td>
+</tr>
+<tr>
+<td style="text-align: right;"><a href="../namespacedalia/#enum-result"><strong>Result</strong></a></td>
+<td style="text-align: left;"><a href="#function-setglobaldopplerfactor"><strong>SetGlobalDopplerFactor</strong></a> (float globalDopplerFactor) <br><em>Sets the global scaling factor for the Doppler effect for the entire engine.</em></td>
+</tr>
+<tr>
+<td style="text-align: right;"><a href="../namespacedalia/#enum-result"><strong>Result</strong></a></td>
+<td style="text-align: left;"><a href="#function-setlistener3dattributes"><strong>SetListener3DAttributes</strong></a> (uint32_t listenerIndex, const <a href="../structdalia_1_1Listener3DAttributes/"><strong>Listener3DAttributes</strong></a> &amp; attributes) <br><em>Updates the complete 3D state of a listener.</em></td>
+</tr>
+<tr>
+<td style="text-align: right;"><a href="../namespacedalia/#enum-result"><strong>Result</strong></a></td>
+<td style="text-align: left;"><a href="#function-setlisteneractive"><strong>SetListenerActive</strong></a> (uint32_t listenerIndex, bool active) <br><em>Enables or disables a listener.</em></td>
+</tr>
+<tr>
+<td style="text-align: right;"><a href="../namespacedalia/#enum-result"><strong>Result</strong></a></td>
+<td style="text-align: left;"><a href="#function-setlistenerdistanceprobeposition"><strong>SetListenerDistanceProbePosition</strong></a> (uint32_t listenerIndex, const <a href="../structdalia_1_1Vec3/"><strong>Vec3</strong></a> &amp; distanceProbePosition) <br><em>Sets the distance probe world position for a listener.</em></td>
+</tr>
+<tr>
+<td style="text-align: right;"><a href="../namespacedalia/#enum-result"><strong>Result</strong></a></td>
+<td style="text-align: left;"><a href="#function-setlistenerorientation"><strong>SetListenerOrientation</strong></a> (uint32_t listenerIndex, const <a href="../structdalia_1_1Vec3/"><strong>Vec3</strong></a> &amp; forward, const <a href="../structdalia_1_1Vec3/"><strong>Vec3</strong></a> &amp; up) <br><em>Sets the facing direction of a listener.</em></td>
+</tr>
+<tr>
+<td style="text-align: right;"><a href="../namespacedalia/#enum-result"><strong>Result</strong></a></td>
+<td style="text-align: left;"><a href="#function-setlistenerposition"><strong>SetListenerPosition</strong></a> (uint32_t listenerIndex, const <a href="../structdalia_1_1Vec3/"><strong>Vec3</strong></a> &amp; position) <br><em>Updates the world position of a listener.</em></td>
+</tr>
+<tr>
+<td style="text-align: right;"><a href="../namespacedalia/#enum-result"><strong>Result</strong></a></td>
+<td style="text-align: left;"><a href="#function-setlistenervelocity"><strong>SetListenerVelocity</strong></a> (uint32_t listenerIndex, const <a href="../structdalia_1_1Vec3/"><strong>Vec3</strong></a> &amp; velocity) <br><em>Sets the velocity of a listener.</em></td>
+</tr>
+<tr>
+<td style="text-align: right;"><a href="../namespacedalia/#enum-result"><strong>Result</strong></a></td>
+<td style="text-align: left;"><a href="#function-setplaybackattenuationcurve"><strong>SetPlaybackAttenuationCurve</strong></a> (<a href="../structdalia_1_1PlaybackHandle/"><strong>PlaybackHandle</strong></a> playback, <a href="../namespacedalia/#enum-attenuationcurve"><strong>AttenuationCurve</strong></a> curve) <br><em>Sets the curve used to evaluate volume drop-off over distance for a playback instance.</em></td>
+</tr>
+<tr>
+<td style="text-align: right;"><a href="../namespacedalia/#enum-result"><strong>Result</strong></a></td>
+<td style="text-align: left;"><a href="#function-setplaybackdistancemode"><strong>SetPlaybackDistanceMode</strong></a> (<a href="../structdalia_1_1PlaybackHandle/"><strong>PlaybackHandle</strong></a> playback, <a href="../namespacedalia/#enum-distancemode"><strong>DistanceMode</strong></a> mode) <br><em>Defines which listener position is used when calculating the distance attenuation for a playback instance.</em></td>
+</tr>
+<tr>
+<td style="text-align: right;"><a href="../namespacedalia/#enum-result"><strong>Result</strong></a></td>
+<td style="text-align: left;"><a href="#function-setplaybackdopplerfactor"><strong>SetPlaybackDopplerFactor</strong></a> (<a href="../structdalia_1_1PlaybackHandle/"><strong>PlaybackHandle</strong></a> playback, float dopplerFactor) <br><em>Sets the scaling factor for the Doppler effect for a playback instance.</em></td>
+</tr>
+<tr>
+<td style="text-align: right;"><a href="../namespacedalia/#enum-result"><strong>Result</strong></a></td>
+<td style="text-align: left;"><a href="#function-setplaybacklistenermask"><strong>SetPlaybackListenerMask</strong></a> (<a href="../structdalia_1_1PlaybackHandle/"><strong>PlaybackHandle</strong></a> playback, <a href="../namespacedalia/#typedef-listenermask"><strong>ListenerMask</strong></a> mask) <br><em>Sets the listener routing mask for a playback instance.</em></td>
+</tr>
+<tr>
+<td style="text-align: right;"><a href="../namespacedalia/#enum-result"><strong>Result</strong></a></td>
+<td style="text-align: left;"><a href="#function-setplaybacklooping"><strong>SetPlaybackLooping</strong></a> (<a href="../structdalia_1_1PlaybackHandle/"><strong>PlaybackHandle</strong></a> playback, bool looping) <br><em>Sets the looping state a playback instance.</em></td>
+</tr>
+<tr>
+<td style="text-align: right;"><a href="../namespacedalia/#enum-result"><strong>Result</strong></a></td>
+<td style="text-align: left;"><a href="#function-setplaybackminmaxdistance"><strong>SetPlaybackMinMaxDistance</strong></a> (<a href="../structdalia_1_1PlaybackHandle/"><strong>PlaybackHandle</strong></a> playback, float minDistance, float maxDistance) <br><em>Defines the distance boundaries for the attenuation curve of a playback instance.</em></td>
+</tr>
+<tr>
+<td style="text-align: right;"><a href="../namespacedalia/#enum-result"><strong>Result</strong></a></td>
+<td style="text-align: left;"><a href="#function-setplaybackposition"><strong>SetPlaybackPosition</strong></a> (<a href="../structdalia_1_1PlaybackHandle/"><strong>PlaybackHandle</strong></a> playback, const <a href="../structdalia_1_1Vec3/"><strong>Vec3</strong></a> &amp; position) <br><em>Updates the 3D world position of a playback instance.</em></td>
+</tr>
+<tr>
+<td style="text-align: right;"><a href="../namespacedalia/#enum-result"><strong>Result</strong></a></td>
+<td style="text-align: left;"><a href="#function-setplaybackrate"><strong>SetPlaybackRate</strong></a> (<a href="../structdalia_1_1PlaybackHandle/"><strong>PlaybackHandle</strong></a> playback, float rate) <br><em>Sets the playback rate (speed) of a playback instance.</em></td>
+</tr>
+<tr>
+<td style="text-align: right;"><a href="../namespacedalia/#enum-result"><strong>Result</strong></a></td>
+<td style="text-align: left;"><a href="#function-setplaybackspatial"><strong>SetPlaybackSpatial</strong></a> (<a href="../structdalia_1_1PlaybackHandle/"><strong>PlaybackHandle</strong></a> playback, bool spatial) <br><em>Enables or disables 3D spatialization for a playback instance.</em></td>
+</tr>
+<tr>
+<td style="text-align: right;"><a href="../namespacedalia/#enum-result"><strong>Result</strong></a></td>
+<td style="text-align: left;"><a href="#function-setplaybackstereopan"><strong>SetPlaybackStereoPan</strong></a> (<a href="../structdalia_1_1PlaybackHandle/"><strong>PlaybackHandle</strong></a> playback, float pan) <br><em>Sets the stereo pan of a playback instance.</em></td>
+</tr>
+<tr>
+<td style="text-align: right;"><a href="../namespacedalia/#enum-result"><strong>Result</strong></a></td>
+<td style="text-align: left;"><a href="#function-setplaybackusedoppler"><strong>SetPlaybackUseDoppler</strong></a> (<a href="../structdalia_1_1PlaybackHandle/"><strong>PlaybackHandle</strong></a> playback, bool useDoppler) <br><em>Enables or disables the Doppler effect for a playback instance.</em></td>
+</tr>
+<tr>
+<td style="text-align: right;"><a href="../namespacedalia/#enum-result"><strong>Result</strong></a></td>
+<td style="text-align: left;"><a href="#function-setplaybackvelocity"><strong>SetPlaybackVelocity</strong></a> (<a href="../structdalia_1_1PlaybackHandle/"><strong>PlaybackHandle</strong></a> playback, const <a href="../structdalia_1_1Vec3/"><strong>Vec3</strong></a> &amp; velocity) <br><em>Sets the velocity of a playback instance.</em></td>
+</tr>
+<tr>
+<td style="text-align: right;"><a href="../namespacedalia/#enum-result"><strong>Result</strong></a></td>
+<td style="text-align: left;"><a href="#function-setplaybackvolumedb"><strong>SetPlaybackVolumeDb</strong></a> (<a href="../structdalia_1_1PlaybackHandle/"><strong>PlaybackHandle</strong></a> playback, float volumeDb) <br><em>Sets the mixing volume of a playback instance in decibels (dB).</em></td>
+</tr>
+<tr>
+<td style="text-align: right;"><a href="../namespacedalia/#enum-result"><strong>Result</strong></a></td>
+<td style="text-align: left;"><a href="#function-shutdown"><strong>Shutdown</strong></a> () <br><em>Halts all audio processing, terminates all background threads and frees allocated engine memory.</em></td>
+</tr>
+<tr>
+<td style="text-align: right;"><a href="../namespacedalia/#enum-result"><strong>Result</strong></a></td>
+<td style="text-align: left;"><a href="#function-stopplayback"><strong>StopPlayback</strong></a> (<a href="../structdalia_1_1PlaybackHandle/"><strong>PlaybackHandle</strong></a> playback) <br><em>Stops a playback instance.</em></td>
+</tr>
+<tr>
+<td style="text-align: right;"><a href="../namespacedalia/#enum-result"><strong>Result</strong></a></td>
+<td style="text-align: left;"><a href="#function-unloadsound"><strong>UnloadSound</strong></a> (<a href="../structdalia_1_1SoundHandle/"><strong>SoundHandle</strong></a> sound) <br><em>Decrements the reference count of a sound and unloads it if the count reaches zero.</em></td>
+</tr>
+<tr>
+<td style="text-align: right;">void</td>
+<td style="text-align: left;"><a href="#function-update"><strong>Update</strong></a> () <br><em>The per-frame tick method for the engine.</em></td>
+</tr>
+<tr>
+<td style="text-align: right;"><a href="./"><strong>Engine</strong></a> &amp;</td>
+<td style="text-align: left;"><a href="#function-operator"><strong>operator=</strong></a> (const <a href="./"><strong>Engine</strong></a> &amp;) = delete<br></td>
+</tr>
+<tr>
+<td style="text-align: right;"></td>
+<td style="text-align: left;"><a href="#function-engine"><strong>~Engine</strong></a> () <br></td>
+</tr>
+</tbody>
+</table>
+<h2 id="public-functions-documentation">Public Functions Documentation<a class="headerlink" href="#public-functions-documentation" title="Permanent link">&para;</a></h2>
+<h3 id="function-attacheffect">function AttachEffect<a class="headerlink" href="#function-attacheffect" title="Permanent link">&para;</a></h3>
+<p><em>Inserts an allocated effect into the processing chain of a specified bus.</em> 
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="n">Result</span><span class="w"> </span><span class="n">dalia</span><span class="o">::</span><span class="n">Engine</span><span class="o">::</span><span class="n">AttachEffect</span><span class="w"> </span><span class="p">(</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="w">    </span><span class="n">EffectHandle</span><span class="w"> </span><span class="n">effect</span><span class="p">,</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">char</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">busIdentifier</span><span class="p">,</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="w">    </span><span class="kt">uint32_t</span><span class="w"> </span><span class="n">effectSlot</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="p">)</span><span class="w"> </span>
+</code></pre></div></p>
+<p>A bus can hold up to four effects at a time. Attached effects are processed sequentially from slot 0 to slot 3.</p>
+<p><strong>Note:</strong></p>
+<p>[Exclusive Routing] A single effect instance can only be attached to one bus at a time. Attaching an effect that is already attached to a bus will forcefully detach that effect from its old bus. Doing so is generally not recommended if the bus is being played through as it can potentially cause a pop in the audio output due to bypassing the built-in effect fade-out.</p>
+<p><strong>Note:</strong></p>
+<p>[Hot-Swap] If the specified slot on the target bus is already occupied by another effect, the existing effect will be forcefully detached and replaced by the new effect. Doing so is generally not recommended for the same reasons mentioned above.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>effect</code> The handle to the effect instance. </li>
+<li><code>busIdentifier</code> The unique string identifier of the target bus. </li>
+<li><code>effectSlot</code> The index in the effect rack of the bus (0 to 3).</li>
+</ul>
+<p><strong>Return value:</strong></p>
+<ul>
+<li>Result::Ok The effect was successfully attached to the bus. </li>
+<li>Result::NotInitialized The engine is not initialized. </li>
+<li>Result::InvalidHandle The effect handle is not recognized. </li>
+<li>Result::ExpiredHandle The effect handle points to an already destroyed effect. </li>
+<li>Result::BusNotFound The target bus does not exist. </li>
+<li>Result::InvalidEffectSlot The requested slot exceeds the rack index limit. </li>
+</ul>
+<hr>
+
+<h3 id="function-createbus">function CreateBus<a class="headerlink" href="#function-createbus" title="Permanent link">&para;</a></h3>
+<p><em>Creates a new mixing bus.</em> 
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="n">Result</span><span class="w"> </span><span class="n">dalia</span><span class="o">::</span><span class="n">Engine</span><span class="o">::</span><span class="n">CreateBus</span><span class="w"> </span><span class="p">(</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">char</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">identifier</span><span class="p">,</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">char</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">parentIdentifier</span><span class="o">=</span><span class="s">&quot;Master&quot;</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="p">)</span><span class="w"> </span>
+</code></pre></div></p>
+<p><strong>Note:</strong></p>
+<p>[Reference Counting] Buses are reference counted via their string identifiers. If CreateBus is called for an identifier that already exists, the engine will increment its reference count. If the bus already exists, any new parentIdentifier provided in subsequent calls is ignored and a warning is logged.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>identifier</code> The unique string identifier of the bus. </li>
+<li><code>parentIdentifier</code> Optional. The unique string identifier of the parent bus (defaults to Master).</li>
+</ul>
+<p><strong>Return value:</strong></p>
+<ul>
+<li>Result::Ok The bus was successfully created or its reference count was incremented. </li>
+<li>Result::NotInitialized The engine is not initialized. </li>
+<li>Result::BusNotFound The parent bus does not exist. </li>
+<li>Result::BusPoolExhausted The allocated bus capacity has been reached. </li>
+</ul>
+<hr>
+
+<h3 id="function-createeffect">function CreateEffect<a class="headerlink" href="#function-createeffect" title="Permanent link">&para;</a></h3>
+<p><em>Allocates a new DSP effect instance and initializes it with the provided parameters.</em> 
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span><span class="w"> </span><span class="nc">TParams</span><span class="o">&gt;</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="n">Result</span><span class="w"> </span><span class="n">dalia</span><span class="o">::</span><span class="n">Engine</span><span class="o">::</span><span class="n">CreateEffect</span><span class="w"> </span><span class="p">(</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="w">    </span><span class="n">EffectHandle</span><span class="w"> </span><span class="o">&amp;</span><span class="w"> </span><span class="n">effect</span><span class="p">,</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="n">TParams</span><span class="w"> </span><span class="o">&amp;</span><span class="w"> </span><span class="n">params</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="p">)</span><span class="w"> </span>
+</code></pre></div></p>
+<p>This function is used to create all effects. The type of effect this function creates depends on the type of effect parameters that is passed into it.</p>
+<p><strong>Template parameters:</strong></p>
+<ul>
+<li><code>TParams</code> The parameter struct containing the effect settings. </li>
+</ul>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>effect</code> The handle to be populated. </li>
+<li><code>params</code> The initial parameters.</li>
+</ul>
+<p><strong>Return value:</strong></p>
+<ul>
+<li>Result::Ok The effect was successfully created. </li>
+<li>Result::NotInitialized The engine is not initialized. </li>
+<li>Result::EffectPoolExhausted The allocated effect capacity has been reached. </li>
+</ul>
+<hr>
+
+<h3 id="function-createplayback">function CreatePlayback<a class="headerlink" href="#function-createplayback" title="Permanent link">&para;</a></h3>
+<p><em>Creates a playback instance with a sound and prepares it for playback.</em> 
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="n">Result</span><span class="w"> </span><span class="n">dalia</span><span class="o">::</span><span class="n">Engine</span><span class="o">::</span><span class="n">CreatePlayback</span><span class="w"> </span><span class="p">(</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">    </span><span class="n">PlaybackHandle</span><span class="w"> </span><span class="o">&amp;</span><span class="w"> </span><span class="n">playback</span><span class="p">,</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="w">    </span><span class="n">SoundHandle</span><span class="w"> </span><span class="n">sound</span><span class="p">,</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="w">    </span><span class="n">PlaybackExitCallback</span><span class="w"> </span><span class="n">callback</span><span class="o">=</span><span class="nb">nullptr</span>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="p">)</span><span class="w"> </span>
+</code></pre></div></p>
+<p>This function does not start playback.</p>
+<p><strong>Note:</strong></p>
+<p>[Deferred Playback] This function will still succeed if the sound is still being loaded asynchronously.</p>
+<p><strong>Note:</strong></p>
+<p>[Playback Lifecycle] Playback instances are immediately invalidated upon stopping. Because of this, always check the return value of any playback modifying methods to make sure the handle is still valid.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>playback</code> The handle to be populated. </li>
+<li><code>sound</code> The handle to the sound. </li>
+<li><code>callback</code> Optional. If provided, this function will be called when the playback terminates.</li>
+</ul>
+<p><strong>Return value:</strong></p>
+<ul>
+<li>Result::Ok The playback instance was successfully created. </li>
+<li>Result::NotInitialized The engine is not initialized. </li>
+<li>Result::InvalidHandle The sound handle is not recognized. </li>
+<li>Result::SoundLoadError The sound asset previously failed to load. </li>
+<li>Result::VoicePoolExhausted The allocated voice capacity has been reached. </li>
+<li>Result::StreamPoolExhausted The allocated stream capacity has been reached. </li>
+<li>Result::IoStreamRequestQueueFull The I/O streaming request queue is at capacity. </li>
+</ul>
+<hr>
+
+<h3 id="function-destroybus">function DestroyBus<a class="headerlink" href="#function-destroybus" title="Permanent link">&para;</a></h3>
+<p><em>Decrements the reference count of a bus and destroys it if the count reaches zero.</em> 
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="n">Result</span><span class="w"> </span><span class="n">dalia</span><span class="o">::</span><span class="n">Engine</span><span class="o">::</span><span class="n">DestroyBus</span><span class="w"> </span><span class="p">(</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">char</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">identifier</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="p">)</span><span class="w"> </span>
+</code></pre></div></p>
+<p>If the bus is destroyed, any child buses or active playbacks that are routed to this bus are orphaned. An orphaned bus can be rerouted to a new parent bus, but an orphaned voice will immediately be stopped by the engine with the exit condition ExplicitStop.</p>
+<p><strong>Note:</strong></p>
+<p>[Master Immunity] The Master bus is permanently allocated by the engine and cannot be destroyed.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>identifier</code> The unique string identifier of the bus.</li>
+</ul>
+<p><strong>Return value:</strong></p>
+<ul>
+<li>Result::Ok The bus was successfully destroyed or its reference count was decremented. </li>
+<li>Result::NotInitialized The engine is not initialized. </li>
+<li>Result::BusNotFound The bus does not exist or has already been destroyed. </li>
+<li>Result::Error Attempted to destroy Master bus. </li>
+</ul>
+<hr>
+
+<h3 id="function-destroyeffect">function DestroyEffect<a class="headerlink" href="#function-destroyeffect" title="Permanent link">&para;</a></h3>
+<p><em>Destroys an effect.</em> 
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="n">Result</span><span class="w"> </span><span class="n">dalia</span><span class="o">::</span><span class="n">Engine</span><span class="o">::</span><span class="n">DestroyEffect</span><span class="w"> </span><span class="p">(</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w">    </span><span class="n">EffectHandle</span><span class="w"> </span><span class="n">effect</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="p">)</span><span class="w"> </span>
+</code></pre></div></p>
+<p>If the effect is attached to a bus, the engine will automatically detach it before destroying it.</p>
+<p><strong>Note:</strong></p>
+<p>[Attached Effects] Destroying an effect that is attached to a bus that is being played through is generally not recommended as it can cause a pop in the audio output due to bypassing the built-in effect fade-out.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>effect</code> The handle to the effect instance.</li>
+</ul>
+<p><strong>Return value:</strong></p>
+<ul>
+<li>Result::Ok The effect was successfully destroyed. </li>
+<li>Result::NotInitialized The engine is not initialized. </li>
+<li>Result::InvalidHandle The effect handle is not recognized. </li>
+<li>Result::ExpiredHandle The effect handle points to an already destroyed effect. </li>
+</ul>
+<hr>
+
+<h3 id="function-detacheffect">function DetachEffect<a class="headerlink" href="#function-detacheffect" title="Permanent link">&para;</a></h3>
+<p><em>Removes an effect from the mix graph, regardless of which bus it is routed to.</em> 
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="n">Result</span><span class="w"> </span><span class="n">dalia</span><span class="o">::</span><span class="n">Engine</span><span class="o">::</span><span class="n">DetachEffect</span><span class="w"> </span><span class="p">(</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="w">    </span><span class="n">EffectHandle</span><span class="w"> </span><span class="n">effect</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="p">)</span><span class="w"> </span>
+</code></pre></div></p>
+<p><strong>Note:</strong></p>
+<p>[Effect Lifetime] Detaching an effect does not destroy it.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>effect</code> The handle to the effect instance.</li>
+</ul>
+<p><strong>Return value:</strong></p>
+<ul>
+<li>Result::Ok The effect was successfully detached. </li>
+<li>Result::NotInitialized The engine is not initialized. </li>
+<li>Result::InvalidHandle The effect handle is not recognized. </li>
+<li>Result::ExpiredHandle The effect handle points to an already destroyed effect. </li>
+</ul>
+<hr>
+
+<h3 id="function-engine-12">function Engine [1/2]<a class="headerlink" href="#function-engine-12" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="n">dalia</span><span class="o">::</span><span class="n">Engine</span><span class="o">::</span><span class="n">Engine</span><span class="w"> </span><span class="p">()</span><span class="w"> </span>
+</code></pre></div>
+<hr>
+
+<h3 id="function-engine-22">function Engine [2/2]<a class="headerlink" href="#function-engine-22" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="n">dalia</span><span class="o">::</span><span class="n">Engine</span><span class="o">::</span><span class="n">Engine</span><span class="w"> </span><span class="p">(</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="n">Engine</span><span class="w"> </span><span class="o">&amp;</span>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">delete</span>
+</code></pre></div>
+<hr>
+
+<h3 id="function-getsoundlength">function GetSoundLength<a class="headerlink" href="#function-getsoundlength" title="Permanent link">&para;</a></h3>
+<p><em>Fetches the total duration (in seconds) of a loaded sound.</em> 
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="n">Result</span><span class="w"> </span><span class="n">dalia</span><span class="o">::</span><span class="n">Engine</span><span class="o">::</span><span class="n">GetSoundLength</span><span class="w"> </span><span class="p">(</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="w">    </span><span class="n">SoundHandle</span><span class="w"> </span><span class="n">sound</span><span class="p">,</span>
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="w">    </span><span class="kt">double</span><span class="w"> </span><span class="o">&amp;</span><span class="w"> </span><span class="n">lengthInSeconds</span>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="p">)</span><span class="w"> </span>
+</code></pre></div></p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>sound</code> The handle to the sound asset. </li>
+<li><code>lengthInSeconds</code> The variable to be populated with the length of the sound asset.</li>
+</ul>
+<p><strong>Return value:</strong></p>
+<ul>
+<li>Result::Ok The sound length was successfully fetched. </li>
+<li>Result::NotInitialized The engine is not initialized. </li>
+<li>Result::InvalidHandle The sound handle is not recognized, or has already been freed. </li>
+</ul>
+<hr>
+
+<h3 id="function-init">function Init<a class="headerlink" href="#function-init" title="Permanent link">&para;</a></h3>
+<p><em>Initializes the engine, hardware device and background threads.</em> 
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="n">Result</span><span class="w"> </span><span class="n">dalia</span><span class="o">::</span><span class="n">Engine</span><span class="o">::</span><span class="n">Init</span><span class="w"> </span><span class="p">(</span>
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="n">EngineConfig</span><span class="w"> </span><span class="o">&amp;</span><span class="w"> </span><span class="n">config</span><span class="o">=</span><span class="n">EngineConfig</span><span class="w"> </span><span class="p">{}</span>
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="p">)</span><span class="w"> </span>
+</code></pre></div></p>
+<p>This function allocates all internal memory pools and starts the background audio thread, I/O loading thread, and I/O streaming thread. It must be called once before any other engine methods are used.</p>
+<p><strong>Note:</strong></p>
+<p>[Hardware Device] The engine will default to the OS's default audio device.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>config</code> The initialization settings for the engine.</li>
+</ul>
+<p><strong>Return value:</strong></p>
+<ul>
+<li>Result::Ok The engine was successfully initialized and is ready for use. </li>
+<li>Result::AlreadyInitialized Attempted to initialize an already initialized engine. </li>
+<li>Result::DeviceFailed The operating system failed to initialize or start the audio device. </li>
+</ul>
+<hr>
+
+<h3 id="function-loadsoundasync">function LoadSoundAsync<a class="headerlink" href="#function-loadsoundasync" title="Permanent link">&para;</a></h3>
+<p><em>Asynchronously loads a sound into memory or prepares a file for streaming.</em> 
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="n">Result</span><span class="w"> </span><span class="n">dalia</span><span class="o">::</span><span class="n">Engine</span><span class="o">::</span><span class="n">LoadSoundAsync</span><span class="w"> </span><span class="p">(</span>
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="w">    </span><span class="n">SoundHandle</span><span class="w"> </span><span class="o">&amp;</span><span class="w"> </span><span class="n">sound</span><span class="p">,</span>
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="w">    </span><span class="n">SoundType</span><span class="w"> </span><span class="n">type</span><span class="p">,</span>
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">char</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">filepath</span><span class="p">,</span>
+<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a><span class="w">    </span><span class="n">AssetLoadCallback</span><span class="w"> </span><span class="n">callback</span><span class="o">=</span><span class="nb">nullptr</span><span class="p">,</span>
+<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a><span class="w">    </span><span class="kt">uint32_t</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">outRequestId</span><span class="o">=</span><span class="nb">nullptr</span>
+<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a><span class="p">)</span><span class="w"> </span>
+</code></pre></div></p>
+<p>This function returns immediately and does not block the calling thread. The provided sound is valid immediately if the call succeeds. If playback using the sound is attempted before the load is complete, the engine will safely defer the playback request internally.</p>
+<p><strong>Note:</strong></p>
+<p>[Reference Counting] Sounds are reference counted. If the requested filepath with the same SoundType is already loaded, this function increments a reference count and returns the already loaded sound. Because of this, one must also unload a sound the same number of times as it has been loaded in order to properly unload it from the engine.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>sound</code> The handle to be populated. </li>
+<li><code>type</code> Specifies if the sound should be fully decoded into memory (Resident) or streamed directly from disk (Stream). </li>
+<li><code>filepath</code> The string path to the audio asset. </li>
+<li><code>callback</code> Optional. If provided, this function will be called when the load finishes. </li>
+<li><code>outRequestId</code> Optional. Populated with a unique ID for the async request. It will evaluate to INVALID_REQUEST_ID if the asset is already loaded.</li>
+</ul>
+<p><strong>Return value:</strong></p>
+<ul>
+<li>Result::Ok The request was successfully queued for load or is already loaded. </li>
+<li>Result::NotInitialized The engine is not initialized. </li>
+<li>Result::ResidentSoundPoolExhausted The allocated capacity for resident sounds has been reached. </li>
+<li>Result::StreamSoundPoolExhausted The allocated capacity for stream sounds has been reached. </li>
+</ul>
+<hr>
+
+<h3 id="function-pauseplayback">function PausePlayback<a class="headerlink" href="#function-pauseplayback" title="Permanent link">&para;</a></h3>
+<p><em>Pauses a playback instance.</em> 
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="n">Result</span><span class="w"> </span><span class="n">dalia</span><span class="o">::</span><span class="n">Engine</span><span class="o">::</span><span class="n">PausePlayback</span><span class="w"> </span><span class="p">(</span>
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a><span class="w">    </span><span class="n">PlaybackHandle</span><span class="w"> </span><span class="n">playback</span>
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a><span class="p">)</span><span class="w"> </span>
+</code></pre></div></p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>playback</code> The handle to the playback instance.</li>
+</ul>
+<p><strong>Return value:</strong></p>
+<ul>
+<li>Result::Ok The playback instance was successfully set to pause. </li>
+<li>Result::NotInitialized The engine is not initialized. </li>
+<li>Result::InvalidHandle The playback handle is not recognized. </li>
+<li>Result::ExpiredHandle The playback handle has already stopped playing. </li>
+</ul>
+<hr>
+
+<h3 id="function-playplayback">function PlayPlayback<a class="headerlink" href="#function-playplayback" title="Permanent link">&para;</a></h3>
+<p><em>Starts or resumes a playback instance.</em> 
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="n">Result</span><span class="w"> </span><span class="n">dalia</span><span class="o">::</span><span class="n">Engine</span><span class="o">::</span><span class="n">PlayPlayback</span><span class="w"> </span><span class="p">(</span>
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="w">    </span><span class="n">PlaybackHandle</span><span class="w"> </span><span class="n">playback</span>
+<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="p">)</span><span class="w"> </span>
+</code></pre></div></p>
+<p>If the playback instance is paused, calling this function will resume it from the current position. If it is inactive, it will play from the start.</p>
+<p><strong>Note:</strong></p>
+<p>[Deferred Playback] It is safe to call this function on a playback instance that is still waiting for its sound to load. The playback will start as soon as the sound has been loaded in.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>playback</code> The handle to the playback instance.</li>
+</ul>
+<p><strong>Return value:</strong></p>
+<ul>
+<li>Result::Ok The playback instance was successfully set to play. </li>
+<li>Result::NotInitialized The engine is not initialized. </li>
+<li>Result::InvalidHandle The playback handle is not recognized. </li>
+<li>Result::ExpiredHandle The playback handle has already stopped playing. </li>
+<li>Result::PlaybackCorrupted The internal state of the playback instance has been corrupted. </li>
+</ul>
+<hr>
+
+<h3 id="function-routebus">function RouteBus<a class="headerlink" href="#function-routebus" title="Permanent link">&para;</a></h3>
+<p><em>Modifies the routing topology by changing the output destination of an existing bus.</em> 
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="n">Result</span><span class="w"> </span><span class="n">dalia</span><span class="o">::</span><span class="n">Engine</span><span class="o">::</span><span class="n">RouteBus</span><span class="w"> </span><span class="p">(</span>
+<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a><span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">char</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">identifier</span><span class="p">,</span>
+<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a><span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">char</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">parentIdentifier</span>
+<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a><span class="p">)</span><span class="w"> </span>
+</code></pre></div></p>
+<p>Moves a bus and all of its attached children (buses and playbacks) to a new parent bus in the mixing hierarchy.</p>
+<p><strong>Note:</strong></p>
+<p>[Hierarchy Protection] The mixing hierarchy must always remain a strict directed acyclic graph (DAG). If an attempt is made to route a bus into itself or into one of its own descendants, this function will return an error. Additionally, the Master bus cannot be re-routed.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>identifier</code> The unique string identifier of the bus. </li>
+<li><code>parentIdentifier</code> The unique string identifier of the new parent bus (must be an existing bus).</li>
+</ul>
+<p><strong>Return value:</strong></p>
+<ul>
+<li>Result::Ok The bus was successfully re-routed. </li>
+<li>Result::NotInitialized The engine is not initialized. </li>
+<li>Result::InvalidRouting Attempted a route that would result in a cyclic bus hierarchy, or attempted to route Master. </li>
+<li>Result::BusNotFound Either the bus or the parent bus does not exist. </li>
+</ul>
+<hr>
+
+<h3 id="function-routeplayback">function RoutePlayback<a class="headerlink" href="#function-routeplayback" title="Permanent link">&para;</a></h3>
+<p><em>Routes a playback instance to output its audio into the specified mixing bus.</em> 
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="n">Result</span><span class="w"> </span><span class="n">dalia</span><span class="o">::</span><span class="n">Engine</span><span class="o">::</span><span class="n">RoutePlayback</span><span class="w"> </span><span class="p">(</span>
+<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a><span class="w">    </span><span class="n">PlaybackHandle</span><span class="w"> </span><span class="n">playback</span><span class="p">,</span>
+<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a><span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">char</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">busIdentifier</span>
+<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a><span class="p">)</span><span class="w"> </span>
+</code></pre></div></p>
+<p>This function can be called both before and during playback.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>playback</code> The handle to the playback instance. </li>
+<li><code>busIdentifier</code> The unique string identifier of the target bus.</li>
+</ul>
+<p><strong>Return value:</strong></p>
+<ul>
+<li>Result::Ok The voice was successfully routed. </li>
+<li>Result::NotInitialized The engine is not initialized. </li>
+<li>Result::InvalidHandle The playback handle is not recognized. </li>
+<li>Result::ExpiredHandle The playback handle has already stopped playing. </li>
+<li>Result::BusNotFound The target bus does not exist. </li>
+</ul>
+<hr>
+
+<h3 id="function-seekplayback">function SeekPlayback<a class="headerlink" href="#function-seekplayback" title="Permanent link">&para;</a></h3>
+<p><em>Seeks a playback instance to a specified time offset.</em> 
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="n">Result</span><span class="w"> </span><span class="n">dalia</span><span class="o">::</span><span class="n">Engine</span><span class="o">::</span><span class="n">SeekPlayback</span><span class="w"> </span><span class="p">(</span>
+<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a><span class="w">    </span><span class="n">PlaybackHandle</span><span class="w"> </span><span class="n">playback</span><span class="p">,</span>
+<a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a><span class="w">    </span><span class="kt">double</span><span class="w"> </span><span class="n">timeInSeconds</span>
+<a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a><span class="p">)</span><span class="w"> </span>
+</code></pre></div></p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>playback</code> The handle to the playback instance. </li>
+<li><code>timeInSeconds</code> The time offset from the start of the sound (in seconds). This value is automatically clamped between 0.0 and the length of the sound.</li>
+</ul>
+<p><strong>Return value:</strong></p>
+<ul>
+<li>Result::Ok The seek was successfully performed. </li>
+<li>Result::NotInitialized The engine is not initialized. </li>
+<li>Result::InvalidHandle The playback handle is not recognized. </li>
+<li>Result::ExpiredHandle The playback handle has already stopped playing. </li>
+</ul>
+<hr>
+
+<h3 id="function-setbusvolumedb">function SetBusVolumeDb<a class="headerlink" href="#function-setbusvolumedb" title="Permanent link">&para;</a></h3>
+<p><em>Sets the mixing volume of a bus in decibels (dB).</em> 
+<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a><span class="n">Result</span><span class="w"> </span><span class="n">dalia</span><span class="o">::</span><span class="n">Engine</span><span class="o">::</span><span class="n">SetBusVolumeDb</span><span class="w"> </span><span class="p">(</span>
+<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a><span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="kt">char</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="n">identifier</span><span class="p">,</span>
+<a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">volumeDb</span>
+<a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a><span class="p">)</span><span class="w"> </span>
+</code></pre></div></p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>identifier</code> The unique string identifier of the bus. </li>
+<li><code>volumeDb</code> The new volume in decibels (dB). A value of 0.0 represents unity gain. The volume is automatically clamped to the engine's safe operating range (between -60.0dB and +12.0dB).</li>
+</ul>
+<p><strong>Return value:</strong></p>
+<ul>
+<li>Result::Ok The mixing volume of the bus was successfully updated. </li>
+<li>Result::NotInitialized The engine is not initialized. </li>
+<li>Result::BusNotFound The bus does not exist. </li>
+</ul>
+<hr>
+
+<h3 id="function-seteffectparams">function SetEffectParams<a class="headerlink" href="#function-seteffectparams" title="Permanent link">&para;</a></h3>
+<p><em>Updates the parameters of an effect instance.</em> 
+<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="k">template</span><span class="o">&lt;</span><span class="k">typename</span><span class="w"> </span><span class="nc">TParams</span><span class="o">&gt;</span>
+<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a><span class="n">Result</span><span class="w"> </span><span class="n">dalia</span><span class="o">::</span><span class="n">Engine</span><span class="o">::</span><span class="n">SetEffectParams</span><span class="w"> </span><span class="p">(</span>
+<a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a><span class="w">    </span><span class="n">EffectHandle</span><span class="w"> </span><span class="n">effect</span><span class="p">,</span>
+<a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a><span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="n">TParams</span><span class="w"> </span><span class="o">&amp;</span><span class="w"> </span><span class="n">params</span>
+<a id="__codelineno-18-5" name="__codelineno-18-5" href="#__codelineno-18-5"></a><span class="p">)</span><span class="w"> </span>
+</code></pre></div></p>
+<p><strong>Note:</strong></p>
+<p>[Params Typing] The params type must match the params type of the effect instance that the provided handle is referencing.</p>
+<p><strong>Template parameters:</strong></p>
+<ul>
+<li><code>TParams</code> The parameter struct containing the effect settings. </li>
+</ul>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>effect</code> The handle to the effect instance. </li>
+<li><code>params</code> The new parameters.</li>
+</ul>
+<p><strong>Return value:</strong></p>
+<ul>
+<li>Result::Ok The effect parameters were successfully updated. </li>
+<li>Result::NotInitialized The engine is not initialized. </li>
+<li>Result::InvalidHandle The effect handle is not recognized. </li>
+<li>Result::ExpiredHandle The effect handle points to an already destroyed effect. </li>
+</ul>
+<hr>
+
+<h3 id="function-setglobaldopplerfactor">function SetGlobalDopplerFactor<a class="headerlink" href="#function-setglobaldopplerfactor" title="Permanent link">&para;</a></h3>
+<p><em>Sets the global scaling factor for the Doppler effect for the entire engine.</em> 
+<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a><span class="n">Result</span><span class="w"> </span><span class="n">dalia</span><span class="o">::</span><span class="n">Engine</span><span class="o">::</span><span class="n">SetGlobalDopplerFactor</span><span class="w"> </span><span class="p">(</span>
+<a id="__codelineno-19-2" name="__codelineno-19-2" href="#__codelineno-19-2"></a><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">globalDopplerFactor</span>
+<a id="__codelineno-19-3" name="__codelineno-19-3" href="#__codelineno-19-3"></a><span class="p">)</span><span class="w"> </span>
+</code></pre></div></p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>globalDopplerFactor</code> The global scaling factor. Clamped internally between 0.0 and 10.0.</li>
+</ul>
+<p><strong>Return value:</strong></p>
+<ul>
+<li>Result::Ok The global scaling factor for the Doppler effect was successfully set. </li>
+<li>Result::NotInitialized The engine is not initialized. </li>
+</ul>
+<hr>
+
+<h3 id="function-setlistener3dattributes">function SetListener3DAttributes<a class="headerlink" href="#function-setlistener3dattributes" title="Permanent link">&para;</a></h3>
+<p><em>Updates the complete 3D state of a listener.</em> 
+<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a><span class="n">Result</span><span class="w"> </span><span class="n">dalia</span><span class="o">::</span><span class="n">Engine</span><span class="o">::</span><span class="n">SetListener3DAttributes</span><span class="w"> </span><span class="p">(</span>
+<a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a><span class="w">    </span><span class="kt">uint32_t</span><span class="w"> </span><span class="n">listenerIndex</span><span class="p">,</span>
+<a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a><span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="n">Listener3DAttributes</span><span class="w"> </span><span class="o">&amp;</span><span class="w"> </span><span class="n">attributes</span>
+<a id="__codelineno-20-4" name="__codelineno-20-4" href="#__codelineno-20-4"></a><span class="p">)</span><span class="w"> </span>
+</code></pre></div></p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>listenerIndex</code> The zero-based index of the listener. </li>
+<li><code>attributes</code> The new 3D attributes.</li>
+</ul>
+<p><strong>Return value:</strong></p>
+<ul>
+<li>Result::Ok The listener 3D attributes were successfully set. </li>
+<li>Result::NotInitialized The engine is not initialized. </li>
+<li>Result::ListenerNotFound The listener index exceeds the allocated listener capacity. </li>
+</ul>
+<hr>
+
+<h3 id="function-setlisteneractive">function SetListenerActive<a class="headerlink" href="#function-setlisteneractive" title="Permanent link">&para;</a></h3>
+<p><em>Enables or disables a listener.</em> 
+<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a><span class="n">Result</span><span class="w"> </span><span class="n">dalia</span><span class="o">::</span><span class="n">Engine</span><span class="o">::</span><span class="n">SetListenerActive</span><span class="w"> </span><span class="p">(</span>
+<a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a><span class="w">    </span><span class="kt">uint32_t</span><span class="w"> </span><span class="n">listenerIndex</span><span class="p">,</span>
+<a id="__codelineno-21-3" name="__codelineno-21-3" href="#__codelineno-21-3"></a><span class="w">    </span><span class="kt">bool</span><span class="w"> </span><span class="n">active</span>
+<a id="__codelineno-21-4" name="__codelineno-21-4" href="#__codelineno-21-4"></a><span class="p">)</span><span class="w"> </span>
+</code></pre></div></p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>listenerIndex</code> The zero-based index of the listener. </li>
+<li><code>active</code> True to enable the listener, false to disable it.</li>
+</ul>
+<p><strong>Return value:</strong></p>
+<ul>
+<li>Result::Ok The listener was successfully enabled or disabled. </li>
+<li>Result::NotInitialized The engine is not initialized. </li>
+<li>Result::ListenerNotFound The listener index exceeds the allocated listener capacity. </li>
+</ul>
+<hr>
+
+<h3 id="function-setlistenerdistanceprobeposition">function SetListenerDistanceProbePosition<a class="headerlink" href="#function-setlistenerdistanceprobeposition" title="Permanent link">&para;</a></h3>
+<p><em>Sets the distance probe world position for a listener.</em> 
+<div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a><span class="n">Result</span><span class="w"> </span><span class="n">dalia</span><span class="o">::</span><span class="n">Engine</span><span class="o">::</span><span class="n">SetListenerDistanceProbePosition</span><span class="w"> </span><span class="p">(</span>
+<a id="__codelineno-22-2" name="__codelineno-22-2" href="#__codelineno-22-2"></a><span class="w">    </span><span class="kt">uint32_t</span><span class="w"> </span><span class="n">listenerIndex</span><span class="p">,</span>
+<a id="__codelineno-22-3" name="__codelineno-22-3" href="#__codelineno-22-3"></a><span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="n">Vec3</span><span class="w"> </span><span class="o">&amp;</span><span class="w"> </span><span class="n">distanceProbePosition</span>
+<a id="__codelineno-22-4" name="__codelineno-22-4" href="#__codelineno-22-4"></a><span class="p">)</span><span class="w"> </span>
+</code></pre></div></p>
+<p><strong>Note:</strong></p>
+<p>[Usage] This position is only used for distance attenuation by playback instances with distance mode set to FromDistanceProbe.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>listenerIndex</code> The zero-based index of the listener. </li>
+<li><code>distanceProbePosition</code> The new world position.</li>
+</ul>
+<p><strong>Return value:</strong></p>
+<ul>
+<li>Result::Ok The listener's distance probe world position was successfully set. </li>
+<li>Result::NotInitialized The engine is not initialized. </li>
+<li>Result::ListenerNotFound The listener index exceeds the allocated listener capacity. </li>
+</ul>
+<hr>
+
+<h3 id="function-setlistenerorientation">function SetListenerOrientation<a class="headerlink" href="#function-setlistenerorientation" title="Permanent link">&para;</a></h3>
+<p><em>Sets the facing direction of a listener.</em> 
+<div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a><span class="n">Result</span><span class="w"> </span><span class="n">dalia</span><span class="o">::</span><span class="n">Engine</span><span class="o">::</span><span class="n">SetListenerOrientation</span><span class="w"> </span><span class="p">(</span>
+<a id="__codelineno-23-2" name="__codelineno-23-2" href="#__codelineno-23-2"></a><span class="w">    </span><span class="kt">uint32_t</span><span class="w"> </span><span class="n">listenerIndex</span><span class="p">,</span>
+<a id="__codelineno-23-3" name="__codelineno-23-3" href="#__codelineno-23-3"></a><span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="n">Vec3</span><span class="w"> </span><span class="o">&amp;</span><span class="w"> </span><span class="n">forward</span><span class="p">,</span>
+<a id="__codelineno-23-4" name="__codelineno-23-4" href="#__codelineno-23-4"></a><span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="n">Vec3</span><span class="w"> </span><span class="o">&amp;</span><span class="w"> </span><span class="n">up</span>
+<a id="__codelineno-23-5" name="__codelineno-23-5" href="#__codelineno-23-5"></a><span class="p">)</span><span class="w"> </span>
+</code></pre></div></p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>listenerIndex</code> The zero-based index of the listener. </li>
+<li><code>forward</code> The forward-facing direction vector. Normalized internally. </li>
+<li><code>up</code> The upward-facing direction vector. Normalized internally.</li>
+</ul>
+<p><strong>Return value:</strong></p>
+<ul>
+<li>Result::Ok The listener orientation was successfully set. </li>
+<li>Result::NotInitialized The engine is not initialized. </li>
+<li>Result::ListenerNotFound The listener index exceeds the allocated listener capacity. </li>
+</ul>
+<hr>
+
+<h3 id="function-setlistenerposition">function SetListenerPosition<a class="headerlink" href="#function-setlistenerposition" title="Permanent link">&para;</a></h3>
+<p><em>Updates the world position of a listener.</em> 
+<div class="highlight"><pre><span></span><code><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a><span class="n">Result</span><span class="w"> </span><span class="n">dalia</span><span class="o">::</span><span class="n">Engine</span><span class="o">::</span><span class="n">SetListenerPosition</span><span class="w"> </span><span class="p">(</span>
+<a id="__codelineno-24-2" name="__codelineno-24-2" href="#__codelineno-24-2"></a><span class="w">    </span><span class="kt">uint32_t</span><span class="w"> </span><span class="n">listenerIndex</span><span class="p">,</span>
+<a id="__codelineno-24-3" name="__codelineno-24-3" href="#__codelineno-24-3"></a><span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="n">Vec3</span><span class="w"> </span><span class="o">&amp;</span><span class="w"> </span><span class="n">position</span>
+<a id="__codelineno-24-4" name="__codelineno-24-4" href="#__codelineno-24-4"></a><span class="p">)</span><span class="w"> </span>
+</code></pre></div></p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>listenerIndex</code> The zero-based index of the listener. </li>
+<li><code>position</code> The new world position.</li>
+</ul>
+<p><strong>Return value:</strong></p>
+<ul>
+<li>Result::Ok The listener world position was successfully set. </li>
+<li>Result::NotInitialized The engine is not initialized. </li>
+<li>Result::ListenerNotFound The listener index exceeds the allocated listener capacity. </li>
+</ul>
+<hr>
+
+<h3 id="function-setlistenervelocity">function SetListenerVelocity<a class="headerlink" href="#function-setlistenervelocity" title="Permanent link">&para;</a></h3>
+<p><em>Sets the velocity of a listener.</em> 
+<div class="highlight"><pre><span></span><code><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a><span class="n">Result</span><span class="w"> </span><span class="n">dalia</span><span class="o">::</span><span class="n">Engine</span><span class="o">::</span><span class="n">SetListenerVelocity</span><span class="w"> </span><span class="p">(</span>
+<a id="__codelineno-25-2" name="__codelineno-25-2" href="#__codelineno-25-2"></a><span class="w">    </span><span class="kt">uint32_t</span><span class="w"> </span><span class="n">listenerIndex</span><span class="p">,</span>
+<a id="__codelineno-25-3" name="__codelineno-25-3" href="#__codelineno-25-3"></a><span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="n">Vec3</span><span class="w"> </span><span class="o">&amp;</span><span class="w"> </span><span class="n">velocity</span>
+<a id="__codelineno-25-4" name="__codelineno-25-4" href="#__codelineno-25-4"></a><span class="p">)</span><span class="w"> </span>
+</code></pre></div></p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>listenerIndex</code> The zero-based index of the listener. </li>
+<li><code>velocity</code> The velocity vector (in m/s).</li>
+</ul>
+<p><strong>Return value:</strong></p>
+<ul>
+<li>Result::Ok The listener velocity was successfully set. </li>
+<li>Result::NotInitialized The engine is not initialized. </li>
+<li>Result::ListenerNotFound The listener index exceeds the allocated listener capacity. </li>
+</ul>
+<hr>
+
+<h3 id="function-setplaybackattenuationcurve">function SetPlaybackAttenuationCurve<a class="headerlink" href="#function-setplaybackattenuationcurve" title="Permanent link">&para;</a></h3>
+<p><em>Sets the curve used to evaluate volume drop-off over distance for a playback instance.</em> 
+<div class="highlight"><pre><span></span><code><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a><span class="n">Result</span><span class="w"> </span><span class="n">dalia</span><span class="o">::</span><span class="n">Engine</span><span class="o">::</span><span class="n">SetPlaybackAttenuationCurve</span><span class="w"> </span><span class="p">(</span>
+<a id="__codelineno-26-2" name="__codelineno-26-2" href="#__codelineno-26-2"></a><span class="w">    </span><span class="n">PlaybackHandle</span><span class="w"> </span><span class="n">playback</span><span class="p">,</span>
+<a id="__codelineno-26-3" name="__codelineno-26-3" href="#__codelineno-26-3"></a><span class="w">    </span><span class="n">AttenuationCurve</span><span class="w"> </span><span class="n">curve</span>
+<a id="__codelineno-26-4" name="__codelineno-26-4" href="#__codelineno-26-4"></a><span class="p">)</span><span class="w"> </span>
+</code></pre></div></p>
+<p><strong>Note:</strong></p>
+<p>[Spatial only] This only affects playback instances that have spatialization enabled.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>playback</code> The handle to the playback instance. </li>
+<li><code>curve</code> The attenuation curve to apply.</li>
+</ul>
+<p><strong>Return value:</strong></p>
+<ul>
+<li>Result::Ok The playback attenuation curve was successfully set. </li>
+<li>Result::NotInitialized The engine is not initialized. </li>
+<li>Result::InvalidHandle The playback handle is not recognized. </li>
+<li>Result::ExpiredHandle The playback handle has already stopped playing. </li>
+</ul>
+<hr>
+
+<h3 id="function-setplaybackdistancemode">function SetPlaybackDistanceMode<a class="headerlink" href="#function-setplaybackdistancemode" title="Permanent link">&para;</a></h3>
+<p><em>Defines which listener position is used when calculating the distance attenuation for a playback instance.</em> 
+<div class="highlight"><pre><span></span><code><a id="__codelineno-27-1" name="__codelineno-27-1" href="#__codelineno-27-1"></a><span class="n">Result</span><span class="w"> </span><span class="n">dalia</span><span class="o">::</span><span class="n">Engine</span><span class="o">::</span><span class="n">SetPlaybackDistanceMode</span><span class="w"> </span><span class="p">(</span>
+<a id="__codelineno-27-2" name="__codelineno-27-2" href="#__codelineno-27-2"></a><span class="w">    </span><span class="n">PlaybackHandle</span><span class="w"> </span><span class="n">playback</span><span class="p">,</span>
+<a id="__codelineno-27-3" name="__codelineno-27-3" href="#__codelineno-27-3"></a><span class="w">    </span><span class="n">DistanceMode</span><span class="w"> </span><span class="n">mode</span>
+<a id="__codelineno-27-4" name="__codelineno-27-4" href="#__codelineno-27-4"></a><span class="p">)</span><span class="w"> </span>
+</code></pre></div></p>
+<p><strong>Note:</strong></p>
+<p>[Spatial only] This only affects playback instances that have spatialization enabled.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>playback</code> The handle to the playback instance. </li>
+<li><code>mode</code> The distance evaluation mode to apply.</li>
+</ul>
+<p><strong>Return value:</strong></p>
+<ul>
+<li>Result::Ok The playback distance mode was successfully applied. </li>
+<li>Result::NotInitialized The engine is not initialized. </li>
+<li>Result::InvalidHandle The playback handle is not recognized. </li>
+<li>Result::ExpiredHandle The playback handle has already stopped playing. </li>
+</ul>
+<hr>
+
+<h3 id="function-setplaybackdopplerfactor">function SetPlaybackDopplerFactor<a class="headerlink" href="#function-setplaybackdopplerfactor" title="Permanent link">&para;</a></h3>
+<p><em>Sets the scaling factor for the Doppler effect for a playback instance.</em> 
+<div class="highlight"><pre><span></span><code><a id="__codelineno-28-1" name="__codelineno-28-1" href="#__codelineno-28-1"></a><span class="n">Result</span><span class="w"> </span><span class="n">dalia</span><span class="o">::</span><span class="n">Engine</span><span class="o">::</span><span class="n">SetPlaybackDopplerFactor</span><span class="w"> </span><span class="p">(</span>
+<a id="__codelineno-28-2" name="__codelineno-28-2" href="#__codelineno-28-2"></a><span class="w">    </span><span class="n">PlaybackHandle</span><span class="w"> </span><span class="n">playback</span><span class="p">,</span>
+<a id="__codelineno-28-3" name="__codelineno-28-3" href="#__codelineno-28-3"></a><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">dopplerFactor</span>
+<a id="__codelineno-28-4" name="__codelineno-28-4" href="#__codelineno-28-4"></a><span class="p">)</span><span class="w"> </span>
+</code></pre></div></p>
+<p><strong>Note:</strong></p>
+<p>[Spatial only] This only affects playback instances that have spatialization and the Doppler effect enabled.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>playback</code> The handle to the playback instance. </li>
+<li><code>dopplerFactor</code> The scaling factor. Clamped internally between 0.0 and 10.0.</li>
+</ul>
+<p><strong>Return value:</strong></p>
+<ul>
+<li>Result::Ok The playback Doppler effect's scaling factor was successfully set. </li>
+<li>Result::NotInitialized The engine is not initialized. </li>
+<li>Result::InvalidHandle The playback handle is not recognized. </li>
+<li>Result::ExpiredHandle The playback handle has already stopped playing. </li>
+</ul>
+<hr>
+
+<h3 id="function-setplaybacklistenermask">function SetPlaybackListenerMask<a class="headerlink" href="#function-setplaybacklistenermask" title="Permanent link">&para;</a></h3>
+<p><em>Sets the listener routing mask for a playback instance.</em> 
+<div class="highlight"><pre><span></span><code><a id="__codelineno-29-1" name="__codelineno-29-1" href="#__codelineno-29-1"></a><span class="n">Result</span><span class="w"> </span><span class="n">dalia</span><span class="o">::</span><span class="n">Engine</span><span class="o">::</span><span class="n">SetPlaybackListenerMask</span><span class="w"> </span><span class="p">(</span>
+<a id="__codelineno-29-2" name="__codelineno-29-2" href="#__codelineno-29-2"></a><span class="w">    </span><span class="n">PlaybackHandle</span><span class="w"> </span><span class="n">playback</span><span class="p">,</span>
+<a id="__codelineno-29-3" name="__codelineno-29-3" href="#__codelineno-29-3"></a><span class="w">    </span><span class="n">ListenerMask</span><span class="w"> </span><span class="n">mask</span>
+<a id="__codelineno-29-4" name="__codelineno-29-4" href="#__codelineno-29-4"></a><span class="p">)</span><span class="w"> </span>
+</code></pre></div></p>
+<p>The routing mask determines which listeners are allowed to hear and evaluate the playback instance.</p>
+<p><strong>Note:</strong></p>
+<p>[Spatial only] This only affects playback instances that have spatialization enabled.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>playback</code> The handle to the playback instance. </li>
+<li><code>mask</code> The listener routing bitmask.</li>
+</ul>
+<p><strong>Return value:</strong></p>
+<ul>
+<li>Result::Ok The listener routing mask for the playback instance was successfully set. </li>
+<li>Result::NotInitialized The engine is not initialized. </li>
+<li>Result::InvalidHandle The playback handle is not recognized. </li>
+<li>Result::ExpiredHandle The playback handle has already stopped playing. </li>
+</ul>
+<hr>
+
+<h3 id="function-setplaybacklooping">function SetPlaybackLooping<a class="headerlink" href="#function-setplaybacklooping" title="Permanent link">&para;</a></h3>
+<p><em>Sets the looping state a playback instance.</em> 
+<div class="highlight"><pre><span></span><code><a id="__codelineno-30-1" name="__codelineno-30-1" href="#__codelineno-30-1"></a><span class="n">Result</span><span class="w"> </span><span class="n">dalia</span><span class="o">::</span><span class="n">Engine</span><span class="o">::</span><span class="n">SetPlaybackLooping</span><span class="w"> </span><span class="p">(</span>
+<a id="__codelineno-30-2" name="__codelineno-30-2" href="#__codelineno-30-2"></a><span class="w">    </span><span class="n">PlaybackHandle</span><span class="w"> </span><span class="n">playback</span><span class="p">,</span>
+<a id="__codelineno-30-3" name="__codelineno-30-3" href="#__codelineno-30-3"></a><span class="w">    </span><span class="kt">bool</span><span class="w"> </span><span class="n">looping</span>
+<a id="__codelineno-30-4" name="__codelineno-30-4" href="#__codelineno-30-4"></a><span class="p">)</span><span class="w"> </span>
+</code></pre></div></p>
+<p>This method updates whether a playback instance will automatically restart upon finishing.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>playback</code> The handle to the playback instance. </li>
+<li><code>looping</code> The looping state.</li>
+</ul>
+<p><strong>Return value:</strong></p>
+<ul>
+<li>Result::Ok The playback instance looping state was successfully set. </li>
+<li>Result::NotInitialized The engine is not initialized. </li>
+<li>Result::InvalidHandle The playback handle is not recognized. </li>
+<li>Result::ExpiredHandle The playback handle has already stopped playing. </li>
+</ul>
+<hr>
+
+<h3 id="function-setplaybackminmaxdistance">function SetPlaybackMinMaxDistance<a class="headerlink" href="#function-setplaybackminmaxdistance" title="Permanent link">&para;</a></h3>
+<p><em>Defines the distance boundaries for the attenuation curve of a playback instance.</em> 
+<div class="highlight"><pre><span></span><code><a id="__codelineno-31-1" name="__codelineno-31-1" href="#__codelineno-31-1"></a><span class="n">Result</span><span class="w"> </span><span class="n">dalia</span><span class="o">::</span><span class="n">Engine</span><span class="o">::</span><span class="n">SetPlaybackMinMaxDistance</span><span class="w"> </span><span class="p">(</span>
+<a id="__codelineno-31-2" name="__codelineno-31-2" href="#__codelineno-31-2"></a><span class="w">    </span><span class="n">PlaybackHandle</span><span class="w"> </span><span class="n">playback</span><span class="p">,</span>
+<a id="__codelineno-31-3" name="__codelineno-31-3" href="#__codelineno-31-3"></a><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">minDistance</span><span class="p">,</span>
+<a id="__codelineno-31-4" name="__codelineno-31-4" href="#__codelineno-31-4"></a><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">maxDistance</span>
+<a id="__codelineno-31-5" name="__codelineno-31-5" href="#__codelineno-31-5"></a><span class="p">)</span><span class="w"> </span>
+</code></pre></div></p>
+<p><strong>Note:</strong></p>
+<p>[Spatial only] This only affects playback instances that have spatialization enabled.</p>
+<p><strong>Note:</strong></p>
+<p>[Safe values] The engine internally ensures that maxDistance is never less than minDistance, and that minDistance respects the engine's absolute floor limit to prevent division-by-zero.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>playback</code> The handle to the playback instance. </li>
+<li><code>minDistance</code> The radius where the volume drop-off begins. </li>
+<li><code>maxDistance</code> The radius where the volume drops to silence.</li>
+</ul>
+<p><strong>Return value:</strong></p>
+<ul>
+<li>Result::Ok The playback min and max distance were successfully set. </li>
+<li>Result::NotInitialized The engine is not initialized. </li>
+<li>Result::InvalidHandle The playback handle is not recognized. </li>
+<li>Result::ExpiredHandle The playback handle has already stopped playing. </li>
+</ul>
+<hr>
+
+<h3 id="function-setplaybackposition">function SetPlaybackPosition<a class="headerlink" href="#function-setplaybackposition" title="Permanent link">&para;</a></h3>
+<p><em>Updates the 3D world position of a playback instance.</em> 
+<div class="highlight"><pre><span></span><code><a id="__codelineno-32-1" name="__codelineno-32-1" href="#__codelineno-32-1"></a><span class="n">Result</span><span class="w"> </span><span class="n">dalia</span><span class="o">::</span><span class="n">Engine</span><span class="o">::</span><span class="n">SetPlaybackPosition</span><span class="w"> </span><span class="p">(</span>
+<a id="__codelineno-32-2" name="__codelineno-32-2" href="#__codelineno-32-2"></a><span class="w">    </span><span class="n">PlaybackHandle</span><span class="w"> </span><span class="n">playback</span><span class="p">,</span>
+<a id="__codelineno-32-3" name="__codelineno-32-3" href="#__codelineno-32-3"></a><span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="n">Vec3</span><span class="w"> </span><span class="o">&amp;</span><span class="w"> </span><span class="n">position</span>
+<a id="__codelineno-32-4" name="__codelineno-32-4" href="#__codelineno-32-4"></a><span class="p">)</span><span class="w"> </span>
+</code></pre></div></p>
+<p><strong>Note:</strong></p>
+<p>[Spatial only] This only affects playback instances that have spatialization enabled.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>playback</code> The handle to the playback instance. </li>
+<li><code>position</code> The new 3D world coordinates.</li>
+</ul>
+<p><strong>Return value:</strong></p>
+<ul>
+<li>Result::Ok The playback world position was successfully set. </li>
+<li>Result::NotInitialized The engine is not initialized. </li>
+<li>Result::InvalidHandle The playback handle is not recognized. </li>
+<li>Result::ExpiredHandle The playback handle has already stopped playing. </li>
+</ul>
+<hr>
+
+<h3 id="function-setplaybackrate">function SetPlaybackRate<a class="headerlink" href="#function-setplaybackrate" title="Permanent link">&para;</a></h3>
+<p><em>Sets the playback rate (speed) of a playback instance.</em> 
+<div class="highlight"><pre><span></span><code><a id="__codelineno-33-1" name="__codelineno-33-1" href="#__codelineno-33-1"></a><span class="n">Result</span><span class="w"> </span><span class="n">dalia</span><span class="o">::</span><span class="n">Engine</span><span class="o">::</span><span class="n">SetPlaybackRate</span><span class="w"> </span><span class="p">(</span>
+<a id="__codelineno-33-2" name="__codelineno-33-2" href="#__codelineno-33-2"></a><span class="w">    </span><span class="n">PlaybackHandle</span><span class="w"> </span><span class="n">playback</span><span class="p">,</span>
+<a id="__codelineno-33-3" name="__codelineno-33-3" href="#__codelineno-33-3"></a><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">rate</span>
+<a id="__codelineno-33-4" name="__codelineno-33-4" href="#__codelineno-33-4"></a><span class="p">)</span><span class="w"> </span>
+</code></pre></div></p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>playback</code> The handle to the playback instance. </li>
+<li><code>rate</code> The new playback rate. This is clamped internally between 0.1 and 4.0 to prevent performance issues.</li>
+</ul>
+<p><strong>Return value:</strong></p>
+<ul>
+<li>Result::Ok The playback rate of the playback instance was successfully set. </li>
+<li>Result::NotInitialized The engine is not initialized. </li>
+<li>Result::InvalidHandle The playback handle is not recognized. </li>
+<li>Result::ExpiredHandle The playback handle has already stopped playing. </li>
+</ul>
+<hr>
+
+<h3 id="function-setplaybackspatial">function SetPlaybackSpatial<a class="headerlink" href="#function-setplaybackspatial" title="Permanent link">&para;</a></h3>
+<p><em>Enables or disables 3D spatialization for a playback instance.</em> 
+<div class="highlight"><pre><span></span><code><a id="__codelineno-34-1" name="__codelineno-34-1" href="#__codelineno-34-1"></a><span class="n">Result</span><span class="w"> </span><span class="n">dalia</span><span class="o">::</span><span class="n">Engine</span><span class="o">::</span><span class="n">SetPlaybackSpatial</span><span class="w"> </span><span class="p">(</span>
+<a id="__codelineno-34-2" name="__codelineno-34-2" href="#__codelineno-34-2"></a><span class="w">    </span><span class="n">PlaybackHandle</span><span class="w"> </span><span class="n">playback</span><span class="p">,</span>
+<a id="__codelineno-34-3" name="__codelineno-34-3" href="#__codelineno-34-3"></a><span class="w">    </span><span class="kt">bool</span><span class="w"> </span><span class="n">spatial</span>
+<a id="__codelineno-34-4" name="__codelineno-34-4" href="#__codelineno-34-4"></a><span class="p">)</span><span class="w"> </span>
+</code></pre></div></p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>playback</code> The handle to the playback instance. </li>
+<li><code>spatial</code> True to enable 3D spatialization, false for 2D/global playback.</li>
+</ul>
+<p><strong>Return value:</strong></p>
+<ul>
+<li>Result::Ok The playback spatialization was successfully enabled or disabled. </li>
+<li>Result::NotInitialized The engine is not initialized. </li>
+<li>Result::InvalidHandle The playback handle is not recognized. </li>
+<li>Result::ExpiredHandle The playback handle has already stopped playing. </li>
+</ul>
+<hr>
+
+<h3 id="function-setplaybackstereopan">function SetPlaybackStereoPan<a class="headerlink" href="#function-setplaybackstereopan" title="Permanent link">&para;</a></h3>
+<p><em>Sets the stereo pan of a playback instance.</em> 
+<div class="highlight"><pre><span></span><code><a id="__codelineno-35-1" name="__codelineno-35-1" href="#__codelineno-35-1"></a><span class="n">Result</span><span class="w"> </span><span class="n">dalia</span><span class="o">::</span><span class="n">Engine</span><span class="o">::</span><span class="n">SetPlaybackStereoPan</span><span class="w"> </span><span class="p">(</span>
+<a id="__codelineno-35-2" name="__codelineno-35-2" href="#__codelineno-35-2"></a><span class="w">    </span><span class="n">PlaybackHandle</span><span class="w"> </span><span class="n">playback</span><span class="p">,</span>
+<a id="__codelineno-35-3" name="__codelineno-35-3" href="#__codelineno-35-3"></a><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">pan</span>
+<a id="__codelineno-35-4" name="__codelineno-35-4" href="#__codelineno-35-4"></a><span class="p">)</span><span class="w"> </span>
+</code></pre></div></p>
+<p><strong>Note:</strong></p>
+<p>[Spatial] This only affects playback instances that have spatialization disabled.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>playback</code> The handle to the playback instance. </li>
+<li><code>pan</code> The normalized pan position. A value of 0.0 represents an equal distribution between L and R, -1.0 is full L and 1.0 is full R.</li>
+</ul>
+<p><strong>Return value:</strong></p>
+<ul>
+<li>Result::Ok The pan of the playback instance was successfully set. </li>
+<li>Result::NotInitialized The engine is not initialized. </li>
+<li>Result::InvalidHandle The playback handle is not recognized. </li>
+<li>Result::ExpiredHandle The playback handle has already stopped playing. </li>
+</ul>
+<hr>
+
+<h3 id="function-setplaybackusedoppler">function SetPlaybackUseDoppler<a class="headerlink" href="#function-setplaybackusedoppler" title="Permanent link">&para;</a></h3>
+<p><em>Enables or disables the Doppler effect for a playback instance.</em> 
+<div class="highlight"><pre><span></span><code><a id="__codelineno-36-1" name="__codelineno-36-1" href="#__codelineno-36-1"></a><span class="n">Result</span><span class="w"> </span><span class="n">dalia</span><span class="o">::</span><span class="n">Engine</span><span class="o">::</span><span class="n">SetPlaybackUseDoppler</span><span class="w"> </span><span class="p">(</span>
+<a id="__codelineno-36-2" name="__codelineno-36-2" href="#__codelineno-36-2"></a><span class="w">    </span><span class="n">PlaybackHandle</span><span class="w"> </span><span class="n">playback</span><span class="p">,</span>
+<a id="__codelineno-36-3" name="__codelineno-36-3" href="#__codelineno-36-3"></a><span class="w">    </span><span class="kt">bool</span><span class="w"> </span><span class="n">useDoppler</span>
+<a id="__codelineno-36-4" name="__codelineno-36-4" href="#__codelineno-36-4"></a><span class="p">)</span><span class="w"> </span>
+</code></pre></div></p>
+<p><strong>Note:</strong></p>
+<p>[Spatial only] This only affects playback instances that have spatialization enabled.</p>
+<p><strong>Note:</strong></p>
+<p>[Requirements] In order for the doppler effect to be calculated, both listener and playback velocity must be supplied to the engine every frame.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>playback</code> The handle to the playback instance. </li>
+<li><code>useDoppler</code> True to enable Doppler frequency shifts, false to disable it.</li>
+</ul>
+<p><strong>Return value:</strong></p>
+<ul>
+<li>Result::Ok The playback Doppler effect was successfully enabled or disabled. </li>
+<li>Result::NotInitialized The engine is not initialized. </li>
+<li>Result::InvalidHandle The playback handle is not recognized. </li>
+<li>Result::ExpiredHandle The playback handle has already stopped playing. </li>
+</ul>
+<hr>
+
+<h3 id="function-setplaybackvelocity">function SetPlaybackVelocity<a class="headerlink" href="#function-setplaybackvelocity" title="Permanent link">&para;</a></h3>
+<p><em>Sets the velocity of a playback instance.</em> 
+<div class="highlight"><pre><span></span><code><a id="__codelineno-37-1" name="__codelineno-37-1" href="#__codelineno-37-1"></a><span class="n">Result</span><span class="w"> </span><span class="n">dalia</span><span class="o">::</span><span class="n">Engine</span><span class="o">::</span><span class="n">SetPlaybackVelocity</span><span class="w"> </span><span class="p">(</span>
+<a id="__codelineno-37-2" name="__codelineno-37-2" href="#__codelineno-37-2"></a><span class="w">    </span><span class="n">PlaybackHandle</span><span class="w"> </span><span class="n">playback</span><span class="p">,</span>
+<a id="__codelineno-37-3" name="__codelineno-37-3" href="#__codelineno-37-3"></a><span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="n">Vec3</span><span class="w"> </span><span class="o">&amp;</span><span class="w"> </span><span class="n">velocity</span>
+<a id="__codelineno-37-4" name="__codelineno-37-4" href="#__codelineno-37-4"></a><span class="p">)</span><span class="w"> </span>
+</code></pre></div></p>
+<p>Velocity is used exclusively to calculate the Doppler effect. If the Effect is disabled, this value is ignored.</p>
+<p><strong>Note:</strong></p>
+<p>[Spatial only] This only affects playback instances that have spatialization enabled.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>playback</code> The handle to the playback instance. </li>
+<li><code>velocity</code> The velocity vector (in m/s).</li>
+</ul>
+<p><strong>Return value:</strong></p>
+<ul>
+<li>Result::Ok The playback velocity was successfully set. </li>
+<li>Result::NotInitialized The engine is not initialized. </li>
+<li>Result::InvalidHandle The playback handle is not recognized. </li>
+<li>Result::ExpiredHandle The playback handle has already stopped playing. </li>
+</ul>
+<hr>
+
+<h3 id="function-setplaybackvolumedb">function SetPlaybackVolumeDb<a class="headerlink" href="#function-setplaybackvolumedb" title="Permanent link">&para;</a></h3>
+<p><em>Sets the mixing volume of a playback instance in decibels (dB).</em> 
+<div class="highlight"><pre><span></span><code><a id="__codelineno-38-1" name="__codelineno-38-1" href="#__codelineno-38-1"></a><span class="n">Result</span><span class="w"> </span><span class="n">dalia</span><span class="o">::</span><span class="n">Engine</span><span class="o">::</span><span class="n">SetPlaybackVolumeDb</span><span class="w"> </span><span class="p">(</span>
+<a id="__codelineno-38-2" name="__codelineno-38-2" href="#__codelineno-38-2"></a><span class="w">    </span><span class="n">PlaybackHandle</span><span class="w"> </span><span class="n">playback</span><span class="p">,</span>
+<a id="__codelineno-38-3" name="__codelineno-38-3" href="#__codelineno-38-3"></a><span class="w">    </span><span class="kt">float</span><span class="w"> </span><span class="n">volumeDb</span>
+<a id="__codelineno-38-4" name="__codelineno-38-4" href="#__codelineno-38-4"></a><span class="p">)</span><span class="w"> </span>
+</code></pre></div></p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>playback</code> The handle to the playback instance. </li>
+<li><code>volumeDb</code> The new volume in decibels (dB). A value of 0.0 represents unity gain. The volume is automatically clamped to the engine's safe operating range (between -60.0dB and +12.0dB).</li>
+</ul>
+<p><strong>Return value:</strong></p>
+<ul>
+<li>Result::Ok The mixing volume of the playback instance was successfully set. </li>
+<li>Result::NotInitialized The engine is not initialized. </li>
+<li>Result::InvalidHandle The playback handle is not recognized. </li>
+<li>Result::ExpiredHandle The playback handle has already stopped playing. </li>
+</ul>
+<hr>
+
+<h3 id="function-shutdown">function Shutdown<a class="headerlink" href="#function-shutdown" title="Permanent link">&para;</a></h3>
+<p><em>Halts all audio processing, terminates all background threads and frees allocated engine memory.</em> 
+<div class="highlight"><pre><span></span><code><a id="__codelineno-39-1" name="__codelineno-39-1" href="#__codelineno-39-1"></a><span class="n">Result</span><span class="w"> </span><span class="n">dalia</span><span class="o">::</span><span class="n">Engine</span><span class="o">::</span><span class="n">Shutdown</span><span class="w"> </span><span class="p">()</span><span class="w"> </span>
+</code></pre></div></p>
+<p><strong>Note:</strong></p>
+<p>[Blocking Operation] This method will block the calling thread until all background threads have fully joined.</p>
+<p><strong>Note:</strong></p>
+<p>[Handle Invalidation] Calling this method will invalidate all handles.</p>
+<p><strong>Return value:</strong></p>
+<ul>
+<li>Result::Ok The engine was successfully shut down. </li>
+<li>Result::NotInitialized Attempted to shut down an engine that is not initialized. </li>
+<li>Result::DeviceFailed The operating system failed to release the hardware device. </li>
+</ul>
+<hr>
+
+<h3 id="function-stopplayback">function StopPlayback<a class="headerlink" href="#function-stopplayback" title="Permanent link">&para;</a></h3>
+<p><em>Stops a playback instance.</em> 
+<div class="highlight"><pre><span></span><code><a id="__codelineno-40-1" name="__codelineno-40-1" href="#__codelineno-40-1"></a><span class="n">Result</span><span class="w"> </span><span class="n">dalia</span><span class="o">::</span><span class="n">Engine</span><span class="o">::</span><span class="n">StopPlayback</span><span class="w"> </span><span class="p">(</span>
+<a id="__codelineno-40-2" name="__codelineno-40-2" href="#__codelineno-40-2"></a><span class="w">    </span><span class="n">PlaybackHandle</span><span class="w"> </span><span class="n">playback</span>
+<a id="__codelineno-40-3" name="__codelineno-40-3" href="#__codelineno-40-3"></a><span class="p">)</span><span class="w"> </span>
+</code></pre></div></p>
+<p>If a callback function was provided when creating the playback instance, it will be called with the exit condition ExplicitStop once the playback has been stopped.</p>
+<p><strong>Note:</strong></p>
+<p>[Playback Lifecycle] Successfully calling this function invalidates the provided <a href="../structdalia_1_1PlaybackHandle/"><strong>PlaybackHandle</strong></a>. A stopped playback cannot be restarted.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>playback</code> The handle to the playback instance.</li>
+</ul>
+<p><strong>Return value:</strong></p>
+<ul>
+<li>Result::Ok The playback instance was successfully set to stop. </li>
+<li>Result::NotInitialized The engine is not initialized. </li>
+<li>Result::InvalidHandle The playback handle is not recognized. </li>
+<li>Result::ExpiredHandle The playback handle has already stopped playing. </li>
+</ul>
+<hr>
+
+<h3 id="function-unloadsound">function UnloadSound<a class="headerlink" href="#function-unloadsound" title="Permanent link">&para;</a></h3>
+<p><em>Decrements the reference count of a sound and unloads it if the count reaches zero.</em> 
+<div class="highlight"><pre><span></span><code><a id="__codelineno-41-1" name="__codelineno-41-1" href="#__codelineno-41-1"></a><span class="n">Result</span><span class="w"> </span><span class="n">dalia</span><span class="o">::</span><span class="n">Engine</span><span class="o">::</span><span class="n">UnloadSound</span><span class="w"> </span><span class="p">(</span>
+<a id="__codelineno-41-2" name="__codelineno-41-2" href="#__codelineno-41-2"></a><span class="w">    </span><span class="n">SoundHandle</span><span class="w"> </span><span class="n">sound</span>
+<a id="__codelineno-41-3" name="__codelineno-41-3" href="#__codelineno-41-3"></a><span class="p">)</span><span class="w"> </span>
+</code></pre></div></p>
+<p>If the reference count of a sound reaches zero, all active playbacks using the sound will be stopped with the exit condition ExplicitStop. The engine will also immediately abort all pending playback requests with the same exit condition.</p>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>sound</code> The handle to the sound asset.</li>
+</ul>
+<p><strong>Return value:</strong></p>
+<ul>
+<li>Result::Ok The sound was successfully unloaded or its reference count was decremented. </li>
+<li>Result::NotInitialized The engine is not initialized. </li>
+<li>Result::InvalidHandle The sound handle is not recognized, or has already been freed. </li>
+</ul>
+<hr>
+
+<h3 id="function-update">function Update<a class="headerlink" href="#function-update" title="Permanent link">&para;</a></h3>
+<p><em>The per-frame tick method for the engine.</em> 
+<div class="highlight"><pre><span></span><code><a id="__codelineno-42-1" name="__codelineno-42-1" href="#__codelineno-42-1"></a><span class="kt">void</span><span class="w"> </span><span class="n">dalia</span><span class="o">::</span><span class="n">Engine</span><span class="o">::</span><span class="n">Update</span><span class="w"> </span><span class="p">()</span><span class="w"> </span>
+</code></pre></div></p>
+<p>This method is the primary synchronization router between the API (calling) thread and the background threads. It must be called exactly once per frame inside the update loop of your main thread.</p>
+<p><strong>Note:</strong></p>
+<p>[Callback Execution] This method processes all events happening within the engine. It is within this method that any provided AudioEventCallback and AssetLoadCallback functions are invoked. </p>
+<hr>
+
+<h3 id="function-operator">function operator=<a class="headerlink" href="#function-operator" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-43-1" name="__codelineno-43-1" href="#__codelineno-43-1"></a><span class="n">Engine</span><span class="w"> </span><span class="o">&amp;</span><span class="w"> </span><span class="n">dalia</span><span class="o">::</span><span class="n">Engine</span><span class="o">::</span><span class="k">operator</span><span class="o">=</span><span class="w"> </span><span class="p">(</span>
+<a id="__codelineno-43-2" name="__codelineno-43-2" href="#__codelineno-43-2"></a><span class="w">    </span><span class="k">const</span><span class="w"> </span><span class="n">Engine</span><span class="w"> </span><span class="o">&amp;</span>
+<a id="__codelineno-43-3" name="__codelineno-43-3" href="#__codelineno-43-3"></a><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">delete</span>
+</code></pre></div>
+<hr>
+
+<h3 id="function-engine">function ~Engine<a class="headerlink" href="#function-engine" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-44-1" name="__codelineno-44-1" href="#__codelineno-44-1"></a><span class="n">dalia</span><span class="o">::</span><span class="n">Engine</span><span class="o">::~</span><span class="n">Engine</span><span class="w"> </span><span class="p">()</span><span class="w"> </span>
+</code></pre></div>
+<hr>
+
+<hr />
+<p>The documentation for this class was generated from the following file <code>engine/include/dalia/audio/Engine.h</code></p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.sections", "navigation.top", "search.suggest", "search.highlight", "content.code.copy"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>

@@ -1,0 +1,13 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.9.8" xml:lang="en-US">
+  <compounddef id="dir_dd0695510186d7664f10ce319a65443f" kind="dir">
+    <compoundname>engine/include/dalia</compoundname>
+    <innerdir refid="dir_0ee167d633b723baeec4094afeaf5d43">engine/include/dalia/audio</innerdir>
+    <innerdir refid="dir_283be189f6de867d90b5075907410367">engine/include/dalia/core</innerdir>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <location file="engine/include/dalia/"/>
+  </compounddef>
+</doxygen>

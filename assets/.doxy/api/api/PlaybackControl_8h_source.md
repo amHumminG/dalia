@@ -1,0 +1,121 @@
+
+
+# File PlaybackControl.h
+
+[**File List**](files.md) **>** [**audio**](dir_0ee167d633b723baeec4094afeaf5d43.md) **>** [**PlaybackControl.h**](PlaybackControl_8h.md)
+
+[Go to the documentation of this file](PlaybackControl_8h.md)
+
+
+```C++
+#pragma once
+
+#include <cstdint>
+#include <functional>
+
+namespace dalia {
+
+    struct PlaybackHandle {
+    public:
+        PlaybackHandle() = default;
+        explicit PlaybackHandle(uint64_t rawId) : m_rawId(rawId) {}
+
+        bool IsValid() const { return m_rawId != 0; }
+
+        bool operator==(const PlaybackHandle& other) const { return m_rawId == other.m_rawId; }
+        bool operator!=(const PlaybackHandle& other) const { return m_rawId != other.m_rawId; }
+
+        uint64_t GetRawId() const { return m_rawId; }
+
+    private:
+        friend class Engine;
+        friend struct EngineInternalState;
+
+        static PlaybackHandle Create(uint32_t index, uint32_t generation) {
+            PlaybackHandle handle;
+            handle.m_rawId = (static_cast<uint64_t>(generation) << 32) | index;
+            return handle;
+        }
+
+        uint32_t GetIndex() const { return static_cast<uint32_t>(m_rawId & 0xFFFFFFFF); }
+        uint32_t GetGeneration() const { return static_cast<uint32_t>(m_rawId >> 32); }
+
+        uint64_t m_rawId = 0;
+    };
+
+    constexpr PlaybackHandle InvalidPlaybackHandle{};
+
+    enum class PlaybackExitCondition : uint8_t {
+        None            = 0,
+        NaturalEnd      = 1, // Finished naturally.
+        ExplicitStop    = 2, // Explicitly stopped by an API call.
+        Evicted         = 3, // Stopped to make room for a playback instance with higher priority.
+        Error           = 4, // Stopped by the engine due to an error.
+    };
+
+    using PlaybackExitCallback = std::function<void(PlaybackHandle playback, PlaybackExitCondition exitCondition)>;
+
+    enum class AttenuationCurve : uint8_t {
+        InverseSquare,
+        Linear,
+        Quadratic
+    };
+
+    enum class DistanceMode : uint8_t {
+        FromListener,       // Standard 3D (Evaluate distance from listener).
+        FromDistanceProbe   // Evaluate distance from the listener's separate distance probe.
+    };
+
+    struct Vec3 {
+        float x = 0.0f;
+        float y = 0.0f;
+        float z = 0.0f;
+    };
+
+    struct Listener3DAttributes {
+        Vec3 position{0.0f, 0.0f, 0.0f};                // The world position that will be used for panning logic.
+        Vec3 distanceProbePosition{0.0f, 0.0f, 0.0f};   // The world position that will be used for attenuation logic
+                                                                // if the distance mode of a playback instance is set to FromDistanceProbe.
+        Vec3 forward{0.0f, 0.0f, 1.0f};             // The direction the listener is facing.
+        Vec3 up{0.0f, 1.0f, 0.0f};                      // The up direction from the listener position.
+
+        Vec3 velocity{0.0f, 0.0f, 0.0f};                // The velocity of the listener.
+    };
+
+    inline constexpr Listener3DAttributes MakeListener3DAttributes(
+        const Vec3& position,
+        const Vec3& forward,
+        const Vec3& up,
+        const Vec3& velocity) {
+        return { position, position, forward, up, velocity };
+    }
+
+    inline constexpr Listener3DAttributes MakeListener3DAttributesSplit(
+        const Vec3& position,
+        const Vec3& probePosition,
+        const Vec3& forward,
+        const Vec3& up,
+        const Vec3& velocity) {
+        return { position, probePosition, forward, up, velocity};
+    }
+
+    using ListenerMask = uint32_t;
+
+    constexpr ListenerMask MASK_NONE = 0b00000000;           // Targets none of the listeners (silent if spatial).
+    constexpr ListenerMask MASK_LISTENER_0 = 0b00000001;     // Targets listener 0.
+    constexpr ListenerMask MASK_LISTENER_1 = 0b00000010;     // Targets listener 1.
+    constexpr ListenerMask MASK_LISTENER_2 = 0b00000100;     // Targets listener 2.
+    constexpr ListenerMask MASK_LISTENER_3 = 0b00001000;     // Targets listener 3.
+    constexpr ListenerMask MASK_ALL_LISTENERS = 0xFFFFFFFF;  // Targets all listeners.
+
+    inline constexpr ListenerMask MakeListenerMask(uint32_t listenerIndex) { return (1 << listenerIndex); }
+
+    enum class CoordinateSystem : uint8_t {
+        RightHanded,
+        LeftHanded
+    };
+
+}
+```
+
+

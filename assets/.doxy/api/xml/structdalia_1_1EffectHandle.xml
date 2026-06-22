@@ -1,0 +1,297 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.9.8" xml:lang="en-US">
+  <compounddef id="structdalia_1_1EffectHandle" kind="struct" language="C++" prot="public">
+    <compoundname>dalia::EffectHandle</compoundname>
+    <includes refid="EffectControl_8h" local="no">EffectControl.h</includes>
+    <sectiondef kind="friend">
+      <memberdef kind="friend" id="structdalia_1_1EffectHandle_1a3e1914489e4bed4f9f23cdeab34a43dc" prot="private" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>class</type>
+        <definition>friend class Engine</definition>
+        <argsstring></argsstring>
+        <name>Engine</name>
+        <qualifiedname>dalia::EffectHandle::Engine</qualifiedname>
+        <param>
+          <type><ref refid="classdalia_1_1Engine" kindref="compound">Engine</ref></type>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/EffectControl.h" line="32" column="22" bodyfile="engine/include/dalia/audio/EffectControl.h" bodystart="32" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="friend" id="structdalia_1_1EffectHandle_1a985b82c0bb56300769491dfa7475e590" prot="private" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>class</type>
+        <definition>friend class RtSystem</definition>
+        <argsstring></argsstring>
+        <name>RtSystem</name>
+        <qualifiedname>dalia::EffectHandle::RtSystem</qualifiedname>
+        <param>
+          <type>RtSystem</type>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/EffectControl.h" line="33" column="22" bodyfile="engine/include/dalia/audio/EffectControl.h" bodystart="33" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="friend" id="structdalia_1_1EffectHandle_1a7b4e5fcb00301e31dcbac173d9576d79" prot="private" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>struct</type>
+        <definition>friend struct EngineInternalState</definition>
+        <argsstring></argsstring>
+        <name>EngineInternalState</name>
+        <qualifiedname>dalia::EffectHandle::EngineInternalState</qualifiedname>
+        <param>
+          <type>EngineInternalState</type>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/EffectControl.h" line="34" column="23" bodyfile="engine/include/dalia/audio/EffectControl.h" bodystart="34" bodyend="-1"/>
+      </memberdef>
+    </sectiondef>
+    <sectiondef kind="private-attrib">
+      <memberdef kind="variable" id="structdalia_1_1EffectHandle_1a3df4554ce1070af9d7011cb3e2c187f0" prot="private" static="no" mutable="no">
+        <type>uint64_t</type>
+        <definition>uint64_t dalia::EffectHandle::m_rawId</definition>
+        <argsstring></argsstring>
+        <name>m_rawId</name>
+        <qualifiedname>dalia::EffectHandle::m_rawId</qualifiedname>
+        <initializer>= 0</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/EffectControl.h" line="55" column="18" bodyfile="engine/include/dalia/audio/EffectControl.h" bodystart="55" bodyend="-1"/>
+      </memberdef>
+    </sectiondef>
+    <sectiondef kind="public-func">
+      <memberdef kind="function" id="structdalia_1_1EffectHandle_1a8a1034beb00eb2ab40e0598353d0d1f4" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type></type>
+        <definition>dalia::EffectHandle::EffectHandle</definition>
+        <argsstring>()=default</argsstring>
+        <name>EffectHandle</name>
+        <qualifiedname>dalia::EffectHandle::EffectHandle</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/EffectControl.h" line="15" column="1"/>
+      </memberdef>
+      <memberdef kind="function" id="structdalia_1_1EffectHandle_1a4811df21c96be75bdf453c3e02d34c55" prot="public" static="no" const="no" explicit="yes" inline="yes" virt="non-virtual">
+        <type></type>
+        <definition>dalia::EffectHandle::EffectHandle</definition>
+        <argsstring>(uint64_t rawId)</argsstring>
+        <name>EffectHandle</name>
+        <qualifiedname>dalia::EffectHandle::EffectHandle</qualifiedname>
+        <param>
+          <type>uint64_t</type>
+          <declname>rawId</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/EffectControl.h" line="16" column="10" bodyfile="engine/include/dalia/audio/EffectControl.h" bodystart="16" bodyend="16"/>
+      </memberdef>
+      <memberdef kind="function" id="structdalia_1_1EffectHandle_1ae8a1626f677ba90b0698385106fa2037" prot="public" static="no" const="yes" explicit="no" inline="yes" virt="non-virtual">
+        <type>bool</type>
+        <definition>bool dalia::EffectHandle::IsValid</definition>
+        <argsstring>() const</argsstring>
+        <name>IsValid</name>
+        <qualifiedname>dalia::EffectHandle::IsValid</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para><simplesect kind="return"><para>true if the handle has referenced an effect at some point. Otherwise, false. </para>
+</simplesect>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/EffectControl.h" line="19" column="6" bodyfile="engine/include/dalia/audio/EffectControl.h" bodystart="19" bodyend="19"/>
+      </memberdef>
+      <memberdef kind="function" id="structdalia_1_1EffectHandle_1af14a8b99127eec0af3b889530aada439" prot="public" static="no" const="yes" explicit="no" inline="yes" virt="non-virtual">
+        <type>bool</type>
+        <definition>bool dalia::EffectHandle::operator==</definition>
+        <argsstring>(const EffectHandle &amp;other) const</argsstring>
+        <name>operator==</name>
+        <qualifiedname>dalia::EffectHandle::operator==</qualifiedname>
+        <param>
+          <type>const <ref refid="structdalia_1_1EffectHandle" kindref="compound">EffectHandle</ref> &amp;</type>
+          <declname>other</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/EffectControl.h" line="21" column="14" bodyfile="engine/include/dalia/audio/EffectControl.h" bodystart="21" bodyend="21"/>
+      </memberdef>
+      <memberdef kind="function" id="structdalia_1_1EffectHandle_1a6d8078fe0eb6543eb92d30cb4b328794" prot="public" static="no" const="yes" explicit="no" inline="yes" virt="non-virtual">
+        <type>bool</type>
+        <definition>bool dalia::EffectHandle::operator!=</definition>
+        <argsstring>(const EffectHandle &amp;other) const</argsstring>
+        <name>operator!=</name>
+        <qualifiedname>dalia::EffectHandle::operator!=</qualifiedname>
+        <param>
+          <type>const <ref refid="structdalia_1_1EffectHandle" kindref="compound">EffectHandle</ref> &amp;</type>
+          <declname>other</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/EffectControl.h" line="22" column="14" bodyfile="engine/include/dalia/audio/EffectControl.h" bodystart="22" bodyend="22"/>
+      </memberdef>
+      <memberdef kind="function" id="structdalia_1_1EffectHandle_1a7299a94ed928a36fc997967cd361f4af" prot="public" static="no" const="yes" explicit="no" inline="yes" virt="non-virtual">
+        <type>uint64_t</type>
+        <definition>uint64_t dalia::EffectHandle::GetRawId</definition>
+        <argsstring>() const</argsstring>
+        <name>GetRawId</name>
+        <qualifiedname>dalia::EffectHandle::GetRawId</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para><simplesect kind="return"><para>The underlying raw id of the handle. </para>
+</simplesect>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/EffectControl.h" line="25" column="18" bodyfile="engine/include/dalia/audio/EffectControl.h" bodystart="25" bodyend="25"/>
+      </memberdef>
+      <memberdef kind="function" id="structdalia_1_1EffectHandle_1abdd79508ab6ab15f00879854cb3579ae" prot="public" static="no" const="yes" explicit="no" inline="yes" virt="non-virtual">
+        <type><ref refid="namespacedalia_1ad13a8e277604ee81ccc919a057bcae1e" kindref="member">EffectType</ref></type>
+        <definition>EffectType dalia::EffectHandle::GetType</definition>
+        <argsstring>() const</argsstring>
+        <name>GetType</name>
+        <qualifiedname>dalia::EffectHandle::GetType</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para><simplesect kind="return"><para>The type of effect the handle is referencing. </para>
+</simplesect>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/EffectControl.h" line="28" column="12" bodyfile="engine/include/dalia/audio/EffectControl.h" bodystart="28" bodyend="28"/>
+      </memberdef>
+    </sectiondef>
+    <sectiondef kind="private-static-func">
+      <memberdef kind="function" id="structdalia_1_1EffectHandle_1af7eccd6133508a22584ef00c087e7334" prot="private" static="yes" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type><ref refid="structdalia_1_1EffectHandle" kindref="compound">EffectHandle</ref></type>
+        <definition>static EffectHandle dalia::EffectHandle::Create</definition>
+        <argsstring>(uint32_t index, uint32_t generation, EffectType type)</argsstring>
+        <name>Create</name>
+        <qualifiedname>dalia::EffectHandle::Create</qualifiedname>
+        <param>
+          <type>uint32_t</type>
+          <declname>index</declname>
+        </param>
+        <param>
+          <type>uint32_t</type>
+          <declname>generation</declname>
+        </param>
+        <param>
+          <type><ref refid="namespacedalia_1ad13a8e277604ee81ccc919a057bcae1e" kindref="member">EffectType</ref></type>
+          <declname>type</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/EffectControl.h" line="36" column="29" bodyfile="engine/include/dalia/audio/EffectControl.h" bodystart="36" bodyend="44"/>
+      </memberdef>
+      <memberdef kind="function" id="structdalia_1_1EffectHandle_1a139d942b6b0129bd8f23e60ad0399caa" prot="private" static="yes" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type><ref refid="structdalia_1_1EffectHandle" kindref="compound">EffectHandle</ref></type>
+        <definition>static EffectHandle dalia::EffectHandle::FromRawId</definition>
+        <argsstring>(uint64_t rawId)</argsstring>
+        <name>FromRawId</name>
+        <qualifiedname>dalia::EffectHandle::FromRawId</qualifiedname>
+        <param>
+          <type>uint64_t</type>
+          <declname>rawId</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/EffectControl.h" line="46" column="29" bodyfile="engine/include/dalia/audio/EffectControl.h" bodystart="46" bodyend="50"/>
+      </memberdef>
+    </sectiondef>
+    <sectiondef kind="private-func">
+      <memberdef kind="function" id="structdalia_1_1EffectHandle_1ab7b5d539b1e3efc4589918ed990f0b9f" prot="private" static="no" const="yes" explicit="no" inline="yes" virt="non-virtual">
+        <type>uint32_t</type>
+        <definition>uint32_t dalia::EffectHandle::GetIndex</definition>
+        <argsstring>() const</argsstring>
+        <name>GetIndex</name>
+        <qualifiedname>dalia::EffectHandle::GetIndex</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/EffectControl.h" line="52" column="10" bodyfile="engine/include/dalia/audio/EffectControl.h" bodystart="52" bodyend="52"/>
+      </memberdef>
+      <memberdef kind="function" id="structdalia_1_1EffectHandle_1af700bb3ff205bbc82266d4102d11380c" prot="private" static="no" const="yes" explicit="no" inline="yes" virt="non-virtual">
+        <type>uint32_t</type>
+        <definition>uint32_t dalia::EffectHandle::GetGeneration</definition>
+        <argsstring>() const</argsstring>
+        <name>GetGeneration</name>
+        <qualifiedname>dalia::EffectHandle::GetGeneration</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/EffectControl.h" line="53" column="10" bodyfile="engine/include/dalia/audio/EffectControl.h" bodystart="53" bodyend="53"/>
+      </memberdef>
+    </sectiondef>
+    <briefdescription>
+<para>Handle used to manage effect instances. This handle expires once the effect it is referencing has been destroyed. </para>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <location file="engine/include/dalia/audio/EffectControl.h" line="13" column="1" bodyfile="engine/include/dalia/audio/EffectControl.h" bodystart="13" bodyend="56"/>
+    <listofallmembers>
+      <member refid="structdalia_1_1EffectHandle_1af7eccd6133508a22584ef00c087e7334" prot="private" virt="non-virtual"><scope>dalia::EffectHandle</scope><name>Create</name></member>
+      <member refid="structdalia_1_1EffectHandle_1a8a1034beb00eb2ab40e0598353d0d1f4" prot="public" virt="non-virtual"><scope>dalia::EffectHandle</scope><name>EffectHandle</name></member>
+      <member refid="structdalia_1_1EffectHandle_1a4811df21c96be75bdf453c3e02d34c55" prot="public" virt="non-virtual"><scope>dalia::EffectHandle</scope><name>EffectHandle</name></member>
+      <member refid="structdalia_1_1EffectHandle_1a3e1914489e4bed4f9f23cdeab34a43dc" prot="private" virt="non-virtual"><scope>dalia::EffectHandle</scope><name>Engine</name></member>
+      <member refid="structdalia_1_1EffectHandle_1a7b4e5fcb00301e31dcbac173d9576d79" prot="private" virt="non-virtual"><scope>dalia::EffectHandle</scope><name>EngineInternalState</name></member>
+      <member refid="structdalia_1_1EffectHandle_1a139d942b6b0129bd8f23e60ad0399caa" prot="private" virt="non-virtual"><scope>dalia::EffectHandle</scope><name>FromRawId</name></member>
+      <member refid="structdalia_1_1EffectHandle_1af700bb3ff205bbc82266d4102d11380c" prot="private" virt="non-virtual"><scope>dalia::EffectHandle</scope><name>GetGeneration</name></member>
+      <member refid="structdalia_1_1EffectHandle_1ab7b5d539b1e3efc4589918ed990f0b9f" prot="private" virt="non-virtual"><scope>dalia::EffectHandle</scope><name>GetIndex</name></member>
+      <member refid="structdalia_1_1EffectHandle_1a7299a94ed928a36fc997967cd361f4af" prot="public" virt="non-virtual"><scope>dalia::EffectHandle</scope><name>GetRawId</name></member>
+      <member refid="structdalia_1_1EffectHandle_1abdd79508ab6ab15f00879854cb3579ae" prot="public" virt="non-virtual"><scope>dalia::EffectHandle</scope><name>GetType</name></member>
+      <member refid="structdalia_1_1EffectHandle_1ae8a1626f677ba90b0698385106fa2037" prot="public" virt="non-virtual"><scope>dalia::EffectHandle</scope><name>IsValid</name></member>
+      <member refid="structdalia_1_1EffectHandle_1a3df4554ce1070af9d7011cb3e2c187f0" prot="private" virt="non-virtual"><scope>dalia::EffectHandle</scope><name>m_rawId</name></member>
+      <member refid="structdalia_1_1EffectHandle_1a6d8078fe0eb6543eb92d30cb4b328794" prot="public" virt="non-virtual"><scope>dalia::EffectHandle</scope><name>operator!=</name></member>
+      <member refid="structdalia_1_1EffectHandle_1af14a8b99127eec0af3b889530aada439" prot="public" virt="non-virtual"><scope>dalia::EffectHandle</scope><name>operator==</name></member>
+      <member refid="structdalia_1_1EffectHandle_1a985b82c0bb56300769491dfa7475e590" prot="private" virt="non-virtual"><scope>dalia::EffectHandle</scope><name>RtSystem</name></member>
+    </listofallmembers>
+  </compounddef>
+</doxygen>

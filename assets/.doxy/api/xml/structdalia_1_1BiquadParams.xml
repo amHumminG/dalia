@@ -1,0 +1,118 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.9.8" xml:lang="en-US">
+  <compounddef id="structdalia_1_1BiquadParams" kind="struct" language="C++" prot="public">
+    <compoundname>dalia::BiquadParams</compoundname>
+    <includes refid="EffectControl_8h" local="no">EffectControl.h</includes>
+    <sectiondef kind="public-type">
+      <memberdef kind="enum" id="structdalia_1_1BiquadParams_1a3741328b1e86d83176a37f7f9e89b868" prot="public" static="no" strong="yes">
+        <type>uint8_t</type>
+        <name>Type</name>
+        <qualifiedname>dalia::BiquadParams::Type</qualifiedname>
+        <enumvalue id="structdalia_1_1BiquadParams_1a3741328b1e86d83176a37f7f9e89b868a835f2dc4fd545ddcd275198d9fbadf63" prot="public">
+          <name>LowPass</name>
+          <briefdescription>
+          </briefdescription>
+          <detaileddescription>
+          </detaileddescription>
+        </enumvalue>
+        <enumvalue id="structdalia_1_1BiquadParams_1a3741328b1e86d83176a37f7f9e89b868ae9456dc865a19e434997ea20bb5373f6" prot="public">
+          <name>HighPass</name>
+          <briefdescription>
+          </briefdescription>
+          <detaileddescription>
+          </detaileddescription>
+        </enumvalue>
+        <enumvalue id="structdalia_1_1BiquadParams_1a3741328b1e86d83176a37f7f9e89b868a39c9e9c45a479147bf5f74156421c744" prot="public">
+          <name>BandPass</name>
+          <briefdescription>
+          </briefdescription>
+          <detaileddescription>
+          </detaileddescription>
+        </enumvalue>
+        <briefdescription>
+<para>Defines the frequency response shape of a standard biquadratic filter. </para>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/EffectControl.h" line="62" column="5" bodyfile="engine/include/dalia/audio/EffectControl.h" bodystart="62" bodyend="66"/>
+      </memberdef>
+    </sectiondef>
+    <sectiondef kind="public-attrib">
+      <memberdef kind="variable" id="structdalia_1_1BiquadParams_1a7eb71ef3dc092c704c92108a9bbfd8fa" prot="public" static="no" mutable="no">
+        <type>enum <ref refid="structdalia_1_1BiquadParams_1a3741328b1e86d83176a37f7f9e89b868" kindref="member">dalia::BiquadParams::Type</ref></type>
+        <definition>enum dalia::BiquadParams::Type dalia::BiquadParams::type</definition>
+        <argsstring></argsstring>
+        <name>type</name>
+        <qualifiedname>dalia::BiquadParams::type</qualifiedname>
+        <initializer>= <ref refid="structdalia_1_1BiquadParams_1a3741328b1e86d83176a37f7f9e89b868a835f2dc4fd545ddcd275198d9fbadf63" kindref="member">Type::LowPass</ref></initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/EffectControl.h" line="66" column="7"/>
+      </memberdef>
+      <memberdef kind="variable" id="structdalia_1_1BiquadParams_1ae16d8b7873a31981321a5076a454b06a" prot="public" static="no" mutable="no">
+        <type>float</type>
+        <definition>float dalia::BiquadParams::frequency</definition>
+        <argsstring></argsstring>
+        <name>frequency</name>
+        <qualifiedname>dalia::BiquadParams::frequency</qualifiedname>
+        <initializer>= 20000.0f</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/EffectControl.h" line="68" column="11" bodyfile="engine/include/dalia/audio/EffectControl.h" bodystart="68" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structdalia_1_1BiquadParams_1a45e2bc7638df6702b991b5ab9d1561fc" prot="public" static="no" mutable="no">
+        <type>float</type>
+        <definition>float dalia::BiquadParams::resonance</definition>
+        <argsstring></argsstring>
+        <name>resonance</name>
+        <qualifiedname>dalia::BiquadParams::resonance</qualifiedname>
+        <initializer>= 0.707f</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/EffectControl.h" line="69" column="11" bodyfile="engine/include/dalia/audio/EffectControl.h" bodystart="69" bodyend="-1"/>
+      </memberdef>
+    </sectiondef>
+    <sectiondef kind="public-func">
+      <memberdef kind="function" id="structdalia_1_1BiquadParams_1a7f75f030f14b2ee6a31cef4c6e06235f" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void dalia::BiquadParams::Sanitize</definition>
+        <argsstring>()</argsstring>
+        <name>Sanitize</name>
+        <qualifiedname>dalia::BiquadParams::Sanitize</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/EffectControl.h" line="71" column="10"/>
+      </memberdef>
+    </sectiondef>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <location file="engine/include/dalia/audio/EffectControl.h" line="60" column="5" bodyfile="engine/include/dalia/audio/EffectControl.h" bodystart="60" bodyend="72"/>
+    <listofallmembers>
+      <member refid="structdalia_1_1BiquadParams_1ae16d8b7873a31981321a5076a454b06a" prot="public" virt="non-virtual"><scope>dalia::BiquadParams</scope><name>frequency</name></member>
+      <member refid="structdalia_1_1BiquadParams_1a45e2bc7638df6702b991b5ab9d1561fc" prot="public" virt="non-virtual"><scope>dalia::BiquadParams</scope><name>resonance</name></member>
+      <member refid="structdalia_1_1BiquadParams_1a7f75f030f14b2ee6a31cef4c6e06235f" prot="public" virt="non-virtual"><scope>dalia::BiquadParams</scope><name>Sanitize</name></member>
+      <member refid="structdalia_1_1BiquadParams_1a3741328b1e86d83176a37f7f9e89b868" prot="public" virt="non-virtual"><scope>dalia::BiquadParams</scope><name>Type</name></member>
+      <member refid="structdalia_1_1BiquadParams_1a7eb71ef3dc092c704c92108a9bbfd8fa" prot="public" virt="non-virtual"><scope>dalia::BiquadParams</scope><name>type</name></member>
+    </listofallmembers>
+  </compounddef>
+</doxygen>

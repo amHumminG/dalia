@@ -1,0 +1,65 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.9.8" xml:lang="en-US">
+  <compounddef id="structdalia_1_1Vec3" kind="struct" language="C++" prot="public">
+    <compoundname>dalia::Vec3</compoundname>
+    <includes refid="PlaybackControl_8h" local="no">PlaybackControl.h</includes>
+    <sectiondef kind="public-attrib">
+      <memberdef kind="variable" id="structdalia_1_1Vec3_1a72ae8ed11a871956fc8244c0449c85e9" prot="public" static="no" mutable="no">
+        <type>float</type>
+        <definition>float dalia::Vec3::x</definition>
+        <argsstring></argsstring>
+        <name>x</name>
+        <qualifiedname>dalia::Vec3::x</qualifiedname>
+        <initializer>= 0.0f</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/PlaybackControl.h" line="70" column="7" bodyfile="engine/include/dalia/audio/PlaybackControl.h" bodystart="70" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structdalia_1_1Vec3_1acc0f4a812d41bdfe95452cc428e39864" prot="public" static="no" mutable="no">
+        <type>float</type>
+        <definition>float dalia::Vec3::y</definition>
+        <argsstring></argsstring>
+        <name>y</name>
+        <qualifiedname>dalia::Vec3::y</qualifiedname>
+        <initializer>= 0.0f</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/PlaybackControl.h" line="71" column="7" bodyfile="engine/include/dalia/audio/PlaybackControl.h" bodystart="71" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structdalia_1_1Vec3_1a7b2e0dc0056ae987bbed7513c778d9b4" prot="public" static="no" mutable="no">
+        <type>float</type>
+        <definition>float dalia::Vec3::z</definition>
+        <argsstring></argsstring>
+        <name>z</name>
+        <qualifiedname>dalia::Vec3::z</qualifiedname>
+        <initializer>= 0.0f</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/PlaybackControl.h" line="72" column="7" bodyfile="engine/include/dalia/audio/PlaybackControl.h" bodystart="72" bodyend="-1"/>
+      </memberdef>
+    </sectiondef>
+    <briefdescription>
+<para>Standard 3D vector for the DALIA API. </para>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <location file="engine/include/dalia/audio/PlaybackControl.h" line="69" column="1" bodyfile="engine/include/dalia/audio/PlaybackControl.h" bodystart="69" bodyend="73"/>
+    <listofallmembers>
+      <member refid="structdalia_1_1Vec3_1a72ae8ed11a871956fc8244c0449c85e9" prot="public" virt="non-virtual"><scope>dalia::Vec3</scope><name>x</name></member>
+      <member refid="structdalia_1_1Vec3_1acc0f4a812d41bdfe95452cc428e39864" prot="public" virt="non-virtual"><scope>dalia::Vec3</scope><name>y</name></member>
+      <member refid="structdalia_1_1Vec3_1a7b2e0dc0056ae987bbed7513c778d9b4" prot="public" virt="non-virtual"><scope>dalia::Vec3</scope><name>z</name></member>
+    </listofallmembers>
+  </compounddef>
+</doxygen>

@@ -1,0 +1,114 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.9.8" xml:lang="en-US">
+  <compounddef id="structdalia_1_1Listener3DAttributes" kind="struct" language="C++" prot="public">
+    <compoundname>dalia::Listener3DAttributes</compoundname>
+    <includes refid="PlaybackControl_8h" local="no">PlaybackControl.h</includes>
+    <sectiondef kind="public-attrib">
+      <memberdef kind="variable" id="structdalia_1_1Listener3DAttributes_1a9849c36ef6a090d19f595269dd448a77" prot="public" static="no" mutable="no">
+        <type><ref refid="structdalia_1_1Vec3" kindref="compound">Vec3</ref></type>
+        <definition>Vec3 dalia::Listener3DAttributes::position</definition>
+        <argsstring></argsstring>
+        <name>position</name>
+        <qualifiedname>dalia::Listener3DAttributes::position</qualifiedname>
+        <initializer>{0.0f, 0.0f, 0.0f}</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/PlaybackControl.h" line="77" column="6" bodyfile="engine/include/dalia/audio/PlaybackControl.h" bodystart="77" bodyend="77"/>
+      </memberdef>
+      <memberdef kind="variable" id="structdalia_1_1Listener3DAttributes_1a425409dbbc589234cd37b668e0ac2dfa" prot="public" static="no" mutable="no">
+        <type><ref refid="structdalia_1_1Vec3" kindref="compound">Vec3</ref></type>
+        <definition>Vec3 dalia::Listener3DAttributes::distanceProbePosition</definition>
+        <argsstring></argsstring>
+        <name>distanceProbePosition</name>
+        <qualifiedname>dalia::Listener3DAttributes::distanceProbePosition</qualifiedname>
+        <initializer>{0.0f, 0.0f, 0.0f}</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/PlaybackControl.h" line="78" column="6" bodyfile="engine/include/dalia/audio/PlaybackControl.h" bodystart="78" bodyend="78"/>
+      </memberdef>
+      <memberdef kind="variable" id="structdalia_1_1Listener3DAttributes_1a44cbba5b09ff096671bfd2a6a31cbfaa" prot="public" static="no" mutable="no">
+        <type><ref refid="structdalia_1_1Vec3" kindref="compound">Vec3</ref></type>
+        <definition>Vec3 dalia::Listener3DAttributes::forward</definition>
+        <argsstring></argsstring>
+        <name>forward</name>
+        <qualifiedname>dalia::Listener3DAttributes::forward</qualifiedname>
+        <initializer>{0.0f, 0.0f, 1.0f}</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/PlaybackControl.h" line="80" column="6" bodyfile="engine/include/dalia/audio/PlaybackControl.h" bodystart="80" bodyend="80"/>
+      </memberdef>
+      <memberdef kind="variable" id="structdalia_1_1Listener3DAttributes_1a72c28b9bbfa7810ddf2e2738c5aafbde" prot="public" static="no" mutable="no">
+        <type><ref refid="structdalia_1_1Vec3" kindref="compound">Vec3</ref></type>
+        <definition>Vec3 dalia::Listener3DAttributes::up</definition>
+        <argsstring></argsstring>
+        <name>up</name>
+        <qualifiedname>dalia::Listener3DAttributes::up</qualifiedname>
+        <initializer>{0.0f, 1.0f, 0.0f}</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/PlaybackControl.h" line="81" column="6" bodyfile="engine/include/dalia/audio/PlaybackControl.h" bodystart="81" bodyend="81"/>
+      </memberdef>
+      <memberdef kind="variable" id="structdalia_1_1Listener3DAttributes_1a22f58542ef0b73b2454b0b7c7582780f" prot="public" static="no" mutable="no">
+        <type><ref refid="structdalia_1_1Vec3" kindref="compound">Vec3</ref></type>
+        <definition>Vec3 dalia::Listener3DAttributes::velocity</definition>
+        <argsstring></argsstring>
+        <name>velocity</name>
+        <qualifiedname>dalia::Listener3DAttributes::velocity</qualifiedname>
+        <initializer>{0.0f, 0.0f, 0.0f}</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/PlaybackControl.h" line="83" column="6" bodyfile="engine/include/dalia/audio/PlaybackControl.h" bodystart="83" bodyend="83"/>
+      </memberdef>
+    </sectiondef>
+    <briefdescription>
+<para>A snapshot of a listener&apos;s 3D state in the world. </para>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <collaborationgraph>
+      <node id="1">
+        <label>dalia::Listener3DAttributes</label>
+        <link refid="structdalia_1_1Listener3DAttributes"/>
+        <childnode refid="2" relation="usage">
+          <edgelabel>distanceProbePosition</edgelabel>
+          <edgelabel>forward</edgelabel>
+          <edgelabel>position</edgelabel>
+          <edgelabel>up</edgelabel>
+          <edgelabel>velocity</edgelabel>
+        </childnode>
+      </node>
+      <node id="2">
+        <label>dalia::Vec3</label>
+        <link refid="structdalia_1_1Vec3"/>
+      </node>
+    </collaborationgraph>
+    <location file="engine/include/dalia/audio/PlaybackControl.h" line="76" column="1" bodyfile="engine/include/dalia/audio/PlaybackControl.h" bodystart="76" bodyend="84"/>
+    <listofallmembers>
+      <member refid="structdalia_1_1Listener3DAttributes_1a425409dbbc589234cd37b668e0ac2dfa" prot="public" virt="non-virtual"><scope>dalia::Listener3DAttributes</scope><name>distanceProbePosition</name></member>
+      <member refid="structdalia_1_1Listener3DAttributes_1a44cbba5b09ff096671bfd2a6a31cbfaa" prot="public" virt="non-virtual"><scope>dalia::Listener3DAttributes</scope><name>forward</name></member>
+      <member refid="structdalia_1_1Listener3DAttributes_1a9849c36ef6a090d19f595269dd448a77" prot="public" virt="non-virtual"><scope>dalia::Listener3DAttributes</scope><name>position</name></member>
+      <member refid="structdalia_1_1Listener3DAttributes_1a72c28b9bbfa7810ddf2e2738c5aafbde" prot="public" virt="non-virtual"><scope>dalia::Listener3DAttributes</scope><name>up</name></member>
+      <member refid="structdalia_1_1Listener3DAttributes_1a22f58542ef0b73b2454b0b7c7582780f" prot="public" virt="non-virtual"><scope>dalia::Listener3DAttributes</scope><name>velocity</name></member>
+    </listofallmembers>
+  </compounddef>
+</doxygen>

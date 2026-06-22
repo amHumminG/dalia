@@ -1,0 +1,3138 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.9.8" xml:lang="en-US">
+  <compounddef id="classdalia_1_1Engine" kind="class" language="C++" prot="public">
+    <compoundname>dalia::Engine</compoundname>
+    <includes refid="Engine_8h" local="no">Engine.h</includes>
+    <sectiondef kind="private-attrib">
+      <memberdef kind="variable" id="classdalia_1_1Engine_1aaa59b14ae7ba10d65e496929d06dc5db" prot="private" static="no" mutable="no">
+        <type>EngineInternalState *</type>
+        <definition>EngineInternalState* dalia::Engine::m_state</definition>
+        <argsstring></argsstring>
+        <name>m_state</name>
+        <qualifiedname>dalia::Engine::m_state</qualifiedname>
+        <initializer>= nullptr</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/Engine.h" line="689" column="21" bodyfile="engine/include/dalia/audio/Engine.h" bodystart="689" bodyend="-1"/>
+      </memberdef>
+    </sectiondef>
+    <sectiondef kind="public-func">
+      <memberdef kind="function" id="classdalia_1_1Engine_1a2fca7712552fe1e7ca9bf56ab9d1be13" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type></type>
+        <definition>dalia::Engine::Engine</definition>
+        <argsstring>()</argsstring>
+        <name>Engine</name>
+        <qualifiedname>dalia::Engine::Engine</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/Engine.h" line="42" column="1"/>
+      </memberdef>
+      <memberdef kind="function" id="classdalia_1_1Engine_1accc5593af97018c2060197467d76f60a" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type></type>
+        <definition>dalia::Engine::~Engine</definition>
+        <argsstring>()</argsstring>
+        <name>~Engine</name>
+        <qualifiedname>dalia::Engine::~Engine</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/Engine.h" line="43" column="1"/>
+      </memberdef>
+      <memberdef kind="function" id="classdalia_1_1Engine_1aaf797c8c979b19ede45164ebe3203fa5" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type></type>
+        <definition>dalia::Engine::Engine</definition>
+        <argsstring>(const Engine &amp;)=delete</argsstring>
+        <name>Engine</name>
+        <qualifiedname>dalia::Engine::Engine</qualifiedname>
+        <param>
+          <type>const <ref refid="classdalia_1_1Engine" kindref="compound">Engine</ref> &amp;</type>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/Engine.h" line="45" column="1"/>
+      </memberdef>
+      <memberdef kind="function" id="classdalia_1_1Engine_1a86e152e97889fb174c899fb0ad23065b" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type><ref refid="classdalia_1_1Engine" kindref="compound">Engine</ref> &amp;</type>
+        <definition>Engine &amp; dalia::Engine::operator=</definition>
+        <argsstring>(const Engine &amp;)=delete</argsstring>
+        <name>operator=</name>
+        <qualifiedname>dalia::Engine::operator=</qualifiedname>
+        <param>
+          <type>const <ref refid="classdalia_1_1Engine" kindref="compound">Engine</ref> &amp;</type>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/Engine.h" line="46" column="8"/>
+      </memberdef>
+      <memberdef kind="function" id="classdalia_1_1Engine_1a5f7328c4fa15282add71f37d7c0b42ea" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909" kindref="member">Result</ref></type>
+        <definition>Result dalia::Engine::Init</definition>
+        <argsstring>(const EngineConfig &amp;config=EngineConfig{})</argsstring>
+        <name>Init</name>
+        <qualifiedname>dalia::Engine::Init</qualifiedname>
+        <param>
+          <type>const <ref refid="structdalia_1_1EngineConfig" kindref="compound">EngineConfig</ref> &amp;</type>
+          <declname>config</declname>
+          <defval><ref refid="structdalia_1_1EngineConfig" kindref="compound">EngineConfig</ref>{}</defval>
+        </param>
+        <briefdescription>
+<para>Initializes the engine, hardware device and background threads. </para>
+        </briefdescription>
+        <detaileddescription>
+<para>This function allocates all internal memory pools and starts the background audio thread, I/O loading thread, and I/O streaming thread. It must be called once before any other engine methods are used.</para>
+<para><simplesect kind="note"><para>[Hardware Device] The engine will default to the OS&apos;s default audio device.</para>
+</simplesect>
+<parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername direction="in">config</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The initialization settings for the engine.</para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<parameterlist kind="retval"><parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909aa60852f204ed8028c1c58808b746d115" kindref="member">Result::Ok</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The engine was successfully initialized and is ready for use. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909aac5706c6b4c156062a2be0889a9e7946" kindref="member">Result::AlreadyInitialized</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>Attempted to initialize an already initialized engine. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909a7ce1050a5ad320fcebb48a07ac6e3d08" kindref="member">Result::DeviceFailed</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The operating system failed to initialize or start the audio device. </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/Engine.h" line="66" column="8"/>
+      </memberdef>
+      <memberdef kind="function" id="classdalia_1_1Engine_1a0f631c3f073d87445140817a628af01b" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909" kindref="member">Result</ref></type>
+        <definition>Result dalia::Engine::Shutdown</definition>
+        <argsstring>()</argsstring>
+        <name>Shutdown</name>
+        <qualifiedname>dalia::Engine::Shutdown</qualifiedname>
+        <briefdescription>
+<para>Halts all audio processing, terminates all background threads and frees allocated engine memory. </para>
+        </briefdescription>
+        <detaileddescription>
+<para><simplesect kind="note"><para>[Blocking Operation] This method will block the calling thread until all background threads have fully joined.</para>
+</simplesect>
+<simplesect kind="note"><para>[Handle Invalidation] Calling this method will invalidate all handles.</para>
+</simplesect>
+<parameterlist kind="retval"><parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909aa60852f204ed8028c1c58808b746d115" kindref="member">Result::Ok</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The engine was successfully shut down. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909a9646ad3a1c3e708b4fa8b4b4270fbab6" kindref="member">Result::NotInitialized</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>Attempted to shut down an engine that is not initialized. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909a7ce1050a5ad320fcebb48a07ac6e3d08" kindref="member">Result::DeviceFailed</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The operating system failed to release the hardware device. </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/Engine.h" line="78" column="8"/>
+      </memberdef>
+      <memberdef kind="function" id="classdalia_1_1Engine_1a38b33f1acb8e123651b454de5c897c2c" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void dalia::Engine::Update</definition>
+        <argsstring>()</argsstring>
+        <name>Update</name>
+        <qualifiedname>dalia::Engine::Update</qualifiedname>
+        <briefdescription>
+<para>The per-frame tick method for the engine. </para>
+        </briefdescription>
+        <detaileddescription>
+<para>This method is the primary synchronization router between the API (calling) thread and the background threads. It must be called exactly once per frame inside the update loop of your main thread.</para>
+<para><simplesect kind="note"><para>[Callback Execution] This method processes all events happening within the engine. It is within this method that any provided AudioEventCallback and AssetLoadCallback functions are invoked. </para>
+</simplesect>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/Engine.h" line="87" column="6"/>
+      </memberdef>
+      <memberdef kind="function" id="classdalia_1_1Engine_1a6a8095c701262ecd7cb658439e935183" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909" kindref="member">Result</ref></type>
+        <definition>Result dalia::Engine::SetGlobalDopplerFactor</definition>
+        <argsstring>(float globalDopplerFactor)</argsstring>
+        <name>SetGlobalDopplerFactor</name>
+        <qualifiedname>dalia::Engine::SetGlobalDopplerFactor</qualifiedname>
+        <param>
+          <type>float</type>
+          <declname>globalDopplerFactor</declname>
+        </param>
+        <briefdescription>
+<para>Sets the global scaling factor for the Doppler effect for the entire engine. </para>
+        </briefdescription>
+        <detaileddescription>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername direction="in">globalDopplerFactor</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The global scaling factor. Clamped internally between 0.0 and 10.0.</para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<parameterlist kind="retval"><parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909aa60852f204ed8028c1c58808b746d115" kindref="member">Result::Ok</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The global scaling factor for the Doppler effect was successfully set. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909a9646ad3a1c3e708b4fa8b4b4270fbab6" kindref="member">Result::NotInitialized</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The engine is not initialized. </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/Engine.h" line="103" column="8"/>
+      </memberdef>
+      <memberdef kind="function" id="classdalia_1_1Engine_1ae796ba32aac0ef903f9d2bb0bbefdf30" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909" kindref="member">Result</ref></type>
+        <definition>Result dalia::Engine::LoadSoundAsync</definition>
+        <argsstring>(SoundHandle &amp;sound, SoundType type, const char *filepath, AssetLoadCallback callback=nullptr, uint32_t *outRequestId=nullptr)</argsstring>
+        <name>LoadSoundAsync</name>
+        <qualifiedname>dalia::Engine::LoadSoundAsync</qualifiedname>
+        <param>
+          <type><ref refid="structdalia_1_1SoundHandle" kindref="compound">SoundHandle</ref> &amp;</type>
+          <declname>sound</declname>
+        </param>
+        <param>
+          <type><ref refid="namespacedalia_1aeae4a70bf40c2732cf099bd25d505e83" kindref="member">SoundType</ref></type>
+          <declname>type</declname>
+        </param>
+        <param>
+          <type>const char *</type>
+          <declname>filepath</declname>
+        </param>
+        <param>
+          <type><ref refid="namespacedalia_1a8b5caf23993dc23d571d3c50ec8a8f31" kindref="member">AssetLoadCallback</ref></type>
+          <declname>callback</declname>
+          <defval>nullptr</defval>
+        </param>
+        <param>
+          <type>uint32_t *</type>
+          <declname>outRequestId</declname>
+          <defval>nullptr</defval>
+        </param>
+        <briefdescription>
+<para>Asynchronously loads a sound into memory or prepares a file for streaming. </para>
+        </briefdescription>
+        <detaileddescription>
+<para>This function returns immediately and does not block the calling thread. The provided sound is valid immediately if the call succeeds. If playback using the sound is attempted before the load is complete, the engine will safely defer the playback request internally.</para>
+<para><simplesect kind="note"><para>[Reference Counting] Sounds are reference counted. If the requested filepath with the same SoundType is already loaded, this function increments a reference count and returns the already loaded sound. Because of this, one must also unload a sound the same number of times as it has been loaded in order to properly unload it from the engine.</para>
+</simplesect>
+<parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername direction="out">sound</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The handle to be populated. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername direction="in">type</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>Specifies if the sound should be fully decoded into memory (Resident) or streamed directly from disk (Stream). </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername direction="in">filepath</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The string path to the audio asset. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername direction="in">callback</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>Optional. If provided, this function will be called when the load finishes. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername direction="out">outRequestId</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>Optional. Populated with a unique ID for the async request. It will evaluate to INVALID_REQUEST_ID if the asset is already loaded.</para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<parameterlist kind="retval"><parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909aa60852f204ed8028c1c58808b746d115" kindref="member">Result::Ok</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The request was successfully queued for load or is already loaded. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909a9646ad3a1c3e708b4fa8b4b4270fbab6" kindref="member">Result::NotInitialized</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The engine is not initialized. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909a076a0a402ed68612967341df27ac63b4" kindref="member">Result::ResidentSoundPoolExhausted</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The allocated capacity for resident sounds has been reached. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909a08b5c6667753514b1b686425030ef90a" kindref="member">Result::StreamSoundPoolExhausted</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The allocated capacity for stream sounds has been reached. </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/Engine.h" line="138" column="8"/>
+      </memberdef>
+      <memberdef kind="function" id="classdalia_1_1Engine_1a0a01cf22fa76223497879a9adf12d6ed" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909" kindref="member">Result</ref></type>
+        <definition>Result dalia::Engine::UnloadSound</definition>
+        <argsstring>(SoundHandle sound)</argsstring>
+        <name>UnloadSound</name>
+        <qualifiedname>dalia::Engine::UnloadSound</qualifiedname>
+        <param>
+          <type><ref refid="structdalia_1_1SoundHandle" kindref="compound">SoundHandle</ref></type>
+          <declname>sound</declname>
+        </param>
+        <briefdescription>
+<para>Decrements the reference count of a sound and unloads it if the count reaches zero. </para>
+        </briefdescription>
+        <detaileddescription>
+<para>If the reference count of a sound reaches zero, all active playbacks using the sound will be stopped with the exit condition ExplicitStop. The engine will also immediately abort all pending playback requests with the same exit condition.</para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername direction="in">sound</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The handle to the sound asset.</para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<parameterlist kind="retval"><parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909aa60852f204ed8028c1c58808b746d115" kindref="member">Result::Ok</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The sound was successfully unloaded or its reference count was decremented. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909a9646ad3a1c3e708b4fa8b4b4270fbab6" kindref="member">Result::NotInitialized</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The engine is not initialized. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909a2d0e462e9958ce7bb443e70023241dfe" kindref="member">Result::InvalidHandle</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The sound handle is not recognized, or has already been freed. </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/Engine.h" line="152" column="8"/>
+      </memberdef>
+      <memberdef kind="function" id="classdalia_1_1Engine_1ae67615289466762674c0864cc8a5c47e" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909" kindref="member">Result</ref></type>
+        <definition>Result dalia::Engine::GetSoundLength</definition>
+        <argsstring>(SoundHandle sound, double &amp;lengthInSeconds)</argsstring>
+        <name>GetSoundLength</name>
+        <qualifiedname>dalia::Engine::GetSoundLength</qualifiedname>
+        <param>
+          <type><ref refid="structdalia_1_1SoundHandle" kindref="compound">SoundHandle</ref></type>
+          <declname>sound</declname>
+        </param>
+        <param>
+          <type>double &amp;</type>
+          <declname>lengthInSeconds</declname>
+        </param>
+        <briefdescription>
+<para>Fetches the total duration (in seconds) of a loaded sound. </para>
+        </briefdescription>
+        <detaileddescription>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername direction="in">sound</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The handle to the sound asset. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername direction="out">lengthInSeconds</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The variable to be populated with the length of the sound asset.</para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<parameterlist kind="retval"><parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909aa60852f204ed8028c1c58808b746d115" kindref="member">Result::Ok</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The sound length was successfully fetched. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909a9646ad3a1c3e708b4fa8b4b4270fbab6" kindref="member">Result::NotInitialized</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The engine is not initialized. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909a2d0e462e9958ce7bb443e70023241dfe" kindref="member">Result::InvalidHandle</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The sound handle is not recognized, or has already been freed. </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/Engine.h" line="162" column="8"/>
+      </memberdef>
+      <memberdef kind="function" id="classdalia_1_1Engine_1a450bc3173d2106e2a501c371224f09e3" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909" kindref="member">Result</ref></type>
+        <definition>Result dalia::Engine::CreateBus</definition>
+        <argsstring>(const char *identifier, const char *parentIdentifier=&quot;Master&quot;)</argsstring>
+        <name>CreateBus</name>
+        <qualifiedname>dalia::Engine::CreateBus</qualifiedname>
+        <param>
+          <type>const char *</type>
+          <declname>identifier</declname>
+        </param>
+        <param>
+          <type>const char *</type>
+          <declname>parentIdentifier</declname>
+          <defval>&quot;Master&quot;</defval>
+        </param>
+        <briefdescription>
+<para>Creates a new mixing bus. </para>
+        </briefdescription>
+        <detaileddescription>
+<para><simplesect kind="note"><para>[Reference Counting] Buses are reference counted via their string identifiers. If CreateBus is called for an identifier that already exists, the engine will increment its reference count. If the bus already exists, any new parentIdentifier provided in subsequent calls is ignored and a warning is logged.</para>
+</simplesect>
+<parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername direction="in">identifier</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The unique string identifier of the bus. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername direction="in">parentIdentifier</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>Optional. The unique string identifier of the parent bus (defaults to Master).</para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<parameterlist kind="retval"><parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909aa60852f204ed8028c1c58808b746d115" kindref="member">Result::Ok</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The bus was successfully created or its reference count was incremented. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909a9646ad3a1c3e708b4fa8b4b4270fbab6" kindref="member">Result::NotInitialized</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The engine is not initialized. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909a0004ce2e7826ed26d7c56786c65e098e" kindref="member">Result::BusNotFound</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The parent bus does not exist. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909a15356f8637dedeb2297e2aadd6e7e370" kindref="member">Result::BusPoolExhausted</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The allocated bus capacity has been reached. </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/Engine.h" line="185" column="8"/>
+      </memberdef>
+      <memberdef kind="function" id="classdalia_1_1Engine_1a25c1d9db52b7d0cf732a0012c2a3c862" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909" kindref="member">Result</ref></type>
+        <definition>Result dalia::Engine::DestroyBus</definition>
+        <argsstring>(const char *identifier)</argsstring>
+        <name>DestroyBus</name>
+        <qualifiedname>dalia::Engine::DestroyBus</qualifiedname>
+        <param>
+          <type>const char *</type>
+          <declname>identifier</declname>
+        </param>
+        <briefdescription>
+<para>Decrements the reference count of a bus and destroys it if the count reaches zero. </para>
+        </briefdescription>
+        <detaileddescription>
+<para>If the bus is destroyed, any child buses or active playbacks that are routed to this bus are orphaned. An orphaned bus can be rerouted to a new parent bus, but an orphaned voice will immediately be stopped by the engine with the exit condition ExplicitStop.</para>
+<para><simplesect kind="note"><para>[Master Immunity] The Master bus is permanently allocated by the engine and cannot be destroyed.</para>
+</simplesect>
+<parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername direction="in">identifier</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The unique string identifier of the bus.</para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<parameterlist kind="retval"><parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909aa60852f204ed8028c1c58808b746d115" kindref="member">Result::Ok</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The bus was successfully destroyed or its reference count was decremented. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909a9646ad3a1c3e708b4fa8b4b4270fbab6" kindref="member">Result::NotInitialized</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The engine is not initialized. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909a0004ce2e7826ed26d7c56786c65e098e" kindref="member">Result::BusNotFound</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The bus does not exist or has already been destroyed. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909a902b0d55fddef6f8d651fe1035b7d4bd" kindref="member">Result::Error</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>Attempted to destroy Master bus. </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/Engine.h" line="201" column="8"/>
+      </memberdef>
+      <memberdef kind="function" id="classdalia_1_1Engine_1a7a71893647d077bba510e0f18b779dc4" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909" kindref="member">Result</ref></type>
+        <definition>Result dalia::Engine::RouteBus</definition>
+        <argsstring>(const char *identifier, const char *parentIdentifier)</argsstring>
+        <name>RouteBus</name>
+        <qualifiedname>dalia::Engine::RouteBus</qualifiedname>
+        <param>
+          <type>const char *</type>
+          <declname>identifier</declname>
+        </param>
+        <param>
+          <type>const char *</type>
+          <declname>parentIdentifier</declname>
+        </param>
+        <briefdescription>
+<para>Modifies the routing topology by changing the output destination of an existing bus. </para>
+        </briefdescription>
+        <detaileddescription>
+<para>Moves a bus and all of its attached children (buses and playbacks) to a new parent bus in the mixing hierarchy.</para>
+<para><simplesect kind="note"><para>[Hierarchy Protection] The mixing hierarchy must always remain a strict directed acyclic graph (DAG). If an attempt is made to route a bus into itself or into one of its own descendants, this function will return an error. Additionally, the Master bus cannot be re-routed.</para>
+</simplesect>
+<parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername direction="in">identifier</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The unique string identifier of the bus. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername direction="in">parentIdentifier</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The unique string identifier of the new parent bus (must be an existing bus).</para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<parameterlist kind="retval"><parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909aa60852f204ed8028c1c58808b746d115" kindref="member">Result::Ok</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The bus was successfully re-routed. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909a9646ad3a1c3e708b4fa8b4b4270fbab6" kindref="member">Result::NotInitialized</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The engine is not initialized. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909a6646544c19956602eb5df4cba95b777f" kindref="member">Result::InvalidRouting</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>Attempted a route that would result in a cyclic bus hierarchy, or attempted to route Master. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909a0004ce2e7826ed26d7c56786c65e098e" kindref="member">Result::BusNotFound</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>Either the bus or the parent bus does not exist. </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/Engine.h" line="220" column="8"/>
+      </memberdef>
+      <memberdef kind="function" id="classdalia_1_1Engine_1a6fbaf3fb8183aeb21d6bbee1963c0671" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909" kindref="member">Result</ref></type>
+        <definition>Result dalia::Engine::SetBusVolumeDb</definition>
+        <argsstring>(const char *identifier, float volumeDb)</argsstring>
+        <name>SetBusVolumeDb</name>
+        <qualifiedname>dalia::Engine::SetBusVolumeDb</qualifiedname>
+        <param>
+          <type>const char *</type>
+          <declname>identifier</declname>
+        </param>
+        <param>
+          <type>float</type>
+          <declname>volumeDb</declname>
+        </param>
+        <briefdescription>
+<para>Sets the mixing volume of a bus in decibels (dB). </para>
+        </briefdescription>
+        <detaileddescription>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername direction="in">identifier</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The unique string identifier of the bus. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername direction="in">volumeDb</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The new volume in decibels (dB). A value of 0.0 represents unity gain. The volume is automatically clamped to the engine&apos;s safe operating range (between -60.0dB and +12.0dB).</para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<parameterlist kind="retval"><parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909aa60852f204ed8028c1c58808b746d115" kindref="member">Result::Ok</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The mixing volume of the bus was successfully updated. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909a9646ad3a1c3e708b4fa8b4b4270fbab6" kindref="member">Result::NotInitialized</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The engine is not initialized. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909a0004ce2e7826ed26d7c56786c65e098e" kindref="member">Result::BusNotFound</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The bus does not exist. </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/Engine.h" line="232" column="8"/>
+      </memberdef>
+      <memberdef kind="function" id="classdalia_1_1Engine_1ad3734db54e0782a7e6a3f172e2291c85" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <templateparamlist>
+          <param>
+            <type>typename TParams</type>
+          </param>
+        </templateparamlist>
+        <type><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909" kindref="member">Result</ref></type>
+        <definition>Result dalia::Engine::CreateEffect</definition>
+        <argsstring>(EffectHandle &amp;effect, const TParams &amp;params)</argsstring>
+        <name>CreateEffect</name>
+        <qualifiedname>dalia::Engine::CreateEffect</qualifiedname>
+        <param>
+          <type><ref refid="structdalia_1_1EffectHandle" kindref="compound">EffectHandle</ref> &amp;</type>
+          <declname>effect</declname>
+        </param>
+        <param>
+          <type>const TParams &amp;</type>
+          <declname>params</declname>
+        </param>
+    <requiresclause>requires(TParams p) {p.Sanitize(); }    </requiresclause>
+        <briefdescription>
+<para>Allocates a new DSP effect instance and initializes it with the provided parameters. </para>
+        </briefdescription>
+        <detaileddescription>
+<para>This function is used to create all effects. The type of effect this function creates depends on the type of effect parameters that is passed into it.</para>
+<para><parameterlist kind="templateparam"><parameteritem>
+<parameternamelist>
+<parametername>TParams</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The parameter struct containing the effect settings. </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername direction="out">effect</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The handle to be populated. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername direction="in">params</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The initial parameters.</para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<parameterlist kind="retval"><parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909aa60852f204ed8028c1c58808b746d115" kindref="member">Result::Ok</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The effect was successfully created. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909a9646ad3a1c3e708b4fa8b4b4270fbab6" kindref="member">Result::NotInitialized</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The engine is not initialized. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909af943f6350dc121b135cf0f52b82ce0c6" kindref="member">Result::EffectPoolExhausted</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The allocated effect capacity has been reached. </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/Engine.h" line="257" column="8"/>
+      </memberdef>
+      <memberdef kind="function" id="classdalia_1_1Engine_1a8d8212c313926d8024bae4494c068f5e" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <templateparamlist>
+          <param>
+            <type>typename TParams</type>
+          </param>
+        </templateparamlist>
+        <type><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909" kindref="member">Result</ref></type>
+        <definition>Result dalia::Engine::SetEffectParams</definition>
+        <argsstring>(EffectHandle effect, const TParams &amp;params)</argsstring>
+        <name>SetEffectParams</name>
+        <qualifiedname>dalia::Engine::SetEffectParams</qualifiedname>
+        <param>
+          <type><ref refid="structdalia_1_1EffectHandle" kindref="compound">EffectHandle</ref></type>
+          <declname>effect</declname>
+        </param>
+        <param>
+          <type>const TParams &amp;</type>
+          <declname>params</declname>
+        </param>
+    <requiresclause>requires(TParams p) {p.Sanitize(); }    </requiresclause>
+        <briefdescription>
+<para>Updates the parameters of an effect instance. </para>
+        </briefdescription>
+        <detaileddescription>
+<para><simplesect kind="note"><para>[Params Typing] The params type must match the params type of the effect instance that the provided handle is referencing.</para>
+</simplesect>
+<parameterlist kind="templateparam"><parameteritem>
+<parameternamelist>
+<parametername>TParams</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The parameter struct containing the effect settings. </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername direction="in">effect</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The handle to the effect instance. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername direction="in">params</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The new parameters.</para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<parameterlist kind="retval"><parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909aa60852f204ed8028c1c58808b746d115" kindref="member">Result::Ok</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The effect parameters were successfully updated. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909a9646ad3a1c3e708b4fa8b4b4270fbab6" kindref="member">Result::NotInitialized</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The engine is not initialized. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909a2d0e462e9958ce7bb443e70023241dfe" kindref="member">Result::InvalidHandle</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The effect handle is not recognized. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909a4adb1b076d1ab0f1202673245fa77017" kindref="member">Result::ExpiredHandle</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The effect handle points to an already destroyed effect. </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/Engine.h" line="274" column="8"/>
+      </memberdef>
+      <memberdef kind="function" id="classdalia_1_1Engine_1aa0fb1a5ff192a5c6dc1afd5e01a0b81d" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909" kindref="member">Result</ref></type>
+        <definition>Result dalia::Engine::AttachEffect</definition>
+        <argsstring>(EffectHandle effect, const char *busIdentifier, uint32_t effectSlot)</argsstring>
+        <name>AttachEffect</name>
+        <qualifiedname>dalia::Engine::AttachEffect</qualifiedname>
+        <param>
+          <type><ref refid="structdalia_1_1EffectHandle" kindref="compound">EffectHandle</ref></type>
+          <declname>effect</declname>
+        </param>
+        <param>
+          <type>const char *</type>
+          <declname>busIdentifier</declname>
+        </param>
+        <param>
+          <type>uint32_t</type>
+          <declname>effectSlot</declname>
+        </param>
+        <briefdescription>
+<para>Inserts an allocated effect into the processing chain of a specified bus. </para>
+        </briefdescription>
+        <detaileddescription>
+<para>A bus can hold up to four effects at a time. Attached effects are processed sequentially from slot 0 to slot 3.</para>
+<para><simplesect kind="note"><para>[Exclusive Routing] A single effect instance can only be attached to one bus at a time. Attaching an effect that is already attached to a bus will forcefully detach that effect from its old bus. Doing so is generally not recommended if the bus is being played through as it can potentially cause a pop in the audio output due to bypassing the built-in effect fade-out.</para>
+</simplesect>
+<simplesect kind="note"><para>[Hot-Swap] If the specified slot on the target bus is already occupied by another effect, the existing effect will be forcefully detached and replaced by the new effect. Doing so is generally not recommended for the same reasons mentioned above.</para>
+</simplesect>
+<parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername direction="in">effect</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The handle to the effect instance. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername direction="in">busIdentifier</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The unique string identifier of the target bus. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername direction="in">effectSlot</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The index in the effect rack of the bus (0 to 3).</para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<parameterlist kind="retval"><parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909aa60852f204ed8028c1c58808b746d115" kindref="member">Result::Ok</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The effect was successfully attached to the bus. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909a9646ad3a1c3e708b4fa8b4b4270fbab6" kindref="member">Result::NotInitialized</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The engine is not initialized. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909a2d0e462e9958ce7bb443e70023241dfe" kindref="member">Result::InvalidHandle</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The effect handle is not recognized. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909a4adb1b076d1ab0f1202673245fa77017" kindref="member">Result::ExpiredHandle</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The effect handle points to an already destroyed effect. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909a0004ce2e7826ed26d7c56786c65e098e" kindref="member">Result::BusNotFound</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The target bus does not exist. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909a43503371060944c3b30df6987c380001" kindref="member">Result::InvalidEffectSlot</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The requested slot exceeds the rack index limit. </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/Engine.h" line="300" column="8"/>
+      </memberdef>
+      <memberdef kind="function" id="classdalia_1_1Engine_1a2a73dc69eb079bf0c2f33a11e66ecc67" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909" kindref="member">Result</ref></type>
+        <definition>Result dalia::Engine::DetachEffect</definition>
+        <argsstring>(EffectHandle effect)</argsstring>
+        <name>DetachEffect</name>
+        <qualifiedname>dalia::Engine::DetachEffect</qualifiedname>
+        <param>
+          <type><ref refid="structdalia_1_1EffectHandle" kindref="compound">EffectHandle</ref></type>
+          <declname>effect</declname>
+        </param>
+        <briefdescription>
+<para>Removes an effect from the mix graph, regardless of which bus it is routed to. </para>
+        </briefdescription>
+        <detaileddescription>
+<para><simplesect kind="note"><para>[Effect Lifetime] Detaching an effect does not destroy it.</para>
+</simplesect>
+<parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername direction="in">effect</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The handle to the effect instance.</para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<parameterlist kind="retval"><parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909aa60852f204ed8028c1c58808b746d115" kindref="member">Result::Ok</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The effect was successfully detached. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909a9646ad3a1c3e708b4fa8b4b4270fbab6" kindref="member">Result::NotInitialized</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The engine is not initialized. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909a2d0e462e9958ce7bb443e70023241dfe" kindref="member">Result::InvalidHandle</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The effect handle is not recognized. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909a4adb1b076d1ab0f1202673245fa77017" kindref="member">Result::ExpiredHandle</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The effect handle points to an already destroyed effect. </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/Engine.h" line="312" column="8"/>
+      </memberdef>
+      <memberdef kind="function" id="classdalia_1_1Engine_1aa521a754247a3cf0843912c8734d5ffa" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909" kindref="member">Result</ref></type>
+        <definition>Result dalia::Engine::DestroyEffect</definition>
+        <argsstring>(EffectHandle effect)</argsstring>
+        <name>DestroyEffect</name>
+        <qualifiedname>dalia::Engine::DestroyEffect</qualifiedname>
+        <param>
+          <type><ref refid="structdalia_1_1EffectHandle" kindref="compound">EffectHandle</ref></type>
+          <declname>effect</declname>
+        </param>
+        <briefdescription>
+<para>Destroys an effect. </para>
+        </briefdescription>
+        <detaileddescription>
+<para>If the effect is attached to a bus, the engine will automatically detach it before destroying it.</para>
+<para><simplesect kind="note"><para>[Attached Effects] Destroying an effect that is attached to a bus that is being played through is generally not recommended as it can cause a pop in the audio output due to bypassing the built-in effect fade-out.</para>
+</simplesect>
+<parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername direction="in">effect</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The handle to the effect instance.</para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<parameterlist kind="retval"><parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909aa60852f204ed8028c1c58808b746d115" kindref="member">Result::Ok</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The effect was successfully destroyed. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909a9646ad3a1c3e708b4fa8b4b4270fbab6" kindref="member">Result::NotInitialized</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The engine is not initialized. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909a2d0e462e9958ce7bb443e70023241dfe" kindref="member">Result::InvalidHandle</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The effect handle is not recognized. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909a4adb1b076d1ab0f1202673245fa77017" kindref="member">Result::ExpiredHandle</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The effect handle points to an already destroyed effect. </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/Engine.h" line="328" column="8"/>
+      </memberdef>
+      <memberdef kind="function" id="classdalia_1_1Engine_1a81cf45d8be8275f64552ccbd18a70cd7" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909" kindref="member">Result</ref></type>
+        <definition>Result dalia::Engine::CreatePlayback</definition>
+        <argsstring>(PlaybackHandle &amp;playback, SoundHandle sound, PlaybackExitCallback callback=nullptr)</argsstring>
+        <name>CreatePlayback</name>
+        <qualifiedname>dalia::Engine::CreatePlayback</qualifiedname>
+        <param>
+          <type><ref refid="structdalia_1_1PlaybackHandle" kindref="compound">PlaybackHandle</ref> &amp;</type>
+          <declname>playback</declname>
+        </param>
+        <param>
+          <type><ref refid="structdalia_1_1SoundHandle" kindref="compound">SoundHandle</ref></type>
+          <declname>sound</declname>
+        </param>
+        <param>
+          <type><ref refid="namespacedalia_1a045bd73a9d8d1e25704acfbe7fd16db7" kindref="member">PlaybackExitCallback</ref></type>
+          <declname>callback</declname>
+          <defval>nullptr</defval>
+        </param>
+        <briefdescription>
+<para>Creates a playback instance with a sound and prepares it for playback. </para>
+        </briefdescription>
+        <detaileddescription>
+<para>This function does not start playback.</para>
+<para><simplesect kind="note"><para>[Deferred Playback] This function will still succeed if the sound is still being loaded asynchronously.</para>
+</simplesect>
+<simplesect kind="note"><para>[Playback Lifecycle] Playback instances are immediately invalidated upon stopping. Because of this, always check the return value of any playback modifying methods to make sure the handle is still valid.</para>
+</simplesect>
+<parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername direction="out">playback</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The handle to be populated. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername direction="in">sound</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The handle to the sound. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername direction="in">callback</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>Optional. If provided, this function will be called when the playback terminates.</para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<parameterlist kind="retval"><parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909aa60852f204ed8028c1c58808b746d115" kindref="member">Result::Ok</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The playback instance was successfully created. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909a9646ad3a1c3e708b4fa8b4b4270fbab6" kindref="member">Result::NotInitialized</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The engine is not initialized. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909a2d0e462e9958ce7bb443e70023241dfe" kindref="member">Result::InvalidHandle</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The sound handle is not recognized. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909a097538fcf0b092a118f541f57961d632" kindref="member">Result::SoundLoadError</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The sound asset previously failed to load. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909acccf1968a971068b4531488dd06ac6e3" kindref="member">Result::VoicePoolExhausted</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The allocated voice capacity has been reached. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909adf59ac6ec24608aea06f80cbaa8238a3" kindref="member">Result::StreamPoolExhausted</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The allocated stream capacity has been reached. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909a67ed85655ee2774f289b3ae143053bd3" kindref="member">Result::IoStreamRequestQueueFull</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The I/O streaming request queue is at capacity. </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/Engine.h" line="360" column="8"/>
+      </memberdef>
+      <memberdef kind="function" id="classdalia_1_1Engine_1abe578ab0a1ef9fc2180cc9281ea141ec" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909" kindref="member">Result</ref></type>
+        <definition>Result dalia::Engine::RoutePlayback</definition>
+        <argsstring>(PlaybackHandle playback, const char *busIdentifier)</argsstring>
+        <name>RoutePlayback</name>
+        <qualifiedname>dalia::Engine::RoutePlayback</qualifiedname>
+        <param>
+          <type><ref refid="structdalia_1_1PlaybackHandle" kindref="compound">PlaybackHandle</ref></type>
+          <declname>playback</declname>
+        </param>
+        <param>
+          <type>const char *</type>
+          <declname>busIdentifier</declname>
+        </param>
+        <briefdescription>
+<para>Routes a playback instance to output its audio into the specified mixing bus. </para>
+        </briefdescription>
+        <detaileddescription>
+<para>This function can be called both before and during playback.</para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername direction="in">playback</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The handle to the playback instance. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername direction="in">busIdentifier</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The unique string identifier of the target bus.</para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<parameterlist kind="retval"><parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909aa60852f204ed8028c1c58808b746d115" kindref="member">Result::Ok</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The voice was successfully routed. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909a9646ad3a1c3e708b4fa8b4b4270fbab6" kindref="member">Result::NotInitialized</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The engine is not initialized. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909a2d0e462e9958ce7bb443e70023241dfe" kindref="member">Result::InvalidHandle</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The playback handle is not recognized. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909a4adb1b076d1ab0f1202673245fa77017" kindref="member">Result::ExpiredHandle</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The playback handle has already stopped playing. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909a0004ce2e7826ed26d7c56786c65e098e" kindref="member">Result::BusNotFound</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The target bus does not exist. </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/Engine.h" line="375" column="8"/>
+      </memberdef>
+      <memberdef kind="function" id="classdalia_1_1Engine_1a987c48b22766dbe1f8bcd824887a9c09" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909" kindref="member">Result</ref></type>
+        <definition>Result dalia::Engine::PlayPlayback</definition>
+        <argsstring>(PlaybackHandle playback)</argsstring>
+        <name>PlayPlayback</name>
+        <qualifiedname>dalia::Engine::PlayPlayback</qualifiedname>
+        <param>
+          <type><ref refid="structdalia_1_1PlaybackHandle" kindref="compound">PlaybackHandle</ref></type>
+          <declname>playback</declname>
+        </param>
+        <briefdescription>
+<para>Starts or resumes a playback instance. </para>
+        </briefdescription>
+        <detaileddescription>
+<para>If the playback instance is paused, calling this function will resume it from the current position. If it is inactive, it will play from the start.</para>
+<para><simplesect kind="note"><para>[Deferred Playback] It is safe to call this function on a playback instance that is still waiting for its sound to load. The playback will start as soon as the sound has been loaded in.</para>
+</simplesect>
+<parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername direction="in">playback</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The handle to the playback instance.</para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<parameterlist kind="retval"><parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909aa60852f204ed8028c1c58808b746d115" kindref="member">Result::Ok</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The playback instance was successfully set to play. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909a9646ad3a1c3e708b4fa8b4b4270fbab6" kindref="member">Result::NotInitialized</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The engine is not initialized. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909a2d0e462e9958ce7bb443e70023241dfe" kindref="member">Result::InvalidHandle</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The playback handle is not recognized. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909a4adb1b076d1ab0f1202673245fa77017" kindref="member">Result::ExpiredHandle</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The playback handle has already stopped playing. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909a5b1a09ef3b5482a9f57623db724f3279" kindref="member">Result::PlaybackCorrupted</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The internal state of the playback instance has been corrupted. </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/Engine.h" line="392" column="8"/>
+      </memberdef>
+      <memberdef kind="function" id="classdalia_1_1Engine_1a1779506316ee1cf0a89aaf5fdae743f4" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909" kindref="member">Result</ref></type>
+        <definition>Result dalia::Engine::PausePlayback</definition>
+        <argsstring>(PlaybackHandle playback)</argsstring>
+        <name>PausePlayback</name>
+        <qualifiedname>dalia::Engine::PausePlayback</qualifiedname>
+        <param>
+          <type><ref refid="structdalia_1_1PlaybackHandle" kindref="compound">PlaybackHandle</ref></type>
+          <declname>playback</declname>
+        </param>
+        <briefdescription>
+<para>Pauses a playback instance. </para>
+        </briefdescription>
+        <detaileddescription>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername direction="in">playback</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The handle to the playback instance.</para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<parameterlist kind="retval"><parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909aa60852f204ed8028c1c58808b746d115" kindref="member">Result::Ok</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The playback instance was successfully set to pause. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909a9646ad3a1c3e708b4fa8b4b4270fbab6" kindref="member">Result::NotInitialized</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The engine is not initialized. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909a2d0e462e9958ce7bb443e70023241dfe" kindref="member">Result::InvalidHandle</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The playback handle is not recognized. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909a4adb1b076d1ab0f1202673245fa77017" kindref="member">Result::ExpiredHandle</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The playback handle has already stopped playing. </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/Engine.h" line="402" column="8"/>
+      </memberdef>
+      <memberdef kind="function" id="classdalia_1_1Engine_1af617540b3eede2b3bbb40ff23ea0deaa" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909" kindref="member">Result</ref></type>
+        <definition>Result dalia::Engine::StopPlayback</definition>
+        <argsstring>(PlaybackHandle playback)</argsstring>
+        <name>StopPlayback</name>
+        <qualifiedname>dalia::Engine::StopPlayback</qualifiedname>
+        <param>
+          <type><ref refid="structdalia_1_1PlaybackHandle" kindref="compound">PlaybackHandle</ref></type>
+          <declname>playback</declname>
+        </param>
+        <briefdescription>
+<para>Stops a playback instance. </para>
+        </briefdescription>
+        <detaileddescription>
+<para>If a callback function was provided when creating the playback instance, it will be called with the exit condition ExplicitStop once the playback has been stopped.</para>
+<para><simplesect kind="note"><para>[Playback Lifecycle] Successfully calling this function invalidates the provided <ref refid="structdalia_1_1PlaybackHandle" kindref="compound">PlaybackHandle</ref>. A stopped playback cannot be restarted.</para>
+</simplesect>
+<parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername direction="in">playback</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The handle to the playback instance.</para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<parameterlist kind="retval"><parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909aa60852f204ed8028c1c58808b746d115" kindref="member">Result::Ok</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The playback instance was successfully set to stop. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909a9646ad3a1c3e708b4fa8b4b4270fbab6" kindref="member">Result::NotInitialized</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The engine is not initialized. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909a2d0e462e9958ce7bb443e70023241dfe" kindref="member">Result::InvalidHandle</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The playback handle is not recognized. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909a4adb1b076d1ab0f1202673245fa77017" kindref="member">Result::ExpiredHandle</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The playback handle has already stopped playing. </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/Engine.h" line="418" column="8"/>
+      </memberdef>
+      <memberdef kind="function" id="classdalia_1_1Engine_1a1afba0203932455971eb00d455efad59" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909" kindref="member">Result</ref></type>
+        <definition>Result dalia::Engine::SeekPlayback</definition>
+        <argsstring>(PlaybackHandle playback, double timeInSeconds)</argsstring>
+        <name>SeekPlayback</name>
+        <qualifiedname>dalia::Engine::SeekPlayback</qualifiedname>
+        <param>
+          <type><ref refid="structdalia_1_1PlaybackHandle" kindref="compound">PlaybackHandle</ref></type>
+          <declname>playback</declname>
+        </param>
+        <param>
+          <type>double</type>
+          <declname>timeInSeconds</declname>
+        </param>
+        <briefdescription>
+<para>Seeks a playback instance to a specified time offset. </para>
+        </briefdescription>
+        <detaileddescription>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>playback</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The handle to the playback instance. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>timeInSeconds</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The time offset from the start of the sound (in seconds). This value is automatically clamped between 0.0 and the length of the sound.</para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<parameterlist kind="retval"><parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909aa60852f204ed8028c1c58808b746d115" kindref="member">Result::Ok</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The seek was successfully performed. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909a9646ad3a1c3e708b4fa8b4b4270fbab6" kindref="member">Result::NotInitialized</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The engine is not initialized. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909a2d0e462e9958ce7bb443e70023241dfe" kindref="member">Result::InvalidHandle</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The playback handle is not recognized. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909a4adb1b076d1ab0f1202673245fa77017" kindref="member">Result::ExpiredHandle</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The playback handle has already stopped playing. </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/Engine.h" line="430" column="8"/>
+      </memberdef>
+      <memberdef kind="function" id="classdalia_1_1Engine_1ad5b479c5851f6075ff78d517d7f45b2a" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909" kindref="member">Result</ref></type>
+        <definition>Result dalia::Engine::SetPlaybackVolumeDb</definition>
+        <argsstring>(PlaybackHandle playback, float volumeDb)</argsstring>
+        <name>SetPlaybackVolumeDb</name>
+        <qualifiedname>dalia::Engine::SetPlaybackVolumeDb</qualifiedname>
+        <param>
+          <type><ref refid="structdalia_1_1PlaybackHandle" kindref="compound">PlaybackHandle</ref></type>
+          <declname>playback</declname>
+        </param>
+        <param>
+          <type>float</type>
+          <declname>volumeDb</declname>
+        </param>
+        <briefdescription>
+<para>Sets the mixing volume of a playback instance in decibels (dB). </para>
+        </briefdescription>
+        <detaileddescription>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername direction="in">playback</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The handle to the playback instance. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername direction="in">volumeDb</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The new volume in decibels (dB). A value of 0.0 represents unity gain. The volume is automatically clamped to the engine&apos;s safe operating range (between -60.0dB and +12.0dB).</para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<parameterlist kind="retval"><parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909aa60852f204ed8028c1c58808b746d115" kindref="member">Result::Ok</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The mixing volume of the playback instance was successfully set. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909a9646ad3a1c3e708b4fa8b4b4270fbab6" kindref="member">Result::NotInitialized</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The engine is not initialized. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909a2d0e462e9958ce7bb443e70023241dfe" kindref="member">Result::InvalidHandle</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The playback handle is not recognized. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909a4adb1b076d1ab0f1202673245fa77017" kindref="member">Result::ExpiredHandle</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The playback handle has already stopped playing. </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/Engine.h" line="443" column="8"/>
+      </memberdef>
+      <memberdef kind="function" id="classdalia_1_1Engine_1aa09c17780d9bfcdd9dcd2128232c1119" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909" kindref="member">Result</ref></type>
+        <definition>Result dalia::Engine::SetPlaybackRate</definition>
+        <argsstring>(PlaybackHandle playback, float rate)</argsstring>
+        <name>SetPlaybackRate</name>
+        <qualifiedname>dalia::Engine::SetPlaybackRate</qualifiedname>
+        <param>
+          <type><ref refid="structdalia_1_1PlaybackHandle" kindref="compound">PlaybackHandle</ref></type>
+          <declname>playback</declname>
+        </param>
+        <param>
+          <type>float</type>
+          <declname>rate</declname>
+        </param>
+        <briefdescription>
+<para>Sets the playback rate (speed) of a playback instance. </para>
+        </briefdescription>
+        <detaileddescription>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername direction="in">playback</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The handle to the playback instance. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername direction="in">rate</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The new playback rate. This is clamped internally between 0.1 and 4.0 to prevent performance issues.</para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<parameterlist kind="retval"><parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909aa60852f204ed8028c1c58808b746d115" kindref="member">Result::Ok</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The playback rate of the playback instance was successfully set. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909a9646ad3a1c3e708b4fa8b4b4270fbab6" kindref="member">Result::NotInitialized</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The engine is not initialized. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909a2d0e462e9958ce7bb443e70023241dfe" kindref="member">Result::InvalidHandle</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The playback handle is not recognized. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909a4adb1b076d1ab0f1202673245fa77017" kindref="member">Result::ExpiredHandle</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The playback handle has already stopped playing. </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/Engine.h" line="455" column="8"/>
+      </memberdef>
+      <memberdef kind="function" id="classdalia_1_1Engine_1a50cc6fc2e53a0827ca8876b4b65c7e37" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909" kindref="member">Result</ref></type>
+        <definition>Result dalia::Engine::SetPlaybackStereoPan</definition>
+        <argsstring>(PlaybackHandle playback, float pan)</argsstring>
+        <name>SetPlaybackStereoPan</name>
+        <qualifiedname>dalia::Engine::SetPlaybackStereoPan</qualifiedname>
+        <param>
+          <type><ref refid="structdalia_1_1PlaybackHandle" kindref="compound">PlaybackHandle</ref></type>
+          <declname>playback</declname>
+        </param>
+        <param>
+          <type>float</type>
+          <declname>pan</declname>
+        </param>
+        <briefdescription>
+<para>Sets the stereo pan of a playback instance. </para>
+        </briefdescription>
+        <detaileddescription>
+<para><simplesect kind="note"><para>[Spatial] This only affects playback instances that have spatialization disabled.</para>
+</simplesect>
+<parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername direction="in">playback</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The handle to the playback instance. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername direction="in">pan</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The normalized pan position. A value of 0.0 represents an equal distribution between L and R, -1.0 is full L and 1.0 is full R.</para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<parameterlist kind="retval"><parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909aa60852f204ed8028c1c58808b746d115" kindref="member">Result::Ok</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The pan of the playback instance was successfully set. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909a9646ad3a1c3e708b4fa8b4b4270fbab6" kindref="member">Result::NotInitialized</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The engine is not initialized. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909a2d0e462e9958ce7bb443e70023241dfe" kindref="member">Result::InvalidHandle</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The playback handle is not recognized. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909a4adb1b076d1ab0f1202673245fa77017" kindref="member">Result::ExpiredHandle</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The playback handle has already stopped playing. </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/Engine.h" line="469" column="8"/>
+      </memberdef>
+      <memberdef kind="function" id="classdalia_1_1Engine_1acd9cc8abc9094ab07854e02f5763b68e" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909" kindref="member">Result</ref></type>
+        <definition>Result dalia::Engine::SetPlaybackLooping</definition>
+        <argsstring>(PlaybackHandle playback, bool looping)</argsstring>
+        <name>SetPlaybackLooping</name>
+        <qualifiedname>dalia::Engine::SetPlaybackLooping</qualifiedname>
+        <param>
+          <type><ref refid="structdalia_1_1PlaybackHandle" kindref="compound">PlaybackHandle</ref></type>
+          <declname>playback</declname>
+        </param>
+        <param>
+          <type>bool</type>
+          <declname>looping</declname>
+        </param>
+        <briefdescription>
+<para>Sets the looping state a playback instance. </para>
+        </briefdescription>
+        <detaileddescription>
+<para>This method updates whether a playback instance will automatically restart upon finishing.</para>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername direction="in">playback</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The handle to the playback instance. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername direction="in">looping</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The looping state.</para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<parameterlist kind="retval"><parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909aa60852f204ed8028c1c58808b746d115" kindref="member">Result::Ok</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The playback instance looping state was successfully set. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909a9646ad3a1c3e708b4fa8b4b4270fbab6" kindref="member">Result::NotInitialized</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The engine is not initialized. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909a2d0e462e9958ce7bb443e70023241dfe" kindref="member">Result::InvalidHandle</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The playback handle is not recognized. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909a4adb1b076d1ab0f1202673245fa77017" kindref="member">Result::ExpiredHandle</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The playback handle has already stopped playing. </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/Engine.h" line="482" column="8"/>
+      </memberdef>
+      <memberdef kind="function" id="classdalia_1_1Engine_1a97c9ce2c1950efbd565e122b75c89b90" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909" kindref="member">Result</ref></type>
+        <definition>Result dalia::Engine::SetPlaybackSpatial</definition>
+        <argsstring>(PlaybackHandle playback, bool spatial)</argsstring>
+        <name>SetPlaybackSpatial</name>
+        <qualifiedname>dalia::Engine::SetPlaybackSpatial</qualifiedname>
+        <param>
+          <type><ref refid="structdalia_1_1PlaybackHandle" kindref="compound">PlaybackHandle</ref></type>
+          <declname>playback</declname>
+        </param>
+        <param>
+          <type>bool</type>
+          <declname>spatial</declname>
+        </param>
+        <briefdescription>
+<para>Enables or disables 3D spatialization for a playback instance. </para>
+        </briefdescription>
+        <detaileddescription>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername direction="in">playback</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The handle to the playback instance. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername direction="in">spatial</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>True to enable 3D spatialization, false for 2D/global playback.</para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<parameterlist kind="retval"><parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909aa60852f204ed8028c1c58808b746d115" kindref="member">Result::Ok</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The playback spatialization was successfully enabled or disabled. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909a9646ad3a1c3e708b4fa8b4b4270fbab6" kindref="member">Result::NotInitialized</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The engine is not initialized. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909a2d0e462e9958ce7bb443e70023241dfe" kindref="member">Result::InvalidHandle</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The playback handle is not recognized. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909a4adb1b076d1ab0f1202673245fa77017" kindref="member">Result::ExpiredHandle</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The playback handle has already stopped playing. </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/Engine.h" line="493" column="8"/>
+      </memberdef>
+      <memberdef kind="function" id="classdalia_1_1Engine_1ab5f3c46c4bfb7043fe0968235efe8936" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909" kindref="member">Result</ref></type>
+        <definition>Result dalia::Engine::SetPlaybackDistanceMode</definition>
+        <argsstring>(PlaybackHandle playback, DistanceMode mode)</argsstring>
+        <name>SetPlaybackDistanceMode</name>
+        <qualifiedname>dalia::Engine::SetPlaybackDistanceMode</qualifiedname>
+        <param>
+          <type><ref refid="structdalia_1_1PlaybackHandle" kindref="compound">PlaybackHandle</ref></type>
+          <declname>playback</declname>
+        </param>
+        <param>
+          <type><ref refid="namespacedalia_1ab240c6866fcf8d2aa499ae0164f1fe7c" kindref="member">DistanceMode</ref></type>
+          <declname>mode</declname>
+        </param>
+        <briefdescription>
+<para>Defines which listener position is used when calculating the distance attenuation for a playback instance. </para>
+        </briefdescription>
+        <detaileddescription>
+<para><simplesect kind="note"><para>[Spatial only] This only affects playback instances that have spatialization enabled.</para>
+</simplesect>
+<parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername direction="in">playback</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The handle to the playback instance. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername direction="in">mode</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The distance evaluation mode to apply.</para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<parameterlist kind="retval"><parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909aa60852f204ed8028c1c58808b746d115" kindref="member">Result::Ok</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The playback distance mode was successfully applied. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909a9646ad3a1c3e708b4fa8b4b4270fbab6" kindref="member">Result::NotInitialized</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The engine is not initialized. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909a2d0e462e9958ce7bb443e70023241dfe" kindref="member">Result::InvalidHandle</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The playback handle is not recognized. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909a4adb1b076d1ab0f1202673245fa77017" kindref="member">Result::ExpiredHandle</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The playback handle has already stopped playing. </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/Engine.h" line="507" column="8"/>
+      </memberdef>
+      <memberdef kind="function" id="classdalia_1_1Engine_1abe2e4c83ee3725c1b36ddc7852a23e06" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909" kindref="member">Result</ref></type>
+        <definition>Result dalia::Engine::SetPlaybackAttenuationCurve</definition>
+        <argsstring>(PlaybackHandle playback, AttenuationCurve curve)</argsstring>
+        <name>SetPlaybackAttenuationCurve</name>
+        <qualifiedname>dalia::Engine::SetPlaybackAttenuationCurve</qualifiedname>
+        <param>
+          <type><ref refid="structdalia_1_1PlaybackHandle" kindref="compound">PlaybackHandle</ref></type>
+          <declname>playback</declname>
+        </param>
+        <param>
+          <type><ref refid="namespacedalia_1a4c457a3406e132cdd206279b1827f73f" kindref="member">AttenuationCurve</ref></type>
+          <declname>curve</declname>
+        </param>
+        <briefdescription>
+<para>Sets the curve used to evaluate volume drop-off over distance for a playback instance. </para>
+        </briefdescription>
+        <detaileddescription>
+<para><simplesect kind="note"><para>[Spatial only] This only affects playback instances that have spatialization enabled.</para>
+</simplesect>
+<parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername direction="in">playback</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The handle to the playback instance. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername direction="in">curve</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The attenuation curve to apply.</para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<parameterlist kind="retval"><parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909aa60852f204ed8028c1c58808b746d115" kindref="member">Result::Ok</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The playback attenuation curve was successfully set. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909a9646ad3a1c3e708b4fa8b4b4270fbab6" kindref="member">Result::NotInitialized</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The engine is not initialized. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909a2d0e462e9958ce7bb443e70023241dfe" kindref="member">Result::InvalidHandle</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The playback handle is not recognized. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909a4adb1b076d1ab0f1202673245fa77017" kindref="member">Result::ExpiredHandle</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The playback handle has already stopped playing. </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/Engine.h" line="520" column="8"/>
+      </memberdef>
+      <memberdef kind="function" id="classdalia_1_1Engine_1ad718d71872f76bfeafb7c487401ae624" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909" kindref="member">Result</ref></type>
+        <definition>Result dalia::Engine::SetPlaybackPosition</definition>
+        <argsstring>(PlaybackHandle playback, const Vec3 &amp;position)</argsstring>
+        <name>SetPlaybackPosition</name>
+        <qualifiedname>dalia::Engine::SetPlaybackPosition</qualifiedname>
+        <param>
+          <type><ref refid="structdalia_1_1PlaybackHandle" kindref="compound">PlaybackHandle</ref></type>
+          <declname>playback</declname>
+        </param>
+        <param>
+          <type>const <ref refid="structdalia_1_1Vec3" kindref="compound">Vec3</ref> &amp;</type>
+          <declname>position</declname>
+        </param>
+        <briefdescription>
+<para>Updates the 3D world position of a playback instance. </para>
+        </briefdescription>
+        <detaileddescription>
+<para><simplesect kind="note"><para>[Spatial only] This only affects playback instances that have spatialization enabled.</para>
+</simplesect>
+<parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername direction="in">playback</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The handle to the playback instance. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername direction="in">position</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The new 3D world coordinates.</para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<parameterlist kind="retval"><parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909aa60852f204ed8028c1c58808b746d115" kindref="member">Result::Ok</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The playback world position was successfully set. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909a9646ad3a1c3e708b4fa8b4b4270fbab6" kindref="member">Result::NotInitialized</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The engine is not initialized. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909a2d0e462e9958ce7bb443e70023241dfe" kindref="member">Result::InvalidHandle</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The playback handle is not recognized. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909a4adb1b076d1ab0f1202673245fa77017" kindref="member">Result::ExpiredHandle</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The playback handle has already stopped playing. </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/Engine.h" line="533" column="8"/>
+      </memberdef>
+      <memberdef kind="function" id="classdalia_1_1Engine_1a1def45fb2577a6d3ed1ef4e06b5e29da" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909" kindref="member">Result</ref></type>
+        <definition>Result dalia::Engine::SetPlaybackMinMaxDistance</definition>
+        <argsstring>(PlaybackHandle playback, float minDistance, float maxDistance)</argsstring>
+        <name>SetPlaybackMinMaxDistance</name>
+        <qualifiedname>dalia::Engine::SetPlaybackMinMaxDistance</qualifiedname>
+        <param>
+          <type><ref refid="structdalia_1_1PlaybackHandle" kindref="compound">PlaybackHandle</ref></type>
+          <declname>playback</declname>
+        </param>
+        <param>
+          <type>float</type>
+          <declname>minDistance</declname>
+        </param>
+        <param>
+          <type>float</type>
+          <declname>maxDistance</declname>
+        </param>
+        <briefdescription>
+<para>Defines the distance boundaries for the attenuation curve of a playback instance. </para>
+        </briefdescription>
+        <detaileddescription>
+<para><simplesect kind="note"><para>[Spatial only] This only affects playback instances that have spatialization enabled.</para>
+</simplesect>
+<simplesect kind="note"><para>[Safe values] The engine internally ensures that maxDistance is never less than minDistance, and that minDistance respects the engine&apos;s absolute floor limit to prevent division-by-zero.</para>
+</simplesect>
+<parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername direction="in">playback</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The handle to the playback instance. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername direction="in">minDistance</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The radius where the volume drop-off begins. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername direction="in">maxDistance</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The radius where the volume drops to silence.</para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<parameterlist kind="retval"><parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909aa60852f204ed8028c1c58808b746d115" kindref="member">Result::Ok</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The playback min and max distance were successfully set. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909a9646ad3a1c3e708b4fa8b4b4270fbab6" kindref="member">Result::NotInitialized</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The engine is not initialized. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909a2d0e462e9958ce7bb443e70023241dfe" kindref="member">Result::InvalidHandle</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The playback handle is not recognized. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909a4adb1b076d1ab0f1202673245fa77017" kindref="member">Result::ExpiredHandle</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The playback handle has already stopped playing. </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/Engine.h" line="550" column="8"/>
+      </memberdef>
+      <memberdef kind="function" id="classdalia_1_1Engine_1acbb7ac8db0ac50b6a173e2bac88af257" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909" kindref="member">Result</ref></type>
+        <definition>Result dalia::Engine::SetPlaybackUseDoppler</definition>
+        <argsstring>(PlaybackHandle playback, bool useDoppler)</argsstring>
+        <name>SetPlaybackUseDoppler</name>
+        <qualifiedname>dalia::Engine::SetPlaybackUseDoppler</qualifiedname>
+        <param>
+          <type><ref refid="structdalia_1_1PlaybackHandle" kindref="compound">PlaybackHandle</ref></type>
+          <declname>playback</declname>
+        </param>
+        <param>
+          <type>bool</type>
+          <declname>useDoppler</declname>
+        </param>
+        <briefdescription>
+<para>Enables or disables the Doppler effect for a playback instance. </para>
+        </briefdescription>
+        <detaileddescription>
+<para><simplesect kind="note"><para>[Spatial only] This only affects playback instances that have spatialization enabled.</para>
+</simplesect>
+<simplesect kind="note"><para>[Requirements] In order for the doppler effect to be calculated, both listener and playback velocity must be supplied to the engine every frame.</para>
+</simplesect>
+<parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername direction="in">playback</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The handle to the playback instance. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername direction="in">useDoppler</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>True to enable Doppler frequency shifts, false to disable it.</para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<parameterlist kind="retval"><parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909aa60852f204ed8028c1c58808b746d115" kindref="member">Result::Ok</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The playback Doppler effect was successfully enabled or disabled. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909a9646ad3a1c3e708b4fa8b4b4270fbab6" kindref="member">Result::NotInitialized</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The engine is not initialized. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909a2d0e462e9958ce7bb443e70023241dfe" kindref="member">Result::InvalidHandle</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The playback handle is not recognized. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909a4adb1b076d1ab0f1202673245fa77017" kindref="member">Result::ExpiredHandle</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The playback handle has already stopped playing. </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/Engine.h" line="566" column="8"/>
+      </memberdef>
+      <memberdef kind="function" id="classdalia_1_1Engine_1a5c9acdd1ab05153631f9a3eb2b129762" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909" kindref="member">Result</ref></type>
+        <definition>Result dalia::Engine::SetPlaybackDopplerFactor</definition>
+        <argsstring>(PlaybackHandle playback, float dopplerFactor)</argsstring>
+        <name>SetPlaybackDopplerFactor</name>
+        <qualifiedname>dalia::Engine::SetPlaybackDopplerFactor</qualifiedname>
+        <param>
+          <type><ref refid="structdalia_1_1PlaybackHandle" kindref="compound">PlaybackHandle</ref></type>
+          <declname>playback</declname>
+        </param>
+        <param>
+          <type>float</type>
+          <declname>dopplerFactor</declname>
+        </param>
+        <briefdescription>
+<para>Sets the scaling factor for the Doppler effect for a playback instance. </para>
+        </briefdescription>
+        <detaileddescription>
+<para><simplesect kind="note"><para>[Spatial only] This only affects playback instances that have spatialization and the Doppler effect enabled.</para>
+</simplesect>
+<parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername direction="in">playback</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The handle to the playback instance. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername direction="in">dopplerFactor</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The scaling factor. Clamped internally between 0.0 and 10.0.</para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<parameterlist kind="retval"><parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909aa60852f204ed8028c1c58808b746d115" kindref="member">Result::Ok</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The playback Doppler effect&apos;s scaling factor was successfully set. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909a9646ad3a1c3e708b4fa8b4b4270fbab6" kindref="member">Result::NotInitialized</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The engine is not initialized. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909a2d0e462e9958ce7bb443e70023241dfe" kindref="member">Result::InvalidHandle</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The playback handle is not recognized. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909a4adb1b076d1ab0f1202673245fa77017" kindref="member">Result::ExpiredHandle</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The playback handle has already stopped playing. </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/Engine.h" line="580" column="8"/>
+      </memberdef>
+      <memberdef kind="function" id="classdalia_1_1Engine_1a05d95de8b78784ce16c0f8d392f4c066" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909" kindref="member">Result</ref></type>
+        <definition>Result dalia::Engine::SetPlaybackVelocity</definition>
+        <argsstring>(PlaybackHandle playback, const Vec3 &amp;velocity)</argsstring>
+        <name>SetPlaybackVelocity</name>
+        <qualifiedname>dalia::Engine::SetPlaybackVelocity</qualifiedname>
+        <param>
+          <type><ref refid="structdalia_1_1PlaybackHandle" kindref="compound">PlaybackHandle</ref></type>
+          <declname>playback</declname>
+        </param>
+        <param>
+          <type>const <ref refid="structdalia_1_1Vec3" kindref="compound">Vec3</ref> &amp;</type>
+          <declname>velocity</declname>
+        </param>
+        <briefdescription>
+<para>Sets the velocity of a playback instance. </para>
+        </briefdescription>
+        <detaileddescription>
+<para>Velocity is used exclusively to calculate the Doppler effect. If the Effect is disabled, this value is ignored.</para>
+<para><simplesect kind="note"><para>[Spatial only] This only affects playback instances that have spatialization enabled.</para>
+</simplesect>
+<parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername direction="in">playback</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The handle to the playback instance. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername direction="in">velocity</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The velocity vector (in m/s).</para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<parameterlist kind="retval"><parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909aa60852f204ed8028c1c58808b746d115" kindref="member">Result::Ok</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The playback velocity was successfully set. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909a9646ad3a1c3e708b4fa8b4b4270fbab6" kindref="member">Result::NotInitialized</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The engine is not initialized. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909a2d0e462e9958ce7bb443e70023241dfe" kindref="member">Result::InvalidHandle</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The playback handle is not recognized. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909a4adb1b076d1ab0f1202673245fa77017" kindref="member">Result::ExpiredHandle</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The playback handle has already stopped playing. </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/Engine.h" line="595" column="8"/>
+      </memberdef>
+      <memberdef kind="function" id="classdalia_1_1Engine_1a1fd64de4d24f901049aea217a21ac023" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909" kindref="member">Result</ref></type>
+        <definition>Result dalia::Engine::SetPlaybackListenerMask</definition>
+        <argsstring>(PlaybackHandle playback, ListenerMask mask)</argsstring>
+        <name>SetPlaybackListenerMask</name>
+        <qualifiedname>dalia::Engine::SetPlaybackListenerMask</qualifiedname>
+        <param>
+          <type><ref refid="structdalia_1_1PlaybackHandle" kindref="compound">PlaybackHandle</ref></type>
+          <declname>playback</declname>
+        </param>
+        <param>
+          <type><ref refid="namespacedalia_1a2ca8a63f16fbc9fca65623cdc3776d2b" kindref="member">ListenerMask</ref></type>
+          <declname>mask</declname>
+        </param>
+        <briefdescription>
+<para>Sets the listener routing mask for a playback instance. </para>
+        </briefdescription>
+        <detaileddescription>
+<para>The routing mask determines which listeners are allowed to hear and evaluate the playback instance.</para>
+<para><simplesect kind="note"><para>[Spatial only] This only affects playback instances that have spatialization enabled.</para>
+</simplesect>
+<parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername direction="in">playback</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The handle to the playback instance. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername direction="in">mask</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The listener routing bitmask.</para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<parameterlist kind="retval"><parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909aa60852f204ed8028c1c58808b746d115" kindref="member">Result::Ok</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The listener routing mask for the playback instance was successfully set. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909a9646ad3a1c3e708b4fa8b4b4270fbab6" kindref="member">Result::NotInitialized</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The engine is not initialized. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909a2d0e462e9958ce7bb443e70023241dfe" kindref="member">Result::InvalidHandle</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The playback handle is not recognized. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909a4adb1b076d1ab0f1202673245fa77017" kindref="member">Result::ExpiredHandle</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The playback handle has already stopped playing. </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/Engine.h" line="610" column="8"/>
+      </memberdef>
+      <memberdef kind="function" id="classdalia_1_1Engine_1a67f18bd255344d04076c6cf52b9dd91e" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909" kindref="member">Result</ref></type>
+        <definition>Result dalia::Engine::SetListenerActive</definition>
+        <argsstring>(uint32_t listenerIndex, bool active)</argsstring>
+        <name>SetListenerActive</name>
+        <qualifiedname>dalia::Engine::SetListenerActive</qualifiedname>
+        <param>
+          <type>uint32_t</type>
+          <declname>listenerIndex</declname>
+        </param>
+        <param>
+          <type>bool</type>
+          <declname>active</declname>
+        </param>
+        <briefdescription>
+<para>Enables or disables a listener. </para>
+        </briefdescription>
+        <detaileddescription>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>listenerIndex</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The zero-based index of the listener. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>active</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>True to enable the listener, false to disable it.</para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<parameterlist kind="retval"><parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909aa60852f204ed8028c1c58808b746d115" kindref="member">Result::Ok</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The listener was successfully enabled or disabled. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909a9646ad3a1c3e708b4fa8b4b4270fbab6" kindref="member">Result::NotInitialized</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The engine is not initialized. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909a3ece28a341e1c14caddf3b3f17ad7f9c" kindref="member">Result::ListenerNotFound</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The listener index exceeds the allocated listener capacity. </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/Engine.h" line="628" column="8"/>
+      </memberdef>
+      <memberdef kind="function" id="classdalia_1_1Engine_1a67840ab698ddaf203013bf49073fa2ff" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909" kindref="member">Result</ref></type>
+        <definition>Result dalia::Engine::SetListener3DAttributes</definition>
+        <argsstring>(uint32_t listenerIndex, const Listener3DAttributes &amp;attributes)</argsstring>
+        <name>SetListener3DAttributes</name>
+        <qualifiedname>dalia::Engine::SetListener3DAttributes</qualifiedname>
+        <param>
+          <type>uint32_t</type>
+          <declname>listenerIndex</declname>
+        </param>
+        <param>
+          <type>const <ref refid="structdalia_1_1Listener3DAttributes" kindref="compound">Listener3DAttributes</ref> &amp;</type>
+          <declname>attributes</declname>
+        </param>
+        <briefdescription>
+<para>Updates the complete 3D state of a listener. </para>
+        </briefdescription>
+        <detaileddescription>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername>listenerIndex</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The zero-based index of the listener. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername>attributes</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The new 3D attributes.</para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<parameterlist kind="retval"><parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909aa60852f204ed8028c1c58808b746d115" kindref="member">Result::Ok</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The listener 3D attributes were successfully set. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909a9646ad3a1c3e708b4fa8b4b4270fbab6" kindref="member">Result::NotInitialized</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The engine is not initialized. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909a3ece28a341e1c14caddf3b3f17ad7f9c" kindref="member">Result::ListenerNotFound</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The listener index exceeds the allocated listener capacity. </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/Engine.h" line="638" column="8"/>
+      </memberdef>
+      <memberdef kind="function" id="classdalia_1_1Engine_1ae43797220fbc8f351ff97dc5131ca63a" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909" kindref="member">Result</ref></type>
+        <definition>Result dalia::Engine::SetListenerPosition</definition>
+        <argsstring>(uint32_t listenerIndex, const Vec3 &amp;position)</argsstring>
+        <name>SetListenerPosition</name>
+        <qualifiedname>dalia::Engine::SetListenerPosition</qualifiedname>
+        <param>
+          <type>uint32_t</type>
+          <declname>listenerIndex</declname>
+        </param>
+        <param>
+          <type>const <ref refid="structdalia_1_1Vec3" kindref="compound">Vec3</ref> &amp;</type>
+          <declname>position</declname>
+        </param>
+        <briefdescription>
+<para>Updates the world position of a listener. </para>
+        </briefdescription>
+        <detaileddescription>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername direction="in">listenerIndex</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The zero-based index of the listener. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername direction="in">position</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The new world position.</para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<parameterlist kind="retval"><parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909aa60852f204ed8028c1c58808b746d115" kindref="member">Result::Ok</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The listener world position was successfully set. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909a9646ad3a1c3e708b4fa8b4b4270fbab6" kindref="member">Result::NotInitialized</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The engine is not initialized. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909a3ece28a341e1c14caddf3b3f17ad7f9c" kindref="member">Result::ListenerNotFound</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The listener index exceeds the allocated listener capacity. </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/Engine.h" line="648" column="8"/>
+      </memberdef>
+      <memberdef kind="function" id="classdalia_1_1Engine_1aef5c8cdaac1ee4175a397c4c18d15867" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909" kindref="member">Result</ref></type>
+        <definition>Result dalia::Engine::SetListenerDistanceProbePosition</definition>
+        <argsstring>(uint32_t listenerIndex, const Vec3 &amp;distanceProbePosition)</argsstring>
+        <name>SetListenerDistanceProbePosition</name>
+        <qualifiedname>dalia::Engine::SetListenerDistanceProbePosition</qualifiedname>
+        <param>
+          <type>uint32_t</type>
+          <declname>listenerIndex</declname>
+        </param>
+        <param>
+          <type>const <ref refid="structdalia_1_1Vec3" kindref="compound">Vec3</ref> &amp;</type>
+          <declname>distanceProbePosition</declname>
+        </param>
+        <briefdescription>
+<para>Sets the distance probe world position for a listener. </para>
+        </briefdescription>
+        <detaileddescription>
+<para><simplesect kind="note"><para>[Usage] This position is only used for distance attenuation by playback instances with distance mode set to FromDistanceProbe.</para>
+</simplesect>
+<parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername direction="in">listenerIndex</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The zero-based index of the listener. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername direction="in">distanceProbePosition</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The new world position.</para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<parameterlist kind="retval"><parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909aa60852f204ed8028c1c58808b746d115" kindref="member">Result::Ok</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The listener&apos;s distance probe world position was successfully set. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909a9646ad3a1c3e708b4fa8b4b4270fbab6" kindref="member">Result::NotInitialized</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The engine is not initialized. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909a3ece28a341e1c14caddf3b3f17ad7f9c" kindref="member">Result::ListenerNotFound</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The listener index exceeds the allocated listener capacity. </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/Engine.h" line="661" column="8"/>
+      </memberdef>
+      <memberdef kind="function" id="classdalia_1_1Engine_1a651d604c79d283ed11ba8265c6d81282" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909" kindref="member">Result</ref></type>
+        <definition>Result dalia::Engine::SetListenerOrientation</definition>
+        <argsstring>(uint32_t listenerIndex, const Vec3 &amp;forward, const Vec3 &amp;up)</argsstring>
+        <name>SetListenerOrientation</name>
+        <qualifiedname>dalia::Engine::SetListenerOrientation</qualifiedname>
+        <param>
+          <type>uint32_t</type>
+          <declname>listenerIndex</declname>
+        </param>
+        <param>
+          <type>const <ref refid="structdalia_1_1Vec3" kindref="compound">Vec3</ref> &amp;</type>
+          <declname>forward</declname>
+        </param>
+        <param>
+          <type>const <ref refid="structdalia_1_1Vec3" kindref="compound">Vec3</ref> &amp;</type>
+          <declname>up</declname>
+        </param>
+        <briefdescription>
+<para>Sets the facing direction of a listener. </para>
+        </briefdescription>
+        <detaileddescription>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername direction="in">listenerIndex</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The zero-based index of the listener. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername direction="in">forward</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The forward-facing direction vector. Normalized internally. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername direction="in">up</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The upward-facing direction vector. Normalized internally.</para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<parameterlist kind="retval"><parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909aa60852f204ed8028c1c58808b746d115" kindref="member">Result::Ok</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The listener orientation was successfully set. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909a9646ad3a1c3e708b4fa8b4b4270fbab6" kindref="member">Result::NotInitialized</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The engine is not initialized. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909a3ece28a341e1c14caddf3b3f17ad7f9c" kindref="member">Result::ListenerNotFound</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The listener index exceeds the allocated listener capacity. </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/Engine.h" line="672" column="8"/>
+      </memberdef>
+      <memberdef kind="function" id="classdalia_1_1Engine_1ad736e3410333f8b3f75caf2e4f8a84cd" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909" kindref="member">Result</ref></type>
+        <definition>Result dalia::Engine::SetListenerVelocity</definition>
+        <argsstring>(uint32_t listenerIndex, const Vec3 &amp;velocity)</argsstring>
+        <name>SetListenerVelocity</name>
+        <qualifiedname>dalia::Engine::SetListenerVelocity</qualifiedname>
+        <param>
+          <type>uint32_t</type>
+          <declname>listenerIndex</declname>
+        </param>
+        <param>
+          <type>const <ref refid="structdalia_1_1Vec3" kindref="compound">Vec3</ref> &amp;</type>
+          <declname>velocity</declname>
+        </param>
+        <briefdescription>
+<para>Sets the velocity of a listener. </para>
+        </briefdescription>
+        <detaileddescription>
+<para><parameterlist kind="param"><parameteritem>
+<parameternamelist>
+<parametername direction="in">listenerIndex</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The zero-based index of the listener. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername direction="in">velocity</parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The velocity vector (in m/s).</para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+<parameterlist kind="retval"><parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909aa60852f204ed8028c1c58808b746d115" kindref="member">Result::Ok</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The listener velocity was successfully set. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909a9646ad3a1c3e708b4fa8b4b4270fbab6" kindref="member">Result::NotInitialized</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The engine is not initialized. </para>
+</parameterdescription>
+</parameteritem>
+<parameteritem>
+<parameternamelist>
+<parametername><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909a3ece28a341e1c14caddf3b3f17ad7f9c" kindref="member">Result::ListenerNotFound</ref></parametername>
+</parameternamelist>
+<parameterdescription>
+<para>The listener index exceeds the allocated listener capacity. </para>
+</parameterdescription>
+</parameteritem>
+</parameterlist>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/Engine.h" line="682" column="8"/>
+      </memberdef>
+    </sectiondef>
+    <sectiondef kind="private-func">
+      <memberdef kind="function" id="classdalia_1_1Engine_1a8e3d96cbc52906850a30edc03e78dafe" prot="private" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void dalia::Engine::TeardownInternal</definition>
+        <argsstring>()</argsstring>
+        <name>TeardownInternal</name>
+        <qualifiedname>dalia::Engine::TeardownInternal</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/Engine.h" line="687" column="6"/>
+      </memberdef>
+    </sectiondef>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <location file="engine/include/dalia/audio/Engine.h" line="40" column="1" bodyfile="engine/include/dalia/audio/Engine.h" bodystart="40" bodyend="691"/>
+    <listofallmembers>
+      <member refid="classdalia_1_1Engine_1aa0fb1a5ff192a5c6dc1afd5e01a0b81d" prot="public" virt="non-virtual"><scope>dalia::Engine</scope><name>AttachEffect</name></member>
+      <member refid="classdalia_1_1Engine_1a450bc3173d2106e2a501c371224f09e3" prot="public" virt="non-virtual"><scope>dalia::Engine</scope><name>CreateBus</name></member>
+      <member refid="classdalia_1_1Engine_1ad3734db54e0782a7e6a3f172e2291c85" prot="public" virt="non-virtual"><scope>dalia::Engine</scope><name>CreateEffect</name></member>
+      <member refid="classdalia_1_1Engine_1a81cf45d8be8275f64552ccbd18a70cd7" prot="public" virt="non-virtual"><scope>dalia::Engine</scope><name>CreatePlayback</name></member>
+      <member refid="classdalia_1_1Engine_1a25c1d9db52b7d0cf732a0012c2a3c862" prot="public" virt="non-virtual"><scope>dalia::Engine</scope><name>DestroyBus</name></member>
+      <member refid="classdalia_1_1Engine_1aa521a754247a3cf0843912c8734d5ffa" prot="public" virt="non-virtual"><scope>dalia::Engine</scope><name>DestroyEffect</name></member>
+      <member refid="classdalia_1_1Engine_1a2a73dc69eb079bf0c2f33a11e66ecc67" prot="public" virt="non-virtual"><scope>dalia::Engine</scope><name>DetachEffect</name></member>
+      <member refid="classdalia_1_1Engine_1a2fca7712552fe1e7ca9bf56ab9d1be13" prot="public" virt="non-virtual"><scope>dalia::Engine</scope><name>Engine</name></member>
+      <member refid="classdalia_1_1Engine_1aaf797c8c979b19ede45164ebe3203fa5" prot="public" virt="non-virtual"><scope>dalia::Engine</scope><name>Engine</name></member>
+      <member refid="classdalia_1_1Engine_1ae67615289466762674c0864cc8a5c47e" prot="public" virt="non-virtual"><scope>dalia::Engine</scope><name>GetSoundLength</name></member>
+      <member refid="classdalia_1_1Engine_1a5f7328c4fa15282add71f37d7c0b42ea" prot="public" virt="non-virtual"><scope>dalia::Engine</scope><name>Init</name></member>
+      <member refid="classdalia_1_1Engine_1ae796ba32aac0ef903f9d2bb0bbefdf30" prot="public" virt="non-virtual"><scope>dalia::Engine</scope><name>LoadSoundAsync</name></member>
+      <member refid="classdalia_1_1Engine_1aaa59b14ae7ba10d65e496929d06dc5db" prot="private" virt="non-virtual"><scope>dalia::Engine</scope><name>m_state</name></member>
+      <member refid="classdalia_1_1Engine_1a86e152e97889fb174c899fb0ad23065b" prot="public" virt="non-virtual"><scope>dalia::Engine</scope><name>operator=</name></member>
+      <member refid="classdalia_1_1Engine_1a1779506316ee1cf0a89aaf5fdae743f4" prot="public" virt="non-virtual"><scope>dalia::Engine</scope><name>PausePlayback</name></member>
+      <member refid="classdalia_1_1Engine_1a987c48b22766dbe1f8bcd824887a9c09" prot="public" virt="non-virtual"><scope>dalia::Engine</scope><name>PlayPlayback</name></member>
+      <member refid="classdalia_1_1Engine_1a7a71893647d077bba510e0f18b779dc4" prot="public" virt="non-virtual"><scope>dalia::Engine</scope><name>RouteBus</name></member>
+      <member refid="classdalia_1_1Engine_1abe578ab0a1ef9fc2180cc9281ea141ec" prot="public" virt="non-virtual"><scope>dalia::Engine</scope><name>RoutePlayback</name></member>
+      <member refid="classdalia_1_1Engine_1a1afba0203932455971eb00d455efad59" prot="public" virt="non-virtual"><scope>dalia::Engine</scope><name>SeekPlayback</name></member>
+      <member refid="classdalia_1_1Engine_1a6fbaf3fb8183aeb21d6bbee1963c0671" prot="public" virt="non-virtual"><scope>dalia::Engine</scope><name>SetBusVolumeDb</name></member>
+      <member refid="classdalia_1_1Engine_1a8d8212c313926d8024bae4494c068f5e" prot="public" virt="non-virtual"><scope>dalia::Engine</scope><name>SetEffectParams</name></member>
+      <member refid="classdalia_1_1Engine_1a6a8095c701262ecd7cb658439e935183" prot="public" virt="non-virtual"><scope>dalia::Engine</scope><name>SetGlobalDopplerFactor</name></member>
+      <member refid="classdalia_1_1Engine_1a67840ab698ddaf203013bf49073fa2ff" prot="public" virt="non-virtual"><scope>dalia::Engine</scope><name>SetListener3DAttributes</name></member>
+      <member refid="classdalia_1_1Engine_1a67f18bd255344d04076c6cf52b9dd91e" prot="public" virt="non-virtual"><scope>dalia::Engine</scope><name>SetListenerActive</name></member>
+      <member refid="classdalia_1_1Engine_1aef5c8cdaac1ee4175a397c4c18d15867" prot="public" virt="non-virtual"><scope>dalia::Engine</scope><name>SetListenerDistanceProbePosition</name></member>
+      <member refid="classdalia_1_1Engine_1a651d604c79d283ed11ba8265c6d81282" prot="public" virt="non-virtual"><scope>dalia::Engine</scope><name>SetListenerOrientation</name></member>
+      <member refid="classdalia_1_1Engine_1ae43797220fbc8f351ff97dc5131ca63a" prot="public" virt="non-virtual"><scope>dalia::Engine</scope><name>SetListenerPosition</name></member>
+      <member refid="classdalia_1_1Engine_1ad736e3410333f8b3f75caf2e4f8a84cd" prot="public" virt="non-virtual"><scope>dalia::Engine</scope><name>SetListenerVelocity</name></member>
+      <member refid="classdalia_1_1Engine_1abe2e4c83ee3725c1b36ddc7852a23e06" prot="public" virt="non-virtual"><scope>dalia::Engine</scope><name>SetPlaybackAttenuationCurve</name></member>
+      <member refid="classdalia_1_1Engine_1ab5f3c46c4bfb7043fe0968235efe8936" prot="public" virt="non-virtual"><scope>dalia::Engine</scope><name>SetPlaybackDistanceMode</name></member>
+      <member refid="classdalia_1_1Engine_1a5c9acdd1ab05153631f9a3eb2b129762" prot="public" virt="non-virtual"><scope>dalia::Engine</scope><name>SetPlaybackDopplerFactor</name></member>
+      <member refid="classdalia_1_1Engine_1a1fd64de4d24f901049aea217a21ac023" prot="public" virt="non-virtual"><scope>dalia::Engine</scope><name>SetPlaybackListenerMask</name></member>
+      <member refid="classdalia_1_1Engine_1acd9cc8abc9094ab07854e02f5763b68e" prot="public" virt="non-virtual"><scope>dalia::Engine</scope><name>SetPlaybackLooping</name></member>
+      <member refid="classdalia_1_1Engine_1a1def45fb2577a6d3ed1ef4e06b5e29da" prot="public" virt="non-virtual"><scope>dalia::Engine</scope><name>SetPlaybackMinMaxDistance</name></member>
+      <member refid="classdalia_1_1Engine_1ad718d71872f76bfeafb7c487401ae624" prot="public" virt="non-virtual"><scope>dalia::Engine</scope><name>SetPlaybackPosition</name></member>
+      <member refid="classdalia_1_1Engine_1aa09c17780d9bfcdd9dcd2128232c1119" prot="public" virt="non-virtual"><scope>dalia::Engine</scope><name>SetPlaybackRate</name></member>
+      <member refid="classdalia_1_1Engine_1a97c9ce2c1950efbd565e122b75c89b90" prot="public" virt="non-virtual"><scope>dalia::Engine</scope><name>SetPlaybackSpatial</name></member>
+      <member refid="classdalia_1_1Engine_1a50cc6fc2e53a0827ca8876b4b65c7e37" prot="public" virt="non-virtual"><scope>dalia::Engine</scope><name>SetPlaybackStereoPan</name></member>
+      <member refid="classdalia_1_1Engine_1acbb7ac8db0ac50b6a173e2bac88af257" prot="public" virt="non-virtual"><scope>dalia::Engine</scope><name>SetPlaybackUseDoppler</name></member>
+      <member refid="classdalia_1_1Engine_1a05d95de8b78784ce16c0f8d392f4c066" prot="public" virt="non-virtual"><scope>dalia::Engine</scope><name>SetPlaybackVelocity</name></member>
+      <member refid="classdalia_1_1Engine_1ad5b479c5851f6075ff78d517d7f45b2a" prot="public" virt="non-virtual"><scope>dalia::Engine</scope><name>SetPlaybackVolumeDb</name></member>
+      <member refid="classdalia_1_1Engine_1a0f631c3f073d87445140817a628af01b" prot="public" virt="non-virtual"><scope>dalia::Engine</scope><name>Shutdown</name></member>
+      <member refid="classdalia_1_1Engine_1af617540b3eede2b3bbb40ff23ea0deaa" prot="public" virt="non-virtual"><scope>dalia::Engine</scope><name>StopPlayback</name></member>
+      <member refid="classdalia_1_1Engine_1a8e3d96cbc52906850a30edc03e78dafe" prot="private" virt="non-virtual"><scope>dalia::Engine</scope><name>TeardownInternal</name></member>
+      <member refid="classdalia_1_1Engine_1a0a01cf22fa76223497879a9adf12d6ed" prot="public" virt="non-virtual"><scope>dalia::Engine</scope><name>UnloadSound</name></member>
+      <member refid="classdalia_1_1Engine_1a38b33f1acb8e123651b454de5c897c2c" prot="public" virt="non-virtual"><scope>dalia::Engine</scope><name>Update</name></member>
+      <member refid="classdalia_1_1Engine_1accc5593af97018c2060197467d76f60a" prot="public" virt="non-virtual"><scope>dalia::Engine</scope><name>~Engine</name></member>
+    </listofallmembers>
+  </compounddef>
+</doxygen>
