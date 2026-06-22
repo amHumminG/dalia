@@ -207,11 +207,6 @@ void Sandbox::Update() {
 		}
 	}
 
-
-	// DPI Scale
-	Vector2 currentDpi = GetWindowScaleDPI();
-	SetMouseScale(1.0f / currentDpi.x, 1.0f / currentDpi.y);
-
 	ImGuiIO& io = ImGui::GetIO();
 
 	if (!io.WantTextInput) {
