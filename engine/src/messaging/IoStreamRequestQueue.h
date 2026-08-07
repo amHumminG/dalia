@@ -36,7 +36,7 @@ namespace dalia {
             req.type = Type::PrepareStream;
             req.index = index;
         	req.gen = gen;
-            strncpy_s(req.data.streamPrep.filepath, MAX_IO_PATH_SIZE, path, _TRUNCATE);
+        	snprintf(req.data.streamPrep.filepath, MAX_IO_PATH_SIZE, "%s", path);
             return req;
         }
 

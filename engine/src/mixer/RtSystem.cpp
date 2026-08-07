@@ -22,6 +22,7 @@
 #include "dalia/audio/SoundControl.h"
 
 #include <cmath>
+#include <cstring>
 
 namespace dalia {
 

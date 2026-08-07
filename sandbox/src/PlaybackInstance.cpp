@@ -6,6 +6,8 @@
 
 #include "DrawHelper.h"
 
+#include <cstring>
+
 PlaybackInstance::PlaybackInstance(dalia::Engine* engine, dalia::SoundHandle sound, const std::string& name)
 	: m_engine(engine), m_name(name) {
 	// Define the exit callback

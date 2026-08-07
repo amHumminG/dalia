@@ -1,8 +1,9 @@
 #include "Sandbox.h"
 
-#include <filesystem>
-
 #include "DrawHelper.h"
+
+#include <cstring>
+#include <filesystem>
 
 static constexpr float DEG_TO_RAD = PI / 180.0f;
 

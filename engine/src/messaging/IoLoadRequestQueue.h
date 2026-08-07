@@ -31,7 +31,7 @@ namespace dalia {
             req.requestId = reqId;
 
             req.data.soundFromFile.resourceHandleRawId = handle.GetRawId();
-            strncpy_s(req.data.soundFromFile.filepath, MAX_IO_PATH_SIZE, filepath, _TRUNCATE);
+        	snprintf(req.data.soundFromFile.filepath, MAX_IO_PATH_SIZE, "%s", filepath);
 
             return req;
         }

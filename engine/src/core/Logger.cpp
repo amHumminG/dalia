@@ -3,6 +3,7 @@
 #include "Logger.h"
 #include "MPSCRingBuffer.h"
 #include <cstdarg>
+#include <cstring>
 
 namespace dalia {
 

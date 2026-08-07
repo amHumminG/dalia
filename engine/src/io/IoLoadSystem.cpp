@@ -138,7 +138,7 @@ namespace dalia {
                     streamSound->sampleRate = info.sample_rate;
                     streamSound->frameCount = totalFrames;
                 	streamSound->lengthInSeconds = static_cast<double>(totalFrames) / info.sample_rate;
-                    strncpy_s(streamSound->filepath, MAX_IO_PATH_SIZE, req.data.soundFromFile.filepath, _TRUNCATE);
+                	snprintf(streamSound->filepath, MAX_IO_PATH_SIZE, "%s", req.data.soundFromFile.filepath);
                 }
                 stb_vorbis_close(decoder);
                 soundLoadStatePtr->store(LoadState::Loaded, std::memory_order_release);

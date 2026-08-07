@@ -4,6 +4,8 @@
 #include "rlImGui.h"
 #include "imgui.h"
 
+#include <cstring>
+
 MixingBus::MixingBus(dalia::Engine* engine, const std::string& identifier, const std::string& parentIdentifier)
 	: m_engine(engine), m_identifier(identifier), m_parentIdentifier(parentIdentifier) {
 	if (m_identifier == "Master") m_parentIdentifier = "None";

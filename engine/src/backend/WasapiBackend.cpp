@@ -3,6 +3,7 @@
 #include "core/Logger.h"
 #include "mixer/RtSystem.h"
 
+#include <cstring>
 #include <algorithm>
 #include <avrt.h>
 

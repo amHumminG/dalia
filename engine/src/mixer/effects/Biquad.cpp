@@ -2,6 +2,7 @@
 
 #include "core/Constants.h"
 
+#include <cstring>
 #include <cmath>
 #include <algorithm>
 
