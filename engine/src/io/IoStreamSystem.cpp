@@ -82,7 +82,7 @@ namespace dalia {
                     // --- Check for unsupported formats ---
 
                     // Channels check
-                    if (info.channels == 0 || info.channels > CHANNELS_STEREO) {
+                    if (info.channels <= 0 || static_cast<uint32_t>(info.channels) > CHANNELS_STEREO) {
                         DALIA_LOG_ERR(LOG_CTX_IO, "Failed to load file (%s). Unsupported channel count (%d)",
                             filepath, info.channels);
                     	stb_vorbis_close(stream.decoder);

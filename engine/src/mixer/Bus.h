@@ -58,7 +58,7 @@ namespace dalia {
         	currentFadeGain = 1.0f;
         	targetFadeGain = 1.0f;
 
-            for (int i = 0; i < MAX_EFFECTS_PER_BUS; i++) {
+            for (uint32_t i = 0; i < MAX_EFFECTS_PER_BUS; i++) {
                 effectSlots[i].Reset();
             }
         }
@@ -85,7 +85,7 @@ namespace dalia {
             params = BusParams{};
         	isParamsDirty = false;
 
-            for (int i = 0; i < MAX_EFFECTS_PER_BUS; i++) {
+            for (uint32_t i = 0; i < MAX_EFFECTS_PER_BUS; i++) {
                 effectSlots[i] = InvalidEffectHandle;
             }
         }

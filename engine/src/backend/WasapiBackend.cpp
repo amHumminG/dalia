@@ -110,7 +110,7 @@ namespace dalia {
 
 		if (SUCCEEDED(hr)) {
 			// Set client properties
-			AudioClientProperties props = {0};
+			AudioClientProperties props = {};
 			props.cbSize = sizeof(AudioClientProperties);
 			props.eCategory = AudioCategory_GameEffects; // Set games priority
 			props.Options = AUDCLNT_STREAMOPTIONS_NONE;

@@ -376,10 +376,10 @@ namespace dalia {
 		m_mixGraphCompiler(config.mixGraphCompiler),
 		m_mixOrder(config.mixOrder),
 		m_dspScratchBuffer(config.dspScratchBuffer) {
-		m_smoothingCoefficient = 1.0f - std::exp(-2.0f * PI * SMOOTHING_CUTOFF_HZ / config.outSampleRate);
+		m_smoothingCoefficient = 1.0f - std::exp(-2.0f * PI * SMOOTHING_CUTOFF_HZ / static_cast<float>(config.outSampleRate));
 		m_fadeStep = CalculateLinearFadeStep(FADE_TIME_GAIN, m_outSampleRate);
 		ConfigureSpeakerLayout(config.speakerLayout);
-		m_masterPeakLimiter.Init(m_outSampleRate);
+		m_masterPeakLimiter.Init(static_cast<float>(m_outSampleRate));
     }
 
     void RtSystem::Tick(float* output, uint32_t frameCount) {

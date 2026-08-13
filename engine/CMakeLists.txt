@@ -1,14 +1,21 @@
-include(FetchContent)
+# Treat warnings as errors (should work for most compilers)
+function (dalia_treat_warnings_as_errors target_name)
+    if(MSVC)
+        target_compile_options(${target_name}
+            PRIVATE
+            /W4 /WX /wd4324
+        )
+    elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
+        target_compile_options(${target_name}
+            PRIVATE
+            -Wall -Wextra -Werror -Wpedantic -Wshadow
+        )
+    endif()
+endfunction()
 
-# stb_vorbis
-FetchContent_Declare(
-    stb_vorbis
-    URL "https://raw.githubusercontent.com/nothings/stb/master/stb_vorbis.c"
-    DOWNLOAD_NO_EXTRACT TRUE
-)
-FetchContent_MakeAvailable(stb_vorbis)
-set(STB_VORBIS_INCLUDE_DIR ${stb_vorbis_SOURCE_DIR})
+add_subdirectory(vendor/stb_vorbis)
 
+# Source files
 set(ENGINE_FILES
     # Public headers
     include/dalia.h
@@ -39,12 +46,14 @@ set(ENGINE_FILES
     src/core/Math.h
     src/core/HandleManager.h
     src/core/HandleManager.cpp
+    src/core/StateSyncPool.h
+    src/core/AsyncPool.h
+    src/core/ParameterBridge.h
 
     src/io/IoStreamSystem.cpp
     src/io/IoStreamSystem.h
     src/io/IoLoadSystem.cpp
     src/io/IoLoadSystem.h
-    src/io/stb_vorbis_impl.cpp
 
     src/messaging/RtCommandQueue.h
     src/messaging/RtCommandQueue.cpp
@@ -67,35 +76,34 @@ set(ENGINE_FILES
     src/mixer/effects/Biquad.h
     src/mixer/effects/Biquad.cpp
     src/mixer/Listener.h
-    src/core/ParameterBridge.h
     src/mixer/Speakers.h
     src/mixer/Resampler.h
     src/mixer/Resampler.cpp
+    src/mixer/PeakLimiter.h
+    src/mixer/PeakLimiter.cpp
+
+    src/dsp/Slew.h
+    src/dsp/Slew.cpp
 
     src/resources/ResidentSound.h
     src/resources/AssetRegistry.cpp
     src/resources/AssetRegistry.h
     src/resources/StreamSound.h
-    src/mixer/PeakLimiter.h
-    src/mixer/PeakLimiter.cpp
-    src/core/StateSyncPool.h
-    src/core/AsyncPool.h
-    src/dsp/Slew.h
-    src/dsp/Slew.cpp
 )
 
 add_library(dalia_engine STATIC ${ENGINE_FILES})
+dalia_treat_warnings_as_errors(dalia_engine)
 
 target_include_directories(dalia_engine 
     PUBLIC include
     PRIVATE src
-    SYSTEM PRIVATE ${STB_VORBIS_INCLUDE_DIR}
 )
 
 target_link_libraries(dalia_engine
     PRIVATE dalia_common
-    PRIVATE ole32 # Backend: COM initialization
-    PRIVATE avrt  # Backend: MMCSS
+    PRIVATE stb_vorbis_lib
+    PRIVATE ole32 # Backend (COM initialization)
+    PRIVATE avrt  # Backend (MMCSS)
 )
 
 add_library(dalia::engine ALIAS dalia_engine)

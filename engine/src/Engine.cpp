@@ -337,13 +337,13 @@ namespace dalia {
 				}
 				break;
 			}
+			default: break;
 		}
 	}
 
 	static void ProcessIoLoadEvent(EngineInternalState* state, const IoLoadEvent& ev) {
 		// Execute user-registered callback
-		auto it = state->loadCallbacks.find(ev.requestId);
-		if (it != state->loadCallbacks.end()) {
+		if (auto it = state->loadCallbacks.find(ev.requestId); it != state->loadCallbacks.end()) {
 			if (it->second) {
 				it->second(ev.requestId, ev.result); // Call it
 			}

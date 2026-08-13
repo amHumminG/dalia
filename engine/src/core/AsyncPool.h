@@ -15,7 +15,7 @@ namespace dalia {
 			: m_capacity(capacity), m_freeList(capacity) {
 			m_pool = std::make_unique<T[]>(capacity);
 
-			for (int i = 0; i < capacity; i++) m_freeList.Push(i);
+			for (uint32_t i = 0; i < capacity; i++) m_freeList.Push(i);
 		}
 
 		bool Allocate(uint32_t& outIndex) { return m_freeList.Pop(outIndex); }
