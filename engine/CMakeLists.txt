@@ -89,6 +89,15 @@ set(ENGINE_FILES
     src/resources/AssetRegistry.cpp
     src/resources/AssetRegistry.h
     src/resources/StreamSound.h
+    src/backend/AudioDeviceManager.cpp
+    src/backend/AudioDeviceManager.h
+    src/backend/AudioDevice.h
+    src/backend/windows/WindowsDeviceManager.cpp
+    src/backend/windows/WindowsDeviceManager.h
+    src/backend/windows/WasapiDevice.cpp
+    src/backend/windows/WasapiDevice.h
+    src/backend/windows/WindowsNullDevice.cpp
+    src/backend/windows/WindowsNullDevice.h
 )
 
 add_library(dalia_engine STATIC ${ENGINE_FILES})
