@@ -69,6 +69,7 @@ private:
 	void DrawHotkeysWindow();
 
 	void RefreshAvailableAssets();
+	void RefreshAudioDevices();
 
 	void BuildDefaultDockingLayout(ImGuiID dockspaceId);
 
@@ -90,6 +91,10 @@ private:
 	bool m_showEffectRack = true;
 
 	bool m_showHotkeysWindow = false;
+
+	// Devices
+	std::vector<dalia::OutputDeviceInfo> m_availableOutputDevices;
+	std::string m_currentDeviceId = "default"; // Tracks UI selection
 
 	// 3D viewport
 	RenderTexture2D m_viewportTexture;

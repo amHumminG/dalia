@@ -331,6 +331,7 @@ void Sandbox::DrawMenuBar() {
 		if (ImGui::BeginMenu("Edit")) {
 			if (ImGui::MenuItem("Engine Settings")) {
 				openEngineSettings = true;
+				RefreshAudioDevices();
 			}
 			ImGui::EndMenu();
 		}
@@ -1273,6 +1274,52 @@ void Sandbox::DrawEngineSettingsModal() {
 	ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
 
 	if (ImGui::BeginPopupModal("Engine Settings", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
+
+		// --- Device Selection ---
+		ImGui::Text("Output Device");
+		ImGui::Separator();
+		ImGui::Spacing();
+
+		std::string previewName = "OS Default Device";
+		if (m_currentDeviceId != "default") {
+			for (const auto& device : m_availableOutputDevices) {
+				if (m_currentDeviceId == device.identifier) {
+					previewName = device.name;
+					break;
+				}
+			}
+		}
+
+		if (ImGui::BeginCombo("Output Device", previewName.c_str())) {
+			if (ImGui::Selectable("OS Default Device", m_currentDeviceId == "default")) {
+				m_currentDeviceId = "default";
+				m_engine.SetOutputDevice("default");
+			}
+
+			// List all output devices
+			for (const auto& device : m_availableOutputDevices) {
+				bool isSelected = (m_currentDeviceId == device.identifier);
+
+				if (ImGui::Selectable(device.name, isSelected)) {
+					m_currentDeviceId = device.identifier;
+					m_engine.SetOutputDevice(device.identifier);
+				}
+
+				if (isSelected) ImGui::SetItemDefaultFocus();
+			}
+			ImGui::EndCombo();
+		}
+
+		ImGui::SameLine();
+		if (ImGui::Button("Refresh")) {
+			RefreshAudioDevices();
+		}
+
+		ImGui::Spacing();
+		ImGui::Spacing();
+
+		// --- Acoustics ---
+
 		ImGui::Text("Global Acoustics");
 		ImGui::Separator();
 		ImGui::Spacing();
@@ -1355,6 +1402,20 @@ void Sandbox::RefreshAvailableAssets() {
 				if (ext == ".wav" || ext == ".mp3" || ext == ".ogg") {
 					m_availableAssets.push_back(entry.path().generic_string());
 				}
+			}
+		}
+	}
+}
+
+void Sandbox::RefreshAudioDevices() {
+	m_availableOutputDevices.clear();
+	uint32_t count = 0;
+
+	if (m_engine.GetOutputDeviceCount(count) == dalia::Result::Ok) {
+		for (uint32_t i = 0; i < count; i++) {
+			dalia::OutputDeviceInfo info;
+			if (m_engine.GetOutputDeviceInfo(i, info) == dalia::Result::Ok) {
+				m_availableOutputDevices.push_back(info);
 			}
 		}
 	}

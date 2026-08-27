@@ -664,6 +664,7 @@ namespace dalia {
 		bool deviceFailed = m_state->activeDevice && m_state->activeDevice->HasFailed();
 
 		if (osTriggered || manualTriggered || deviceFailed) {
+			m_state->pendingManualDeviceSwap = false;
 
 			if (deviceFailed) DALIA_LOG_INFO(LOG_CTX_BACKEND, "Active audio device reported failure. Initiating swap sequence.");
 			else if (manualTriggered) DALIA_LOG_INFO(LOG_CTX_BACKEND, "Audio device swap requested. Initiating swap sequence.");
@@ -679,8 +680,10 @@ namespace dalia {
 			if (!m_state->outputDevice && m_state->targetDeviceId != "default") {
 				DALIA_LOG_WARN(LOG_CTX_BACKEND,
 					"Audio device swap request failed. Target device unavailable. Reverting to OS default audio device.");
+
+				// Try default device instead
 				m_state->targetDeviceId = "default";
-				m_state->outputDevice = m_state->deviceManager->CreateDevice("default", m_state->outSampleRate);
+				m_state->outputDevice = m_state->deviceManager->CreateDevice(m_state->targetDeviceId.c_str(), m_state->outSampleRate);
 			}
 
 			// Set active device
