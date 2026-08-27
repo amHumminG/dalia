@@ -135,8 +135,6 @@ namespace dalia {
 
 		CoTaskMemFree(mixFormat); // Free mixFormat pointer
 
-		if (FAILED(hr)) return Result::ClientFailed;
-
 		// Bind wake-up event
 		hr = m_audioClient->SetEventHandle(m_bufferEvent);
 		if (FAILED(hr)) return Result::ClientFailed;
@@ -178,6 +176,10 @@ namespace dalia {
 		m_system = nullptr;
 	}
 
+	bool WasapiDevice::HasFailed() const {
+		return m_hasFailed.load(std::memory_order_relaxed);
+	}
+
 	const std::string& WasapiDevice::GetName() const {
 		return m_name;
 	}
@@ -195,7 +197,6 @@ namespace dalia {
 		DWORD taskIndex = 0;
 		HANDLE mmcssHandle = AvSetMmThreadCharacteristics(TEXT("Pro Audio"), &taskIndex);
 
-		// Should we do this? Every frame or how does this work?
 		if (!mmcssHandle) {
 			SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_TIME_CRITICAL);
 			DALIA_LOG_WARN(LOG_CTX_CORE,
@@ -223,6 +224,7 @@ namespace dalia {
 				if (hr == AUDCLNT_E_DEVICE_INVALIDATED || hr == AUDCLNT_E_RESOURCES_INVALIDATED) {
 					DALIA_LOG_WARN(LOG_CTX_BACKEND,
 						"Audio device invalidated during padding query. Stopping audio thread.");
+					m_hasFailed.store(true, std::memory_order_release);
 					break;
 				}
 				if (FAILED(hr)) continue;
@@ -236,6 +238,7 @@ namespace dalia {
 				if (hr == AUDCLNT_E_DEVICE_INVALIDATED || hr == AUDCLNT_E_RESOURCES_INVALIDATED) {
 					DALIA_LOG_WARN(LOG_CTX_BACKEND,
 						"Audio device invalidated during buffer fetch. Stopping audio thread.");
+					m_hasFailed.store(true, std::memory_order_release);
 					break;
 				}
 				if (FAILED(hr)) continue;
@@ -249,7 +252,12 @@ namespace dalia {
 					std::memset(pData, 0, framesToWrite * m_channelCount * sizeof(float));
 				}
 
-				m_renderClient->ReleaseBuffer(framesToWrite, 0);
+				hr = m_renderClient->ReleaseBuffer(framesToWrite, 0);
+				if (hr == AUDCLNT_E_DEVICE_INVALIDATED || hr == AUDCLNT_E_RESOURCES_INVALIDATED) {
+					DALIA_LOG_WARN(LOG_CTX_BACKEND, "Audio device invalidated during buffer release. Stopping audio thread.");
+					m_hasFailed.store(true, std::memory_order_release);
+					break;
+				}
 			}
 		}
 

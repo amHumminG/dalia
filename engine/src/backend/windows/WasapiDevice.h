@@ -26,6 +26,8 @@ namespace dalia {
 		Result Start(RtSystem* system) override;
 		void Stop() override;
 
+		bool HasFailed() const override;
+
 		const std::string& GetName() const override;
 		uint32_t GetChannelCount() const override;
 		SpeakerLayout GetSpeakerLayout() const override;
@@ -43,7 +45,8 @@ namespace dalia {
 		HANDLE m_shutdownEvent = nullptr;
 
 		std::thread m_audioThread;
-		std::atomic<bool> m_isRunning = false;
+		std::atomic<bool> m_isRunning{false};
+		std::atomic<bool> m_hasFailed{false};
 
 		std::string m_name;
 		uint32_t m_sampleRate = 0;

@@ -22,6 +22,8 @@ namespace dalia {
 		Result Start(RtSystem* system) override;
 		void Stop() override;
 
+		bool HasFailed() const override;
+
 		const std::string& GetName() const override;
 		uint32_t GetChannelCount() const override;
 		SpeakerLayout GetSpeakerLayout() const override;

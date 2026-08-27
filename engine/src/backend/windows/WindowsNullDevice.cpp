@@ -35,6 +35,10 @@ namespace dalia {
 		m_system = nullptr;
 	}
 
+	bool WindowsNullDevice::HasFailed() const {
+		return false; // Cannot fail
+	}
+
 	const std::string& WindowsNullDevice::GetName() const {
 		return m_name;
 	}

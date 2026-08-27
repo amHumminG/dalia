@@ -661,12 +661,14 @@ namespace dalia {
 		// --- Device Hot-Swapping ---
 		bool osTriggered = m_state->deviceManager->PollDeviceChanged();
 		bool manualTriggered = m_state->pendingManualDeviceSwap;
+		bool deviceFailed = m_state->activeDevice && m_state->activeDevice->HasFailed();
 
-		if (osTriggered || manualTriggered) {
+		if (osTriggered || manualTriggered || deviceFailed) {
 
-			if (manualTriggered) DALIA_LOG_INFO(LOG_CTX_BACKEND, "Audio device swap requested. Initiating swap sequence.");
+			if (deviceFailed) DALIA_LOG_INFO(LOG_CTX_BACKEND, "Active audio device reported failure. Initiating swap sequence.");
+			else if (manualTriggered) DALIA_LOG_INFO(LOG_CTX_BACKEND, "Audio device swap requested. Initiating swap sequence.");
 			else DALIA_LOG_INFO(LOG_CTX_BACKEND, "Audio device change detected. Initiating swap sequence.");
-
+			
 			// Stop audio thread
 			if (m_state->activeDevice) m_state->activeDevice->Stop();
 
