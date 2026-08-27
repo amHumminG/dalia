@@ -30,7 +30,6 @@ set(ENGINE_FILES
     # Internal headers and cpp-files
     src/Engine.cpp
 
-    src/backend/DeviceManager.cpp
     src/backend/DeviceManager.h
     src/backend/OutputDevice.h
     src/backend/windows/WindowsDeviceManager.cpp
