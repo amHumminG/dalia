@@ -3,6 +3,7 @@
 #include "dalia/core/Result.h"
 #include "dalia/core/LogLevel.h"
 
+#include "dalia/audio/DeviceControl.h"
 #include "dalia/audio/PlaybackControl.h"
 #include "dalia/audio/SoundControl.h"
 #include "dalia/audio/EffectControl.h"
@@ -101,6 +102,12 @@ namespace dalia {
 		/// @retval Result::Ok				The global scaling factor for the Doppler effect was successfully set.
 		/// @retval Result::NotInitialized	The engine is not initialized.
 		Result SetGlobalDopplerFactor(float globalDopplerFactor);
+
+		Result GetOutputDeviceCount(uint32_t& count) const;
+
+		Result GetOutputDeviceInfo(uint32_t index, AudioDeviceInfo& info) const;
+
+		Result SetOutputDevice(const char* identifier);
 
 #pragma endregion ENGINE_SETTINGS
 

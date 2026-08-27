@@ -35,6 +35,10 @@ namespace dalia {
 		m_system = nullptr;
 	}
 
+	const std::string& WindowsNullDevice::GetName() const {
+		return m_name;
+	}
+
 	uint32_t WindowsNullDevice::GetChannelCount() const {
 		return 1;
 	}

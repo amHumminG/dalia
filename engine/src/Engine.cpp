@@ -81,11 +81,15 @@ namespace dalia {
 	struct EngineInternalState {
 		bool initialized = false;
 
-		// Output Settings
+		// Device
 		std::unique_ptr<AudioDeviceManager> deviceManager;
 		std::unique_ptr<AudioDevice> outputDevice;
 		std::unique_ptr<AudioDevice> nullDevice;
 		AudioDevice* activeDevice; // Points to either outputDevice or nullDevice
+
+		std::string targetDeviceId = "default";
+		std::vector<AudioDeviceInfo> cachedDeviceList;
+		bool pendingManualDeviceSwap = false;
 
 		SpeakerLayout speakerLayout;
 		uint32_t maxSamplesPerPeriod = 0;
@@ -562,13 +566,15 @@ namespace dalia {
 		m_state->speakerLayout = m_state->activeDevice->GetSpeakerLayout();
 
 		if (m_state->outputDevice) {
-			DALIA_LOG_INFO(LOG_CTX_API, "Output audio device initialized. Channels: %u.", m_state->outChannels);
+			std::string layout;
 			switch (m_state->speakerLayout) {
-				case SpeakerLayout::Mono: DALIA_LOG_INFO(LOG_CTX_API, "Device speaker layout: Mono."); break;
-				case SpeakerLayout::Stereo: DALIA_LOG_INFO(LOG_CTX_API, "Device speaker layout: Stereo."); break;
-				case SpeakerLayout::Surround51: DALIA_LOG_INFO(LOG_CTX_API, "Device speaker layout: 5.1."); break;
-				case SpeakerLayout::Surround71: DALIA_LOG_INFO(LOG_CTX_API, "Device speaker layout: 7.1."); break;
+				case SpeakerLayout::Mono: layout = "Mono"; break;
+				case SpeakerLayout::Stereo: layout = "Stereo"; break;
+				case SpeakerLayout::Surround51: layout = "5.1"; break;
+				case SpeakerLayout::Surround71: layout = "7.1"; break;
 			}
+			DALIA_LOG_INFO(LOG_CTX_API, "Initialized audio device \"%s\". %s layout with %u channel(s).",
+				m_state->outputDevice->GetName().c_str(), layout.c_str(), m_state->outChannels);
 		}
 		else {
 			DALIA_LOG_WARN(LOG_CTX_API, "No output audio device found. Audio will render to void for now.");
@@ -653,34 +659,50 @@ namespace dalia {
 		if (!IsInitialized(m_state)) return;
 
 		// --- Device Hot-Swapping ---
-		if (m_state->deviceManager->PollDeviceChanged()) {
-			DALIA_LOG_INFO(LOG_CTX_BACKEND, "OS audio device change detected. Initiating hot-swap sequence.");
+		bool osTriggered = m_state->deviceManager->PollDeviceChanged();
+		bool manualTriggered = m_state->pendingManualDeviceSwap;
+
+		if (osTriggered || manualTriggered) {
+
+			if (manualTriggered) DALIA_LOG_INFO(LOG_CTX_BACKEND, "Audio device swap requested. Initiating swap sequence.");
+			else DALIA_LOG_INFO(LOG_CTX_BACKEND, "Audio device change detected. Initiating swap sequence.");
 
 			// Stop audio thread
 			if (m_state->activeDevice) m_state->activeDevice->Stop();
 
-			// Rebuild for default device
-			m_state->outputDevice = m_state->deviceManager->CreateDevice("default", m_state->outSampleRate);
+			// Rebuild for target device
+			m_state->outputDevice = m_state->deviceManager->CreateDevice(m_state->targetDeviceId.c_str(), m_state->outSampleRate);
 
-			// Set active
+			// Fallback (if request failed) -> revert to OS default
+			if (!m_state->outputDevice && m_state->targetDeviceId != "default") {
+				DALIA_LOG_WARN(LOG_CTX_BACKEND,
+					"Audio device swap request failed. Target device unavailable. Reverting to OS default audio device.");
+				m_state->targetDeviceId = "default";
+				m_state->outputDevice = m_state->deviceManager->CreateDevice("default", m_state->outSampleRate);
+			}
+
+			// Set active device
 			if (m_state->outputDevice) {
 				m_state->activeDevice = m_state->outputDevice.get();
-				DALIA_LOG_INFO(LOG_CTX_BACKEND, "Audio device hot-swap sequence was successful.");
-				// TODO: Log the user-friendly name of the new device
+				m_state->outChannels = m_state->activeDevice->GetChannelCount();
+				m_state->speakerLayout = m_state->activeDevice->GetSpeakerLayout();
+
+				std::string layout;
+				switch (m_state->speakerLayout) {
+					case SpeakerLayout::Mono: layout = "Mono"; break;
+					case SpeakerLayout::Stereo: layout = "Stereo"; break;
+					case SpeakerLayout::Surround51: layout = "5.1"; break;
+					case SpeakerLayout::Surround71: layout = "7.1"; break;
+				}
+				DALIA_LOG_INFO(LOG_CTX_API, "Successfully swapped audio device to \"%s\". %s layout with %u channel(s).",
+					m_state->outputDevice->GetName().c_str(), layout.c_str(), m_state->outChannels);
 			}
 			else {
 				m_state->activeDevice = m_state->nullDevice.get();
+				m_state->outChannels = m_state->activeDevice->GetChannelCount();
+				m_state->speakerLayout = m_state->activeDevice->GetSpeakerLayout();
 				DALIA_LOG_WARN(LOG_CTX_BACKEND,
-					"Audio device hot-swap sequence failed. No audio devices found. Audio will render to void for now.");
-			}
-
-			m_state->outChannels = m_state->activeDevice->GetChannelCount();
-			m_state->speakerLayout = m_state->activeDevice->GetSpeakerLayout();
-			switch (m_state->speakerLayout) {
-				case SpeakerLayout::Mono:       DALIA_LOG_INFO(LOG_CTX_API, "New layout: Mono."); break;
-				case SpeakerLayout::Stereo:     DALIA_LOG_INFO(LOG_CTX_API, "New layout: Stereo."); break;
-				case SpeakerLayout::Surround51: DALIA_LOG_INFO(LOG_CTX_API, "New layout: 5.1."); break;
-				case SpeakerLayout::Surround71: DALIA_LOG_INFO(LOG_CTX_API, "New layout: 7.1."); break;
+					"Audio device swap sequence failed. No audio devices found. Audio will render to void for now.");
 			}
 
 			m_state->rtSystem->SetOutputFormat(m_state->outChannels, m_state->speakerLayout);
@@ -748,6 +770,36 @@ namespace dalia {
 
 		float clampedGlobalDopplerFactor = std::clamp(globalDopplerFactor, DOPPLER_FACTOR_MIN, DOPPLER_FACTOR_MAX);
 		m_state->rtCommands->Enqueue(RtCommand::SetGlobalDopplerFactor(clampedGlobalDopplerFactor));
+
+		return Result::Ok;
+	}
+
+	Result Engine::GetOutputDeviceCount(uint32_t& count) const {
+		if (!IsInitialized(m_state)) return Result::NotInitialized;
+
+		m_state->cachedDeviceList = m_state->deviceManager->Enumerate(); // Refresh cache
+		count = static_cast<uint32_t>(m_state->cachedDeviceList.size());
+
+		return Result::Ok;
+	}
+
+	Result Engine::GetOutputDeviceInfo(uint32_t index, AudioDeviceInfo& info) const {
+		if (!IsInitialized(m_state)) return Result::NotInitialized;
+		if (index >= m_state->cachedDeviceList.size()) return Result::InvalidArgs;
+
+		info = m_state->cachedDeviceList[index];
+
+		return Result::Ok;
+	}
+
+	Result Engine::SetOutputDevice(const char* identifier) {
+		if (!IsInitialized(m_state)) return Result::NotInitialized;
+
+		const char* target = (identifier && identifier[0]) != '\0' ? identifier : "default"; // treat emtpy/nullptr as default
+		if (m_state->targetDeviceId == target) return Result::Ok;
+
+		m_state->targetDeviceId = target;
+		m_state->pendingManualDeviceSwap = true;
 
 		return Result::Ok;
 	}

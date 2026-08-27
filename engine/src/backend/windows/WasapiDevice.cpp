@@ -5,6 +5,7 @@
 
 #include <cstring>
 #include <algorithm>
+#include <functiondiscoverykeys_devpkey.h> // For PKEY_Device_FriendlyName
 #include "avrt.h"
 
 #ifndef AUDCLNT_STREAMFLAGS_AUTOCONVERTPCM
@@ -27,6 +28,22 @@ namespace dalia {
 
 	Result WasapiDevice::Initialize(uint32_t engineSampleRate) {
 		if (!m_device) return Result::DeviceFailed;
+
+		// Extract friendly name
+		Microsoft::WRL::ComPtr<IPropertyStore> props;
+		if (SUCCEEDED(m_device->OpenPropertyStore(STGM_READ, &props))) {
+			PROPVARIANT varName;
+			PropVariantInit(&varName);
+			if (SUCCEEDED(props->GetValue(PKEY_Device_FriendlyName, &varName)) && varName.pwszVal) {
+				int nameSize = WideCharToMultiByte(CP_UTF8, 0, varName.pwszVal, -1, nullptr, 0, nullptr, nullptr);
+				if (nameSize > 0) {
+					m_name.resize(nameSize - 1);
+					WideCharToMultiByte(CP_UTF8, 0, varName.pwszVal, -1, m_name.data(), nameSize, nullptr, nullptr);
+				}
+			}
+			PropVariantClear(&varName);
+		}
+		if (m_name.empty()) m_name = "Unknown WASAPI Device";
 
 		HRESULT hr = m_device->Activate(__uuidof(IAudioClient), CLSCTX_ALL, nullptr, (void**)&m_audioClient);
 		if (FAILED(hr)) return Result::DeviceFailed;
@@ -68,8 +85,9 @@ namespace dalia {
 					DALIA_LOG_DEBUG(LOG_CTX_BACKEND, "Detected speaker layout (7.1 Surround) with %u channel(s).", m_channelCount);
 					break;
 				default:
-					DALIA_LOG_WARN(LOG_CTX_BACKEND, "Non-standard speaker layout detected (mask: 0x%X).", mask);
-					// Attempt to guess the layout
+					DALIA_LOG_WARN(LOG_CTX_BACKEND,
+						"Non-standard speaker layout detected (mask: 0x%X). Falling back to estimation based on %u channel(s).",
+						mask, m_channelCount);
 					if (m_channelCount >= 8) m_speakerLayout = SpeakerLayout::Surround71;
 					else if (m_channelCount >= 6) m_speakerLayout = SpeakerLayout::Surround51;
 					else if (m_channelCount >= 2) m_speakerLayout = SpeakerLayout::Stereo;
@@ -77,7 +95,8 @@ namespace dalia {
 			}
 		}
 		else {
-			DALIA_LOG_WARN(LOG_CTX_BACKEND, "Missing speaker layout. Falling back to estimation based on %u channel(s).", m_channelCount);
+			DALIA_LOG_WARN(LOG_CTX_BACKEND,
+				"Missing speaker layout. Falling back to estimation based on %u channel(s).", m_channelCount);
 			if (m_channelCount >= 8) m_speakerLayout = SpeakerLayout::Surround71;
 			else if (m_channelCount >= 6) m_speakerLayout = SpeakerLayout::Surround51;
 			else if (m_channelCount >= 2) m_speakerLayout = SpeakerLayout::Stereo;
@@ -111,7 +130,7 @@ namespace dalia {
 		}
 
 		m_periodSizeInFrames = static_cast<UINT32>((defaultDevicePeriod * m_sampleRate) / 10000000);
-		DALIA_LOG_DEBUG(LOG_CTX_BACKEND, "Legacy client initialization succeeded with default periodicity (%u frames).",
+		DALIA_LOG_DEBUG(LOG_CTX_BACKEND, "Audio client initialization succeeded with default periodicity (%u frames).",
 			m_periodSizeInFrames);
 
 		CoTaskMemFree(mixFormat); // Free mixFormat pointer
@@ -131,7 +150,6 @@ namespace dalia {
 		hr = m_audioClient->GetBufferSize(&bufferCapacity);
 		if (FAILED(hr)) return Result::ClientFailed;
 		m_bufferCapacityInFrames = bufferCapacity;
-		DALIA_LOG_DEBUG(LOG_CTX_BACKEND, "Buffer capacity: %d.", bufferCapacity);
 
 		return Result::Ok;
 	}
@@ -158,6 +176,10 @@ namespace dalia {
 
 		if (m_audioClient) m_audioClient->Stop();
 		m_system = nullptr;
+	}
+
+	const std::string& WasapiDevice::GetName() const {
+		return m_name;
 	}
 
 	uint32_t WasapiDevice::GetChannelCount() const {

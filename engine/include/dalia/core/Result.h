@@ -9,12 +9,13 @@ namespace dalia {
 		Error						= -1,
 		NotInitialized				= -2,
 		AlreadyInitialized			= -3,
-		InvalidHandle				= -4,
-		ExpiredHandle				= -5,
-		BusNotFound					= -6,
-		InvalidRouting				= -7,
-		InvalidEffectSlot			= -8,
-		ListenerNotFound			= -9,
+		InvalidArgs					= -4,
+		InvalidHandle				= -5,
+		ExpiredHandle				= -6,
+		BusNotFound					= -7,
+		InvalidRouting				= -8,
+		InvalidEffectSlot			= -9,
+		ListenerNotFound			= -10,
 
 
 		// Pool Capacity Errors

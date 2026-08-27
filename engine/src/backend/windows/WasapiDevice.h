@@ -26,6 +26,7 @@ namespace dalia {
 		Result Start(RtSystem* system) override;
 		void Stop() override;
 
+		const std::string& GetName() const override;
 		uint32_t GetChannelCount() const override;
 		SpeakerLayout GetSpeakerLayout() const override;
 
@@ -44,11 +45,12 @@ namespace dalia {
 		std::thread m_audioThread;
 		std::atomic<bool> m_isRunning = false;
 
+		std::string m_name;
 		uint32_t m_sampleRate = 0;
 		uint32_t m_channelCount = 0;
 		uint32_t m_periodSizeInFrames = 0;
 		uint32_t m_bufferCapacityInFrames = 0;
-		SpeakerLayout m_speakerLayout = SpeakerLayout::Stereo;
+		SpeakerLayout m_speakerLayout = SpeakerLayout::Mono;
 
 	};
 }

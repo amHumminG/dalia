@@ -5,7 +5,7 @@
 #include "core/Logger.h"
 
 #include <functiondiscoverykeys_devpkey.h> // For PKEY_Device_FriendlyName
-#include <string>
+#include <cstring>
 
 namespace dalia {
 
@@ -126,29 +126,26 @@ namespace dalia {
 			Microsoft::WRL::ComPtr<IMMDevice> device;
 			if (FAILED(collection->Item(i, &device))) continue;
 
-			AudioDeviceInfo info;
+			AudioDeviceInfo info{};
 
-			// Get OS identifier
+			// Get device id
 			LPWSTR deviceIdW = nullptr;
 			if (SUCCEEDED(device->GetId(&deviceIdW))) {
-				int size = MultiByteToWideChar(CP_UTF8, 0, (LPCSTR)deviceIdW, -1, nullptr, 0);
-				size = WideCharToMultiByte(CP_UTF8, 0, deviceIdW, -1, nullptr, 0, nullptr, nullptr);
-				info.identifier.resize(size - 1);
-				WideCharToMultiByte(CP_UTF8, 0, deviceIdW, -1, info.identifier.data(), size, nullptr, nullptr);
+				WideCharToMultiByte(CP_UTF8, 0, deviceIdW, -1, info.identifier, MAX_DEVICE_STRING_LEN, nullptr, nullptr);
+				info.identifier[MAX_DEVICE_STRING_LEN - 1] = '\0';
 
 				info.isDefault = (defaultIdW && wcscmp(deviceIdW, defaultIdW) == 0);
 				CoTaskMemFree(deviceIdW);
 			}
 
-			// Get user friendly name
+			// Get friendly name
 			Microsoft::WRL::ComPtr<IPropertyStore> props;
 			if (SUCCEEDED(device->OpenPropertyStore(STGM_READ, &props))) {
 				PROPVARIANT varName;
 				PropVariantInit(&varName);
 				if (SUCCEEDED(props->GetValue(PKEY_Device_FriendlyName, &varName)) && varName.pwszVal) {
-					int nameSize = WideCharToMultiByte(CP_UTF8, 0, varName.pwszVal, -1, nullptr, 0, nullptr, nullptr);
-					info.name.resize(nameSize - 1);
-					WideCharToMultiByte(CP_UTF8, 0, varName.pwszVal, -1, info.name.data(), nameSize, nullptr, nullptr);
+					WideCharToMultiByte(CP_UTF8, 0, varName.pwszVal, -1, info.name, MAX_DEVICE_STRING_LEN, nullptr, nullptr);
+					info.name[MAX_DEVICE_STRING_LEN - 1] = '\0';
 				}
 				PropVariantClear(&varName);
 			}
@@ -164,21 +161,21 @@ namespace dalia {
 		return m_deviceChangedFlag.exchange(false, std::memory_order_acquire);
 	}
 
-	std::unique_ptr<AudioDevice> WindowsDeviceManager::CreateDevice(const std::string& identifier, uint32_t engineSampleRate) {
+	std::unique_ptr<AudioDevice> WindowsDeviceManager::CreateDevice(const char* identifier, uint32_t engineSampleRate) {
 		Microsoft::WRL::ComPtr<IMMDevice> device;
 		HRESULT hr = S_OK;
 
-		if (identifier.empty() || identifier == "default") {
-			// Get OS default device
-			hr = m_enumerator->GetDefaultAudioEndpoint(eRender, eConsole, &device);
+		if (!identifier || std::strcmp(identifier, "default") == 0 || std::strlen(identifier) == 0) {
+			hr = m_enumerator->GetDefaultAudioEndpoint(eRender, eConsole, &device); // Get OS default device
 		}
 		else {
 			// Convert identifier string and get device
-			int size = MultiByteToWideChar(CP_UTF8, 0, identifier.c_str(), -1, nullptr, 0);
-			std::wstring wIdentifier(size, 0);
-			MultiByteToWideChar(CP_UTF8, 0, identifier.c_str(), -1, wIdentifier.data(), size);
-
-			hr = m_enumerator->GetDevice(wIdentifier.c_str(), &device);
+			int size = MultiByteToWideChar(CP_UTF8, 0, identifier, -1, nullptr, 0);
+			if (size > 0) {
+				std::wstring wIdentifier(size - 1, 0);
+				MultiByteToWideChar(CP_UTF8, 0, identifier, -1, wIdentifier.data(), size);
+				hr = m_enumerator->GetDevice(wIdentifier.c_str(), &device);
+			}
 		}
 
 		if (FAILED(hr) || !device) return nullptr;
