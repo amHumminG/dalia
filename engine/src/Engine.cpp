@@ -262,6 +262,86 @@ namespace dalia {
 		return state != nullptr && state->initialized;
 	}
 
+	static void ProcessOutputDeviceSwapping(EngineInternalState* state) {
+// --- Device Hot-Swapping ---
+		std::string newOsDefaultOutputId;
+		bool osTriggered = state->deviceManager->PollDefaultOutputDeviceChanged(newOsDefaultOutputId) && (state->targetDeviceId == "default");
+		bool manualTriggered = state->pendingManualDeviceSwap;
+		bool deviceFailed = state->activeDevice && state->activeDevice->HasFailed();
+
+		// Async shield (for double swaps)
+		if (osTriggered && state->activeDevice && !deviceFailed) {
+			// Does the active device's id match the new os default id?
+			if (state->activeDevice->GetIdentifier() == newOsDefaultOutputId) {
+				// We are already using the new default device -> ignore os notification
+				osTriggered = false;
+			}
+		}
+
+		if (osTriggered || manualTriggered || deviceFailed) {
+			state->pendingManualDeviceSwap = false;
+
+			if (deviceFailed) DALIA_LOG_INFO(LOG_CTX_BACKEND, "Active audio device reported failure. Initiating swap sequence.");
+			else if (manualTriggered) DALIA_LOG_INFO(LOG_CTX_BACKEND, "Audio device swap requested. Initiating swap sequence.");
+			else DALIA_LOG_INFO(LOG_CTX_BACKEND, "Audio device change detected. Initiating swap sequence.");
+
+			// Stop audio thread
+			if (state->activeDevice) state->activeDevice->Stop();
+
+			// Rebuild for target device
+			state->outputDevice = state->deviceManager->CreateDevice(state->targetDeviceId.c_str(), state->outSampleRate);
+
+			// Fallback (if request failed) -> revert to OS default
+			if (!state->outputDevice && state->targetDeviceId != "default") {
+				DALIA_LOG_WARN(LOG_CTX_BACKEND,
+					"Audio device swap request failed. Target device unavailable. Reverting to OS default audio device.");
+
+				// Try default device instead
+				state->targetDeviceId = "default";
+				state->outputDevice = state->deviceManager->CreateDevice(state->targetDeviceId.c_str(), state->outSampleRate);
+			}
+
+			// Set active device
+			if (state->outputDevice) {
+				state->activeDevice = state->outputDevice.get();
+				state->outChannels = state->activeDevice->GetChannelCount();
+				state->speakerLayout = state->activeDevice->GetSpeakerLayout();
+
+				std::string layout;
+				switch (state->speakerLayout) {
+					case SpeakerLayout::Mono: layout = "Mono"; break;
+					case SpeakerLayout::Stereo: layout = "Stereo"; break;
+					case SpeakerLayout::Surround51: layout = "5.1"; break;
+					case SpeakerLayout::Surround71: layout = "7.1"; break;
+				}
+				DALIA_LOG_INFO(LOG_CTX_API, "Successfully swapped audio device to \"%s\". %s layout with %u channel(s).",
+					state->outputDevice->GetName().c_str(), layout.c_str(), state->outChannels);
+			}
+			else {
+				state->activeDevice = state->nullDevice.get();
+				state->outChannels = state->activeDevice->GetChannelCount();
+				state->speakerLayout = state->activeDevice->GetSpeakerLayout();
+				DALIA_LOG_WARN(LOG_CTX_BACKEND,
+					"Audio device swap sequence failed. No audio devices found. Audio will render to void for now.");
+			}
+
+			state->rtSystem->SetOutputFormat(state->outChannels, state->speakerLayout);
+
+			Result res = state->activeDevice->Start(state->rtSystem.get());
+			if (res != Result::Ok) {
+				DALIA_LOG_WARN(LOG_CTX_API,
+					"Failed to start audio thread for new audio device after hot-swap sequence. Audio will render to the void for now.");
+
+				state->activeDevice = state->nullDevice.get();
+				state->outChannels = state->activeDevice->GetChannelCount();
+				state->speakerLayout = state->activeDevice->GetSpeakerLayout();
+
+				state->rtSystem->SetOutputFormat(state->outChannels, state->speakerLayout);
+				state->activeDevice->Start(state->rtSystem.get());
+			}
+		}
+	}
+
 	static inline Result DispatchStreamPrepare(EngineInternalState* state, const char* filepath, uint32_t& streamIndex,
 		uint32_t& streamGen) {
 		if (!state->streams.Allocate(streamIndex)) return Result::StreamPoolExhausted;
@@ -658,83 +738,7 @@ namespace dalia {
 	void Engine::Update() {
 		if (!IsInitialized(m_state)) return;
 
-		// --- Device Hot-Swapping ---
-		std::string newOsDefaultOutputId;
-		bool osTriggered = m_state->deviceManager->PollDefaultOutputDeviceChanged(newOsDefaultOutputId) && (m_state->targetDeviceId == "default");
-		bool manualTriggered = m_state->pendingManualDeviceSwap;
-		bool deviceFailed = m_state->activeDevice && m_state->activeDevice->HasFailed();
-
-		// Async shield (for double swaps)
-		if (osTriggered && m_state->activeDevice && !deviceFailed) {
-			// Does the active device's id match the new os default id?
-			if (m_state->activeDevice->GetIdentifier() == newOsDefaultOutputId) {
-				// We are already using the new default device -> ignore os notification
-				osTriggered = false;
-			}
-		}
-
-		if (osTriggered || manualTriggered || deviceFailed) {
-			m_state->pendingManualDeviceSwap = false;
-
-			if (deviceFailed) DALIA_LOG_INFO(LOG_CTX_BACKEND, "Active audio device reported failure. Initiating swap sequence.");
-			else if (manualTriggered) DALIA_LOG_INFO(LOG_CTX_BACKEND, "Audio device swap requested. Initiating swap sequence.");
-			else DALIA_LOG_INFO(LOG_CTX_BACKEND, "Audio device change detected. Initiating swap sequence.");
-
-			// Stop audio thread
-			if (m_state->activeDevice) m_state->activeDevice->Stop();
-
-			// Rebuild for target device
-			m_state->outputDevice = m_state->deviceManager->CreateDevice(m_state->targetDeviceId.c_str(), m_state->outSampleRate);
-
-			// Fallback (if request failed) -> revert to OS default
-			if (!m_state->outputDevice && m_state->targetDeviceId != "default") {
-				DALIA_LOG_WARN(LOG_CTX_BACKEND,
-					"Audio device swap request failed. Target device unavailable. Reverting to OS default audio device.");
-
-				// Try default device instead
-				m_state->targetDeviceId = "default";
-				m_state->outputDevice = m_state->deviceManager->CreateDevice(m_state->targetDeviceId.c_str(), m_state->outSampleRate);
-			}
-
-			// Set active device
-			if (m_state->outputDevice) {
-				m_state->activeDevice = m_state->outputDevice.get();
-				m_state->outChannels = m_state->activeDevice->GetChannelCount();
-				m_state->speakerLayout = m_state->activeDevice->GetSpeakerLayout();
-
-				std::string layout;
-				switch (m_state->speakerLayout) {
-					case SpeakerLayout::Mono: layout = "Mono"; break;
-					case SpeakerLayout::Stereo: layout = "Stereo"; break;
-					case SpeakerLayout::Surround51: layout = "5.1"; break;
-					case SpeakerLayout::Surround71: layout = "7.1"; break;
-				}
-				DALIA_LOG_INFO(LOG_CTX_API, "Successfully swapped audio device to \"%s\". %s layout with %u channel(s).",
-					m_state->outputDevice->GetName().c_str(), layout.c_str(), m_state->outChannels);
-			}
-			else {
-				m_state->activeDevice = m_state->nullDevice.get();
-				m_state->outChannels = m_state->activeDevice->GetChannelCount();
-				m_state->speakerLayout = m_state->activeDevice->GetSpeakerLayout();
-				DALIA_LOG_WARN(LOG_CTX_BACKEND,
-					"Audio device swap sequence failed. No audio devices found. Audio will render to void for now.");
-			}
-
-			m_state->rtSystem->SetOutputFormat(m_state->outChannels, m_state->speakerLayout);
-
-			Result res = m_state->activeDevice->Start(m_state->rtSystem.get());
-			if (res != Result::Ok) {
-				DALIA_LOG_WARN(LOG_CTX_API,
-					"Failed to start audio thread for new audio device after hot-swap sequence. Audio will render to the void for now.");
-
-				m_state->activeDevice = m_state->nullDevice.get();
-				m_state->outChannels = m_state->activeDevice->GetChannelCount();
-				m_state->speakerLayout = m_state->activeDevice->GetSpeakerLayout();
-
-				m_state->rtSystem->SetOutputFormat(m_state->outChannels, m_state->speakerLayout);
-				m_state->activeDevice->Start(m_state->rtSystem.get());
-			}
-		}
+		ProcessOutputDeviceSwapping(m_state);
 
 		// --- Process Event Inbox ---
 		RtEvent RtEv;
