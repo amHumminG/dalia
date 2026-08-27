@@ -103,10 +103,36 @@ namespace dalia {
 		/// @retval Result::NotInitialized	The engine is not initialized.
 		Result SetGlobalDopplerFactor(float globalDopplerFactor);
 
+		/// @brief Queries the OS for available audio output devices and retrieves the total count.
+		///
+		/// This function forces the engine to scan for all available audio devices and refresh its internal cache.
+		/// It is recommended to call this function once before looping through devices with GetOutputDeviceInfo() to
+		/// ensure that the device list is up to date.
+		///
+		/// @param[out] count Variable to be populated with the total number of available output devices.
+		///
+		/// @retval Result::Ok				The device count was successfully retrieved and the internal cache was updated.
+		/// @retval Result::NotInitialized	The engine is not initialized.
 		Result GetOutputDeviceCount(uint32_t& count) const;
 
-		Result GetOutputDeviceInfo(uint32_t index, AudioDeviceInfo& info) const;
+		/// @brief Queries the metadata for a specific audio output device from the internal cache.
+		///
+		/// @param[in]	index	The zero-based index of the device to query.
+		/// @param[out] info	The struct to be populated with the audio output device metadata.
+		///
+		/// @retval Result::Ok				The device metadata was successfully retrieved.
+		/// @retval Result::NotInitialized	The engine is not initialized.
+		/// @retval Result::InvalidArgs		The provided index is out of bounds.
+		Result GetOutputDeviceInfo(uint32_t index, OutputDeviceInfo& info) const;
 
+		/// @brief Requests a manual change of output device.
+		///
+		/// @param[in] identifier	A null-terminated string containing the unique hardware identifier of the target device.
+		///							Passing a nullptr or an empty string will automatically revert the routing to the OS
+		///							default device.
+		///
+		/// @retval Result::Ok				The request swap was successfully queued or is already the active output device.
+		/// @retval Result::NotInitialized	The engine is not initialized.
 		Result SetOutputDevice(const char* identifier);
 
 #pragma endregion ENGINE_SETTINGS
