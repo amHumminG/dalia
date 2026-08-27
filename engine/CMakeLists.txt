@@ -23,15 +23,22 @@ set(ENGINE_FILES
     include/dalia/audio/PlaybackControl.h
     include/dalia/audio/SoundControl.h
     include/dalia/audio/EffectControl.h
+    include/dalia/audio/DeviceControl.h
     include/dalia/Core/LogLevel.h
     include/dalia/Core/Result.h
 
     # Internal headers and cpp-files
     src/Engine.cpp
 
-    src/backend/WasapiBackend.cpp
-    src/backend/WasapiBackend.h
-    src/backend/IAudioBackend.h
+    src/backend/AudioDeviceManager.cpp
+    src/backend/AudioDeviceManager.h
+    src/backend/AudioDevice.h
+    src/backend/windows/WindowsDeviceManager.cpp
+    src/backend/windows/WindowsDeviceManager.h
+    src/backend/windows/WasapiDevice.cpp
+    src/backend/windows/WasapiDevice.h
+    src/backend/windows/WindowsNullDevice.cpp
+    src/backend/windows/WindowsNullDevice.h
 
     src/core/Constants.h
     src/core/Logger.h
@@ -89,15 +96,6 @@ set(ENGINE_FILES
     src/resources/AssetRegistry.cpp
     src/resources/AssetRegistry.h
     src/resources/StreamSound.h
-    src/backend/AudioDeviceManager.cpp
-    src/backend/AudioDeviceManager.h
-    src/backend/AudioDevice.h
-    src/backend/windows/WindowsDeviceManager.cpp
-    src/backend/windows/WindowsDeviceManager.h
-    src/backend/windows/WasapiDevice.cpp
-    src/backend/windows/WasapiDevice.h
-    src/backend/windows/WindowsNullDevice.cpp
-    src/backend/windows/WindowsNullDevice.h
 )
 
 add_library(dalia_engine STATIC ${ENGINE_FILES})
