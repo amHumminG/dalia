@@ -89,98 +89,30 @@ namespace dalia {
 		// Initialize WASAPI with auto-convert pcm for best device compatibility
 		DWORD streamFlags = AUDCLNT_STREAMFLAGS_EVENTCALLBACK | AUDCLNT_STREAMFLAGS_AUTOCONVERTPCM;
 
-		// Attempt to initialize client with low latency period
-		bool initializedLowLatency = false;
-		Microsoft::WRL::ComPtr<IAudioClient3> audioClient3;
-		hr = m_audioClient->QueryInterface(IID_PPV_ARGS(&audioClient3));
+		hr = m_audioClient->Initialize(
+			AUDCLNT_SHAREMODE_SHARED,
+			streamFlags,
+			0,
+			0,
+			mixFormat,
+			nullptr
+		);
 
-		if (SUCCEEDED(hr)) {
-			// Set client properties
-			AudioClientProperties props = {};
-			props.cbSize = sizeof(AudioClientProperties);
-			props.eCategory = AudioCategory_GameEffects;
-			props.Options = AUDCLNT_STREAMOPTIONS_NONE;
-
-			audioClient3->SetClientProperties(&props);
-
-			UINT32 defaultPeriod, fundamentalPeriod, minPeriod, maxPeriod;
-			hr = audioClient3->GetSharedModeEnginePeriod(mixFormat, &defaultPeriod, &fundamentalPeriod,
-				&minPeriod, &maxPeriod);
-
-			if (SUCCEEDED(hr)) {
-				UINT32 targetPeriod = minPeriod;
-				if (fundamentalPeriod > 0) targetPeriod = (targetPeriod / fundamentalPeriod) * fundamentalPeriod;
-				targetPeriod = std::clamp(targetPeriod, minPeriod, maxPeriod);
-				DALIA_LOG_DEBUG(LOG_CTX_BACKEND, "Target period is %d.", targetPeriod);
-
-				// Attempt low-latency initialization
-				hr = audioClient3->InitializeSharedAudioStream(
-					streamFlags,
-					targetPeriod,
-					mixFormat,
-					nullptr
-				);
-
-				// Handle locked periodicity scenario
-				if (hr == AUDCLNT_E_ENGINE_PERIODICITY_LOCKED) {
-					DALIA_LOG_WARN(LOG_CTX_BACKEND, "Client rendering periodicity is locked by another application.");
-
-					// Fall back to default period
-					hr = audioClient3->InitializeSharedAudioStream(
-						streamFlags,
-						defaultPeriod,
-						mixFormat,
-						nullptr
-					);
-
-					if (SUCCEEDED(hr)) {
-						initializedLowLatency = true;
-						m_periodSizeInFrames = defaultPeriod;
-						DALIA_LOG_DEBUG(LOG_CTX_BACKEND,
-							"Low-latency audio client initialization succeeded with default fallback periodicity (%u frames).",
-							defaultPeriod);
-					}
-				}
-				else if (SUCCEEDED(hr)) {
-					initializedLowLatency = true;
-					m_periodSizeInFrames = targetPeriod;
-					DALIA_LOG_DEBUG(LOG_CTX_BACKEND,
-						"Low-latency audio client initialization succeeded with target periodicity (%u frames).",
-						targetPeriod);
-				}
-			}
+		if (FAILED(hr)) {
+			DALIA_LOG_ERR(LOG_CTX_BACKEND, "Failed to initialize audio client.");
+			return Result::ClientFailed;
 		}
 
-		if (!initializedLowLatency) {
-			// Low latency initialization failed (likely due to user running an older version of Windows
-			// Fall back to legacy initialization
-			DALIA_LOG_WARN(LOG_CTX_BACKEND, "Low-latency initialization failed. Falling back to legacy audio client.");
-
-			hr = m_audioClient->Initialize(
-				AUDCLNT_SHAREMODE_SHARED,
-				streamFlags,
-				0,
-				0,
-				mixFormat,
-				nullptr
-			);
-
-			if (FAILED(hr)) {
-				DALIA_LOG_CRIT(LOG_CTX_BACKEND, "Failed to initialize audio client.");
-				return Result::ClientFailed;
-			}
-
-			REFERENCE_TIME defaultDevicePeriod = 0;
-			REFERENCE_TIME minDevicePeriod = 0;
-			if (FAILED(m_audioClient->GetDevicePeriod(&defaultDevicePeriod, &minDevicePeriod))) {
-				DALIA_LOG_CRIT(LOG_CTX_BACKEND, "Failed to query device period.");
-				return Result::ClientFailed;
-			}
-
-			m_periodSizeInFrames = static_cast<UINT32>((defaultDevicePeriod * m_sampleRate) / 10000000);
-			DALIA_LOG_DEBUG(LOG_CTX_BACKEND, "Legacy client initialization succeeded with default periodicity (%u frames).",
-				m_periodSizeInFrames);
+		REFERENCE_TIME defaultDevicePeriod = 0;
+		REFERENCE_TIME minDevicePeriod = 0;
+		if (FAILED(m_audioClient->GetDevicePeriod(&defaultDevicePeriod, &minDevicePeriod))) {
+			DALIA_LOG_ERR(LOG_CTX_BACKEND, "Failed to query device period.");
+			return Result::ClientFailed;
 		}
+
+		m_periodSizeInFrames = static_cast<UINT32>((defaultDevicePeriod * m_sampleRate) / 10000000);
+		DALIA_LOG_DEBUG(LOG_CTX_BACKEND, "Legacy client initialization succeeded with default periodicity (%u frames).",
+			m_periodSizeInFrames);
 
 		CoTaskMemFree(mixFormat); // Free mixFormat pointer
 
