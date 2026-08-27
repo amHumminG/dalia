@@ -659,9 +659,19 @@ namespace dalia {
 		if (!IsInitialized(m_state)) return;
 
 		// --- Device Hot-Swapping ---
-		bool osTriggered = m_state->deviceManager->PollDeviceChanged();
+		std::string newOsDefaultOutputId;
+		bool osTriggered = m_state->deviceManager->PollDefaultOutputDeviceChanged(newOsDefaultOutputId) && (m_state->targetDeviceId == "default");
 		bool manualTriggered = m_state->pendingManualDeviceSwap;
 		bool deviceFailed = m_state->activeDevice && m_state->activeDevice->HasFailed();
+
+		// Async shield (for double swaps)
+		if (osTriggered && m_state->activeDevice && !deviceFailed) {
+			// Does the active device's id match the new os default id?
+			if (m_state->activeDevice->GetIdentifier() == newOsDefaultOutputId) {
+				// We are already using the new default device -> ignore os notification
+				osTriggered = false;
+			}
+		}
 
 		if (osTriggered || manualTriggered || deviceFailed) {
 			m_state->pendingManualDeviceSwap = false;

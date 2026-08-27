@@ -39,6 +39,10 @@ namespace dalia {
 		return false; // Cannot fail
 	}
 
+	const std::string& WindowsNullOutputDevice::GetIdentifier() const {
+		return m_identifier;
+	}
+
 	const std::string& WindowsNullOutputDevice::GetName() const {
 		return m_name;
 	}

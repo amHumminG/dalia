@@ -29,6 +29,17 @@ namespace dalia {
 	Result WasapiOutputDevice::Initialize(uint32_t engineSampleRate) {
 		if (!m_device) return Result::DeviceFailed;
 
+		// Extract identifier
+		LPWSTR strId = nullptr;
+		if (SUCCEEDED(m_device->GetId(&strId))) {
+			int size = WideCharToMultiByte(CP_UTF8, 0, strId, -1, nullptr, 0, nullptr, nullptr);
+			if (size > 0) {
+				m_identifier.resize(size - 1);
+				WideCharToMultiByte(CP_UTF8, 0, strId, -1, m_identifier.data(), size, nullptr, nullptr);
+			}
+			CoTaskMemFree(strId);
+		}
+
 		// Extract friendly name
 		Microsoft::WRL::ComPtr<IPropertyStore> props;
 		if (SUCCEEDED(m_device->OpenPropertyStore(STGM_READ, &props))) {
@@ -178,6 +189,10 @@ namespace dalia {
 
 	bool WasapiOutputDevice::HasFailed() const {
 		return m_hasFailed.load(std::memory_order_relaxed);
+	}
+
+	const std::string& WasapiOutputDevice::GetIdentifier() const {
+		return m_identifier;
 	}
 
 	const std::string& WasapiOutputDevice::GetName() const {

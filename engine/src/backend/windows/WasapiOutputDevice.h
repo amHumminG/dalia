@@ -28,6 +28,7 @@ namespace dalia {
 
 		bool HasFailed() const override;
 
+		const std::string& GetIdentifier() const override;
 		const std::string& GetName() const override;
 		uint32_t GetChannelCount() const override;
 		SpeakerLayout GetSpeakerLayout() const override;
@@ -48,6 +49,7 @@ namespace dalia {
 		std::atomic<bool> m_isRunning{false};
 		std::atomic<bool> m_hasFailed{false};
 
+		std::string m_identifier;
 		std::string m_name;
 		uint32_t m_sampleRate = 0;
 		uint32_t m_channelCount = 0;

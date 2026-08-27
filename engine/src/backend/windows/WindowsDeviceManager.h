@@ -20,7 +20,7 @@ namespace dalia {
 
 		std::vector<OutputDeviceInfo> Enumerate() override;
 
-		bool PollDeviceChanged() override;
+		bool PollDefaultOutputDeviceChanged(std::string& newDeviceId) override;
 
 		std::unique_ptr<OutputDevice> CreateDevice(const char* identifier, uint32_t engineSampleRate) override;
 		std::unique_ptr<OutputDevice> CreateNullDevice(uint32_t engineSampleRate, uint32_t periodSizeInFrames) override;
@@ -28,7 +28,7 @@ namespace dalia {
 	private:
 		class NotificationClient final : public IMMNotificationClient {
 		public:
-			NotificationClient(std::atomic<bool>& changeFlag);
+			NotificationClient(std::atomic<bool>& changeFlag, std::string& idStr, std::mutex& mtx);
 			~NotificationClient() = default;
 
 			ULONG STDMETHODCALLTYPE AddRef() override;
@@ -44,12 +44,17 @@ namespace dalia {
 		private:
 			LONG m_refCount = 1;
 			std::atomic<bool>& m_changeFlag;
+			std::string& m_idStr;
+			std::mutex& m_mutex;
+
 		};
 
 		Microsoft::WRL::ComPtr<NotificationClient> m_notificationClient;
 		Microsoft::WRL::ComPtr<IMMDeviceEnumerator> m_enumerator;
 
-		std::atomic<bool> m_deviceChangedFlag{false};
+		std::mutex m_notificationMutex;
+		std::string m_notificationDefaultId;
+		std::atomic<bool> m_defaultOutputDeviceChangedFlag{false};
 
 	};
 }
