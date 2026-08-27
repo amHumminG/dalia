@@ -21,15 +21,13 @@ namespace dalia {
 		WasapiDevice(Microsoft::WRL::ComPtr<IMMDevice> device);
 		~WasapiDevice() override;
 
-		Result Initialize();
+		Result Initialize(uint32_t engineSampleRate);
 
 		Result Start(RtSystem* system) override;
 		void Stop() override;
 
-		uint32_t GetSampleRate() const;
-		uint32_t GetChannelCount() const;
-		uint32_t GetPeriodSizeInFrames() const;
-		SpeakerLayout GetSpeakerLayout() const;
+		uint32_t GetChannelCount() const override;
+		SpeakerLayout GetSpeakerLayout() const override;
 
 	private:
 		void AudioThreadMain();

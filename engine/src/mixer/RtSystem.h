@@ -69,6 +69,9 @@ namespace dalia {
         explicit RtSystem(const RtSystemConfig& config);
         void Tick(float* output, uint32_t frameCount);
 
+    	// Must only be called when the audio thread is stopped
+    	void SetOutputFormat(uint32_t channels, SpeakerLayout layout);
+
     private:
         void ProcessCommands();
     	void ProcessParams();
@@ -89,7 +92,7 @@ namespace dalia {
         void DetachEffect(EffectHandle handle, uint32_t busIndex, uint32_t effectSlot);
         void FadeOutEffect(EffectHandle handle, uint32_t busIndex, uint32_t effectSlot);
 
-    	void ConfigureSpeakerLayout(SpeakerLayout layout); // Returns the spatial speaker count
+    	void ConfigureSpeakerLayout(SpeakerLayout layout); // Also sets the spatial speaker count
 
     	PeakLimiter m_masterPeakLimiter;
     	float m_smoothingCoefficient = 0.0f; // Used for volume and gain smoothing

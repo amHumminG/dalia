@@ -20,12 +20,12 @@ namespace dalia {
 		virtual ~AudioDeviceManager() = default;
 
 		virtual Result Initialize() = 0;
-		virtual std::vector<AudioDeviceInfo> Enumerate() = 0;
-		virtual bool HasDeviceChanged() const = 0;
-		virtual void ClearDeviceChangedFlag() = 0;
 
-		virtual std::unique_ptr<AudioDevice> CreateDevice(const std::string& identifier) = 0;
-		virtual std::unique_ptr<AudioDevice> CreateNullDevice(uint32_t targetSampleRate, uint32_t periodSizeInFrames, uint32_t channelCount) = 0;
+		virtual std::vector<AudioDeviceInfo> Enumerate() = 0;
+		virtual bool PollDeviceChanged() = 0;
+
+		virtual std::unique_ptr<AudioDevice> CreateDevice(const std::string& identifier, uint32_t engineSampleRate) = 0;
+		virtual std::unique_ptr<AudioDevice> CreateNullDevice(uint32_t engineSampleRate, uint32_t periodSizeInFrames) = 0;
 
 	};
 }

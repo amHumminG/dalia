@@ -3,7 +3,9 @@
 #include "dalia/audio/SoundControl.h"
 #include "dalia/audio/EffectControl.h"
 
-#include "backend/WasapiBackend.h"
+#include "backend/windows/WindowsDeviceManager.h"
+#include "backend/windows/WindowsNullDevice.h"
+#include "backend/windows/WasapiDevice.h"
 
 #include "core/Logger.h"
 #include "core/FixedStack.h"
@@ -80,7 +82,10 @@ namespace dalia {
 		bool initialized = false;
 
 		// Output Settings
-		std::unique_ptr<IAudioBackend> backend; // HAL
+		std::unique_ptr<AudioDeviceManager> deviceManager;
+		std::unique_ptr<AudioDevice> outputDevice;
+		std::unique_ptr<AudioDevice> nullDevice;
+		AudioDevice* activeDevice; // Points to either outputDevice or nullDevice
 
 		SpeakerLayout speakerLayout;
 		uint32_t maxSamplesPerPeriod = 0;
@@ -525,44 +530,52 @@ namespace dalia {
 		m_state->listeners.Get(0).params.isActive = true;
 		m_state->listeners.GetMirror(0).params.isActive = true;
 
-		// --- BACKEND (HAL) SETUP ---
+		// --- Device Manager Setup ---
 #ifdef _WIN32
-		m_state->backend = std::make_unique<WasapiBackend>();
+		m_state->deviceManager = std::make_unique<WindowsDeviceManager>();
 #else
 		DALIA_LOG_CRIT(LOG_CTX_API, "Failed to initialize engine. Unsupported OS.");
 		TeardownInternal();
 		return Result::SystemError;
 #endif
 
-		Result res = m_state->backend->Init();
+		Result res = m_state->deviceManager->Initialize();
 		if (res != Result::Ok) {
-			DALIA_LOG_CRIT(LOG_CTX_API, "Failed to initialize engine. Backend initialization failed.");
+			DALIA_LOG_CRIT(LOG_CTX_API, "Failed to initialize engine. Device manager initialization failed.");
 			TeardownInternal();
 			return res;
 		}
 
-		m_state->speakerLayout		= m_state->backend->GetSpeakerLayout();
-		if (m_state->speakerLayout == SpeakerLayout::Mono) DALIA_LOG_DEBUG(LOG_CTX_API, "Device is has mono layout.");
-		if (m_state->speakerLayout == SpeakerLayout::Stereo) DALIA_LOG_DEBUG(LOG_CTX_API, "Device is has stereo layout.");
-		if (m_state->speakerLayout == SpeakerLayout::Surround51) DALIA_LOG_DEBUG(LOG_CTX_API, "Device is has 5.1 layout.");
-		if (m_state->speakerLayout == SpeakerLayout::Surround71) DALIA_LOG_DEBUG(LOG_CTX_API, "Device is has 7.1 layout.");
+		// --- Device & Null-Device Setup ---
+		m_state->outSampleRate = ENGINE_SAMPLE_RATE;
 
-		if (m_state->speakerLayout != SpeakerLayout::Mono && m_state->speakerLayout != SpeakerLayout::Stereo) {
-			// Temporary fix until we support more output layouts
-			DALIA_LOG_CRIT(LOG_CTX_API, "Failed to initialize engine. Device uses unsupported speaker layout.");
-			TeardownInternal();
-			return Result::DeviceFailed;
+		m_state->outputDevice = m_state->deviceManager->CreateDevice("default", m_state->outSampleRate);
+		m_state->nullDevice = m_state->deviceManager->CreateNullDevice(
+			m_state->outSampleRate,
+			(m_state->outSampleRate * 10) / 1000
+		);
+
+		if (m_state->outputDevice) m_state->activeDevice = m_state->outputDevice.get();
+		else m_state->activeDevice = m_state->nullDevice.get();
+
+		m_state->outChannels = m_state->activeDevice->GetChannelCount();
+		m_state->speakerLayout = m_state->activeDevice->GetSpeakerLayout();
+
+		if (m_state->outputDevice) {
+			DALIA_LOG_INFO(LOG_CTX_API, "Output audio device initialized. Channels: %u.", m_state->outChannels);
+			switch (m_state->speakerLayout) {
+				case SpeakerLayout::Mono: DALIA_LOG_INFO(LOG_CTX_API, "Device speaker layout: Mono."); break;
+				case SpeakerLayout::Stereo: DALIA_LOG_INFO(LOG_CTX_API, "Device speaker layout: Stereo."); break;
+				case SpeakerLayout::Surround51: DALIA_LOG_INFO(LOG_CTX_API, "Device speaker layout: 5.1."); break;
+				case SpeakerLayout::Surround71: DALIA_LOG_INFO(LOG_CTX_API, "Device speaker layout: 7.1."); break;
+			}
+		}
+		else {
+			DALIA_LOG_WARN(LOG_CTX_API, "No output audio device found. Audio will render to void for now.");
 		}
 
-		m_state->outChannels		= m_state->backend->GetChannelCount();
-		m_state->outSampleRate		= m_state->backend->GetSampleRate();
-		uint32_t bufferSizeInFrames = m_state->backend->GetBufferCapacityInFrames();
-
-		DALIA_LOG_DEBUG(LOG_CTX_API, "Backend period size: %d.", m_state->backend->GetPeriodSizeInFrames());
-		DALIA_LOG_DEBUG(LOG_CTX_API, "Backend buffer size: %d.", bufferSizeInFrames);
-
-		// Buffer allocations based on period size
-		m_state->maxSamplesPerPeriod = bufferSizeInFrames * CHANNELS_MAX;
+		// -- Periodicity Dependent Buffer Allocations ---
+		m_state->maxSamplesPerPeriod = MAX_PERIOD_FRAMES * CHANNELS_MAX;
 		uint32_t busBufferPoolSize = m_state->busCapacity * m_state->maxSamplesPerPeriod;
 		m_state->busBufferPool = std::make_unique<float[]>(busBufferPoolSize);
 		m_state->dspScratchBuffer = std::make_unique<float[]>(m_state->maxSamplesPerPeriod);
@@ -592,8 +605,6 @@ namespace dalia {
 		rtConfig.dspScratchBuffer		= std::span(m_state->dspScratchBuffer.get(), m_state->maxSamplesPerPeriod);
 		m_state->rtSystem = std::make_unique<RtSystem>(rtConfig);
 
-		m_state->backend->AttachSystem(m_state->rtSystem.get()); // Attach audio system to backend
-
 		IoStreamSystemConfig ioStreamingConfig;
 		ioStreamingConfig.outSampleRate		= m_state->outSampleRate;
 		ioStreamingConfig.ioStreamRequests	= m_state->ioStreamRequests.get();
@@ -614,7 +625,7 @@ namespace dalia {
 		m_state->ioLoadSystem->Start();
 
 		// Audio Thread Start
-		res = m_state->backend->Start();
+		res = m_state->activeDevice->Start(m_state->rtSystem.get());
 		if (res != Result::Ok) {
 			DALIA_LOG_CRIT(LOG_CTX_API, "Failed to initialize engine. Failed to start audio thread.");
 			TeardownInternal();
@@ -640,6 +651,53 @@ namespace dalia {
 
 	void Engine::Update() {
 		if (!IsInitialized(m_state)) return;
+
+		// --- Device Hot-Swapping ---
+		if (m_state->deviceManager->PollDeviceChanged()) {
+			DALIA_LOG_INFO(LOG_CTX_BACKEND, "OS audio device change detected. Initiating hot-swap sequence.");
+
+			// Stop audio thread
+			if (m_state->activeDevice) m_state->activeDevice->Stop();
+
+			// Rebuild for default device
+			m_state->outputDevice = m_state->deviceManager->CreateDevice("default", m_state->outSampleRate);
+
+			// Set active
+			if (m_state->outputDevice) {
+				m_state->activeDevice = m_state->outputDevice.get();
+				DALIA_LOG_INFO(LOG_CTX_BACKEND, "Audio device hot-swap sequence was successful.");
+				// TODO: Log the user-friendly name of the new device
+			}
+			else {
+				m_state->activeDevice = m_state->nullDevice.get();
+				DALIA_LOG_WARN(LOG_CTX_BACKEND,
+					"Audio device hot-swap sequence failed. No audio devices found. Audio will render to void for now.");
+			}
+
+			m_state->outChannels = m_state->activeDevice->GetChannelCount();
+			m_state->speakerLayout = m_state->activeDevice->GetSpeakerLayout();
+			switch (m_state->speakerLayout) {
+				case SpeakerLayout::Mono:       DALIA_LOG_INFO(LOG_CTX_API, "New layout: Mono."); break;
+				case SpeakerLayout::Stereo:     DALIA_LOG_INFO(LOG_CTX_API, "New layout: Stereo."); break;
+				case SpeakerLayout::Surround51: DALIA_LOG_INFO(LOG_CTX_API, "New layout: 5.1."); break;
+				case SpeakerLayout::Surround71: DALIA_LOG_INFO(LOG_CTX_API, "New layout: 7.1."); break;
+			}
+
+			m_state->rtSystem->SetOutputFormat(m_state->outChannels, m_state->speakerLayout);
+
+			Result res = m_state->activeDevice->Start(m_state->rtSystem.get());
+			if (res != Result::Ok) {
+				DALIA_LOG_WARN(LOG_CTX_API,
+					"Failed to start audio thread for new audio device after hot-swap sequence. Audio will render to the void for now.");
+
+				m_state->activeDevice = m_state->nullDevice.get();
+				m_state->outChannels = m_state->activeDevice->GetChannelCount();
+				m_state->speakerLayout = m_state->activeDevice->GetSpeakerLayout();
+
+				m_state->rtSystem->SetOutputFormat(m_state->outChannels, m_state->speakerLayout);
+				m_state->activeDevice->Start(m_state->rtSystem.get());
+			}
+		}
 
 		// --- Process Event Inbox ---
 		RtEvent RtEv;
@@ -1926,7 +1984,9 @@ namespace dalia {
 	void Engine::TeardownInternal() {
 		if (!m_state) return;
 
-		if (m_state->backend)			m_state->backend->Stop();
+		if (m_state->outputDevice)		m_state->outputDevice->Stop();
+		if (m_state->nullDevice)		m_state->nullDevice->Stop();
+
 		if (m_state->ioLoadSystem)		m_state->ioLoadSystem->Stop();
 		if (m_state->ioStreamSystem)	m_state->ioStreamSystem->Stop();
 

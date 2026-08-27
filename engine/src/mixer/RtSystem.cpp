@@ -388,6 +388,12 @@ namespace dalia {
         Render(output, frameCount); // Render the audio frame
     }
 
+    void RtSystem::SetOutputFormat(uint32_t channels, SpeakerLayout layout) {
+		m_outChannels = channels;
+		m_speakerLayout = layout;
+		ConfigureSpeakerLayout(layout);
+    }
+
     void RtSystem::ProcessCommands() {
         RtCommand cmd;
         while (m_rtCommands->Pop(cmd)) {

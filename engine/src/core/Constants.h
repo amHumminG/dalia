@@ -88,7 +88,9 @@ namespace dalia {
     constexpr float FILTER_RESONANCE_MIN = 0.1f;
     constexpr float FILTER_RESONANCE_MAX = 10.0f;
 
-    static constexpr uint32_t TARGET_OUTPUT_SAMPLE_RATE = 48000; // The output sample rate the engine wants to output
+	// Static engine configs
+    static constexpr uint32_t ENGINE_SAMPLE_RATE = 48000; // The output sample rate the engine wants to output
+	static constexpr uint32_t MAX_PERIOD_FRAMES = 2048;
 
     // --- Handles, Indices & Generations ---
     static constexpr uint64_t INVALID_RAW_ID = 0;

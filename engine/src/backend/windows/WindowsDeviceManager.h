@@ -20,16 +20,16 @@ namespace dalia {
 
 		std::vector<AudioDeviceInfo> Enumerate() override;
 
-		bool HasDeviceChanged() const override;
-		void ClearDeviceChangedFlag() override;
+		bool PollDeviceChanged() override;
 
-		std::unique_ptr<AudioDevice> CreateDevice(const std::string& identifier) override;
-		std::unique_ptr<AudioDevice> CreateNullDevice(uint32_t targetSampleRate, uint32_t periodSizeInFrames, uint32_t channelCount) override;
+		std::unique_ptr<AudioDevice> CreateDevice(const std::string& identifier, uint32_t engineSampleRate) override;
+		std::unique_ptr<AudioDevice> CreateNullDevice(uint32_t engineSampleRate, uint32_t periodSizeInFrames) override;
 
 	private:
-		class NotificationClient : public IMMNotificationClient {
+		class NotificationClient final : public IMMNotificationClient {
 		public:
 			NotificationClient(std::atomic<bool>& changeFlag);
+			~NotificationClient() = default;
 
 			ULONG STDMETHODCALLTYPE AddRef() override;
 			ULONG STDMETHODCALLTYPE Release() override;

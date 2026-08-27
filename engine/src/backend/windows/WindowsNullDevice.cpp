@@ -9,9 +9,9 @@
 
 namespace dalia {
 
-	WindowsNullDevice::WindowsNullDevice(uint32_t targetSampleRate, uint32_t periodSizeInFrames, uint32_t channelCount)
-		: m_sampleRate(targetSampleRate), m_periodSizeInFrames(periodSizeInFrames), m_channelCount(channelCount) {
-		m_voidBuffer = std::make_unique<float[]>(m_periodSizeInFrames * m_channelCount);
+	WindowsNullDevice::WindowsNullDevice(uint32_t engineSampleRate, uint32_t periodSizeInFrames)
+		: m_sampleRate(engineSampleRate), m_periodSizeInFrames(periodSizeInFrames) {
+		m_voidBuffer = std::make_unique<float[]>(m_periodSizeInFrames);
 	}
 
 	WindowsNullDevice::~WindowsNullDevice() {
@@ -33,6 +33,14 @@ namespace dalia {
 
 		if (m_audioThread.joinable()) m_audioThread.join();
 		m_system = nullptr;
+	}
+
+	uint32_t WindowsNullDevice::GetChannelCount() const {
+		return 1;
+	}
+
+	SpeakerLayout WindowsNullDevice::GetSpeakerLayout() const {
+		return SpeakerLayout::Mono;
 	}
 
 	void WindowsNullDevice::AudioThreadMain() {

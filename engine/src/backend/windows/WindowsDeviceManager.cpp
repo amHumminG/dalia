@@ -36,7 +36,7 @@ namespace dalia {
 		return E_NOINTERFACE;
 	}
 
-	HRESULT STDMETHODCALLTYPE WindowsDeviceManager::NotificationClient::OnDefaultDeviceChanged(EDataFlow flow, ERole role, LPCWSTR pwstrDeviceId) {
+	HRESULT STDMETHODCALLTYPE WindowsDeviceManager::NotificationClient::OnDefaultDeviceChanged(EDataFlow flow, ERole role, LPCWSTR /*pwstrDeviceId*/) {
 		// Only account for cases where the default rendering device changed
 		if (flow == eRender && role == eConsole) {
 			m_changeFlag.store(true, std::memory_order_release);
@@ -45,22 +45,22 @@ namespace dalia {
 		return S_OK;
 	}
 
-	HRESULT STDMETHODCALLTYPE WindowsDeviceManager::NotificationClient::OnDeviceStateChanged(LPCWSTR pwstrDeviceId, DWORD dwNewState) {
+	HRESULT STDMETHODCALLTYPE WindowsDeviceManager::NotificationClient::OnDeviceStateChanged(LPCWSTR /*pwstrDeviceId*/, DWORD /*dwNewState*/) {
 		m_changeFlag.store(true, std::memory_order_release);
 		return S_OK;
 	}
 
-	HRESULT STDMETHODCALLTYPE WindowsDeviceManager::NotificationClient::OnDeviceAdded(LPCWSTR pwstrDeviceId) {
+	HRESULT STDMETHODCALLTYPE WindowsDeviceManager::NotificationClient::OnDeviceAdded(LPCWSTR /*pwstrDeviceId*/) {
 		m_changeFlag.store(true, std::memory_order_release);
 		return S_OK;
 	}
 
-	HRESULT STDMETHODCALLTYPE WindowsDeviceManager::NotificationClient::OnDeviceRemoved(LPCWSTR pwstrDeviceId) {
+	HRESULT STDMETHODCALLTYPE WindowsDeviceManager::NotificationClient::OnDeviceRemoved(LPCWSTR /*pwstrDeviceId*/) {
 		m_changeFlag.store(true, std::memory_order_release);
 		return S_OK;
 	}
 
-	HRESULT STDMETHODCALLTYPE WindowsDeviceManager::NotificationClient::OnPropertyValueChanged(LPCWSTR pwstrDeviceId, const PROPERTYKEY key) {
+	HRESULT STDMETHODCALLTYPE WindowsDeviceManager::NotificationClient::OnPropertyValueChanged(LPCWSTR /*pwstrDeviceId*/, const PROPERTYKEY /*key*/) {
 		return S_OK; // Ignore volume/property changes
 	}
 
@@ -160,15 +160,11 @@ namespace dalia {
 		return deviceList;
 	}
 
-	bool WindowsDeviceManager::HasDeviceChanged() const {
-		return m_deviceChangedFlag.load(std::memory_order_acquire);
+	bool WindowsDeviceManager::PollDeviceChanged() {
+		return m_deviceChangedFlag.exchange(false, std::memory_order_acquire);
 	}
 
-	void WindowsDeviceManager::ClearDeviceChangedFlag() {
-		m_deviceChangedFlag.store(false, std::memory_order_release);
-	}
-
-	std::unique_ptr<AudioDevice> WindowsDeviceManager::CreateDevice(const std::string& identifier) {
+	std::unique_ptr<AudioDevice> WindowsDeviceManager::CreateDevice(const std::string& identifier, uint32_t engineSampleRate) {
 		Microsoft::WRL::ComPtr<IMMDevice> device;
 		HRESULT hr = S_OK;
 
@@ -188,13 +184,13 @@ namespace dalia {
 		if (FAILED(hr) || !device) return nullptr;
 
 		auto wasapiDevice = std::make_unique<WasapiDevice>(device);
-		if (wasapiDevice->Initialize() != Result::Ok) return nullptr; // Negotiate format and buffer size
+		if (wasapiDevice->Initialize(engineSampleRate) != Result::Ok) return nullptr; // Negotiate format and buffer size
 
 		return wasapiDevice;
 	}
 
-	std::unique_ptr<AudioDevice> WindowsDeviceManager::CreateNullDevice(uint32_t targetSampleRate, uint32_t periodSizeInFrames, uint32_t channelCount) {
-		return std::make_unique<WindowsNullDevice>(targetSampleRate, periodSizeInFrames, channelCount);
+	std::unique_ptr<AudioDevice> WindowsDeviceManager::CreateNullDevice(uint32_t targetSampleRate, uint32_t periodSizeInFrames) {
+		return std::make_unique<WindowsNullDevice>(targetSampleRate, periodSizeInFrames);
 	}
 }
 

@@ -16,11 +16,14 @@ namespace dalia {
 
 	class WindowsNullDevice : public AudioDevice {
 	public:
-		WindowsNullDevice(uint32_t targetSampleRate, uint32_t periodSizeInFrames, uint32_t channelCount);
+		WindowsNullDevice(uint32_t engineSampleRate, uint32_t periodSizeInFrames);
 		~WindowsNullDevice() override;
 
 		Result Start(RtSystem* system) override;
 		void Stop() override;
+
+		uint32_t GetChannelCount() const override;
+		SpeakerLayout GetSpeakerLayout() const override;
 
 	private:
 		void AudioThreadMain();
@@ -32,7 +35,6 @@ namespace dalia {
 
 		uint32_t m_sampleRate = 0;
 		uint32_t m_periodSizeInFrames = 0;
-		uint32_t m_channelCount = 0;
 
 		std::unique_ptr<float[]> m_voidBuffer;
 

@@ -25,7 +25,7 @@ namespace dalia {
 		if (m_shutdownEvent) CloseHandle(m_shutdownEvent);
 	}
 
-	Result WasapiDevice::Initialize() {
+	Result WasapiDevice::Initialize(uint32_t engineSampleRate) {
 		if (!m_device) return Result::DeviceFailed;
 
 		HRESULT hr = m_device->Activate(__uuidof(IAudioClient), CLSCTX_ALL, nullptr, (void**)&m_audioClient);
@@ -35,7 +35,10 @@ namespace dalia {
 		hr = m_audioClient->GetMixFormat(&mixFormat);
 		if (FAILED(hr)) return Result::ClientFailed;
 
-		m_sampleRate = mixFormat->nSamplesPerSec;
+		mixFormat->nSamplesPerSec = engineSampleRate; // Set device sample rate to match engine output
+		mixFormat->nAvgBytesPerSec = mixFormat->nSamplesPerSec * mixFormat->nBlockAlign; // Recalculate byte rate
+		m_sampleRate = engineSampleRate;
+
 		m_channelCount = mixFormat->nChannels;
 
 		// --- Determine Speaker Layout ---
@@ -223,6 +226,14 @@ namespace dalia {
 
 		if (m_audioClient) m_audioClient->Stop();
 		m_system = nullptr;
+	}
+
+	uint32_t WasapiDevice::GetChannelCount() const {
+		return m_channelCount;
+	}
+
+	SpeakerLayout WasapiDevice::GetSpeakerLayout() const {
+		return m_speakerLayout;
 	}
 
 	void WasapiDevice::AudioThreadMain() {
