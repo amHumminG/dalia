@@ -10,9 +10,9 @@ namespace dalia {
 
 	class RtSystem;
 
-	class AudioDevice {
+	class OutputDevice {
 	public:
-		virtual ~AudioDevice() = default;
+		virtual ~OutputDevice() = default;
 
 		virtual Result Start(RtSystem* system) = 0;
 		virtual void Stop() = 0;

@@ -1,4 +1,4 @@
-#include "backend/windows/WindowsNullDevice.h"
+#include "backend/windows/WindowsNullOutputDevice.h"
 
 #include "mixer/RtSystem.h"
 #include "core/Logger.h"
@@ -9,49 +9,49 @@
 
 namespace dalia {
 
-	WindowsNullDevice::WindowsNullDevice(uint32_t engineSampleRate, uint32_t periodSizeInFrames)
+	WindowsNullOutputDevice::WindowsNullOutputDevice(uint32_t engineSampleRate, uint32_t periodSizeInFrames)
 		: m_sampleRate(engineSampleRate), m_periodSizeInFrames(periodSizeInFrames) {
 		m_voidBuffer = std::make_unique<float[]>(m_periodSizeInFrames);
 	}
 
-	WindowsNullDevice::~WindowsNullDevice() {
+	WindowsNullOutputDevice::~WindowsNullOutputDevice() {
 		Stop();
 	}
 
-	Result WindowsNullDevice::Start(RtSystem* system) {
+	Result WindowsNullOutputDevice::Start(RtSystem* system) {
 		if (m_isRunning.load(std::memory_order_relaxed)) return Result::Ok;
 
 		m_system = system;
 		m_isRunning.store(true, std::memory_order_release);
 
-		m_audioThread = std::thread(&WindowsNullDevice::AudioThreadMain, this);
+		m_audioThread = std::thread(&WindowsNullOutputDevice::AudioThreadMain, this);
 		return Result::Ok;
 	}
 
-	void WindowsNullDevice::Stop() {
+	void WindowsNullOutputDevice::Stop() {
 		if (!m_isRunning.exchange(false, std::memory_order_release)) return;
 
 		if (m_audioThread.joinable()) m_audioThread.join();
 		m_system = nullptr;
 	}
 
-	bool WindowsNullDevice::HasFailed() const {
+	bool WindowsNullOutputDevice::HasFailed() const {
 		return false; // Cannot fail
 	}
 
-	const std::string& WindowsNullDevice::GetName() const {
+	const std::string& WindowsNullOutputDevice::GetName() const {
 		return m_name;
 	}
 
-	uint32_t WindowsNullDevice::GetChannelCount() const {
+	uint32_t WindowsNullOutputDevice::GetChannelCount() const {
 		return 1;
 	}
 
-	SpeakerLayout WindowsNullDevice::GetSpeakerLayout() const {
+	SpeakerLayout WindowsNullOutputDevice::GetSpeakerLayout() const {
 		return SpeakerLayout::Mono;
 	}
 
-	void WindowsNullDevice::AudioThreadMain() {
+	void WindowsNullOutputDevice::AudioThreadMain() {
 		SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_TIME_CRITICAL);
 
 		// Create high resolution timer

@@ -4,8 +4,8 @@
 #include "dalia/audio/EffectControl.h"
 
 #include "backend/windows/WindowsDeviceManager.h"
-#include "backend/windows/WindowsNullDevice.h"
-#include "backend/windows/WasapiDevice.h"
+#include "backend/windows/WindowsNullOutputDevice.h"
+#include "backend/windows/WasapiOutputDevice.h"
 
 #include "core/Logger.h"
 #include "core/FixedStack.h"
@@ -82,13 +82,13 @@ namespace dalia {
 		bool initialized = false;
 
 		// Device
-		std::unique_ptr<AudioDeviceManager> deviceManager;
-		std::unique_ptr<AudioDevice> outputDevice;
-		std::unique_ptr<AudioDevice> nullDevice;
-		AudioDevice* activeDevice; // Points to either outputDevice or nullDevice
+		std::unique_ptr<DeviceManager> deviceManager;
+		std::unique_ptr<OutputDevice> outputDevice;
+		std::unique_ptr<OutputDevice> nullDevice;
+		OutputDevice* activeDevice; // Points to either outputDevice or nullDevice
 
 		std::string targetDeviceId = "default";
-		std::vector<AudioDeviceInfo> cachedDeviceList;
+		std::vector<OutputDeviceInfo> cachedDeviceList;
 		bool pendingManualDeviceSwap = false;
 
 		SpeakerLayout speakerLayout;
@@ -668,7 +668,7 @@ namespace dalia {
 			if (deviceFailed) DALIA_LOG_INFO(LOG_CTX_BACKEND, "Active audio device reported failure. Initiating swap sequence.");
 			else if (manualTriggered) DALIA_LOG_INFO(LOG_CTX_BACKEND, "Audio device swap requested. Initiating swap sequence.");
 			else DALIA_LOG_INFO(LOG_CTX_BACKEND, "Audio device change detected. Initiating swap sequence.");
-			
+
 			// Stop audio thread
 			if (m_state->activeDevice) m_state->activeDevice->Stop();
 
@@ -785,7 +785,7 @@ namespace dalia {
 		return Result::Ok;
 	}
 
-	Result Engine::GetOutputDeviceInfo(uint32_t index, AudioDeviceInfo& info) const {
+	Result Engine::GetOutputDeviceInfo(uint32_t index, OutputDeviceInfo& info) const {
 		if (!IsInitialized(m_state)) return Result::NotInitialized;
 		if (index >= m_state->cachedDeviceList.size()) return Result::InvalidArgs;
 

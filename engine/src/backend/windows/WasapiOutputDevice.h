@@ -1,6 +1,6 @@
 #pragma once
 
-#include "backend/AudioDevice.h"
+#include "backend/OutputDevice.h"
 #include "mixer/Speakers.h"
 
 #define WIN32_LEAN_AND_MEAN
@@ -16,10 +16,10 @@ namespace dalia {
 
 	class RtSystem;
 
-	class WasapiDevice : public AudioDevice {
+	class WasapiOutputDevice : public OutputDevice {
 	public:
-		WasapiDevice(Microsoft::WRL::ComPtr<IMMDevice> device);
-		~WasapiDevice() override;
+		WasapiOutputDevice(Microsoft::WRL::ComPtr<IMMDevice> device);
+		~WasapiOutputDevice() override;
 
 		Result Initialize(uint32_t engineSampleRate);
 

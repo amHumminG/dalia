@@ -30,15 +30,15 @@ set(ENGINE_FILES
     # Internal headers and cpp-files
     src/Engine.cpp
 
-    src/backend/AudioDeviceManager.cpp
-    src/backend/AudioDeviceManager.h
-    src/backend/AudioDevice.h
+    src/backend/DeviceManager.cpp
+    src/backend/DeviceManager.h
+    src/backend/OutputDevice.h
     src/backend/windows/WindowsDeviceManager.cpp
     src/backend/windows/WindowsDeviceManager.h
-    src/backend/windows/WasapiDevice.cpp
-    src/backend/windows/WasapiDevice.h
-    src/backend/windows/WindowsNullDevice.cpp
-    src/backend/windows/WindowsNullDevice.h
+    src/backend/windows/WasapiOutputDevice.cpp
+    src/backend/windows/WasapiOutputDevice.h
+    src/backend/windows/WindowsNullOutputDevice.cpp
+    src/backend/windows/WindowsNullOutputDevice.h
 
     src/core/Constants.h
     src/core/Logger.h

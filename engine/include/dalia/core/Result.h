@@ -17,7 +17,6 @@ namespace dalia {
 		InvalidEffectSlot			= -9,
 		ListenerNotFound			= -10,
 
-
 		// Pool Capacity Errors
 		PoolExhausted				= -100,
 		ResidentSoundPoolExhausted	= -101,

@@ -1,7 +1,7 @@
 #include "backend/windows/WindowsDeviceManager.h"
 
-#include "backend/windows/WasapiDevice.h"
-#include "backend/windows/WindowsNullDevice.h"
+#include "backend/windows/WasapiOutputDevice.h"
+#include "backend/windows/WindowsNullOutputDevice.h"
 #include "core/Logger.h"
 
 #include <functiondiscoverykeys_devpkey.h> // For PKEY_Device_FriendlyName
@@ -101,8 +101,8 @@ namespace dalia {
 		return Result::Ok;
 	}
 
-	std::vector<AudioDeviceInfo> WindowsDeviceManager::Enumerate() {
-		std::vector<AudioDeviceInfo> deviceList;
+	std::vector<OutputDeviceInfo> WindowsDeviceManager::Enumerate() {
+		std::vector<OutputDeviceInfo> deviceList;
 		if (!m_enumerator) return deviceList;
 
 		// Find the current default device ID
@@ -126,7 +126,7 @@ namespace dalia {
 			Microsoft::WRL::ComPtr<IMMDevice> device;
 			if (FAILED(collection->Item(i, &device))) continue;
 
-			AudioDeviceInfo info{};
+			OutputDeviceInfo info{};
 
 			// Get device id
 			LPWSTR deviceIdW = nullptr;
@@ -161,7 +161,7 @@ namespace dalia {
 		return m_deviceChangedFlag.exchange(false, std::memory_order_acquire);
 	}
 
-	std::unique_ptr<AudioDevice> WindowsDeviceManager::CreateDevice(const char* identifier, uint32_t engineSampleRate) {
+	std::unique_ptr<OutputDevice> WindowsDeviceManager::CreateDevice(const char* identifier, uint32_t engineSampleRate) {
 		Microsoft::WRL::ComPtr<IMMDevice> device;
 		HRESULT hr = S_OK;
 
@@ -180,14 +180,14 @@ namespace dalia {
 
 		if (FAILED(hr) || !device) return nullptr;
 
-		auto wasapiDevice = std::make_unique<WasapiDevice>(device);
+		auto wasapiDevice = std::make_unique<WasapiOutputDevice>(device);
 		if (wasapiDevice->Initialize(engineSampleRate) != Result::Ok) return nullptr; // Negotiate format and buffer size
 
 		return wasapiDevice;
 	}
 
-	std::unique_ptr<AudioDevice> WindowsDeviceManager::CreateNullDevice(uint32_t targetSampleRate, uint32_t periodSizeInFrames) {
-		return std::make_unique<WindowsNullDevice>(targetSampleRate, periodSizeInFrames);
+	std::unique_ptr<OutputDevice> WindowsDeviceManager::CreateNullDevice(uint32_t targetSampleRate, uint32_t periodSizeInFrames) {
+		return std::make_unique<WindowsNullOutputDevice>(targetSampleRate, periodSizeInFrames);
 	}
 }
 

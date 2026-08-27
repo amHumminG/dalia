@@ -1,6 +1,6 @@
 #pragma once
 
-#include "backend/AudioDevice.h"
+#include "backend/OutputDevice.h"
 
 #include <atomic>
 #include <thread>
@@ -14,10 +14,10 @@ namespace dalia {
 
 	class RtSystem;
 
-	class WindowsNullDevice : public AudioDevice {
+	class WindowsNullOutputDevice : public OutputDevice {
 	public:
-		WindowsNullDevice(uint32_t engineSampleRate, uint32_t periodSizeInFrames);
-		~WindowsNullDevice() override;
+		WindowsNullOutputDevice(uint32_t engineSampleRate, uint32_t periodSizeInFrames);
+		~WindowsNullOutputDevice() override;
 
 		Result Start(RtSystem* system) override;
 		void Stop() override;

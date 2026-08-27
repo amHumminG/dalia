@@ -254,7 +254,7 @@ namespace dalia {
 		///
 		/// @tparam TParams		The parameter struct containing the effect settings.
 		/// @param[out] effect	The handle to be populated.
-		/// @param[in] params	The initial parameters.
+		/// @param[in]	params	The initial parameters.
 		///
 		/// @retval Result::Ok						The effect was successfully created.
 		/// @retval Result::NotInitialized			The engine is not initialized.

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "backend/AudioDeviceManager.h"
+#include "backend/DeviceManager.h"
 
 #include <atomic>
 
@@ -11,19 +11,19 @@
 
 namespace dalia {
 
-	class WindowsDeviceManager : public AudioDeviceManager {
+	class WindowsDeviceManager : public DeviceManager {
 	public:
 		WindowsDeviceManager();
 		~WindowsDeviceManager() override;
 
 		Result Initialize() override;
 
-		std::vector<AudioDeviceInfo> Enumerate() override;
+		std::vector<OutputDeviceInfo> Enumerate() override;
 
 		bool PollDeviceChanged() override;
 
-		std::unique_ptr<AudioDevice> CreateDevice(const char* identifier, uint32_t engineSampleRate) override;
-		std::unique_ptr<AudioDevice> CreateNullDevice(uint32_t engineSampleRate, uint32_t periodSizeInFrames) override;
+		std::unique_ptr<OutputDevice> CreateDevice(const char* identifier, uint32_t engineSampleRate) override;
+		std::unique_ptr<OutputDevice> CreateNullDevice(uint32_t engineSampleRate, uint32_t periodSizeInFrames) override;
 
 	private:
 		class NotificationClient final : public IMMNotificationClient {

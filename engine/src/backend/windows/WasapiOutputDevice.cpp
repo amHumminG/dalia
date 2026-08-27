@@ -1,4 +1,4 @@
-#include "backend/windows/WasapiDevice.h"
+#include "backend/windows/WasapiOutputDevice.h"
 
 #include "mixer/RtSystem.h"
 #include "core/Logger.h"
@@ -14,19 +14,19 @@
 
 namespace dalia {
 
-	WasapiDevice::WasapiDevice(Microsoft::WRL::ComPtr<IMMDevice> device)
+	WasapiOutputDevice::WasapiOutputDevice(Microsoft::WRL::ComPtr<IMMDevice> device)
 		: m_device(std::move(device)) {
 		m_bufferEvent = CreateEvent(nullptr, FALSE, TRUE, nullptr);
 		m_shutdownEvent = CreateEvent(nullptr, TRUE, FALSE, nullptr);
 	}
 
-	WasapiDevice::~WasapiDevice() {
+	WasapiOutputDevice::~WasapiOutputDevice() {
 		Stop();
 		if (m_bufferEvent) CloseHandle(m_bufferEvent);
 		if (m_shutdownEvent) CloseHandle(m_shutdownEvent);
 	}
 
-	Result WasapiDevice::Initialize(uint32_t engineSampleRate) {
+	Result WasapiOutputDevice::Initialize(uint32_t engineSampleRate) {
 		if (!m_device) return Result::DeviceFailed;
 
 		// Extract friendly name
@@ -152,7 +152,7 @@ namespace dalia {
 		return Result::Ok;
 	}
 
-	Result WasapiDevice::Start(RtSystem* system) {
+	Result WasapiOutputDevice::Start(RtSystem* system) {
 		if (m_isRunning.load(std::memory_order_relaxed)) return Result::Ok;
 
 		m_system = system;
@@ -161,12 +161,12 @@ namespace dalia {
 		if (FAILED(hr)) return Result::ClientFailed;
 
 		m_isRunning.store(true, std::memory_order_release);
-		m_audioThread = std::thread(&WasapiDevice::AudioThreadMain, this);
+		m_audioThread = std::thread(&WasapiOutputDevice::AudioThreadMain, this);
 
 		return Result::Ok;
 	}
 
-	void WasapiDevice::Stop() {
+	void WasapiOutputDevice::Stop() {
 		if (!m_isRunning.exchange(false, std::memory_order_release)) return;
 
 		SetEvent(m_shutdownEvent); // Wake up thread if it's asleep
@@ -176,23 +176,23 @@ namespace dalia {
 		m_system = nullptr;
 	}
 
-	bool WasapiDevice::HasFailed() const {
+	bool WasapiOutputDevice::HasFailed() const {
 		return m_hasFailed.load(std::memory_order_relaxed);
 	}
 
-	const std::string& WasapiDevice::GetName() const {
+	const std::string& WasapiOutputDevice::GetName() const {
 		return m_name;
 	}
 
-	uint32_t WasapiDevice::GetChannelCount() const {
+	uint32_t WasapiOutputDevice::GetChannelCount() const {
 		return m_channelCount;
 	}
 
-	SpeakerLayout WasapiDevice::GetSpeakerLayout() const {
+	SpeakerLayout WasapiOutputDevice::GetSpeakerLayout() const {
 		return m_speakerLayout;
 	}
 
-	void WasapiDevice::AudioThreadMain() {
+	void WasapiOutputDevice::AudioThreadMain() {
 		// Ensure this thread is very high priority
 		DWORD taskIndex = 0;
 		HANDLE mmcssHandle = AvSetMmThreadCharacteristics(TEXT("Pro Audio"), &taskIndex);
