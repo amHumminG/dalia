@@ -56,10 +56,10 @@ set(ENGINE_FILES
     src/core/AsyncPool.h
     src/core/ParameterBridge.h
 
-    src/io/IoStreamSystem.cpp
-    src/io/IoStreamSystem.h
-    src/io/IoLoadSystem.cpp
-    src/io/IoLoadSystem.h
+    src/async/AsyncStreamSystem.cpp
+    src/async/AsyncStreamSystem.h
+    src/async/AsyncLoadSystem.cpp
+    src/async/AsyncLoadSystem.h
 
     src/messaging/RtCommandQueue.h
     src/messaging/RtCommandQueue.cpp
@@ -95,6 +95,9 @@ set(ENGINE_FILES
     src/resources/AssetRegistry.cpp
     src/resources/AssetRegistry.h
     src/resources/StreamSound.h
+    src/async/AsyncControlSystem.cpp
+    src/async/AsyncControlSystem.h
+    src/messaging/AsyncControlMessaging.h
 )
 
 add_library(dalia_engine STATIC ${ENGINE_FILES})

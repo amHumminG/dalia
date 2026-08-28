@@ -9,8 +9,8 @@ namespace dalia {
     class IoLoadEventQueue;
     class AssetRegistry;
 
-    struct IoLoadSystemConfig {
-    	uint32_t outSampleRate;
+    struct AsyncLoadSystemConfig {
+    	uint32_t outSampleRate = 0;
 
         IoLoadRequestQueue* ioLoadRequests = nullptr;
         IoLoadEventQueue* ioLoadEvents = nullptr;
@@ -18,10 +18,10 @@ namespace dalia {
         AssetRegistry*  assetRegistry = nullptr;
     };
 
-    class IoLoadSystem {
+    class AsyncLoadSystem {
     public:
-        IoLoadSystem(const IoLoadSystemConfig& config);
-        ~IoLoadSystem();
+        AsyncLoadSystem(const AsyncLoadSystemConfig& config);
+        ~AsyncLoadSystem();
 
         void Start();
         void Stop();

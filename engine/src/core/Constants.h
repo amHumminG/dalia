@@ -22,8 +22,11 @@
 
 namespace dalia {
 
-    // -- I/O ---
+    // --- I/O ---
     static constexpr size_t MAX_IO_PATH_SIZE = 256; // The maximum length of a filepath string
+
+	// --- Messaging ---
+	static constexpr size_t ASYNC_CONTROL_QUEUE_CAPACITY = 32;
 
     // --- Mixing ---
 	constexpr float EPSILON = 1e-5f;

@@ -10,17 +10,17 @@ namespace dalia {
     struct StreamContext;
     template <typename T> class SPSCRingBuffer;
 
-    struct IoStreamSystemConfig {
+    struct AsyncStreamSystemConfig {
     	uint32_t outSampleRate;
         IoStreamRequestQueue* ioStreamRequests = nullptr;
         std::span<StreamContext> streamPool;
         SPSCRingBuffer<uint32_t>*   freeStreams = nullptr;
     };
 
-    class IoStreamSystem {
+    class AsyncStreamSystem {
     public:
-        explicit IoStreamSystem(const IoStreamSystemConfig& config);
-        ~IoStreamSystem();
+        explicit AsyncStreamSystem(const AsyncStreamSystemConfig& config);
+        ~AsyncStreamSystem();
 
         void Start();
         void Stop();

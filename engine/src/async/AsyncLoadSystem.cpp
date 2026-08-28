@@ -1,4 +1,4 @@
-#include "io/IoLoadSystem.h"
+#include "async/AsyncLoadSystem.h"
 
 #include "core/Logger.h"
 #include "core/Utility.h"
@@ -15,32 +15,32 @@
 
 namespace dalia {
 
-    IoLoadSystem::IoLoadSystem(const IoLoadSystemConfig& config)
+    AsyncLoadSystem::AsyncLoadSystem(const AsyncLoadSystemConfig& config)
         : m_outSampleRate(config.outSampleRate),
 		m_ioLoadRequests(config.ioLoadRequests),
         m_ioLoadEvents(config.ioLoadEvents),
         m_assetRegistry(config.assetRegistry) {
     }
 
-    IoLoadSystem::~IoLoadSystem() {
+    AsyncLoadSystem::~AsyncLoadSystem() {
         Stop();
     }
 
-    void IoLoadSystem::Start() {
+    void AsyncLoadSystem::Start() {
         if (m_isRunning.load(std::memory_order_relaxed)) return;
 
         m_isRunning.store(true, std::memory_order_release);
-        m_thread = std::thread(&IoLoadSystem::ThreadMain, this);
+        m_thread = std::thread(&AsyncLoadSystem::ThreadMain, this);
     }
 
-    void IoLoadSystem::Stop() {
+    void AsyncLoadSystem::Stop() {
         if (!m_isRunning.load(std::memory_order_relaxed)) return;
 
         m_isRunning.store(false, std::memory_order_release);
         if (m_thread.joinable()) m_thread.join();
     }
 
-    void IoLoadSystem::ThreadMain() {
+    void AsyncLoadSystem::ThreadMain() {
         while (m_isRunning.load(std::memory_order_relaxed)) {
             bool didWork = false;
             IoLoadRequest req;
@@ -56,7 +56,7 @@ namespace dalia {
         }
     }
 
-    void IoLoadSystem::ProcessRequest(const IoLoadRequest& req) {
+    void AsyncLoadSystem::ProcessRequest(const IoLoadRequest& req) {
         switch (req.type) {
             case IoLoadRequest::Type::LoadSound: {
                 SoundHandle soundHandle = SoundHandle::FromRawId(req.data.soundFromFile.resourceHandleRawId);
