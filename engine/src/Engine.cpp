@@ -1,9 +1,14 @@
 #include "dalia/audio/Engine.h"
+
+#include <future>
+
 #include "dalia/audio/PlaybackControl.h"
 #include "dalia/audio/SoundControl.h"
 #include "dalia/audio/EffectControl.h"
 
-#include "backend/WasapiBackend.h"
+#include "backend/windows/WindowsDeviceManager.h"
+#include "backend/windows/WindowsNullOutputDevice.h"
+#include "backend/windows/WasapiOutputDevice.h"
 
 #include "core/Logger.h"
 #include "core/FixedStack.h"
@@ -18,6 +23,7 @@
 #include "messaging/IoStreamRequestQueue.h"
 #include "messaging/IoLoadRequestQueue.h"
 #include "messaging/IoLoadEventQueue.h"
+#include "messaging/AsyncControlMessaging.h"
 
 #include "core/StateSyncPool.h"
 #include "core/AsyncPool.h"
@@ -31,8 +37,9 @@
 #include "mixer/RtSystem.h"
 #include "mixer/Speakers.h"
 
-#include "io/IoStreamSystem.h"
-#include "io/IoLoadSystem.h"
+#include "async/AsyncStreamSystem.h"
+#include "async/AsyncLoadSystem.h"
+#include "async/AsyncControlSystem.h"
 
 #include "resources/AssetRegistry.h"
 #include "resources/ResidentSound.h"
@@ -79,14 +86,24 @@ namespace dalia {
 	struct EngineInternalState {
 		bool initialized = false;
 
-		// Output Settings
-		std::unique_ptr<IAudioBackend> backend; // HAL
+		// Devices
+		std::unique_ptr<DeviceManager> deviceManager;
+		std::unique_ptr<OutputDevice> outputDevice;
+		std::unique_ptr<OutputDevice> nullOutputDevice;
+		OutputDevice* activeOutputDevice; // Points to either outputDevice or nullDevice
+
+		std::vector<OutputDeviceInfo> cachedOutputDeviceList;
+		std::string targetOutputDeviceId = "default";
+		bool activeOutputDeviceIsDefault = true;
+		bool pendingOutputDeviceSwap = false;
+		bool isSwappingOutputDevice = false;
 
 		SpeakerLayout speakerLayout;
 		uint32_t maxSamplesPerPeriod = 0;
 		uint32_t outChannels = 0;
 		uint32_t outSampleRate = 0;
 
+		// Engine Settings
 		CoordinateSystem coordinateSystem;
 
 		// Messaging Queues
@@ -95,6 +112,9 @@ namespace dalia {
 		std::unique_ptr<IoStreamRequestQueue>	ioStreamRequests;
 		std::unique_ptr<IoLoadRequestQueue>		ioLoadRequests;
 		std::unique_ptr<IoLoadEventQueue>		ioLoadEvents;
+
+		std::unique_ptr<SPSCRingBuffer<AsyncControlRequest>> asyncControlRequests;
+		std::unique_ptr<SPSCRingBuffer<AsyncControlEvent>> asyncControlEvents;
 
 		// Resource Capacities
 		uint32_t streamCapacity		= 0;
@@ -143,8 +163,9 @@ namespace dalia {
 
 		// Systems
 		std::unique_ptr<RtSystem> rtSystem;
-		std::unique_ptr<IoStreamSystem> ioStreamSystem;
-		std::unique_ptr<IoLoadSystem> ioLoadSystem;
+		std::unique_ptr<AsyncStreamSystem> ioStreamSystem;
+		std::unique_ptr<AsyncLoadSystem> ioLoadSystem;
+		std::unique_ptr<AsyncControlSystem> asyncControlSystem;
 
 		EngineInternalState(const EngineConfig& config)
 			: coordinateSystem(config.coordinateSystem),
@@ -164,6 +185,8 @@ namespace dalia {
 			ioStreamRequests	= std::make_unique<IoStreamRequestQueue>(config.ioStreamRequestQueueCapacity);
 			ioLoadRequests		= std::make_unique<IoLoadRequestQueue>(config.ioLoadRequestQueueCapacity);
 			ioLoadEvents		= std::make_unique<IoLoadEventQueue>(config.ioLoadEventQueueCapacity);
+			asyncControlRequests = std::make_unique<SPSCRingBuffer<AsyncControlRequest>>(ASYNC_CONTROL_QUEUE_CAPACITY);
+			asyncControlEvents = std::make_unique<SPSCRingBuffer<AsyncControlEvent>>(ASYNC_CONTROL_QUEUE_CAPACITY);
 
 			// Mixing
 			mixGraphCompiler	= std::make_unique<MixGraphCompiler>(config.busCapacity);
@@ -251,6 +274,96 @@ namespace dalia {
 	// --- INTERNAL HELPERS ---
 	static inline bool IsInitialized(const EngineInternalState* state) {
 		return state != nullptr && state->initialized;
+	}
+
+	static void ProcessOutputDeviceSwapping(EngineInternalState* state) {
+		// --- Phase 1 (Poll event queue) ---
+		AsyncControlEvent ev;
+		while (state->asyncControlEvents->Pop(ev)) {
+			if (ev.type == AsyncControlEvent::Type::OutputDeviceSwapped) {
+				if (state->activeOutputDevice) state->activeOutputDevice->Stop();// Stop the null device
+				state->outputDevice.reset(ev.data.swapOutputDevice.newDevice); // Take ownership of new device
+
+				if (ev.data.swapOutputDevice.fellBackToDefault) {
+					state->targetOutputDeviceId = "default";
+					DALIA_LOG_WARN(LOG_CTX_API, "Requested audio output device was unavailable. Fell back to OS default.");
+				}
+
+				state->activeOutputDeviceIsDefault = (state->targetOutputDeviceId == "default");
+
+				if (state->outputDevice) {
+					state->activeOutputDevice = state->outputDevice.get();
+					state->outChannels = state->activeOutputDevice->GetChannelCount();
+					state->speakerLayout = state->activeOutputDevice->GetSpeakerLayout();
+
+					std::string layout;
+					switch (state->speakerLayout) {
+						case SpeakerLayout::Mono: layout = "Mono"; break;
+						case SpeakerLayout::Stereo: layout = "Stereo"; break;
+						case SpeakerLayout::Surround51: layout = "5.1"; break;
+						case SpeakerLayout::Surround71: layout = "7.1"; break;
+					}
+					DALIA_LOG_INFO(LOG_CTX_API, "Successfully swapped audio device to \"%s\". %s layout with %u channel(s).",
+						state->outputDevice->GetName().c_str(), layout.c_str(), state->outChannels);
+				}
+				else {
+					// Both the requested device and the OS default device failed
+					state->activeOutputDevice = state->nullOutputDevice.get(); // Fall back to null device
+					state->outChannels = state->activeOutputDevice->GetChannelCount();
+					state->speakerLayout = state->activeOutputDevice->GetSpeakerLayout();
+					state->targetOutputDeviceId = "default";
+
+					DALIA_LOG_ERR(LOG_CTX_API, "No audio output devices available. Audio will render to void for now.");
+				}
+
+				// Reconfigure and start audio thread
+				state->rtSystem->SetOutputFormat(state->outChannels, state->speakerLayout);
+				state->activeOutputDevice->Start(state->rtSystem.get());
+
+				state->isSwappingOutputDevice = false;
+			}
+		}
+
+		// --- Phase 2 (Wait For Ongoing Swap) ---
+		if (state->isSwappingOutputDevice) return;
+
+		// --- Phase 3 (Initiate Swap If Needed) ---
+		std::string newOsDefaultOutputId;
+		bool osDefaultOutputChanged = state->deviceManager->PollDefaultOutputDeviceChanged(newOsDefaultOutputId);
+		bool shouldReactToOsDefaultChanged = osDefaultOutputChanged && (state->targetOutputDeviceId == "default");
+		bool manualChangePending = state->pendingOutputDeviceSwap;
+		bool deviceFailed = state->activeOutputDevice && state->activeOutputDevice->HasFailed();
+
+		// Async shield (for double swaps)
+		if (shouldReactToOsDefaultChanged && state->activeOutputDevice && !deviceFailed) {
+			// Does the active device's id match the new os default id?
+			if (state->activeOutputDevice->GetIdentifier() == newOsDefaultOutputId) {
+				// We are already using the new default device -> ignore os notification
+				shouldReactToOsDefaultChanged = false;
+			}
+		}
+
+		if (shouldReactToOsDefaultChanged || manualChangePending || deviceFailed) {
+			state->pendingOutputDeviceSwap = false;
+			state->isSwappingOutputDevice = true;
+
+			if (deviceFailed) DALIA_LOG_INFO(LOG_CTX_API, "Active audio device reported failure. Initiating swap sequence.");
+			else if (manualChangePending) DALIA_LOG_INFO(LOG_CTX_API, "Audio device swap requested. Initiating swap sequence.");
+			else DALIA_LOG_INFO(LOG_CTX_API, "OS default audio device changed. Initiating swap sequence.");
+
+			// Transition to NullDevice during swap sequence
+			if (state->activeOutputDevice) state->activeOutputDevice->Stop();
+
+			state->activeOutputDevice = state->nullOutputDevice.get();
+			state->outChannels = state->activeOutputDevice->GetChannelCount();
+			state->speakerLayout = state->activeOutputDevice->GetSpeakerLayout();
+			state->rtSystem->SetOutputFormat(state->outChannels, state->speakerLayout);
+			state->activeOutputDevice->Start(state->rtSystem.get());
+
+			// Push swap request to async control system
+			AsyncControlRequest req = AsyncControlRequest::SwapOutputDevice(state->targetOutputDeviceId.c_str(), state->outSampleRate);
+			if (state->asyncControlRequests->Push(req)) state->asyncControlSystem->NotifyTaskAdded(); // Wake up control thread
+		}
 	}
 
 	static inline Result DispatchStreamPrepare(EngineInternalState* state, const char* filepath, uint32_t& streamIndex,
@@ -525,44 +638,54 @@ namespace dalia {
 		m_state->listeners.Get(0).params.isActive = true;
 		m_state->listeners.GetMirror(0).params.isActive = true;
 
-		// --- BACKEND (HAL) SETUP ---
+		// --- Device Manager Setup ---
 #ifdef _WIN32
-		m_state->backend = std::make_unique<WasapiBackend>();
+		m_state->deviceManager = std::make_unique<WindowsDeviceManager>();
 #else
 		DALIA_LOG_CRIT(LOG_CTX_API, "Failed to initialize engine. Unsupported OS.");
 		TeardownInternal();
 		return Result::SystemError;
 #endif
 
-		Result res = m_state->backend->Init();
+		Result res = m_state->deviceManager->Initialize();
 		if (res != Result::Ok) {
-			DALIA_LOG_CRIT(LOG_CTX_API, "Failed to initialize engine. Backend initialization failed.");
+			DALIA_LOG_CRIT(LOG_CTX_API, "Failed to initialize engine. Device manager initialization failed.");
 			TeardownInternal();
 			return res;
 		}
 
-		m_state->speakerLayout		= m_state->backend->GetSpeakerLayout();
-		if (m_state->speakerLayout == SpeakerLayout::Mono) DALIA_LOG_DEBUG(LOG_CTX_API, "Device is has mono layout.");
-		if (m_state->speakerLayout == SpeakerLayout::Stereo) DALIA_LOG_DEBUG(LOG_CTX_API, "Device is has stereo layout.");
-		if (m_state->speakerLayout == SpeakerLayout::Surround51) DALIA_LOG_DEBUG(LOG_CTX_API, "Device is has 5.1 layout.");
-		if (m_state->speakerLayout == SpeakerLayout::Surround71) DALIA_LOG_DEBUG(LOG_CTX_API, "Device is has 7.1 layout.");
+		// --- Device & Null-Device Setup ---
+		m_state->outSampleRate = ENGINE_SAMPLE_RATE;
 
-		if (m_state->speakerLayout != SpeakerLayout::Mono && m_state->speakerLayout != SpeakerLayout::Stereo) {
-			// Temporary fix until we support more output layouts
-			DALIA_LOG_CRIT(LOG_CTX_API, "Failed to initialize engine. Device uses unsupported speaker layout.");
-			TeardownInternal();
-			return Result::DeviceFailed;
+		m_state->outputDevice = m_state->deviceManager->CreateDevice("default", m_state->outSampleRate);
+		m_state->nullOutputDevice = m_state->deviceManager->CreateNullDevice(
+			m_state->outSampleRate,
+			(m_state->outSampleRate * 10) / 1000
+		);
+
+		if (m_state->outputDevice) m_state->activeOutputDevice = m_state->outputDevice.get();
+		else m_state->activeOutputDevice = m_state->nullOutputDevice.get();
+
+		m_state->outChannels = m_state->activeOutputDevice->GetChannelCount();
+		m_state->speakerLayout = m_state->activeOutputDevice->GetSpeakerLayout();
+
+		if (m_state->outputDevice) {
+			std::string layout;
+			switch (m_state->speakerLayout) {
+				case SpeakerLayout::Mono: layout = "Mono"; break;
+				case SpeakerLayout::Stereo: layout = "Stereo"; break;
+				case SpeakerLayout::Surround51: layout = "5.1"; break;
+				case SpeakerLayout::Surround71: layout = "7.1"; break;
+			}
+			DALIA_LOG_INFO(LOG_CTX_API, "Initialized audio device \"%s\". %s layout with %u channel(s).",
+				m_state->outputDevice->GetName().c_str(), layout.c_str(), m_state->outChannels);
+		}
+		else {
+			DALIA_LOG_WARN(LOG_CTX_API, "No output audio device found. Audio will render to void for now.");
 		}
 
-		m_state->outChannels		= m_state->backend->GetChannelCount();
-		m_state->outSampleRate		= m_state->backend->GetSampleRate();
-		uint32_t bufferSizeInFrames = m_state->backend->GetBufferCapacityInFrames();
-
-		DALIA_LOG_DEBUG(LOG_CTX_API, "Backend period size: %d.", m_state->backend->GetPeriodSizeInFrames());
-		DALIA_LOG_DEBUG(LOG_CTX_API, "Backend buffer size: %d.", bufferSizeInFrames);
-
-		// Buffer allocations based on period size
-		m_state->maxSamplesPerPeriod = bufferSizeInFrames * CHANNELS_MAX;
+		// -- Periodicity Dependent Buffer Allocations ---
+		m_state->maxSamplesPerPeriod = MAX_PERIOD_FRAMES * CHANNELS_MAX;
 		uint32_t busBufferPoolSize = m_state->busCapacity * m_state->maxSamplesPerPeriod;
 		m_state->busBufferPool = std::make_unique<float[]>(busBufferPoolSize);
 		m_state->dspScratchBuffer = std::make_unique<float[]>(m_state->maxSamplesPerPeriod);
@@ -592,29 +715,32 @@ namespace dalia {
 		rtConfig.dspScratchBuffer		= std::span(m_state->dspScratchBuffer.get(), m_state->maxSamplesPerPeriod);
 		m_state->rtSystem = std::make_unique<RtSystem>(rtConfig);
 
-		m_state->backend->AttachSystem(m_state->rtSystem.get()); // Attach audio system to backend
-
-		IoStreamSystemConfig ioStreamingConfig;
+		AsyncStreamSystemConfig ioStreamingConfig;
 		ioStreamingConfig.outSampleRate		= m_state->outSampleRate;
 		ioStreamingConfig.ioStreamRequests	= m_state->ioStreamRequests.get();
 		ioStreamingConfig.streamPool		= m_state->streams.GetSpan();
 		ioStreamingConfig.freeStreams		= m_state->streams.GetFreeList();
-		m_state->ioStreamSystem	= std::make_unique<IoStreamSystem>(ioStreamingConfig);
+		m_state->ioStreamSystem	= std::make_unique<AsyncStreamSystem>(ioStreamingConfig);
 
-		IoLoadSystemConfig ioLoadSystemConfig;
+		AsyncLoadSystemConfig ioLoadSystemConfig;
 		ioLoadSystemConfig.outSampleRate	= m_state->outSampleRate;
 		ioLoadSystemConfig.ioLoadRequests	= m_state->ioLoadRequests.get();
 		ioLoadSystemConfig.ioLoadEvents		= m_state->ioLoadEvents.get();
 		ioLoadSystemConfig.assetRegistry	= m_state->assetRegistry.get();
-		m_state->ioLoadSystem = std::make_unique<IoLoadSystem>(ioLoadSystemConfig);
+		m_state->ioLoadSystem = std::make_unique<AsyncLoadSystem>(ioLoadSystemConfig);
+
+		AsyncControlSystemConfig asyncControlSystemConfig;
+		asyncControlSystemConfig.requestQueue = m_state->asyncControlRequests.get();
+		asyncControlSystemConfig.eventQueue = m_state->asyncControlEvents.get();
+		asyncControlSystemConfig.deviceManager = m_state->deviceManager.get();
+		m_state->asyncControlSystem = std::make_unique<AsyncControlSystem>(asyncControlSystemConfig);
 
 		// --- SYSTEMS START ---
-		// I/O Thread Start
 		m_state->ioStreamSystem->Start();
 		m_state->ioLoadSystem->Start();
+		m_state->asyncControlSystem->Start();
 
-		// Audio Thread Start
-		res = m_state->backend->Start();
+		res = m_state->activeOutputDevice->Start(m_state->rtSystem.get());
 		if (res != Result::Ok) {
 			DALIA_LOG_CRIT(LOG_CTX_API, "Failed to initialize engine. Failed to start audio thread.");
 			TeardownInternal();
@@ -640,6 +766,8 @@ namespace dalia {
 
 	void Engine::Update() {
 		if (!IsInitialized(m_state)) return;
+
+		ProcessOutputDeviceSwapping(m_state);
 
 		// --- Process Event Inbox ---
 		RtEvent RtEv;
@@ -690,6 +818,56 @@ namespace dalia {
 
 		float clampedGlobalDopplerFactor = std::clamp(globalDopplerFactor, DOPPLER_FACTOR_MIN, DOPPLER_FACTOR_MAX);
 		m_state->rtCommands->Enqueue(RtCommand::SetGlobalDopplerFactor(clampedGlobalDopplerFactor));
+
+		return Result::Ok;
+	}
+
+	Result Engine::GetOutputDeviceCount(uint32_t& count) const {
+		if (!IsInitialized(m_state)) return Result::NotInitialized;
+
+		m_state->cachedOutputDeviceList = m_state->deviceManager->Enumerate(); // Refresh cache
+		count = static_cast<uint32_t>(m_state->cachedOutputDeviceList.size());
+
+		return Result::Ok;
+	}
+
+	Result Engine::GetOutputDeviceInfo(uint32_t index, OutputDeviceInfo& info) const {
+		if (!IsInitialized(m_state)) return Result::NotInitialized;
+		if (index >= m_state->cachedOutputDeviceList.size()) return Result::InvalidArgs;
+
+		info = m_state->cachedOutputDeviceList[index];
+
+		return Result::Ok;
+	}
+
+	Result Engine::GetActiveOutputDeviceInfo(OutputDeviceInfo& info) const {
+		if (!IsInitialized(m_state)) return Result::NotInitialized;
+		if (!m_state->activeOutputDevice) return Result::StateCorrupted;
+
+		snprintf(info.name, MAX_DEVICE_STR_LEN, "%s", m_state->activeOutputDevice->GetName().c_str());
+		snprintf(info.identifier, MAX_DEVICE_STR_LEN, "%s", m_state->activeOutputDevice->GetIdentifier().c_str());
+		info.isDefault = m_state->activeOutputDeviceIsDefault;
+
+		return Result::Ok;
+	}
+
+	Result Engine::GetTargetOutputDeviceId(char* identifier, size_t maxLength) const {
+		if (!IsInitialized(m_state)) return Result::NotInitialized;
+		if (!identifier || maxLength == 0) return Result::InvalidArgs;
+
+		snprintf(identifier, maxLength, "%s", m_state->targetOutputDeviceId.c_str());
+
+		return Result::Ok;
+	}
+
+	Result Engine::SetOutputDevice(const char* identifier) {
+		if (!IsInitialized(m_state)) return Result::NotInitialized;
+
+		const char* target = (identifier && identifier[0]) != '\0' ? identifier : "default"; // treat emtpy/nullptr as default
+		if (m_state->targetOutputDeviceId == target) return Result::Ok;
+
+		m_state->targetOutputDeviceId = target;
+		m_state->pendingOutputDeviceSwap = true;
 
 		return Result::Ok;
 	}
@@ -1926,7 +2104,9 @@ namespace dalia {
 	void Engine::TeardownInternal() {
 		if (!m_state) return;
 
-		if (m_state->backend)			m_state->backend->Stop();
+		if (m_state->outputDevice)		m_state->outputDevice->Stop();
+		if (m_state->nullOutputDevice)		m_state->nullOutputDevice->Stop();
+
 		if (m_state->ioLoadSystem)		m_state->ioLoadSystem->Stop();
 		if (m_state->ioStreamSystem)	m_state->ioStreamSystem->Stop();
 

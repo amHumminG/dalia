@@ -23,15 +23,21 @@ set(ENGINE_FILES
     include/dalia/audio/PlaybackControl.h
     include/dalia/audio/SoundControl.h
     include/dalia/audio/EffectControl.h
+    include/dalia/audio/DeviceControl.h
     include/dalia/Core/LogLevel.h
     include/dalia/Core/Result.h
 
     # Internal headers and cpp-files
     src/Engine.cpp
 
-    src/backend/WasapiBackend.cpp
-    src/backend/WasapiBackend.h
-    src/backend/IAudioBackend.h
+    src/backend/DeviceManager.h
+    src/backend/OutputDevice.h
+    src/backend/windows/WindowsDeviceManager.cpp
+    src/backend/windows/WindowsDeviceManager.h
+    src/backend/windows/WasapiOutputDevice.cpp
+    src/backend/windows/WasapiOutputDevice.h
+    src/backend/windows/WindowsNullOutputDevice.cpp
+    src/backend/windows/WindowsNullOutputDevice.h
 
     src/core/Constants.h
     src/core/Logger.h
@@ -50,10 +56,10 @@ set(ENGINE_FILES
     src/core/AsyncPool.h
     src/core/ParameterBridge.h
 
-    src/io/IoStreamSystem.cpp
-    src/io/IoStreamSystem.h
-    src/io/IoLoadSystem.cpp
-    src/io/IoLoadSystem.h
+    src/async/AsyncStreamSystem.cpp
+    src/async/AsyncStreamSystem.h
+    src/async/AsyncLoadSystem.cpp
+    src/async/AsyncLoadSystem.h
 
     src/messaging/RtCommandQueue.h
     src/messaging/RtCommandQueue.cpp
@@ -89,6 +95,9 @@ set(ENGINE_FILES
     src/resources/AssetRegistry.cpp
     src/resources/AssetRegistry.h
     src/resources/StreamSound.h
+    src/async/AsyncControlSystem.cpp
+    src/async/AsyncControlSystem.h
+    src/messaging/AsyncControlMessaging.h
 )
 
 add_library(dalia_engine STATIC ${ENGINE_FILES})

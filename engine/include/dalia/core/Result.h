@@ -8,14 +8,15 @@ namespace dalia {
 		// Generic Errors [-1, -99]
 		Error						= -1,
 		NotInitialized				= -2,
-		AlreadyInitialized			= -3,
-		InvalidHandle				= -4,
-		ExpiredHandle				= -5,
-		BusNotFound					= -6,
-		InvalidRouting				= -7,
-		InvalidEffectSlot			= -8,
-		ListenerNotFound			= -9,
-
+		StateCorrupted				= -3,
+		AlreadyInitialized			= -4,
+		InvalidArgs					= -5,
+		InvalidHandle				= -6,
+		ExpiredHandle				= -7,
+		BusNotFound					= -8,
+		InvalidRouting				= -9,
+		InvalidEffectSlot			= -10,
+		ListenerNotFound			= -11,
 
 		// Pool Capacity Errors
 		PoolExhausted				= -100,

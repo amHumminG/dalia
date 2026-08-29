@@ -37,7 +37,7 @@ namespace dalia {
 		uint64_t m_rawId = 0;
 	};
 
-	constexpr PlaybackHandle InvalidPlaybackHandle{};
+	constexpr PlaybackHandle InvalidPlaybackHandle{}; // Sentinel value representing an invalid playback instance.
 
 	/// @brief The condition under which a playback instance was stopped.
 	enum class PlaybackExitCondition : uint8_t {
@@ -124,9 +124,10 @@ namespace dalia {
 	/// @return A bitmask with the corresponding listener's bit enabled.
 	inline constexpr ListenerMask MakeListenerMask(uint32_t listenerIndex) { return (1 << listenerIndex); }
 
+	/// @brief Defines the mathematical handedness of the host engine's 3D world space.
 	enum class CoordinateSystem : uint8_t {
-		RightHanded,
-		LeftHanded
+		RightHanded = 0,
+		LeftHanded	= 1
 	};
 
 }

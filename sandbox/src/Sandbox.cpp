@@ -331,6 +331,7 @@ void Sandbox::DrawMenuBar() {
 		if (ImGui::BeginMenu("Edit")) {
 			if (ImGui::MenuItem("Engine Settings")) {
 				openEngineSettings = true;
+				RefreshAudioDevices();
 			}
 			ImGui::EndMenu();
 		}
@@ -948,33 +949,33 @@ void Sandbox::DrawViewport() {
 	ImVec2 windowPos = ImGui::GetWindowPos();
 	ImVec2 windowSize = ImGui::GetWindowSize();
 
-	if (!m_inFreeCamMode) {
-		const char* text = "Press C to enter free camera mode";
-		float textWidth = ImGui::CalcTextSize(text).x;
-		ImGui::GetWindowDrawList()->AddText(
-			ImVec2(windowPos.x + (windowSize.x / 2) - (textWidth / 2), windowPos.y + 30),
-			IM_COL32(255, 255, 255, 150),
-			text
-		);
-	}
-	else {
-		const char* text = "Press C to exit free camera mode";
-		float textWidth = ImGui::CalcTextSize(text).x;
-		ImGui::GetWindowDrawList()->AddText(
-		ImVec2(windowPos.x + (windowSize.x / 2) - (textWidth / 2), windowPos.y + 30),
-			IM_COL32(255, 255, 255, 150),
-			text
-		);
-	}
+	// FPS (top right)
+	char fpsText[32];
+	snprintf(fpsText, sizeof(fpsText), "FPS: %.1f", ImGui::GetIO().Framerate);
+	float fpsTextWidth = ImGui::CalcTextSize(fpsText).x;
+	ImGui::GetWindowDrawList()->AddText(
+		ImVec2(windowPos.x + windowSize.x - fpsTextWidth - 10, windowPos.y + 30),
+		IM_COL32(255, 255, 255, 150),
+		fpsText
+	);
 
-	// Draw camera coordinates
+	// Camera coordinates (top left)
 	Vector3 cameraPos = m_spectatorCamera.position;
 	char coordText[64];
 	snprintf(coordText, sizeof(coordText), "X: %.1f Y: %.1f Z: %.1f", cameraPos.x, cameraPos.y, cameraPos.z);
 	ImGui::GetWindowDrawList()->AddText(
-		ImVec2(windowPos.x + 10, windowPos.y + 30),
+		ImVec2(windowPos.x + 10, windowPos.y + 30), // 20 pixels below the FPS text
 		IM_COL32(255, 255, 255, 150),
 		coordText
+	);
+
+	// Free-cam mode instruction (top center)
+	const char* text = m_inFreeCamMode ? "Press C to exit free camera mode" : "Press C to enter free camera mode";
+	float textWidth = ImGui::CalcTextSize(text).x;
+	ImGui::GetWindowDrawList()->AddText(
+		ImVec2(windowPos.x + (windowSize.x / 2) - (textWidth / 2), windowPos.y + 30),
+		IM_COL32(255, 255, 255, 150),
+		text
 	);
 
 	ImGui::End();
@@ -1273,6 +1274,67 @@ void Sandbox::DrawEngineSettingsModal() {
 	ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
 
 	if (ImGui::BeginPopupModal("Engine Settings", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
+
+		// --- Device Selection ---
+		ImGui::Text("Output Device");
+		ImGui::Separator();
+		ImGui::Spacing();
+
+		char targetIdBuffer[dalia::MAX_DEVICE_STR_LEN] = {0};
+		if (m_engine.GetTargetOutputDeviceId(targetIdBuffer, sizeof(targetIdBuffer)) != dalia::Result::Ok) {
+			snprintf(targetIdBuffer, sizeof(targetIdBuffer), "Engine State Corruption");
+		}
+
+		std::string_view currentTargetId(targetIdBuffer);
+
+		std::string previewName = "Unknown";
+		if (currentTargetId == "default") {
+			previewName = "OS Default";
+		}
+		else {
+			for (const auto& device : m_availableOutputDevices) {
+				if (currentTargetId == device.identifier) {
+					previewName = device.name;
+					break;
+				}
+			}
+		}
+
+		if (ImGui::BeginCombo("Output Device", previewName.c_str())) {
+			if (ImGui::Selectable("OS Default", m_currentDeviceId == "default")) {
+				m_currentDeviceId = "default";
+				m_engine.SetOutputDevice("default");
+			}
+
+			// List all output devices
+			for (const auto& device : m_availableOutputDevices) {
+				bool isSelected = (m_currentDeviceId == device.identifier);
+
+				if (ImGui::Selectable(device.name, isSelected)) {
+					m_currentDeviceId = device.identifier;
+					m_engine.SetOutputDevice(device.identifier);
+				}
+
+				if (isSelected) ImGui::SetItemDefaultFocus();
+			}
+			ImGui::EndCombo();
+		}
+
+		ImGui::SameLine();
+		if (ImGui::Button("Refresh")) {
+			RefreshAudioDevices();
+		}
+
+		dalia::OutputDeviceInfo activeInfo;
+		if (m_engine.GetActiveOutputDeviceInfo(activeInfo) == dalia::Result::Ok) {
+			ImGui::TextDisabled("Routing Status: %s", activeInfo.name);
+		}
+
+		ImGui::Spacing();
+		ImGui::Spacing();
+
+		// --- Acoustics ---
+
 		ImGui::Text("Global Acoustics");
 		ImGui::Separator();
 		ImGui::Spacing();
@@ -1355,6 +1417,20 @@ void Sandbox::RefreshAvailableAssets() {
 				if (ext == ".wav" || ext == ".mp3" || ext == ".ogg") {
 					m_availableAssets.push_back(entry.path().generic_string());
 				}
+			}
+		}
+	}
+}
+
+void Sandbox::RefreshAudioDevices() {
+	m_availableOutputDevices.clear();
+	uint32_t count = 0;
+
+	if (m_engine.GetOutputDeviceCount(count) == dalia::Result::Ok) {
+		for (uint32_t i = 0; i < count; i++) {
+			dalia::OutputDeviceInfo info;
+			if (m_engine.GetOutputDeviceInfo(i, info) == dalia::Result::Ok) {
+				m_availableOutputDevices.push_back(info);
 			}
 		}
 	}

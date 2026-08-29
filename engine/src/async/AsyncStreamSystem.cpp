@@ -1,4 +1,4 @@
-#include "io/IoStreamSystem.h"
+#include "async/AsyncStreamSystem.h"
 
 #include "core/Logger.h"
 
@@ -15,32 +15,32 @@
 
 namespace dalia {
 
-    IoStreamSystem::IoStreamSystem(const IoStreamSystemConfig& config)
+    AsyncStreamSystem::AsyncStreamSystem(const AsyncStreamSystemConfig& config)
         : m_outSampleRate(config.outSampleRate),
 		m_ioStreamRequests(config.ioStreamRequests),
         m_streamPool(config.streamPool),
         m_freeStreams(config.freeStreams) {
     }
 
-    IoStreamSystem::~IoStreamSystem() {
+    AsyncStreamSystem::~AsyncStreamSystem() {
         Stop();
     }
 
-    void IoStreamSystem::Start() {
+    void AsyncStreamSystem::Start() {
         if (m_isRunning.load(std::memory_order_relaxed)) return;
 
         m_isRunning.store(true, std::memory_order_release);
-        m_thread = std::thread(&IoStreamSystem::ThreadMain, this);
+        m_thread = std::thread(&AsyncStreamSystem::ThreadMain, this);
     }
 
-    void IoStreamSystem::Stop() {
+    void AsyncStreamSystem::Stop() {
         if (!m_isRunning.load(std::memory_order_relaxed)) return;
 
         m_isRunning.store(false, std::memory_order_release);
         if (m_thread.joinable()) m_thread.join();
     }
 
-    void IoStreamSystem::ThreadMain() {
+    void AsyncStreamSystem::ThreadMain() {
         while (m_isRunning.load(std::memory_order_relaxed)) {
             bool didWork = false;
             IoStreamRequest req;
@@ -56,7 +56,7 @@ namespace dalia {
         }
     }
 
-    void IoStreamSystem::ProcessRequest(const IoStreamRequest& req) {
+    void AsyncStreamSystem::ProcessRequest(const IoStreamRequest& req) {
         switch (req.type) {
             case IoStreamRequest::Type::PrepareStream: {
                 uint32_t sIndex = req.index;
@@ -160,7 +160,7 @@ namespace dalia {
         }
     }
 
-    void IoStreamSystem::FillBuffer(StreamContext& stream, uint32_t bufferIndex) {
+    void AsyncStreamSystem::FillBuffer(StreamContext& stream, uint32_t bufferIndex) {
         if (!stream.decoder) {
             DALIA_LOG_ERR(LOG_CTX_IO, "Invalid stream decoder.");
             stream.state.store(StreamState::Error, std::memory_order_release);
