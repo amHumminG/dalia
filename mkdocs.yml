@@ -33,6 +33,7 @@ nav:
   - Getting Started: getting-started.md
   - Architecture: architecture.md
   - Guide:
+      - Device Management: guide/device-management.md
       - Asset Management: guide/asset-management.md
       - Playback Control: guide/playback-control.md
       - Mixing & Routing: guide/mixing.md

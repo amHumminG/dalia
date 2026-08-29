@@ -7,8 +7,7 @@
 ---
 
 ## Features
-* **Configurable Memory Usage:** All internal pools are pre-allocated at startup per configuration. No dynamic allocations 
-* at runtime except for resident sound loading (on a background thread).
+* **Configurable Memory Usage:** All internal pools are pre-allocated at startup per configuration.
 * **Asset Management:** Asynchronous, reference-counted asset loading and double-buffered OGG/Vorbis streaming.
 * **3D Spatialization:**
   * Configurable coordinate systems (left/right-handed).
