@@ -949,33 +949,33 @@ void Sandbox::DrawViewport() {
 	ImVec2 windowPos = ImGui::GetWindowPos();
 	ImVec2 windowSize = ImGui::GetWindowSize();
 
-	if (!m_inFreeCamMode) {
-		const char* text = "Press C to enter free camera mode";
-		float textWidth = ImGui::CalcTextSize(text).x;
-		ImGui::GetWindowDrawList()->AddText(
-			ImVec2(windowPos.x + (windowSize.x / 2) - (textWidth / 2), windowPos.y + 30),
-			IM_COL32(255, 255, 255, 150),
-			text
-		);
-	}
-	else {
-		const char* text = "Press C to exit free camera mode";
-		float textWidth = ImGui::CalcTextSize(text).x;
-		ImGui::GetWindowDrawList()->AddText(
-		ImVec2(windowPos.x + (windowSize.x / 2) - (textWidth / 2), windowPos.y + 30),
-			IM_COL32(255, 255, 255, 150),
-			text
-		);
-	}
+	// FPS (top right)
+	char fpsText[32];
+	snprintf(fpsText, sizeof(fpsText), "FPS: %.1f", ImGui::GetIO().Framerate);
+	float fpsTextWidth = ImGui::CalcTextSize(fpsText).x;
+	ImGui::GetWindowDrawList()->AddText(
+		ImVec2(windowPos.x + windowSize.x - fpsTextWidth - 10, windowPos.y + 30),
+		IM_COL32(255, 255, 255, 150),
+		fpsText
+	);
 
-	// Draw camera coordinates
+	// Camera coordinates (top left)
 	Vector3 cameraPos = m_spectatorCamera.position;
 	char coordText[64];
 	snprintf(coordText, sizeof(coordText), "X: %.1f Y: %.1f Z: %.1f", cameraPos.x, cameraPos.y, cameraPos.z);
 	ImGui::GetWindowDrawList()->AddText(
-		ImVec2(windowPos.x + 10, windowPos.y + 30),
+		ImVec2(windowPos.x + 10, windowPos.y + 30), // 20 pixels below the FPS text
 		IM_COL32(255, 255, 255, 150),
 		coordText
+	);
+
+	// Free-cam mode instruction (top center)
+	const char* text = m_inFreeCamMode ? "Press C to exit free camera mode" : "Press C to enter free camera mode";
+	float textWidth = ImGui::CalcTextSize(text).x;
+	ImGui::GetWindowDrawList()->AddText(
+		ImVec2(windowPos.x + (windowSize.x / 2) - (textWidth / 2), windowPos.y + 30),
+		IM_COL32(255, 255, 255, 150),
+		text
 	);
 
 	ImGui::End();
