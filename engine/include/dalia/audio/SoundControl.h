@@ -7,10 +7,11 @@
 
 namespace dalia {
 
+	/// @brief Specifies the memory management and playback strategy for an audio asset.
     enum class SoundType : uint8_t {
         None     = 0,
-        Resident = 1,
-        Stream   = 2
+        Resident = 1, // The entire audio file is decompressed and loaded into RAM.
+        Stream   = 2 // The audio data is read from disk in chunks.
     };
 
     /// @brief Handle used to manage loaded sounds. This handle expires once the sound it is referencing is unloaded.
@@ -57,7 +58,7 @@ namespace dalia {
         uint64_t m_rawId = 0;
     };
 
-    constexpr uint32_t INVALID_REQUEST_ID = 0;
+    constexpr uint32_t INVALID_REQUEST_ID = 0; // Sentinel value indicating a failed async request.
 
     /// @brief A function that, if provided when loading an asset, will be called once the asset has been successfully
     /// loaded.

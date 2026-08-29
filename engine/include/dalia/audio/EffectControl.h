@@ -3,9 +3,10 @@
 
 namespace dalia {
 
+	/// @brief Defines the available DSP effect algorithms.
 	enum class EffectType : uint8_t {
-		None,
-		Biquad
+		None	= 0,
+		Biquad  = 1 // Biquadratic IIR filter.
 	};
 
 	/// @brief Handle used to manage effect instances. This handle expires once the effect it is referencing has been
@@ -26,7 +27,6 @@ namespace dalia {
 
 		/// @return The type of effect the handle is referencing.
 		EffectType GetType() const { return static_cast<EffectType>(m_rawId >> 56); }
-
 
     private:
         friend class Engine;
@@ -55,8 +55,9 @@ namespace dalia {
         uint64_t m_rawId = 0;
     };
 
-    constexpr EffectHandle InvalidEffectHandle{};
+    constexpr EffectHandle InvalidEffectHandle{}; // Sentinel value representing an invalid effect instance.
 
+    /// @brief Configuration parameters for a biquadratic IIR filter.
     struct BiquadParams {
     	/// @brief Defines the frequency response shape of a standard biquadratic filter.
     	enum class Type : uint8_t {
@@ -68,7 +69,8 @@ namespace dalia {
     	float frequency = 20000.0f; // The cutoff or center frequency of the filter (in Hz).
     	float resonance = 0.707f;	// The Q-factor of the filter.
 
-    	void Sanitize();
+	    /// @brief Clamps internal parameters to safe ranges.
+	    void Sanitize();
     };
 
 }
