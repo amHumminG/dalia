@@ -4,11 +4,12 @@
 
 namespace dalia {
 
-	constexpr uint32_t MAX_DEVICE_STRING_LEN = 256;
+	constexpr size_t MAX_DEVICE_STR_LEN = 256;
 
+	/// @brief
 	struct OutputDeviceInfo {
-		char name[MAX_DEVICE_STRING_LEN];
-		char identifier[MAX_DEVICE_STRING_LEN];
+		char name[MAX_DEVICE_STR_LEN];
+		char identifier[MAX_DEVICE_STR_LEN];
 		bool isDefault = false;
 	};
 }

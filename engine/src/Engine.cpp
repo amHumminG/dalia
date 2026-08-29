@@ -94,6 +94,7 @@ namespace dalia {
 
 		std::vector<OutputDeviceInfo> cachedOutputDeviceList;
 		std::string targetOutputDeviceId = "default";
+		bool activeOutputDeviceIsDefault = true;
 		bool pendingOutputDeviceSwap = false;
 		bool isSwappingOutputDevice = false;
 
@@ -285,8 +286,10 @@ namespace dalia {
 
 				if (ev.data.swapOutputDevice.fellBackToDefault) {
 					state->targetOutputDeviceId = "default";
-					DALIA_LOG_WARN(LOG_CTX_API, "Requested audio output device unavailable. Fell back to OS default.");
+					DALIA_LOG_WARN(LOG_CTX_API, "Requested audio output device was unavailable. Fell back to OS default.");
 				}
+
+				state->activeOutputDeviceIsDefault = (state->targetOutputDeviceId == "default");
 
 				if (state->outputDevice) {
 					state->activeOutputDevice = state->outputDevice.get();
@@ -833,6 +836,26 @@ namespace dalia {
 		if (index >= m_state->cachedOutputDeviceList.size()) return Result::InvalidArgs;
 
 		info = m_state->cachedOutputDeviceList[index];
+
+		return Result::Ok;
+	}
+
+	Result Engine::GetActiveOutputDeviceInfo(OutputDeviceInfo& info) const {
+		if (!IsInitialized(m_state)) return Result::NotInitialized;
+		if (!m_state->activeOutputDevice) return Result::StateCorrupted;
+
+		snprintf(info.name, MAX_DEVICE_STR_LEN, "%s", m_state->activeOutputDevice->GetName().c_str());
+		snprintf(info.identifier, MAX_DEVICE_STR_LEN, "%s", m_state->activeOutputDevice->GetIdentifier().c_str());
+		info.isDefault = m_state->activeOutputDeviceIsDefault;
+
+		return Result::Ok;
+	}
+
+	Result Engine::GetTargetOutputDeviceId(char* identifier, size_t maxLength) const {
+		if (!IsInitialized(m_state)) return Result::NotInitialized;
+		if (!identifier || maxLength == 0) return Result::InvalidArgs;
+
+		snprintf(identifier, maxLength, "%s", m_state->targetOutputDeviceId.c_str());
 
 		return Result::Ok;
 	}

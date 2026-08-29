@@ -37,8 +37,8 @@ namespace dalia {
 		std::thread m_audioThread;
 		std::atomic<bool> m_isRunning{false};
 
-		std::string m_identifier = "Null";
-		std::string m_name = "Null Device";
+		std::string m_identifier = "No Output Device";
+		std::string m_name = "null_device";
 		uint32_t m_sampleRate = 0;
 		uint32_t m_periodSizeInFrames = 0;
 

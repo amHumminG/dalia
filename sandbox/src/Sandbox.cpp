@@ -1280,10 +1280,20 @@ void Sandbox::DrawEngineSettingsModal() {
 		ImGui::Separator();
 		ImGui::Spacing();
 
-		std::string previewName = "OS Default Device";
-		if (m_currentDeviceId != "default") {
+		char targetIdBuffer[dalia::MAX_DEVICE_STR_LEN] = {0};
+		if (m_engine.GetTargetOutputDeviceId(targetIdBuffer, sizeof(targetIdBuffer)) != dalia::Result::Ok) {
+			snprintf(targetIdBuffer, sizeof(targetIdBuffer), "Engine State Corruption");
+		}
+
+		std::string_view currentTargetId(targetIdBuffer);
+
+		std::string previewName = "Unknown";
+		if (currentTargetId == "default") {
+			previewName = "OS Default";
+		}
+		else {
 			for (const auto& device : m_availableOutputDevices) {
-				if (m_currentDeviceId == device.identifier) {
+				if (currentTargetId == device.identifier) {
 					previewName = device.name;
 					break;
 				}
@@ -1291,7 +1301,7 @@ void Sandbox::DrawEngineSettingsModal() {
 		}
 
 		if (ImGui::BeginCombo("Output Device", previewName.c_str())) {
-			if (ImGui::Selectable("OS Default Device", m_currentDeviceId == "default")) {
+			if (ImGui::Selectable("OS Default", m_currentDeviceId == "default")) {
 				m_currentDeviceId = "default";
 				m_engine.SetOutputDevice("default");
 			}
@@ -1313,6 +1323,11 @@ void Sandbox::DrawEngineSettingsModal() {
 		ImGui::SameLine();
 		if (ImGui::Button("Refresh")) {
 			RefreshAudioDevices();
+		}
+
+		dalia::OutputDeviceInfo activeInfo;
+		if (m_engine.GetActiveOutputDeviceInfo(activeInfo) == dalia::Result::Ok) {
+			ImGui::TextDisabled("Routing Status: %s", activeInfo.name);
 		}
 
 		ImGui::Spacing();

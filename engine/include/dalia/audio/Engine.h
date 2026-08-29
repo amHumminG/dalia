@@ -103,7 +103,7 @@ namespace dalia {
 		/// @retval Result::NotInitialized	The engine is not initialized.
 		Result SetGlobalDopplerFactor(float globalDopplerFactor);
 
-		/// @brief Queries the OS for available audio output devices and retrieves the total count.
+		/// @brief Queries the OS for available output devices and retrieves the total count.
 		///
 		/// This function forces the engine to scan for all available audio devices and refresh its internal cache.
 		/// It is recommended to call this function once before looping through devices with GetOutputDeviceInfo() to
@@ -115,15 +115,40 @@ namespace dalia {
 		/// @retval Result::NotInitialized	The engine is not initialized.
 		Result GetOutputDeviceCount(uint32_t& count) const;
 
-		/// @brief Queries the metadata for a specific audio output device from the internal cache.
+		/// @brief Queries the metadata for a specific output device from the internal cache.
 		///
 		/// @param[in]	index	The zero-based index of the device to query.
-		/// @param[out] info	The struct to be populated with the audio output device metadata.
+		/// @param[out] info	The struct to be populated with the output device metadata.
 		///
 		/// @retval Result::Ok				The device metadata was successfully retrieved.
 		/// @retval Result::NotInitialized	The engine is not initialized.
 		/// @retval Result::InvalidArgs		The provided index is out of bounds.
 		Result GetOutputDeviceInfo(uint32_t index, OutputDeviceInfo& info) const;
+
+		/// @brief Requests the metadata for the active output device.
+		///
+		/// @param[out] info The struct to be populated with the output device metadata.
+		///
+		/// @retval Result::Ok				The device metadata was successfully retrieved.
+		/// @retval Result::NotInitialized	The engine is not initialized.
+		/// @retval Result::StateCorrupted	Internal engine state is corrupted.
+		Result GetActiveOutputDeviceInfo(OutputDeviceInfo& info) const;
+
+		/// @brief Queries the device identifier of the currently targeted output device.
+		///
+		/// @note If a device swap has been requested, this represents the requested output device, which may differ
+		/// from the current output device.
+		///
+		/// @param[out] identifier	A pointer to the buffer where the null-terminated target device identifier will be
+		///							written. If the engine is targeting the default OS output device. "default" will be
+		///							written to the buffer.
+		/// @param[in]	maxLength	The total capacity of the provided buffer in bytes (including space for the
+		///							null-terminator). It is recommended to use MAX_DEVICE_STR_LEN as buffer size.
+		///
+		/// @retval Result::Ok				The device metadata was successfully retrieved.
+		/// @retval Result::NotInitialized	The engine is not initialized.
+		/// @retval Result::InvalidArgs		The provided buffer pointer is nullptr or maxLength is 0.
+		Result GetTargetOutputDeviceId(char* identifier, size_t maxLength) const;
 
 		/// @brief Requests a manual change of output device.
 		///
