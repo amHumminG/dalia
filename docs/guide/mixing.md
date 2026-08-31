@@ -35,7 +35,7 @@ same number of times as `Engine::CreateBus()` for the same identifier in order t
 ```c++
 engine->DestroyBus("UI");
 ```
-*Note: If a bus is destroyed, any child buses or active playbacks that are routed to the bus are orphaned. An orphaned 
+**Note:** *If a bus is destroyed, any child buses or active playbacks that are routed to the bus are orphaned. An orphaned 
 bus can be rerouted to a new parent bus, but an orphaned voice will immediately be stopped by the engine with the exit 
 condition `PlaybackExitCondition::ExplicitStop`.*
 
@@ -79,7 +79,7 @@ engine->AttachEffect(lowpassFilter, "SFX", 0);
 Effects are exclusively attached. A single effect instance can only be attached to one bus at a time. If you attach an
 effect to a slot that is already occupied, the old effect is forcefully detached and replaced with the new one.
 
-*Note: Hot-swapping an effect on a bus that is actively playing audio bypasses internal fade-outs and may cause "pops".
+**Note:** *Hot-swapping an effect on a bus that is actively playing audio bypasses internal fade-outs and may cause "pops".
 It is advised to only attach and detach effects when a bus is not actively playing audio.*
 
 ### Modifying and Detaching
@@ -88,7 +88,7 @@ The parameters of an effect can be altered at any time, even when it is actively
 lowpassParams.frequency = 400.0f;
 engine->SetEffectParams(lowpassFilter, lowpassParams); // Lower the frequency cutoff to 400Hz
 ```
-*Note: Changing the `BiquadParams::Type` of an active filter alters its DSP topology instantly. Unlike frequency and 
+**Note:** *Changing the `BiquadParams::Type` of an active filter alters its DSP topology instantly. Unlike frequency and 
 resonance, discrete topology changes are not smoothed and will cause an audible pop if audio is currently passing 
 through. It is highly recommended to only change filter types during silence or when the filter is not attached.*
 
@@ -101,5 +101,5 @@ To destroy the effect and free its memory, simply call `Engine::DestroyEffect()`
 ```c++
 engine->DestroyEffect(lowpassFilter);
 ```
-*Note: It is completely safe to destroy an effect that is attached to a bus. This will have the same effect as first
+**Note:** *It is completely safe to destroy an effect that is attached to a bus. This will have the same effect as first
 detaching the effect and then destroying it.*

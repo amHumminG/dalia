@@ -15,13 +15,13 @@ listener, use `Engine::SetListenerActive()`.
 ```c++
 engine->SetListenerActive(1, true); // Activate listener 1
 ```
-*Note: De-activating all listeners will result in spatial playback instances becoming inaudible.*
+**Note:** *De-activating all listeners will result in spatial playback instances becoming inaudible.*
 
 ### Listener Parameter Control
 To correctly spatialize audio, the engine needs to know where the listener is in the 3D world. It also needs to know
 its orientation. Therefore, the listener attributes have to be continuously updated to match the state of your scene.
 This can be done either by using the combined `Engine::SetListener3DAttributes()` function, or by individually setting
-position, orientation, and velocity with their dedicated setter functions. Note that setting the velocity is not
+position, orientation, and velocity with their dedicated setter functions. However, setting the velocity is not
 necessary (and can be left as its default value) if you do not intend to utilize the Doppler effect.
 ```c++
 // Assuming you place the listener on your camera
@@ -34,7 +34,7 @@ dalia::Listener3DAttributes attributes = MakeListener3DAttributes(
 
 engine->SetListener3DAttributes(0, attributes); // Update the attributes of listener 0
 ```
-*Note: This example uses a helper function to create the struct. It is completely fine to create the struct
+**Note:** *This example uses a helper function to create the struct. It is completely fine to create the struct
 yourself. You can safely leave the `distanceProbePosition` to use its default value if you do not intend to use that
 feature.*
 
@@ -92,7 +92,7 @@ engine->SetGlobalDopplerFactor(2.0f); // Exaggerate the Doppler pitch shift glob
 
 engine->SetPlaybackDopplerFactor(explosionPlayback, 0.5f); // Reduce the Doppler pitch shift locally
 ```
-*Note: The global and local scales are multiplicative and both affect the final output at all times.*
+**Note:** *The global and local scales are multiplicative and both affect the final output at all times.*
 
 ## Multi-Listener Routing
 If you are building a game using multiple listeners, you can choose which listeners are allowed to hear a specific

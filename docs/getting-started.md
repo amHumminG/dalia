@@ -28,7 +28,7 @@ cmake --build build --config Release
 DALIA automatically detects when it is built as a subproject and will exclude the sandbox and studio applications from the
 build.
 
-**Via FetchContent:**
+**CMake Via FetchContent:**
 ```cmake
 include(FetchContent)
 FetchContent_Declare(
@@ -38,12 +38,6 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(dalia)
 
-target_link_libraries(YourTarget PRIVATE dalia::engine)
-```
-
-**Via Git Submodule:**
-```cmake
-add_subdirectory(third_party/dalia)
 target_link_libraries(YourTarget PRIVATE dalia::engine)
 ```
 

@@ -34,7 +34,7 @@ tracked in order to play and later on, unload the sound.
 dalia::SoundHandle explosionSound;
 engine->LoadSoundAsync(explosionSound, dalia::SoundType::Resident, "assets/explosion.ogg");
 ```
-*Note: If you attempt to create and start a playback instance using a sound that is still loading, the engine will safely 
+**Note:** *If you attempt to create and start a playback instance using a sound that is still loading, the engine will safely 
 defer the playback start until the sound has been fully loaded.*
 
 ### Load Callbacks
@@ -44,8 +44,6 @@ during the `Engine::Update()` tick.
 
 When calling a load function, you can also optionally pass a pointer to retrieve a unique request ID. this ID is
 passed directly into the callback, allowing an asset manager to track exactly which load request has finished.
-*Note: If the requested sound is already loaded in, the engine will populate the request ID parameter with
-`INVALID_REQUEST_ID` (`0`), as no new asynchronous operation was required.*
 ```c++
 // Define the callback
 void OnSoundLoaded(uint32_t requestId, dalia::Result result) {
@@ -61,6 +59,8 @@ void OnSoundLoaded(uint32_t requestId, dalia::Result result) {
 uint32_t requestId;
 engine->LoadSoundAsync(explosionSound, dalia::SoundType::Resident, "assets/explosion.ogg", OnSoundLoaded, &requestId);
 ```
+**Note**: *If the requested sound is already loaded in, the engine will populate the request ID parameter with
+`INVALID_REQUEST_ID` (`0`), as no new asynchronous operation was required.*
 
 ## Reference Counting & Unloading
 DALIA pre-allocates all of its memory pools at startup. When you load a sound, you are claiming a spot in that pool.

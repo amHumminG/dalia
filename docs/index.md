@@ -12,7 +12,7 @@
 
     ---
 
-    Build from source or integrate DALIA into your project.
+    Building from source & project integration.
 
     [:octicons-arrow-right-24: Getting Started](getting-started.md)
 

@@ -15,7 +15,7 @@
   * Distance probes (split distance-attenuation and panning origins for 3rd-person cameras).
   * Doppler frequency shifts with global and per-playback scaling.
 * **Dynamic Mixing Hierarchy:**
-  * Directed acyclic graph bus routing.
+  * Directed acyclic graph for bus routing.
   * 4 hot-swappable DSP effect slots per bus.
 * **Real-Time Playback Parameter Control:** Volume, playback rate, pan, looping, spatialization, position, attenuation curve, min/max distance, velocity, doppler effect, and more.
 
@@ -54,7 +54,7 @@ cmake --build build --config Release
 DALIA automatically detects when it is built as a subproject and will exclude the sandbox and studio applications from the 
 build.
 
-**Via FetchContent:**
+**CMake Via FetchContent:**
 ```cmake
 include(FetchContent)
 FetchContent_Declare(
@@ -64,12 +64,6 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(dalia)
 
-target_link_libraries(YourTarget PRIVATE dalia::engine)
-```
-
-**Via Git Submodule:**
-```cmake
-add_subdirectory(third_party/dalia)
 target_link_libraries(YourTarget PRIVATE dalia::engine)
 ```
 
@@ -87,4 +81,4 @@ The sandbox and studio applications are built using the following open-source pr
 * [rlImGui](https://github.com/raylib-extras/rlImGui) (zlib License)
 * [ImGuizmo](https://github.com/CedricGuillemet/ImGuizmo) (MIT License)
 
-*(Note: These UI and rendering libraries are excluded from your build when DALIA is linked as a subproject).*
+**Note:** *The UI and rendering libraries are excluded from your build when DALIA is linked as a subproject.*

@@ -59,7 +59,7 @@ For standard non-spatial playback, you can pan the sound between the left and ri
 ```c++
 engine->SetPlaybackStereoPan(explosionPlayback, 0.5f); // Pan slightly to the right
 ```
-*Note that if the playback instance has spatialization enabled, manual stereo panning is ignored.*
+**Note** *If the playback instance has spatialization enabled, manual stereo panning is ignored.*
 
 ### Looping and Seeking
 By default, a playback instance plays a sound from start to finish once. You can set a playback instance to loop

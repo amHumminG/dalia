@@ -1,5 +1,7 @@
 # Architecture
 
+**Attention:** This document is slightly outdated but should be revised shortly.
+
 ## Threading Model
 DALIA splits its processing across four threads in total (one of them being the thread that the API is 
 being called from). The engine delegates its workload to three internal subsystems. To do this efficiently without 
@@ -31,8 +33,8 @@ handles and file data into memory.
 To avoid the overhead of dynamic allocations during runtime, the engine pre-allocates all memory it will need during
 `Engine::Init()`. All of this memory including the contiguous arrays (pools) that hold voices, buses, and assets is 
 owned by a single, centralized `EngineInternalState` struct. The engine injects pointers to the pre-allocated
-memory-pools into the three subsystems (`RtSystem`, `IoStreamSystem`, and `IoLoadSystem`) upon creation. The subsystems hold no state, they simply act on the memory
-provided to them by the internal state.
+memory-pools into the three subsystems (`RtSystem`, `IoStreamSystem`, and `IoLoadSystem`) upon creation. The subsystems 
+hold no state, they simply act on the memory provided to them by the internal state.
 
 ## Mixing Graph
 The DSP pipeline is a Directed Acyclic Graph (DAG). In order to route audio dynamically, every node
