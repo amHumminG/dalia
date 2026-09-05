@@ -1,0 +1,81 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.9.8" xml:lang="en-US">
+  <compounddef id="structdalia_1_1EngineConfig_1_1Advanced" kind="struct" language="C++" prot="public">
+    <compoundname>dalia::EngineConfig::Advanced</compoundname>
+    <includes refid="Engine_8h" local="no">Engine.h</includes>
+    <sectiondef kind="public-attrib">
+      <memberdef kind="variable" id="structdalia_1_1EngineConfig_1_1Advanced_1a45f079007c2c93c2e6ec557cd00d3910" prot="public" static="no" mutable="no">
+        <type>size_t</type>
+        <definition>size_t dalia::EngineConfig::Advanced::RealTimeQueueCapacity</definition>
+        <argsstring></argsstring>
+        <name>RealTimeQueueCapacity</name>
+        <qualifiedname>dalia::EngineConfig::Advanced::RealTimeQueueCapacity</qualifiedname>
+        <initializer>= 1024</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/Engine.h" line="43" column="8" bodyfile="engine/include/dalia/audio/Engine.h" bodystart="43" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structdalia_1_1EngineConfig_1_1Advanced_1a00ab7580078c9de69b38c244852185b6" prot="public" static="no" mutable="no">
+        <type>size_t</type>
+        <definition>size_t dalia::EngineConfig::Advanced::AsyncStreamQueueCapacity</definition>
+        <argsstring></argsstring>
+        <name>AsyncStreamQueueCapacity</name>
+        <qualifiedname>dalia::EngineConfig::Advanced::AsyncStreamQueueCapacity</qualifiedname>
+        <initializer>= 256</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/Engine.h" line="44" column="8" bodyfile="engine/include/dalia/audio/Engine.h" bodystart="44" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structdalia_1_1EngineConfig_1_1Advanced_1a1ddc369f6244254751286025628da08e" prot="public" static="no" mutable="no">
+        <type>size_t</type>
+        <definition>size_t dalia::EngineConfig::Advanced::AsyncLoadQueueCapacity</definition>
+        <argsstring></argsstring>
+        <name>AsyncLoadQueueCapacity</name>
+        <qualifiedname>dalia::EngineConfig::Advanced::AsyncLoadQueueCapacity</qualifiedname>
+        <initializer>= 128</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/Engine.h" line="45" column="8" bodyfile="engine/include/dalia/audio/Engine.h" bodystart="45" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structdalia_1_1EngineConfig_1_1Advanced_1a417fc8c291c15cc52fc861fe7c6784bb" prot="public" static="no" mutable="no">
+        <type>size_t</type>
+        <definition>size_t dalia::EngineConfig::Advanced::AsyncControlQueueCapacity</definition>
+        <argsstring></argsstring>
+        <name>AsyncControlQueueCapacity</name>
+        <qualifiedname>dalia::EngineConfig::Advanced::AsyncControlQueueCapacity</qualifiedname>
+        <initializer>= 32</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/Engine.h" line="46" column="8" bodyfile="engine/include/dalia/audio/Engine.h" bodystart="46" bodyend="-1"/>
+      </memberdef>
+    </sectiondef>
+    <briefdescription>
+<para><ref refid="structdalia_1_1EngineConfig_1_1Advanced" kindref="compound">Advanced</ref> settings. Only touch if you have very tight constraints or experience queue overflows. </para>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <location file="engine/include/dalia/audio/Engine.h" line="41" column="1" bodyfile="engine/include/dalia/audio/Engine.h" bodystart="41" bodyend="47"/>
+    <listofallmembers>
+      <member refid="structdalia_1_1EngineConfig_1_1Advanced_1a417fc8c291c15cc52fc861fe7c6784bb" prot="public" virt="non-virtual"><scope>dalia::EngineConfig::Advanced</scope><name>AsyncControlQueueCapacity</name></member>
+      <member refid="structdalia_1_1EngineConfig_1_1Advanced_1a1ddc369f6244254751286025628da08e" prot="public" virt="non-virtual"><scope>dalia::EngineConfig::Advanced</scope><name>AsyncLoadQueueCapacity</name></member>
+      <member refid="structdalia_1_1EngineConfig_1_1Advanced_1a00ab7580078c9de69b38c244852185b6" prot="public" virt="non-virtual"><scope>dalia::EngineConfig::Advanced</scope><name>AsyncStreamQueueCapacity</name></member>
+      <member refid="structdalia_1_1EngineConfig_1_1Advanced_1a45f079007c2c93c2e6ec557cd00d3910" prot="public" virt="non-virtual"><scope>dalia::EngineConfig::Advanced</scope><name>RealTimeQueueCapacity</name></member>
+    </listofallmembers>
+  </compounddef>
+</doxygen>

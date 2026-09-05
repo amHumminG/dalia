@@ -1,0 +1,238 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.9.8" xml:lang="en-US">
+  <compounddef id="structdalia_1_1PlaybackHandle" kind="struct" language="C++" prot="public">
+    <compoundname>dalia::PlaybackHandle</compoundname>
+    <includes refid="PlaybackControl_8h" local="no">PlaybackControl.h</includes>
+    <sectiondef kind="friend">
+      <memberdef kind="friend" id="structdalia_1_1PlaybackHandle_1a3e1914489e4bed4f9f23cdeab34a43dc" prot="private" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>class</type>
+        <definition>friend class Engine</definition>
+        <argsstring></argsstring>
+        <name>Engine</name>
+        <qualifiedname>dalia::PlaybackHandle::Engine</qualifiedname>
+        <param>
+          <type><ref refid="classdalia_1_1Engine" kindref="compound">Engine</ref></type>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/PlaybackControl.h" line="25" column="14" bodyfile="engine/include/dalia/audio/PlaybackControl.h" bodystart="25" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="friend" id="structdalia_1_1PlaybackHandle_1a7b4e5fcb00301e31dcbac173d9576d79" prot="private" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>struct</type>
+        <definition>friend struct EngineInternalState</definition>
+        <argsstring></argsstring>
+        <name>EngineInternalState</name>
+        <qualifiedname>dalia::PlaybackHandle::EngineInternalState</qualifiedname>
+        <param>
+          <type>EngineInternalState</type>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/PlaybackControl.h" line="26" column="15" bodyfile="engine/include/dalia/audio/PlaybackControl.h" bodystart="26" bodyend="-1"/>
+      </memberdef>
+    </sectiondef>
+    <sectiondef kind="private-attrib">
+      <memberdef kind="variable" id="structdalia_1_1PlaybackHandle_1a98ef77a60afc482c968935779e244233" prot="private" static="no" mutable="no">
+        <type>uint64_t</type>
+        <definition>uint64_t dalia::PlaybackHandle::m_rawId</definition>
+        <argsstring></argsstring>
+        <name>m_rawId</name>
+        <qualifiedname>dalia::PlaybackHandle::m_rawId</qualifiedname>
+        <initializer>= 0</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/PlaybackControl.h" line="37" column="10" bodyfile="engine/include/dalia/audio/PlaybackControl.h" bodystart="37" bodyend="-1"/>
+      </memberdef>
+    </sectiondef>
+    <sectiondef kind="public-func">
+      <memberdef kind="function" id="structdalia_1_1PlaybackHandle_1a6d093ff22b854ff72827a68f6fc3510f" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type></type>
+        <definition>dalia::PlaybackHandle::PlaybackHandle</definition>
+        <argsstring>()=default</argsstring>
+        <name>PlaybackHandle</name>
+        <qualifiedname>dalia::PlaybackHandle::PlaybackHandle</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/PlaybackControl.h" line="12" column="1"/>
+      </memberdef>
+      <memberdef kind="function" id="structdalia_1_1PlaybackHandle_1a05bb813e3111c277153600621fea7f5b" prot="public" static="no" const="no" explicit="yes" inline="yes" virt="non-virtual">
+        <type></type>
+        <definition>dalia::PlaybackHandle::PlaybackHandle</definition>
+        <argsstring>(uint64_t rawId)</argsstring>
+        <name>PlaybackHandle</name>
+        <qualifiedname>dalia::PlaybackHandle::PlaybackHandle</qualifiedname>
+        <param>
+          <type>uint64_t</type>
+          <declname>rawId</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/PlaybackControl.h" line="13" column="10" bodyfile="engine/include/dalia/audio/PlaybackControl.h" bodystart="13" bodyend="13"/>
+      </memberdef>
+      <memberdef kind="function" id="structdalia_1_1PlaybackHandle_1a2101b0c7c74bc1bf3ee4d69e09a46de5" prot="public" static="no" const="yes" explicit="no" inline="yes" virt="non-virtual">
+        <type>bool</type>
+        <definition>bool dalia::PlaybackHandle::IsValid</definition>
+        <argsstring>() const</argsstring>
+        <name>IsValid</name>
+        <qualifiedname>dalia::PlaybackHandle::IsValid</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para><simplesect kind="return"><para>true if the handle has referenced an active playback instance at some point. Otherwise, false. </para>
+</simplesect>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/PlaybackControl.h" line="16" column="6" bodyfile="engine/include/dalia/audio/PlaybackControl.h" bodystart="16" bodyend="16"/>
+      </memberdef>
+      <memberdef kind="function" id="structdalia_1_1PlaybackHandle_1ac31624b3566dd60893fe0b4a18a62e5e" prot="public" static="no" const="yes" explicit="no" inline="yes" virt="non-virtual">
+        <type>bool</type>
+        <definition>bool dalia::PlaybackHandle::operator==</definition>
+        <argsstring>(const PlaybackHandle &amp;other) const</argsstring>
+        <name>operator==</name>
+        <qualifiedname>dalia::PlaybackHandle::operator==</qualifiedname>
+        <param>
+          <type>const <ref refid="structdalia_1_1PlaybackHandle" kindref="compound">PlaybackHandle</ref> &amp;</type>
+          <declname>other</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/PlaybackControl.h" line="18" column="6" bodyfile="engine/include/dalia/audio/PlaybackControl.h" bodystart="18" bodyend="18"/>
+      </memberdef>
+      <memberdef kind="function" id="structdalia_1_1PlaybackHandle_1adf53da7a0cc9b457fbcfe2d3842be324" prot="public" static="no" const="yes" explicit="no" inline="yes" virt="non-virtual">
+        <type>bool</type>
+        <definition>bool dalia::PlaybackHandle::operator!=</definition>
+        <argsstring>(const PlaybackHandle &amp;other) const</argsstring>
+        <name>operator!=</name>
+        <qualifiedname>dalia::PlaybackHandle::operator!=</qualifiedname>
+        <param>
+          <type>const <ref refid="structdalia_1_1PlaybackHandle" kindref="compound">PlaybackHandle</ref> &amp;</type>
+          <declname>other</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/PlaybackControl.h" line="19" column="6" bodyfile="engine/include/dalia/audio/PlaybackControl.h" bodystart="19" bodyend="19"/>
+      </memberdef>
+      <memberdef kind="function" id="structdalia_1_1PlaybackHandle_1a02679929e24e94a9a89e58f71a683767" prot="public" static="no" const="yes" explicit="no" inline="yes" virt="non-virtual">
+        <type>uint64_t</type>
+        <definition>uint64_t dalia::PlaybackHandle::GetRawId</definition>
+        <argsstring>() const</argsstring>
+        <name>GetRawId</name>
+        <qualifiedname>dalia::PlaybackHandle::GetRawId</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+<para><simplesect kind="return"><para>The underlying raw id of the handle. </para>
+</simplesect>
+</para>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/PlaybackControl.h" line="22" column="10" bodyfile="engine/include/dalia/audio/PlaybackControl.h" bodystart="22" bodyend="22"/>
+      </memberdef>
+    </sectiondef>
+    <sectiondef kind="private-static-func">
+      <memberdef kind="function" id="structdalia_1_1PlaybackHandle_1a6091c5b72f084522c7e1ed454ae0a255" prot="private" static="yes" const="no" explicit="no" inline="yes" virt="non-virtual">
+        <type><ref refid="structdalia_1_1PlaybackHandle" kindref="compound">PlaybackHandle</ref></type>
+        <definition>static PlaybackHandle dalia::PlaybackHandle::Create</definition>
+        <argsstring>(uint32_t index, uint32_t generation)</argsstring>
+        <name>Create</name>
+        <qualifiedname>dalia::PlaybackHandle::Create</qualifiedname>
+        <param>
+          <type>uint32_t</type>
+          <declname>index</declname>
+        </param>
+        <param>
+          <type>uint32_t</type>
+          <declname>generation</declname>
+        </param>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/PlaybackControl.h" line="28" column="23" bodyfile="engine/include/dalia/audio/PlaybackControl.h" bodystart="28" bodyend="32"/>
+      </memberdef>
+    </sectiondef>
+    <sectiondef kind="private-func">
+      <memberdef kind="function" id="structdalia_1_1PlaybackHandle_1aea472ec90954d3700cfdc53c35806172" prot="private" static="no" const="yes" explicit="no" inline="yes" virt="non-virtual">
+        <type>uint32_t</type>
+        <definition>uint32_t dalia::PlaybackHandle::GetIndex</definition>
+        <argsstring>() const</argsstring>
+        <name>GetIndex</name>
+        <qualifiedname>dalia::PlaybackHandle::GetIndex</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/PlaybackControl.h" line="34" column="10" bodyfile="engine/include/dalia/audio/PlaybackControl.h" bodystart="34" bodyend="34"/>
+      </memberdef>
+      <memberdef kind="function" id="structdalia_1_1PlaybackHandle_1a1182efea82db02eb9d75d40f7f5ad76c" prot="private" static="no" const="yes" explicit="no" inline="yes" virt="non-virtual">
+        <type>uint32_t</type>
+        <definition>uint32_t dalia::PlaybackHandle::GetGeneration</definition>
+        <argsstring>() const</argsstring>
+        <name>GetGeneration</name>
+        <qualifiedname>dalia::PlaybackHandle::GetGeneration</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="engine/include/dalia/audio/PlaybackControl.h" line="35" column="10" bodyfile="engine/include/dalia/audio/PlaybackControl.h" bodystart="35" bodyend="35"/>
+      </memberdef>
+    </sectiondef>
+    <briefdescription>
+<para>Handle used to manage playback instances. This handle will expire once the playback instance it is referencing stops. </para>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <location file="engine/include/dalia/audio/PlaybackControl.h" line="10" column="1" bodyfile="engine/include/dalia/audio/PlaybackControl.h" bodystart="10" bodyend="38"/>
+    <listofallmembers>
+      <member refid="structdalia_1_1PlaybackHandle_1a6091c5b72f084522c7e1ed454ae0a255" prot="private" virt="non-virtual"><scope>dalia::PlaybackHandle</scope><name>Create</name></member>
+      <member refid="structdalia_1_1PlaybackHandle_1a3e1914489e4bed4f9f23cdeab34a43dc" prot="private" virt="non-virtual"><scope>dalia::PlaybackHandle</scope><name>Engine</name></member>
+      <member refid="structdalia_1_1PlaybackHandle_1a7b4e5fcb00301e31dcbac173d9576d79" prot="private" virt="non-virtual"><scope>dalia::PlaybackHandle</scope><name>EngineInternalState</name></member>
+      <member refid="structdalia_1_1PlaybackHandle_1a1182efea82db02eb9d75d40f7f5ad76c" prot="private" virt="non-virtual"><scope>dalia::PlaybackHandle</scope><name>GetGeneration</name></member>
+      <member refid="structdalia_1_1PlaybackHandle_1aea472ec90954d3700cfdc53c35806172" prot="private" virt="non-virtual"><scope>dalia::PlaybackHandle</scope><name>GetIndex</name></member>
+      <member refid="structdalia_1_1PlaybackHandle_1a02679929e24e94a9a89e58f71a683767" prot="public" virt="non-virtual"><scope>dalia::PlaybackHandle</scope><name>GetRawId</name></member>
+      <member refid="structdalia_1_1PlaybackHandle_1a2101b0c7c74bc1bf3ee4d69e09a46de5" prot="public" virt="non-virtual"><scope>dalia::PlaybackHandle</scope><name>IsValid</name></member>
+      <member refid="structdalia_1_1PlaybackHandle_1a98ef77a60afc482c968935779e244233" prot="private" virt="non-virtual"><scope>dalia::PlaybackHandle</scope><name>m_rawId</name></member>
+      <member refid="structdalia_1_1PlaybackHandle_1adf53da7a0cc9b457fbcfe2d3842be324" prot="public" virt="non-virtual"><scope>dalia::PlaybackHandle</scope><name>operator!=</name></member>
+      <member refid="structdalia_1_1PlaybackHandle_1ac31624b3566dd60893fe0b4a18a62e5e" prot="public" virt="non-virtual"><scope>dalia::PlaybackHandle</scope><name>operator==</name></member>
+      <member refid="structdalia_1_1PlaybackHandle_1a6d093ff22b854ff72827a68f6fc3510f" prot="public" virt="non-virtual"><scope>dalia::PlaybackHandle</scope><name>PlaybackHandle</name></member>
+      <member refid="structdalia_1_1PlaybackHandle_1a05bb813e3111c277153600621fea7f5b" prot="public" virt="non-virtual"><scope>dalia::PlaybackHandle</scope><name>PlaybackHandle</name></member>
+    </listofallmembers>
+  </compounddef>
+</doxygen>
