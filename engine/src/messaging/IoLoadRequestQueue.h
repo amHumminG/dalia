@@ -20,7 +20,7 @@ namespace dalia {
         union {
             struct {
                 uint64_t resourceHandleRawId;
-                char filepath[MAX_IO_PATH_SIZE];
+                char filepath[MAX_STR_LEN_ASSET_PATH];
             } soundFromFile;
 
         } data = {};
@@ -31,7 +31,7 @@ namespace dalia {
             req.requestId = reqId;
 
             req.data.soundFromFile.resourceHandleRawId = handle.GetRawId();
-        	snprintf(req.data.soundFromFile.filepath, MAX_IO_PATH_SIZE, "%s", filepath);
+        	snprintf(req.data.soundFromFile.filepath, MAX_STR_LEN_ASSET_PATH, "%s", filepath);
 
             return req;
         }

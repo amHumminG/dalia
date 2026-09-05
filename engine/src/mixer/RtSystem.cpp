@@ -259,7 +259,7 @@ namespace dalia {
 			}
 
 			block.channels = stream.channels;
-			uint32_t framesInSource = DOUBLE_BUFFER_FRAMES;
+			uint32_t framesInSource = STREAM_BUFFER_FRAMES;
 			const uint32_t eofIndex = stream.eofIndex[voice.data.stream.frontBufferIndex];
 
 			if (!voice.params.isLooping && eofIndex != NO_EOF) framesInSource = eofIndex / stream.channels;
@@ -307,7 +307,7 @@ namespace dalia {
 				voice.data.stream.frontBufferIndex
 			));
 			voice.data.stream.frontBufferIndex = 1 - voice.data.stream.frontBufferIndex;
-			voice.cursor -= static_cast<double>(DOUBLE_BUFFER_FRAMES);
+			voice.cursor -= static_cast<double>(STREAM_BUFFER_FRAMES);
 			if (voice.cursor < 0.0) voice.cursor = 0.0;
 
 			return true;

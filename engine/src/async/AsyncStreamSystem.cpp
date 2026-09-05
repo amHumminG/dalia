@@ -169,7 +169,7 @@ namespace dalia {
 
         float* bufferPtr = stream.buffers[bufferIndex];
 
-        int framesNeeded = DOUBLE_BUFFER_FRAMES;
+        int framesNeeded = STREAM_BUFFER_FRAMES;
         int framesWritten = 0;
         bool justLooped = false;
         bool foundEOF = false;

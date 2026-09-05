@@ -1,7 +1,7 @@
 #pragma once
 
 #include "core/Types.h"
-#include "core/Constants.h"
+#include "dalia/audio/SoundControl.h"
 
 #include <cstdint>
 #include <atomic>
@@ -14,7 +14,7 @@ namespace dalia {
 
         uint32_t pathHash = 0;
 
-        char filepath[MAX_IO_PATH_SIZE];
+        char filepath[MAX_STR_LEN_ASSET_PATH];
 
         // Will be used if inside a soundbank
         size_t byteOffset = 0;

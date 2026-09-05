@@ -29,7 +29,8 @@ because the internal buffers have to be filled before playback can start.
 
 DALIA performs all sound loading asynchronously on background threads. Therefore, loading operations will never block
 the calling thread. Successfully calling a load function will provide you with a `SoundHandle`. This handle must be
-tracked in order to play and later on, unload the sound.
+tracked in order to play and later on, unload the sound. When loading an asset, the maximum size of the path string
+(including null-terminator) cannot exceed `MAX_STR_LEN_ASSET_PATH`.
 ```c++
 dalia::SoundHandle explosionSound;
 engine->LoadSoundAsync(explosionSound, dalia::SoundType::Resident, "assets/explosion.ogg");

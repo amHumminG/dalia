@@ -47,7 +47,7 @@ For this reason, device state is separated into two separate concepts:
 The device identifier that the engine is currently attempting to use. This updates the moment `SetOutputDevice()` is
 called. It can be queried like this:
 ```c++
-char targetId[dalia::MAX_DEVICE_STR_LEN];
+char targetId[dalia::MAX_STR_LEN_DEVICE];
 engine->GetTargetOutputDeviceId(targetId, sizeof(targetId));
 ```
 
@@ -67,7 +67,7 @@ Because of the async nature of device swapping, it is recommended that any UI dr
 output device rather than the *active* to avoid visual flickering. Here is some pseudocode for how this can be done:
 ```c++
 // Get engine target
-char targetId[dalia::MAX_DEVICE_STR_LEN] = {0};
+char targetId[dalia::MAX_STR_LEN_DEVICE] = {0};
 engine->GetTargetOutputDeviceId(targetId, sizeof(targetId));
 std::string_view currentTargetId(targetId);
 

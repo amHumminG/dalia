@@ -180,13 +180,13 @@ namespace dalia {
 			buses(config.busCapacity),
 			biquads(config.BiquadCapacity) {
 			// Message Queues
-			rtCommands			= std::make_unique<RtCommandQueue>(config.rtCommandQueueCapacity);
-			rtEvents			= std::make_unique<RtEventQueue>(config.rtEventQueueCapacity);
-			ioStreamRequests	= std::make_unique<IoStreamRequestQueue>(config.ioStreamRequestQueueCapacity);
-			ioLoadRequests		= std::make_unique<IoLoadRequestQueue>(config.ioLoadRequestQueueCapacity);
-			ioLoadEvents		= std::make_unique<IoLoadEventQueue>(config.ioLoadEventQueueCapacity);
-			asyncControlRequests = std::make_unique<SPSCRingBuffer<AsyncControlRequest>>(ASYNC_CONTROL_QUEUE_CAPACITY);
-			asyncControlEvents = std::make_unique<SPSCRingBuffer<AsyncControlEvent>>(ASYNC_CONTROL_QUEUE_CAPACITY);
+			rtCommands			= std::make_unique<RtCommandQueue>(config.advanced.RealTimeQueueCapacity);
+			rtEvents			= std::make_unique<RtEventQueue>(config.advanced.RealTimeQueueCapacity);
+			ioStreamRequests	= std::make_unique<IoStreamRequestQueue>(config.advanced.AsyncStreamQueueCapacity);
+			ioLoadRequests		= std::make_unique<IoLoadRequestQueue>(config.advanced.AsyncLoadQueueCapacity);
+			ioLoadEvents		= std::make_unique<IoLoadEventQueue>(config.advanced.AsyncLoadQueueCapacity);
+			asyncControlRequests = std::make_unique<SPSCRingBuffer<AsyncControlRequest>>(config.advanced.AsyncControlQueueCapacity);
+			asyncControlEvents = std::make_unique<SPSCRingBuffer<AsyncControlEvent>>(config.advanced.AsyncControlQueueCapacity);
 
 			// Mixing
 			mixGraphCompiler	= std::make_unique<MixGraphCompiler>(config.busCapacity);
@@ -655,7 +655,7 @@ namespace dalia {
 		}
 
 		// --- Device & Null-Device Setup ---
-		m_state->outSampleRate = ENGINE_SAMPLE_RATE;
+		m_state->outSampleRate = config.sampleRate;
 
 		m_state->outputDevice = m_state->deviceManager->CreateDevice("default", m_state->outSampleRate);
 		m_state->nullOutputDevice = m_state->deviceManager->CreateNullDevice(
@@ -844,8 +844,8 @@ namespace dalia {
 		if (!IsInitialized(m_state)) return Result::NotInitialized;
 		if (!m_state->activeOutputDevice) return Result::StateCorrupted;
 
-		snprintf(info.name, MAX_DEVICE_STR_LEN, "%s", m_state->activeOutputDevice->GetName().c_str());
-		snprintf(info.identifier, MAX_DEVICE_STR_LEN, "%s", m_state->activeOutputDevice->GetIdentifier().c_str());
+		snprintf(info.name, MAX_STR_LEN_DEVICE, "%s", m_state->activeOutputDevice->GetName().c_str());
+		snprintf(info.identifier, MAX_STR_LEN_DEVICE, "%s", m_state->activeOutputDevice->GetIdentifier().c_str());
 		info.isDefault = m_state->activeOutputDeviceIsDefault;
 
 		return Result::Ok;

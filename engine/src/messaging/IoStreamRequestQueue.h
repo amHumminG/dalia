@@ -1,5 +1,6 @@
 #pragma once
-#include "core/Constants.h"
+
+#include "dalia/audio/SoundControl.h"
 #include "core/MPSCRingBuffer.h"
 
 namespace dalia {
@@ -19,7 +20,7 @@ namespace dalia {
 
         union {
             struct {
-                char filepath[MAX_IO_PATH_SIZE];
+                char filepath[MAX_STR_LEN_ASSET_PATH];
             } streamPrep;
 
             struct {
@@ -36,7 +37,7 @@ namespace dalia {
             req.type = Type::PrepareStream;
             req.index = index;
         	req.gen = gen;
-        	snprintf(req.data.streamPrep.filepath, MAX_IO_PATH_SIZE, "%s", path);
+        	snprintf(req.data.streamPrep.filepath, MAX_STR_LEN_ASSET_PATH, "%s", path);
             return req;
         }
 

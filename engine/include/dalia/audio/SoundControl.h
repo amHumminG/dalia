@@ -7,6 +7,8 @@
 
 namespace dalia {
 
+	static constexpr size_t MAX_STR_LEN_ASSET_PATH = 256; // The maximum string length (including null-terminator) of a filepath.
+
 	/// @brief Specifies the memory management and playback strategy for an audio asset.
     enum class SoundType : uint8_t {
         None     = 0,

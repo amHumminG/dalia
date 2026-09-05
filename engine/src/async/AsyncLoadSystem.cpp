@@ -1,5 +1,7 @@
 #include "async/AsyncLoadSystem.h"
 
+#include "dalia/audio/SoundControl.h"
+
 #include "core/Logger.h"
 #include "core/Utility.h"
 
@@ -138,7 +140,7 @@ namespace dalia {
                     streamSound->sampleRate = info.sample_rate;
                     streamSound->frameCount = totalFrames;
                 	streamSound->lengthInSeconds = static_cast<double>(totalFrames) / info.sample_rate;
-                	snprintf(streamSound->filepath, MAX_IO_PATH_SIZE, "%s", req.data.soundFromFile.filepath);
+                	snprintf(streamSound->filepath, MAX_STR_LEN_ASSET_PATH, "%s", req.data.soundFromFile.filepath);
                 }
                 stb_vorbis_close(decoder);
                 soundLoadStatePtr->store(LoadState::Loaded, std::memory_order_release);

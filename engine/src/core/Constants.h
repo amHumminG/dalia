@@ -22,12 +22,6 @@
 
 namespace dalia {
 
-    // --- I/O ---
-    static constexpr size_t MAX_IO_PATH_SIZE = 256; // The maximum length of a filepath string
-
-	// --- Messaging ---
-	static constexpr size_t ASYNC_CONTROL_QUEUE_CAPACITY = 32;
-
     // --- Mixing ---
 	constexpr float EPSILON = 1e-5f;
     constexpr float EPSILON_VOLUME = 1e-5f;
@@ -92,8 +86,10 @@ namespace dalia {
     constexpr float FILTER_RESONANCE_MAX = 10.0f;
 
 	// Static engine configs
-    static constexpr uint32_t ENGINE_SAMPLE_RATE = 48000; // The output sample rate the engine wants to output
 	static constexpr uint32_t MAX_PERIOD_FRAMES = 2048;
+
+	static constexpr size_t STREAM_BUFFER_FRAMES = 16384;
+	static constexpr size_t STREAM_BUFFER_SIZE = STREAM_BUFFER_FRAMES * CHANNELS_MAX;
 
     // --- Handles, Indices & Generations ---
     static constexpr uint64_t INVALID_RAW_ID = 0;
@@ -101,6 +97,8 @@ namespace dalia {
     static constexpr uint32_t MASTER_BUS_INDEX = 0;  // The index of the master bus within the bus pool
     static constexpr uint32_t NO_PARENT = INT32_MAX; // Indicator that a voice or bus has no parent
     static constexpr uint32_t NO_INDEX = INT32_MAX;  // Default index value
+
+	static constexpr uint32_t NO_EOF = UINT32_MAX; // Flag for stream buffer EOF indices
 
     static constexpr uint32_t NO_GENERATION = 0;
     static constexpr uint32_t START_GENERATION = 1;

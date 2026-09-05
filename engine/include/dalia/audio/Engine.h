@@ -12,32 +12,42 @@ namespace dalia {
 
 	struct EngineInternalState;
 
+	/// @brief Configuration containing all user-exposed engine settings.
 	struct EngineConfig {
-		LogLevel logLevel = LogLevel::Warning;
-		LogCallback logCallback = nullptr;
+		// Core Settings
+		uint32_t sampleRate = 48000; // Internal mixing sample rate
 
-		CoordinateSystem coordinateSystem = CoordinateSystem::RightHanded;
+		// Logging
+		LogLevel logLevel = LogLevel::Warning; // The level at which the engine will log messages.
+		LogCallback logCallback = nullptr; // Optional log sink.
 
-		uint32_t residentSoundCapacity = 256;
-		uint32_t streamSoundCapacity = 256;
+		// Spatialization
+		CoordinateSystem coordinateSystem = CoordinateSystem::RightHanded; // The coordinate system used for spatial audio.
+		uint32_t listenerCapacity = 1; // The maximum number of listeners that can exist at once (min=1 max=4).
 
-		uint32_t voiceCapacity		= 128;
-		uint32_t maxActiveVoices	= 64; // Currently unused
-		uint32_t streamCapacity		= 32;
-		uint32_t busCapacity		= 64;
+		// Asset Capacities
+		uint32_t residentSoundCapacity	= 256; // The number of resident sounds the engine is able hold loaded at once
+		uint32_t streamSoundCapacity	= 256; // The number of stream sounds the engine is able to hold loaded at once
 
-		// Effects
-		uint32_t BiquadCapacity		= 32;
+		// Mixing Capacities
+		uint32_t voiceCapacity		= 128; // The maximum number of playback instances that can exist at once.
+		uint32_t streamCapacity		= 32; // The maximum number of playback instances playing stream sounds at once.
+		uint32_t busCapacity		= 64; // The maximum number of buses that can exist at once.
 
-		uint32_t listenerCapacity	= 1; // Min 1, max 4
+		// Effect Capacities
+		uint32_t BiquadCapacity	= 32; // The maximum number of biquad filters that can exist at once.
 
-		size_t rtCommandQueueCapacity		= 1024;
-		size_t rtEventQueueCapacity			= 1024;
-		size_t ioStreamRequestQueueCapacity	= 256;
-		size_t ioLoadRequestQueueCapacity	= 64;
-		size_t ioLoadEventQueueCapacity		= 64;
+		/// @brief Advanced settings. Only touch if you have very tight constraints or experience queue overflows.
+		struct Advanced {
+			// Internal Messaging Queue Capacities (must be power of 2)
+			size_t RealTimeQueueCapacity		= 1024;
+			size_t AsyncStreamQueueCapacity		= 256;
+			size_t AsyncLoadQueueCapacity		= 128;
+			size_t AsyncControlQueueCapacity	= 32;
+		} advanced;
 	};
 
+	/// @brief The central interface and lifetime manager for the DALIA audio engine.
 	class Engine {
 	public:
 		Engine();

@@ -138,8 +138,8 @@ namespace dalia {
 			// Get device id
 			LPWSTR deviceIdW = nullptr;
 			if (SUCCEEDED(device->GetId(&deviceIdW))) {
-				WideCharToMultiByte(CP_UTF8, 0, deviceIdW, -1, info.identifier, MAX_DEVICE_STR_LEN, nullptr, nullptr);
-				info.identifier[MAX_DEVICE_STR_LEN - 1] = '\0';
+				WideCharToMultiByte(CP_UTF8, 0, deviceIdW, -1, info.identifier, MAX_STR_LEN_DEVICE, nullptr, nullptr);
+				info.identifier[MAX_STR_LEN_DEVICE - 1] = '\0';
 
 				info.isDefault = (defaultIdW && wcscmp(deviceIdW, defaultIdW) == 0);
 				CoTaskMemFree(deviceIdW);
@@ -151,8 +151,8 @@ namespace dalia {
 				PROPVARIANT varName;
 				PropVariantInit(&varName);
 				if (SUCCEEDED(props->GetValue(PKEY_Device_FriendlyName, &varName)) && varName.pwszVal) {
-					WideCharToMultiByte(CP_UTF8, 0, varName.pwszVal, -1, info.name, MAX_DEVICE_STR_LEN, nullptr, nullptr);
-					info.name[MAX_DEVICE_STR_LEN - 1] = '\0';
+					WideCharToMultiByte(CP_UTF8, 0, varName.pwszVal, -1, info.name, MAX_STR_LEN_DEVICE, nullptr, nullptr);
+					info.name[MAX_STR_LEN_DEVICE - 1] = '\0';
 				}
 				PropVariantClear(&varName);
 			}

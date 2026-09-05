@@ -1280,7 +1280,7 @@ void Sandbox::DrawEngineSettingsModal() {
 		ImGui::Separator();
 		ImGui::Spacing();
 
-		char targetIdBuffer[dalia::MAX_DEVICE_STR_LEN] = {0};
+		char targetIdBuffer[dalia::MAX_STR_LEN_DEVICE] = {0};
 		if (m_engine.GetTargetOutputDeviceId(targetIdBuffer, sizeof(targetIdBuffer)) != dalia::Result::Ok) {
 			snprintf(targetIdBuffer, sizeof(targetIdBuffer), "Engine State Corruption");
 		}
