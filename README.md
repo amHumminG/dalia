@@ -7,6 +7,8 @@
 ---
 
 ## Features
+* **Lock-Free API:** Zero mutex usage on the calling thread.
+* **Device Management:** Async audio endpoint hot-swapping.
 * **Configurable Memory Usage:** All internal pools are pre-allocated at startup per configuration.
 * **Asset Management:** Asynchronous, reference-counted asset loading and double-buffered OGG/Vorbis streaming.
 * **3D Spatialization:**
@@ -19,8 +21,21 @@
   * 4 hot-swappable DSP effect slots per bus.
 * **Real-Time Playback Parameter Control:** Volume, playback rate, pan, looping, spatialization, position, attenuation curve, min/max distance, velocity, doppler effect, and more.
 
-DALIA is currently only supported on Windows (WASAPI).
 Check out the [documentation](https://amhumming.github.io/dalia/) for more details.
+
+## Platform Support
+| Operating System | Status    | API  |
+|:-----------------|:----------|:-----|
+| **Windows**      | Supported | WASAPI |
+| **macOS**        | TBD       | CoreAudio |
+| **Linux**        | Planned   | ALSA |
+
+## Speaker Configurations
+| Configuration | Supported | Tested |
+|:--------------|:----------|:-------|
+| **Stereo (2.0)**   | Yes       | Yes    |
+| **Mono (1.0)**     | Yes       | No     |
+| **Surround (5.1 / 7.1)**     | No        | No     |
 
 ## Sandbox
 The standalone sandbox application is designed to showcase and test the engine's features. If you want to
@@ -70,7 +85,7 @@ target_link_libraries(YourTarget PRIVATE dalia::engine)
 ## License
 DALIA is licensed under the [MIT License](LICENSE).
 
-## Acknowledgements
+## Dependencies and Acknowledgements
 
 The core engine relies on a single public-domain header:
 * [stb_vorbis](https://github.com/nothings/stb) for OGG/Vorbis decoding.
