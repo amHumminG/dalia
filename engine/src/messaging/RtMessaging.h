@@ -1,8 +1,8 @@
 #pragma once
 
-#include "core/Constants.h"
 #include "core/SPSCRingBuffer.h"
 #include "dalia/audio/EffectControl.h"
+#include "dalia/audio/PlaybackControl.h"
 
 #include <vector>
 
@@ -260,20 +260,75 @@ namespace dalia {
 		}
 	};
 
+	struct  RtEvent {
+		enum class Type {
+			None,
+
+			// Voice Lifecycle
+			VoiceStopped,
+
+			// Effects
+			EffectActive,
+			EffectDetached,
+		};
+
+		Type type = Type::None;
+
+		// Payload
+		union Data {
+			struct {
+				uint32_t index;
+				uint32_t generation;
+				PlaybackExitCondition exitCondition;
+			} voice;
+
+			struct {
+				uint64_t handleRawId;
+			} effect;
+
+		} data = {};
+
+		static RtEvent VoiceStopped(uint32_t index, uint32_t generation, PlaybackExitCondition exitCondition) {
+			RtEvent ev;
+			ev.type = Type::VoiceStopped;
+			ev.data.voice.index = index;
+			ev.data.voice.generation = generation;
+			ev.data.voice.exitCondition = exitCondition;
+			return ev;
+		}
+
+		static RtEvent EffectActive(uint64_t handleRawId) {
+			RtEvent ev;
+			ev.type = Type::EffectActive;
+			ev.data.effect.handleRawId = handleRawId;
+			return ev;
+		}
+
+		static RtEvent EffectDetached(uint64_t handleRawId) {
+			RtEvent ev;
+			ev.type = Type::EffectDetached;
+			ev.data.effect.handleRawId = handleRawId;
+			return ev;
+		}
+	};
+
+	// --- Queues ---
+
+	// Wrapper due to the need for a staging area
 	class RtCommandQueue {
 	public:
 		RtCommandQueue(size_t commandCapacity);
 		~RtCommandQueue() = default;
 
-		// Game thread API
 		void Enqueue(const RtCommand& command);
 		void Dispatch();
 
-		// Audio thread API
 		bool Pop(RtCommand& command);
 
 	private:
 		std::vector<RtCommand> m_stagingArea;
 		SPSCRingBuffer<RtCommand> m_buffer;
 	};
+
+	using RtEventQueue = SPSCRingBuffer<RtEvent>;
 }

@@ -1,12 +1,6 @@
 #include "async/AsyncControlSystem.h"
 
 #include "backend/windows/WindowsDeviceManager.h"
-
-#include "core/SPSCRingBuffer.h"
-#include "messaging/AsyncControlMessaging.h"
-
-#include <objbase.h>
-
 #include "core/Logger.h"
 
 namespace dalia {

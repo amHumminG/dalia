@@ -16,13 +16,10 @@
 #include "core/Constants.h"
 #include "core/Types.h"
 #include "core/Math.h"
-#include "core/HandleManager.h"
 
-#include "messaging/RtCommandQueue.h"
-#include "messaging/RtEventQueue.h"
-#include "messaging/IoStreamRequestQueue.h"
-#include "messaging/IoLoadRequestQueue.h"
-#include "messaging/IoLoadEventQueue.h"
+#include "messaging/RtMessaging.h"
+#include "messaging/AsyncStreamMessaging.h"
+#include "messaging/AsyncLoadMessaging.h"
 #include "messaging/AsyncControlMessaging.h"
 
 #include "core/StateSyncPool.h"
@@ -107,14 +104,13 @@ namespace dalia {
 		CoordinateSystem coordinateSystem;
 
 		// Messaging Queues
-		std::unique_ptr<RtCommandQueue>			rtCommands;
-		std::unique_ptr<RtEventQueue>			rtEvents;
-		std::unique_ptr<IoStreamRequestQueue>	ioStreamRequests;
-		std::unique_ptr<IoLoadRequestQueue>		ioLoadRequests;
-		std::unique_ptr<IoLoadEventQueue>		ioLoadEvents;
-
-		std::unique_ptr<SPSCRingBuffer<AsyncControlRequest>> asyncControlRequests;
-		std::unique_ptr<SPSCRingBuffer<AsyncControlEvent>> asyncControlEvents;
+		std::unique_ptr<RtCommandQueue>				rtCommands;
+		std::unique_ptr<RtEventQueue>				rtEvents;
+		std::unique_ptr<AsyncStreamRequestQueue>	asyncStreamRequests;
+		std::unique_ptr<AsyncLoadRequestQueue>		asyncLoadRequests;
+		std::unique_ptr<AsyncLoadEventQueue>		asyncLoadEvents;
+		std::unique_ptr<AsyncControlRequestQueue>	asyncControlRequests;
+		std::unique_ptr<AsyncControlEventQueue>		asyncControlEvents;
 
 		// Resource Capacities
 		uint32_t streamCapacity		= 0;
@@ -163,8 +159,8 @@ namespace dalia {
 
 		// Systems
 		std::unique_ptr<RtSystem> rtSystem;
-		std::unique_ptr<AsyncStreamSystem> ioStreamSystem;
-		std::unique_ptr<AsyncLoadSystem> ioLoadSystem;
+		std::unique_ptr<AsyncStreamSystem> asyncStreamSystem;
+		std::unique_ptr<AsyncLoadSystem> asyncLoadSystem;
 		std::unique_ptr<AsyncControlSystem> asyncControlSystem;
 
 		EngineInternalState(const EngineConfig& config)
@@ -180,13 +176,13 @@ namespace dalia {
 			buses(config.busCapacity),
 			biquads(config.BiquadCapacity) {
 			// Message Queues
-			rtCommands			= std::make_unique<RtCommandQueue>(config.advanced.RealTimeQueueCapacity);
-			rtEvents			= std::make_unique<RtEventQueue>(config.advanced.RealTimeQueueCapacity);
-			ioStreamRequests	= std::make_unique<IoStreamRequestQueue>(config.advanced.AsyncStreamQueueCapacity);
-			ioLoadRequests		= std::make_unique<IoLoadRequestQueue>(config.advanced.AsyncLoadQueueCapacity);
-			ioLoadEvents		= std::make_unique<IoLoadEventQueue>(config.advanced.AsyncLoadQueueCapacity);
-			asyncControlRequests = std::make_unique<SPSCRingBuffer<AsyncControlRequest>>(config.advanced.AsyncControlQueueCapacity);
-			asyncControlEvents = std::make_unique<SPSCRingBuffer<AsyncControlEvent>>(config.advanced.AsyncControlQueueCapacity);
+			rtCommands				= std::make_unique<RtCommandQueue>(config.advanced.RealTimeQueueCapacity);
+			rtEvents				= std::make_unique<RtEventQueue>(config.advanced.RealTimeQueueCapacity);
+			asyncStreamRequests		= std::make_unique<AsyncStreamRequestQueue>(config.advanced.AsyncStreamQueueCapacity);
+			asyncLoadRequests		= std::make_unique<AsyncLoadRequestQueue>(config.advanced.AsyncLoadQueueCapacity);
+			asyncLoadEvents			= std::make_unique<AsyncLoadEventQueue>(config.advanced.AsyncLoadQueueCapacity);
+			asyncControlRequests	= std::make_unique<SPSCRingBuffer<AsyncControlRequest>>(config.advanced.AsyncControlQueueCapacity);
+			asyncControlEvents		= std::make_unique<SPSCRingBuffer<AsyncControlEvent>>(config.advanced.AsyncControlQueueCapacity);
 
 			// Mixing
 			mixGraphCompiler	= std::make_unique<MixGraphCompiler>(config.busCapacity);
@@ -373,8 +369,8 @@ namespace dalia {
 
 		// Send I/O request to prepare stream
 		state->streams.Get(streamIndex).state.store(StreamState::Preparing, std::memory_order_release);
-		IoStreamRequest req = IoStreamRequest::PrepareStream(streamIndex,state->streams.Get(streamIndex).gen ,filepath);
-		if (!state->ioStreamRequests->Push(req)) {
+		AsyncStreamRequest req = AsyncStreamRequest::PrepareStream(streamIndex,state->streams.Get(streamIndex).gen ,filepath);
+		if (!state->asyncStreamRequests->Push(req)) {
 			// Rollback
 			state->streams.Get(streamIndex).state.store(StreamState::Free, std::memory_order_release);
 			state->streams.Free(streamIndex);
@@ -454,7 +450,7 @@ namespace dalia {
 		}
 	}
 
-	static void ProcessIoLoadEvent(EngineInternalState* state, const IoLoadEvent& ev) {
+	static void ProcessIoLoadEvent(EngineInternalState* state, const AsyncLoadEvent& ev) {
 		// Execute user-registered callback
 		if (auto it = state->loadCallbacks.find(ev.requestId); it != state->loadCallbacks.end()) {
 			if (it->second) {
@@ -464,7 +460,7 @@ namespace dalia {
 		}
 
 		switch (ev.type) {
-			case IoLoadEvent::Type::SoundLoaded: {
+			case AsyncLoadEvent::Type::SoundLoaded: {
 				// Process deferred playbacks
 				for (auto it = state->pendingPlaybacks.begin(); it != state->pendingPlaybacks.end(); ) {
 					if (it->assetRawId == ev.assetRawId) {
@@ -561,7 +557,7 @@ namespace dalia {
 				}
 				break;
 			}
-			case IoLoadEvent::Type::SoundLoadFailed: {
+			case AsyncLoadEvent::Type::SoundLoadFailed: {
 				for (auto it = state->pendingPlaybacks.begin(); it != state->pendingPlaybacks.end(); ) {
 					if (it->assetRawId == ev.assetRawId) {
 						uint32_t vIndex = it->voiceIndex, vGen = it->voiceGen;
@@ -699,7 +695,7 @@ namespace dalia {
 		rtConfig.outSampleRate			= m_state->outSampleRate;
 		rtConfig.rtCommands				= m_state->rtCommands.get();
 		rtConfig.rtEvents				= m_state->rtEvents.get();
-		rtConfig.ioStreamRequests		= m_state->ioStreamRequests.get();
+		rtConfig.asyncStreamRequests		= m_state->asyncStreamRequests.get();
 		rtConfig.streamPool				= m_state->streams.GetSpan();
 		rtConfig.listenerPool			= m_state->listeners.GetSpan();
 		rtConfig.listenerParamBridges	= m_state->listeners.GetParamBridgeSpan();
@@ -717,17 +713,17 @@ namespace dalia {
 
 		AsyncStreamSystemConfig ioStreamingConfig;
 		ioStreamingConfig.outSampleRate		= m_state->outSampleRate;
-		ioStreamingConfig.ioStreamRequests	= m_state->ioStreamRequests.get();
+		ioStreamingConfig.ioStreamRequests	= m_state->asyncStreamRequests.get();
 		ioStreamingConfig.streamPool		= m_state->streams.GetSpan();
 		ioStreamingConfig.freeStreams		= m_state->streams.GetFreeList();
-		m_state->ioStreamSystem	= std::make_unique<AsyncStreamSystem>(ioStreamingConfig);
+		m_state->asyncStreamSystem	= std::make_unique<AsyncStreamSystem>(ioStreamingConfig);
 
 		AsyncLoadSystemConfig ioLoadSystemConfig;
 		ioLoadSystemConfig.outSampleRate	= m_state->outSampleRate;
-		ioLoadSystemConfig.ioLoadRequests	= m_state->ioLoadRequests.get();
-		ioLoadSystemConfig.ioLoadEvents		= m_state->ioLoadEvents.get();
+		ioLoadSystemConfig.ioLoadRequests	= m_state->asyncLoadRequests.get();
+		ioLoadSystemConfig.ioLoadEvents		= m_state->asyncLoadEvents.get();
 		ioLoadSystemConfig.assetRegistry	= m_state->assetRegistry.get();
-		m_state->ioLoadSystem = std::make_unique<AsyncLoadSystem>(ioLoadSystemConfig);
+		m_state->asyncLoadSystem = std::make_unique<AsyncLoadSystem>(ioLoadSystemConfig);
 
 		AsyncControlSystemConfig asyncControlSystemConfig;
 		asyncControlSystemConfig.requestQueue = m_state->asyncControlRequests.get();
@@ -736,8 +732,8 @@ namespace dalia {
 		m_state->asyncControlSystem = std::make_unique<AsyncControlSystem>(asyncControlSystemConfig);
 
 		// --- SYSTEMS START ---
-		m_state->ioStreamSystem->Start();
-		m_state->ioLoadSystem->Start();
+		m_state->asyncStreamSystem->Start();
+		m_state->asyncLoadSystem->Start();
 		m_state->asyncControlSystem->Start();
 
 		res = m_state->activeOutputDevice->Start(m_state->rtSystem.get());
@@ -773,8 +769,8 @@ namespace dalia {
 		RtEvent RtEv;
 		while (m_state->rtEvents->Pop(RtEv)) ProcessRtEvent(m_state, RtEv);
 
-		IoLoadEvent loadEv;
-		while (m_state->ioLoadEvents->Pop(loadEv)) ProcessIoLoadEvent(m_state, loadEv);
+		AsyncLoadEvent loadEv;
+		while (m_state->asyncLoadEvents->Pop(loadEv)) ProcessIoLoadEvent(m_state, loadEv);
 
 		// --- Update Parameter Bridges ---
 		for (uint32_t vIndex = 0; vIndex < m_state->voiceCapacity; vIndex++) {
@@ -926,7 +922,7 @@ namespace dalia {
 		if (outRequestId) *outRequestId = requestId;
 		if (callback) m_state->loadCallbacks[requestId] = std::move(callback);
 
-		m_state->ioLoadRequests->Push(IoLoadRequest::LoadSound(requestId, sound, filepath));
+		m_state->asyncLoadRequests->Push(AsyncLoadRequest::LoadSound(requestId, sound, filepath));
 
 		return Result::Ok;
 	}
@@ -2107,8 +2103,8 @@ namespace dalia {
 		if (m_state->outputDevice)		m_state->outputDevice->Stop();
 		if (m_state->nullOutputDevice)		m_state->nullOutputDevice->Stop();
 
-		if (m_state->ioLoadSystem)		m_state->ioLoadSystem->Stop();
-		if (m_state->ioStreamSystem)	m_state->ioStreamSystem->Stop();
+		if (m_state->asyncLoadSystem)		m_state->asyncLoadSystem->Stop();
+		if (m_state->asyncStreamSystem)	m_state->asyncStreamSystem->Stop();
 
 		delete m_state;
 		m_state = nullptr;

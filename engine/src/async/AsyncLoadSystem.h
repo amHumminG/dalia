@@ -1,19 +1,19 @@
 #pragma once
+
+#include "messaging/AsyncLoadMessaging.h"
+
 #include <thread>
 #include <atomic>
 
 namespace dalia {
 
-    class IoLoadRequestQueue;
-    struct IoLoadRequest;
-    class IoLoadEventQueue;
     class AssetRegistry;
 
     struct AsyncLoadSystemConfig {
     	uint32_t outSampleRate = 0;
 
-        IoLoadRequestQueue* ioLoadRequests = nullptr;
-        IoLoadEventQueue* ioLoadEvents = nullptr;
+        AsyncLoadRequestQueue* ioLoadRequests = nullptr;
+        AsyncLoadEventQueue* ioLoadEvents = nullptr;
 
         AssetRegistry*  assetRegistry = nullptr;
     };
@@ -28,12 +28,12 @@ namespace dalia {
 
     private:
         void ThreadMain();
-        void ProcessRequest(const IoLoadRequest& request);
+        void ProcessRequest(const AsyncLoadRequest& request);
 
     	uint32_t m_outSampleRate = 0;
 
-        IoLoadRequestQueue* m_ioLoadRequests;
-        IoLoadEventQueue* m_ioLoadEvents;
+        AsyncLoadRequestQueue* m_ioLoadRequests;
+        AsyncLoadEventQueue* m_ioLoadEvents;
 
         AssetRegistry* m_assetRegistry;
 

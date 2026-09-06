@@ -1,5 +1,7 @@
 #pragma once
 
+#include "messaging/RtMessaging.h"
+#include "messaging/AsyncStreamMessaging.h"
 #include "core/Constants.h"
 #include "core/ParameterBridge.h"
 #include "mixer/Speakers.h"
@@ -8,10 +10,6 @@
 #include <span>
 
 namespace dalia {
-
-    class RtCommandQueue;
-    class RtEventQueue;
-    class IoStreamRequestQueue;
 
 	struct Listener;
 	struct ListenerParams;
@@ -36,13 +34,13 @@ namespace dalia {
     	float globalDopplerFactor = 1.0f;
 
         SpeakerLayout speakerLayout;
-    	uint32_t maxSamplesPerPeriod = 0;
-        uint32_t outChannels = 0;
-        uint32_t outSampleRate = 0;
+    	uint32_t maxSamplesPerPeriod	= 0;
+        uint32_t outChannels			= 0;
+        uint32_t outSampleRate			= 0;
 
-        RtCommandQueue* rtCommands              = nullptr;
-        RtEventQueue* rtEvents                  = nullptr;
-        IoStreamRequestQueue* ioStreamRequests  = nullptr;
+        RtCommandQueue* rtCommands					= nullptr;
+        RtEventQueue* rtEvents						= nullptr;
+        AsyncStreamRequestQueue* asyncStreamRequests	= nullptr;
 
     	std::span<StreamContext> streamPool;
 
@@ -59,7 +57,7 @@ namespace dalia {
     	std::span<Biquad> biquadPool;
     	std::span<ParameterBridge<BiquadParams>> biquadParamBridges;
 
-    	MixGraphCompiler* mixGraphCompiler		= nullptr;
+    	MixGraphCompiler* mixGraphCompiler = nullptr;
     	std::span<uint32_t> mixOrder;
         std::span<float> dspScratchBuffer;
     };
@@ -95,8 +93,8 @@ namespace dalia {
     	void ConfigureSpeakerLayout(SpeakerLayout layout); // Also sets the spatial speaker count
 
     	PeakLimiter m_masterPeakLimiter;
-    	float m_smoothingCoefficient = 0.0f; // Used for volume and gain smoothing
-    	float m_fadeStep = 0.0f;			 // Per sample step for gain fading
+    	float m_smoothingCoefficient	= 0.0f; // Used for volume and gain smoothing
+    	float m_fadeStep				= 0.0f;	// Per sample step for gain fading
 
     	// Global User Settings
     	CoordinateSystem m_coordinateSystem;
@@ -105,15 +103,15 @@ namespace dalia {
     	// Output Settings
     	SpeakerLayout m_speakerLayout;
     	VirtualSpeaker m_speakerMatrix[CHANNELS_MAX];
-    	uint32_t m_spatialSpeakerCount = 0;
-    	uint32_t m_maxSamplesPerPeriod = 0;
-        uint32_t m_outChannels = 0;
-        uint32_t m_outSampleRate = 0;
+    	uint32_t m_spatialSpeakerCount	= 0;
+    	uint32_t m_maxSamplesPerPeriod	= 0;
+        uint32_t m_outChannels			= 0;
+        uint32_t m_outSampleRate		= 0;
 
     	// Messaging
-        RtCommandQueue* m_rtCommands				= nullptr;
-        RtEventQueue* m_rtEvents					= nullptr;
-        IoStreamRequestQueue* m_ioStreamRequests	= nullptr;
+        RtCommandQueue* m_rtCommands					= nullptr;
+        RtEventQueue* m_rtEvents						= nullptr;
+        AsyncStreamRequestQueue* m_asyncStreamRequests	= nullptr;
 
     	// Streams
     	std::span<StreamContext> m_streamPool;

@@ -13,9 +13,8 @@
 #include "mixer/Listener.h"
 #include "mixer/MixGraphCompiler.h"
 
-#include "messaging/RtCommandQueue.h"
-#include "messaging/RtEventQueue.h"
-#include "messaging/IoStreamRequestQueue.h"
+#include "messaging/RtMessaging.h"
+#include "messaging/AsyncStreamMessaging.h"
 
 #include "effects/Biquad.h"
 
@@ -276,7 +275,7 @@ namespace dalia {
 		return block;
 	}
 
-	inline bool HandleVoiceBoundary(Voice& voice, StreamContext* streamPool, IoStreamRequestQueue* ioStreamRequests) {
+	inline bool HandleVoiceBoundary(Voice& voice, StreamContext* streamPool, AsyncStreamRequestQueue* ioStreamRequests) {
 		if (voice.soundType == SoundType::Resident) {
 			if (voice.params.isLooping) {
 				voice.cursor -= static_cast<double>(voice.data.resident.frameCount);
@@ -301,7 +300,7 @@ namespace dalia {
 
 			// No exit -> Swap front buffer
 			stream.bufferReady[voice.data.stream.frontBufferIndex].store(false, std::memory_order_release);
-			ioStreamRequests->Push(IoStreamRequest::RefillStreamBuffer(
+			ioStreamRequests->Push(AsyncStreamRequest::RefillStreamBuffer(
 				voice.data.stream.streamContextIndex,
 				stream.gen.load(std::memory_order_relaxed),
 				voice.data.stream.frontBufferIndex
@@ -362,7 +361,7 @@ namespace dalia {
 		m_outSampleRate(config.outSampleRate),
 		m_rtCommands(config.rtCommands),
 		m_rtEvents(config.rtEvents),
-		m_ioStreamRequests(config.ioStreamRequests),
+		m_asyncStreamRequests(config.asyncStreamRequests),
 		m_streamPool(config.streamPool),
 		m_voicePool(config.voicePool),
 		m_voiceParamBridges(config.voiceParamBridges),
@@ -683,7 +682,7 @@ namespace dalia {
 							std::memory_order_release)) {
 							// If streaming we can push the request
 
-							m_ioStreamRequests->Push(IoStreamRequest::SeekStream(
+							m_asyncStreamRequests->Push(AsyncStreamRequest::SeekStream(
 								voice.data.stream.streamContextIndex,
 								stream.gen,
 								voice.pendingSeekFrame
@@ -921,7 +920,7 @@ namespace dalia {
 
 				// Boundary check
 				if (block.framesAvailable < sourceFramesNeeded) {
-					bool keepPlaying = HandleVoiceBoundary(voice, m_streamPool.data(), m_ioStreamRequests);
+					bool keepPlaying = HandleVoiceBoundary(voice, m_streamPool.data(), m_asyncStreamRequests);
 					if (!keepPlaying) break;
 				}
 			}
@@ -934,7 +933,7 @@ namespace dalia {
     	Voice& voice = m_voicePool[vIndex];
 
     	if (voice.soundType == SoundType::Stream) {
-    		m_ioStreamRequests->Push(IoStreamRequest::ReleaseStream(
+    		m_asyncStreamRequests->Push(AsyncStreamRequest::ReleaseStream(
     			voice.data.stream.streamContextIndex,
     			m_streamPool[voice.data.stream.streamContextIndex].gen
     		));

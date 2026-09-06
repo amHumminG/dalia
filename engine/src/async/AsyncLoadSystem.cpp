@@ -5,8 +5,7 @@
 #include "core/Logger.h"
 #include "core/Utility.h"
 
-#include "messaging/IoLoadRequestQueue.h"
-#include "messaging/IoLoadEventQueue.h"
+#include "messaging/AsyncLoadMessaging.h"
 
 #include "resources/AssetRegistry.h"
 #include "resources/ResidentSound.h"
@@ -45,7 +44,7 @@ namespace dalia {
     void AsyncLoadSystem::ThreadMain() {
         while (m_isRunning.load(std::memory_order_relaxed)) {
             bool didWork = false;
-            IoLoadRequest req;
+            AsyncLoadRequest req;
 
             while (m_ioLoadRequests->Pop(req)) {
                 didWork = true;
@@ -58,9 +57,9 @@ namespace dalia {
         }
     }
 
-    void AsyncLoadSystem::ProcessRequest(const IoLoadRequest& req) {
+    void AsyncLoadSystem::ProcessRequest(const AsyncLoadRequest& req) {
         switch (req.type) {
-            case IoLoadRequest::Type::LoadSound: {
+            case AsyncLoadRequest::Type::LoadSound: {
                 SoundHandle soundHandle = SoundHandle::FromRawId(req.data.soundFromFile.resourceHandleRawId);
                 SoundType soundType = soundHandle.GetType();
 
@@ -92,7 +91,7 @@ namespace dalia {
                 if (!decoder) {
                     soundLoadStatePtr->store(LoadState::Error, std::memory_order_release);
 
-                    m_ioLoadEvents->Push(IoLoadEvent::SoundLoadFailed(req.requestId, Result::FileReadError));
+                    m_ioLoadEvents->Push(AsyncLoadEvent::SoundLoadFailed(req.requestId, Result::FileReadError));
                     DALIA_LOG_ERR(LOG_CTX_IO, "Failed to load sound from %s. %s.", req.data.soundFromFile.filepath,
                         GetStbVorbisErrorString(error));
 
@@ -122,7 +121,7 @@ namespace dalia {
                     if (framesDecoded == 0) {
                         soundLoadStatePtr->store(LoadState::Error, std::memory_order_release);
 
-                        m_ioLoadEvents->Push(IoLoadEvent::SoundLoadFailed(req.requestId, Result::FileReadError));
+                        m_ioLoadEvents->Push(AsyncLoadEvent::SoundLoadFailed(req.requestId, Result::FileReadError));
                         DALIA_LOG_ERR(LOG_CTX_IO, "Failed to read samples from %s.", req.data.soundFromFile.filepath);
 
                         stb_vorbis_close(decoder);
@@ -145,7 +144,7 @@ namespace dalia {
                 stb_vorbis_close(decoder);
                 soundLoadStatePtr->store(LoadState::Loaded, std::memory_order_release);
 
-                m_ioLoadEvents->Push(IoLoadEvent::SoundLoaded(req.requestId, soundHandle.GetRawId()));
+                m_ioLoadEvents->Push(AsyncLoadEvent::SoundLoaded(req.requestId, soundHandle.GetRawId()));
 
                 DALIA_LOG_DEBUG(LOG_CTX_IO, "Loaded sound from file (%s).", req.data.soundFromFile.filepath);
                 break;

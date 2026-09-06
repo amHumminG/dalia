@@ -1,19 +1,19 @@
 #pragma once
 
+#include "messaging/AsyncControlMessaging.h"
+
 #include <thread>
 #include <atomic>
 #include <semaphore>
 
 namespace dalia {
 
-	template <typename T> class SPSCRingBuffer;
-	struct AsyncControlRequest;
-	struct AsyncControlEvent;
 	class DeviceManager;
 
 	struct AsyncControlSystemConfig {
-		SPSCRingBuffer<AsyncControlRequest>* requestQueue = nullptr;
-		SPSCRingBuffer<AsyncControlEvent>* eventQueue = nullptr;
+		AsyncControlRequestQueue* requestQueue = nullptr;
+		AsyncControlEventQueue* eventQueue = nullptr;
+
 		DeviceManager* deviceManager = nullptr;
 	};
 
@@ -35,8 +35,8 @@ namespace dalia {
 		std::atomic<bool> m_isRunning{false};
 		std::counting_semaphore<1024> m_taskSemaphore{0};
 
-		SPSCRingBuffer<AsyncControlRequest>* m_requestQueue = nullptr;
-		SPSCRingBuffer<AsyncControlEvent>* m_eventQueue = nullptr;
+		AsyncControlRequestQueue* m_requestQueue = nullptr;
+		AsyncControlEventQueue* m_eventQueue = nullptr;
 		DeviceManager* m_deviceManager = nullptr;
 	};
 }

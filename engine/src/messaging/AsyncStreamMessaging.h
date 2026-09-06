@@ -5,7 +5,7 @@
 
 namespace dalia {
 
-    struct IoStreamRequest {
+    struct AsyncStreamRequest {
         enum class Type {
             None,
             PrepareStream,
@@ -32,8 +32,8 @@ namespace dalia {
             } streamSeek;
         } data = {};
 
-        static IoStreamRequest PrepareStream(uint32_t index, uint32_t gen, const char* path) {
-            IoStreamRequest req;
+        static AsyncStreamRequest PrepareStream(uint32_t index, uint32_t gen, const char* path) {
+            AsyncStreamRequest req;
             req.type = Type::PrepareStream;
             req.index = index;
         	req.gen = gen;
@@ -41,16 +41,16 @@ namespace dalia {
             return req;
         }
 
-        static IoStreamRequest ReleaseStream(uint32_t index, uint32_t gen) {
-            IoStreamRequest req;
+        static AsyncStreamRequest ReleaseStream(uint32_t index, uint32_t gen) {
+            AsyncStreamRequest req;
             req.type = Type::ReleaseStream;
             req.index = index;
         	req.gen = gen;
             return req;
         }
 
-        static IoStreamRequest RefillStreamBuffer(uint32_t index, uint32_t gen, uint32_t bufferIndex) {
-            IoStreamRequest req;
+        static AsyncStreamRequest RefillStreamBuffer(uint32_t index, uint32_t gen, uint32_t bufferIndex) {
+            AsyncStreamRequest req;
             req.type = Type::RefillStreamBuffer;
             req.index = index;
             req.gen = gen;
@@ -58,8 +58,8 @@ namespace dalia {
             return req;
         }
 
-        static IoStreamRequest SeekStream(uint32_t index, uint32_t gen, uint32_t seekFrame) {
-            IoStreamRequest req{};
+        static AsyncStreamRequest SeekStream(uint32_t index, uint32_t gen, uint32_t seekFrame) {
+            AsyncStreamRequest req{};
             req.type = Type::SeekStream;
             req.index = index;
             req.gen = gen;
@@ -68,17 +68,7 @@ namespace dalia {
         }
     };
 
-    class IoStreamRequestQueue {
-    public:
-        IoStreamRequestQueue(size_t capacity);
-        ~IoStreamRequestQueue() = default;
+	// --- Queues ---
 
-        bool Push(const IoStreamRequest& request);
-        bool Pop(IoStreamRequest& request);
-
-    private:
-        MPSCRingBuffer<IoStreamRequest> m_buffer;
-    };
-
-
+	using AsyncStreamRequestQueue = MPSCRingBuffer<AsyncStreamRequest>;
 }

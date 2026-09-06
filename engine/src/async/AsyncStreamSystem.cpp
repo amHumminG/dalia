@@ -3,7 +3,7 @@
 #include "core/Logger.h"
 
 #include "core/SPSCRingBuffer.h"
-#include "messaging/IoStreamRequestQueue.h"
+#include "messaging/AsyncStreamMessaging.h"
 #include "mixer/StreamContext.h"
 
 #define STB_VORBIS_HEADER_ONLY
@@ -43,7 +43,7 @@ namespace dalia {
     void AsyncStreamSystem::ThreadMain() {
         while (m_isRunning.load(std::memory_order_relaxed)) {
             bool didWork = false;
-            IoStreamRequest req;
+            AsyncStreamRequest req;
 
             while (m_ioStreamRequests->Pop(req)) {
                 didWork = true;
@@ -56,9 +56,9 @@ namespace dalia {
         }
     }
 
-    void AsyncStreamSystem::ProcessRequest(const IoStreamRequest& req) {
+    void AsyncStreamSystem::ProcessRequest(const AsyncStreamRequest& req) {
         switch (req.type) {
-            case IoStreamRequest::Type::PrepareStream: {
+            case AsyncStreamRequest::Type::PrepareStream: {
                 uint32_t sIndex = req.index;
                 uint32_t sGen = req.gen;
                 const char* filepath = req.data.streamPrep.filepath;
@@ -107,7 +107,7 @@ namespace dalia {
 
                 break;
             }
-            case IoStreamRequest::Type::ReleaseStream: {
+            case AsyncStreamRequest::Type::ReleaseStream: {
                 uint32_t sIndex = req.index;
             	uint32_t sGen = req.gen;
 
@@ -124,7 +124,7 @@ namespace dalia {
                 DALIA_LOG_DEBUG(LOG_CTX_IO, "Freed stream %d.", sIndex);
                 break;
             }
-            case IoStreamRequest::Type::RefillStreamBuffer: {
+            case AsyncStreamRequest::Type::RefillStreamBuffer: {
                 uint32_t sIndex = req.index;
                 uint32_t sGen = req.gen;
                 uint32_t bufferIndex = req.data.streamRefill.bufferIndex;
@@ -136,7 +136,7 @@ namespace dalia {
                 FillBuffer(stream, bufferIndex);
                 break;
             }
-            case IoStreamRequest::Type::SeekStream: {
+            case AsyncStreamRequest::Type::SeekStream: {
                 uint32_t sIndex = req.index;
                 uint32_t sGen = req.gen;
                 uint32_t seekFrame = req.data.streamSeek.seekFrame;

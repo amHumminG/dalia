@@ -1,8 +1,10 @@
 #pragma once
 
-#include <cstdint>
-
+#include "core/SPSCRingBuffer.h"
 #include "dalia/audio/DeviceControl.h"
+
+#include <cstdint>
+#include <cstdio>
 
 namespace dalia {
 
@@ -54,4 +56,8 @@ namespace dalia {
 		}
 	};
 
+	// --- Queues ---
+
+	using AsyncControlRequestQueue = SPSCRingBuffer<AsyncControlRequest>;
+	using AsyncControlEventQueue = SPSCRingBuffer<AsyncControlEvent>;
 }
