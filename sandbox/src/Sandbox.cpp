@@ -66,7 +66,7 @@ Sandbox::Sandbox()
 		m_logs.push_back({level, context, message});
 	};
 	config.listenerCapacity = 4;
-	m_engine.Init(config);
+	m_engine.Initialize(config);
 
 	m_buses.push_back(std::make_unique<MixingBus>(&m_engine, "Master"));
 

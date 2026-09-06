@@ -65,7 +65,7 @@ int main() {
     dalia::Engine engine;
     
     dalia::EngineConfig config;
-    dalia::Result res = engine.Init(config);
+    dalia::Result res = engine.Initialize(config);
     if (res != dalia::Result::Ok) {
         // All result codes can be converted into c-strings like this
         std::cerr << "Failed to initialize audio engine. Error code: " << dalia::GetResultString(res) << std::endl;
@@ -111,7 +111,7 @@ dalia::EngineConfig config;
 config.logLevel = dalia::LogLevel::Info;
 config.logCallback = CustomLogSink;
 
-engine.Init(config);
+engine.Inititalize(config);
 ```
 *Note: The `context` string describes which internal system of the engine the log originates from.*
 

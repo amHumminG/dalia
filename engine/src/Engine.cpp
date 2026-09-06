@@ -606,7 +606,7 @@ namespace dalia {
 	Engine::Engine() = default;
 	Engine::~Engine() { TeardownInternal(); };
 
-	Result Engine::Init(const EngineConfig& config) {
+	Result Engine::Initialize(const EngineConfig& config) {
 		if (m_state != nullptr) {
 			DALIA_LOG_WARN(LOG_CTX_API, "Attempting to initialize engine that is already initialized.");
 			return Result::AlreadyInitialized;

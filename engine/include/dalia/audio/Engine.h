@@ -64,8 +64,9 @@ namespace dalia {
 
 		/// @brief Initializes the engine, hardware device and background threads.
 		///
-		/// This function allocates all internal memory pools and starts the background audio thread, I/O loading
-		/// thread, and I/O streaming thread. It must be called once before any other engine methods are used.
+		/// This function allocates all internal memory pools and starts the background audio thread, async loading
+		/// thread, async streaming thread, and async control thread. It must be called once before any other engine
+		/// methods are used.
 		///
 		/// @note [Hardware Device] The engine will default to the OS's default audio device.
 		///
@@ -74,7 +75,7 @@ namespace dalia {
 		/// @retval Result::Ok					The engine was successfully initialized and is ready for use.
 		/// @retval Result::AlreadyInitialized	Attempted to initialize an already initialized engine.
 		/// @retval Result::DeviceFailed		The operating system failed to initialize or start the audio device.
-		Result Init(const EngineConfig& config = EngineConfig{});
+		Result Initialize(const EngineConfig& config = EngineConfig{});
 
 		/// @brief Halts all audio processing, terminates all background threads and frees allocated engine memory.
 		///
