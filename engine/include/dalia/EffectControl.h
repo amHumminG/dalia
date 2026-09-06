@@ -1,4 +1,8 @@
 #pragma once
+
+/// @file EffectControl.h
+/// @brief DSP effect definitions, handles, and parameter structures.
+
 #include <cstdint>
 
 namespace dalia {

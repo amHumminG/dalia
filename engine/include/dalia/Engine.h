@@ -1,12 +1,15 @@
 #pragma once
 
-#include "dalia/core/Result.h"
-#include "dalia/core/LogLevel.h"
+/// @file Engine.h
+/// @brief Core DALIA engine lifecycle, configuration, and API entry points.
 
-#include "dalia/audio/DeviceControl.h"
-#include "dalia/audio/PlaybackControl.h"
-#include "dalia/audio/SoundControl.h"
-#include "dalia/audio/EffectControl.h"
+#include "dalia/Result.h"
+#include "LogLevel.h"
+
+#include "DeviceControl.h"
+#include "PlaybackControl.h"
+#include "dalia/SoundControl.h"
+#include "EffectControl.h"
 
 namespace dalia {
 
@@ -35,7 +38,7 @@ namespace dalia {
 		uint32_t busCapacity		= 64; // The maximum number of buses that can exist at once.
 
 		// Effect Capacities
-		uint32_t BiquadCapacity	= 32; // The maximum number of biquad filters that can exist at once.
+		uint32_t biquadCapacity	= 32; // The maximum number of biquad filters that can exist at once.
 
 		/// @brief Advanced settings. Only touch if you have very tight constraints or experience queue overflows.
 		struct Advanced {

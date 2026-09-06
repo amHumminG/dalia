@@ -19,13 +19,13 @@ add_subdirectory(vendor/stb_vorbis)
 set(ENGINE_FILES
     # Public headers
     include/dalia.h
-    include/dalia/audio/Engine.h
-    include/dalia/audio/PlaybackControl.h
-    include/dalia/audio/SoundControl.h
-    include/dalia/audio/EffectControl.h
-    include/dalia/audio/DeviceControl.h
-    include/dalia/Core/LogLevel.h
-    include/dalia/Core/Result.h
+    include/dalia/Engine.h
+    include/dalia/PlaybackControl.h
+    include/dalia/SoundControl.h
+    include/dalia/EffectControl.h
+    include/dalia/DeviceControl.h
+    include/dalia/LogLevel.h
+    include/dalia/Result.h
 
     # Internal headers and cpp-files
     src/Engine.cpp

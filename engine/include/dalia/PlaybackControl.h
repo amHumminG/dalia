@@ -1,5 +1,8 @@
 #pragma once
 
+/// @file PlaybackControl.h
+/// @brief Playback handles, 3D spatialization types, and listener configurations.
+
 #include <cstdint>
 #include <functional>
 
@@ -37,7 +40,8 @@ namespace dalia {
 		uint64_t m_rawId = 0;
 	};
 
-	constexpr PlaybackHandle InvalidPlaybackHandle{}; // Sentinel value representing an invalid playback instance.
+	/// @brief Sentinel value representing an invalid playback instance.
+	constexpr PlaybackHandle InvalidPlaybackHandle{};
 
 	/// @brief The condition under which a playback instance was stopped.
 	enum class PlaybackExitCondition : uint8_t {
@@ -48,8 +52,10 @@ namespace dalia {
 		Error			= 4, // Stopped by the engine due to an error.
 	};
 
-	/// @brief A function that, if provided when creating a playback instance, will be called when the playback
-	/// instance is stopped.
+	/// @brief Defines the signature for playback instance termination callbacks.
+	///
+	/// @param playback			The handle to the playback instance that has just terminated.
+	/// @param exitCondition	The reason why the playback instance stopped.
 	using PlaybackExitCallback = std::function<void(PlaybackHandle playback, PlaybackExitCondition exitCondition)>;
 
 	/// @brief Curve used to calculate distance attenuation.
@@ -108,16 +114,16 @@ namespace dalia {
 	/// bitwise OR.
 	using ListenerMask = uint32_t;
 
-	constexpr ListenerMask MASK_NONE = 0b00000000;			 // Targets none of the listeners (silent if spatial).
-	constexpr ListenerMask MASK_LISTENER_0 = 0b00000001;	 // Targets listener 0.
-	constexpr ListenerMask MASK_LISTENER_1 = 0b00000010;	 // Targets listener 1.
-	constexpr ListenerMask MASK_LISTENER_2 = 0b00000100;	 // Targets listener 2.
-	constexpr ListenerMask MASK_LISTENER_3 = 0b00001000;	 // Targets listener 3.
-	constexpr ListenerMask MASK_ALL_LISTENERS = 0xFFFFFFFF;  // Targets all listeners.
+	constexpr ListenerMask MASK_NONE = 0b00000000;			 ///< Targets none of the listeners (silent if spatial).
+	constexpr ListenerMask MASK_LISTENER_0 = 0b00000001;	 ///< Targets listener 0.
+	constexpr ListenerMask MASK_LISTENER_1 = 0b00000010;	 ///< Targets listener 1.
+	constexpr ListenerMask MASK_LISTENER_2 = 0b00000100;	 ///< Targets listener 2.
+	constexpr ListenerMask MASK_LISTENER_3 = 0b00001000;	 ///< Targets listener 3.
+	constexpr ListenerMask MASK_ALL_LISTENERS = 0xFFFFFFFF;  ///< Targets all listeners.
 
 	/// @brief Creates a routing mask targeting a specific listener.
 	///
-	/// @Note[Combining masks] Multiple masks can be combined using bitwise OR.
+	/// @note[Combining masks] Multiple masks can be combined using bitwise OR.
 	///
 	/// @param[in] listenerIndex The zero-based index of the listener to target.
 	///

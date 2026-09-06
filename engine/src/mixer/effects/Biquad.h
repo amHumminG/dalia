@@ -1,6 +1,6 @@
 #pragma once
 
-#include "dalia/audio/EffectControl.h"
+#include "../../../include/dalia/EffectControl.h"
 #include "core/Constants.h"
 #include "dsp/Slew.h"
 

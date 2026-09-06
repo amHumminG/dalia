@@ -1,6 +1,6 @@
 #include "async/AsyncLoadSystem.h"
 
-#include "dalia/audio/SoundControl.h"
+#include "../../include/dalia/SoundControl.h"
 
 #include "core/Logger.h"
 #include "core/Utility.h"

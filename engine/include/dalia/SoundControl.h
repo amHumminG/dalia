@@ -1,13 +1,17 @@
 #pragma once
 
-#include "dalia/core/Result.h"
+/// @file SoundControl.h
+/// @brief Asset management and async load callbacks.
+
+#include "Result.h"
 
 #include <cstdint>
 #include <functional>
 
 namespace dalia {
 
-	static constexpr size_t MAX_STR_LEN_ASSET_PATH = 256; // The maximum string length (including null-terminator) of a filepath.
+	/// @brief The maximum string length (including null-terminator) of a filepath.
+	constexpr size_t MAX_STR_LEN_ASSET_PATH = 256;
 
 	/// @brief Specifies the memory management and playback strategy for an audio asset.
     enum class SoundType : uint8_t {
@@ -60,9 +64,15 @@ namespace dalia {
         uint64_t m_rawId = 0;
     };
 
-    constexpr uint32_t INVALID_REQUEST_ID = 0; // Sentinel value indicating a failed async request.
+	/// @brief Sentinel value indicating a failed async request.
+    constexpr uint32_t INVALID_REQUEST_ID = 0;
 
-    /// @brief A function that, if provided when loading an asset, will be called once the asset has been successfully
-    /// loaded.
+    /// @brief Defines the signature for asset load callbacks.
+    ///
+    /// If provided when requesting an asset load, this function executes when the asynchronous load completes. This
+    /// happens regardless if the load operation has succeeded or failed. Make sure to check the populated result code.
+    ///
+    /// @param requestId	The (optionally provided) identifier populated by the engine when the load was requested.
+    /// @param result		The outcome of the load operation.
     using AssetLoadCallback = std::function<void(uint32_t requestId, Result result)>;
 }

@@ -1,8 +1,8 @@
 #pragma once
 
 #include "core/SPSCRingBuffer.h"
-#include "dalia/audio/EffectControl.h"
-#include "dalia/audio/PlaybackControl.h"
+#include "../../include/dalia/EffectControl.h"
+#include "../../include/dalia/PlaybackControl.h"
 
 #include <vector>
 

@@ -1,10 +1,14 @@
 #pragma once
 
+/// @file DeviceControl.h
+/// @brief Audio output device metadata structures.
+
 #include <cstdint>
 
 namespace dalia {
 
-	constexpr size_t MAX_STR_LEN_DEVICE = 256; // The maximum string length (including null-terminator) for device names and identifiers.
+	/// @brief The maximum string length (including null-terminator) for device names and identifiers.
+	constexpr size_t MAX_STR_LEN_DEVICE = 256;
 
 	/// @brief Contains metadata for an audio output device.
 	struct OutputDeviceInfo {

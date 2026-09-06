@@ -1,5 +1,5 @@
 #pragma once
-#include "dalia/core/Result.h"
+#include "dalia/Result.h"
 #include "core/SPSCRingBuffer.h"
 #include "mixer/Voice.h"
 #include <cstdint>

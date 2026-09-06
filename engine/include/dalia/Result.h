@@ -1,11 +1,17 @@
 #pragma once
 
+/// @file Result.h
+/// @brief Return codes and related helpers.
+
 namespace dalia {
 
+	/// @brief Return codes for the DALIA API.
+	///
+	/// Represents the success or failure of an API call. Values < 0 represent failures.
 	enum class Result : int {
-		Ok					= 0,
+		Ok							= 0,
 
-		// Generic Errors [-1, -99]
+		// Generic Errors
 		Error						= -1,
 		NotInitialized				= -2,
 		StateCorrupted				= -3,
@@ -46,16 +52,22 @@ namespace dalia {
 		DeviceNotFound				= -501,
 		DeviceFailed				= -502,
 		ClientFailed				= -503,
-
 	};
 
+	/// @brief Converts a Result code into a readable string literal.
+	///
+	/// @param result The Result code to evaluate.
+	///
+	/// @return A null-terminated string describing the result.
 	constexpr const char* GetResultString(const Result result) {
 		switch (result) {
 			case Result::Ok: return "Ok";
 
 			case Result::Error: return "Error (generic)";
 			case Result::NotInitialized: return "Engine is not initialized.";
+			case Result::StateCorrupted: return "Engine state is corrupted.";
 			case Result::AlreadyInitialized: return "Engine is already initialized.";
+			case Result::InvalidArgs: return "Invalid arguments.";
 			case Result::InvalidHandle: return "Invalid handle";
 			case Result::ExpiredHandle: return "Expired handle";
 			case Result::BusNotFound: return "Bus not found";
@@ -87,7 +99,7 @@ namespace dalia {
 			case Result::DeviceFailed: return "Device Failed";
 			case Result::ClientFailed: return "Client Failed";
 
-			default: return "Error (unknown)";
+			default: return "No string is defined for this result type";
 		}
 	}
 }

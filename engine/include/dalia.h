@@ -1,11 +1,15 @@
 #pragma once
 
-// Include this file for all DALIA functionality
+/// @file dalia.h
+/// @brief Umbrella header for the DALIA audio engine.
+///
+/// This file includes the entire public API. It is provided for convenience and is ideal for inclusion in precompiled
+/// headers.
 
-#include "dalia/audio/Engine.h"
-#include "dalia/audio/PlaybackControl.h"
-#include "dalia/audio/SoundControl.h"
-#include "dalia/audio/EffectControl.h"
-
-#include "dalia/core/LogLevel.h"
-#include "dalia/core/Result.h"
+#include "dalia/Engine.h"
+#include "dalia/PlaybackControl.h"
+#include "dalia/SoundControl.h"
+#include "dalia/EffectControl.h"
+#include "dalia/DeviceControl.h"
+#include "dalia/LogLevel.h"
+#include "dalia/Result.h"

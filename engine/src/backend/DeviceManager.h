@@ -1,7 +1,7 @@
 #pragma once
 
-#include "dalia/audio/DeviceControl.h"
-#include "dalia/core/Result.h"
+#include "../../include/dalia/DeviceControl.h"
+#include "../../include/dalia/Result.h"
 #include "backend/OutputDevice.h"
 
 #include <string>

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "dalia/core/Result.h"
+#include "../../include/dalia/Result.h"
 #include "mixer/Speakers.h"
 
 #include <string>

@@ -1,10 +1,10 @@
-#include "dalia/audio/Engine.h"
+#include "dalia/Engine.h"
 
 #include <future>
 
-#include "dalia/audio/PlaybackControl.h"
-#include "dalia/audio/SoundControl.h"
-#include "dalia/audio/EffectControl.h"
+#include "../include/dalia/PlaybackControl.h"
+#include "dalia/SoundControl.h"
+#include "../include/dalia/EffectControl.h"
 
 #include "backend/windows/WindowsDeviceManager.h"
 #include "backend/windows/WindowsNullOutputDevice.h"
@@ -169,12 +169,12 @@ namespace dalia {
 			voiceCapacity(config.voiceCapacity),
 			listenerCapacity(std::clamp(config.listenerCapacity, LISTENERS_MIN, LISTENERS_MAX)),
 			busCapacity(config.busCapacity),
-			biquadCapacity(config.BiquadCapacity),
+			biquadCapacity(config.biquadCapacity),
 			streams(config.streamCapacity),
 			voices(config.voiceCapacity),
 			listeners(std::clamp(config.listenerCapacity, LISTENERS_MIN, LISTENERS_MAX)),
 			buses(config.busCapacity),
-			biquads(config.BiquadCapacity) {
+			biquads(config.biquadCapacity) {
 			// Message Queues
 			rtCommands				= std::make_unique<RtCommandQueue>(config.advanced.RealTimeQueueCapacity);
 			rtEvents				= std::make_unique<RtEventQueue>(config.advanced.RealTimeQueueCapacity);
@@ -450,7 +450,7 @@ namespace dalia {
 		}
 	}
 
-	static void ProcessIoLoadEvent(EngineInternalState* state, const AsyncLoadEvent& ev) {
+	static void ProcessAsyncLoadEvent(EngineInternalState* state, const AsyncLoadEvent& ev) {
 		// Execute user-registered callback
 		if (auto it = state->loadCallbacks.find(ev.requestId); it != state->loadCallbacks.end()) {
 			if (it->second) {
@@ -770,7 +770,7 @@ namespace dalia {
 		while (m_state->rtEvents->Pop(RtEv)) ProcessRtEvent(m_state, RtEv);
 
 		AsyncLoadEvent loadEv;
-		while (m_state->asyncLoadEvents->Pop(loadEv)) ProcessIoLoadEvent(m_state, loadEv);
+		while (m_state->asyncLoadEvents->Pop(loadEv)) ProcessAsyncLoadEvent(m_state, loadEv);
 
 		// --- Update Parameter Bridges ---
 		for (uint32_t vIndex = 0; vIndex < m_state->voiceCapacity; vIndex++) {
