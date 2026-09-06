@@ -66,8 +66,9 @@ plugins:
   - mkdoxy:
       projects:
         api:
-          src-dirs: engine/include/dalia
+          src-dirs: engine/include
           full-doc: True
           doxy-cfg:
             RECURSIVE: True
             EXTRACT_ALL: True
+            STRIP_FROM_PATH: engine/include
