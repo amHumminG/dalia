@@ -277,8 +277,7 @@ namespace dalia {
 		AsyncControlEvent ev;
 		while (state->asyncControlEvents->Pop(ev)) {
 			if (ev.type == AsyncControlEvent::Type::OutputDeviceSwapped) {
-				if (state->activeOutputDevice) state->activeOutputDevice->Stop();// Stop the null device
-				state->outputDevice.reset(ev.data.swapOutputDevice.newDevice); // Take ownership of new device
+				state->outputDevice.reset(ev.data.swapOutputDevice.newDevice); // Take ownership of new device (already started)
 
 				if (ev.data.swapOutputDevice.fellBackToDefault) {
 					state->targetOutputDeviceId = "default";
@@ -312,10 +311,6 @@ namespace dalia {
 					DALIA_LOG_ERR(LOG_CTX_API, "No audio output devices available. Audio will render to void for now.");
 				}
 
-				// Reconfigure and start audio thread
-				state->rtSystem->SetOutputFormat(state->outChannels, state->speakerLayout);
-				state->activeOutputDevice->Start(state->rtSystem.get());
-
 				state->isSwappingOutputDevice = false;
 			}
 		}
@@ -347,18 +342,20 @@ namespace dalia {
 			else if (manualChangePending) DALIA_LOG_INFO(LOG_CTX_API, "Audio device swap requested. Initiating swap sequence.");
 			else DALIA_LOG_INFO(LOG_CTX_API, "OS default audio device changed. Initiating swap sequence.");
 
-			// Transition to NullDevice during swap sequence
-			if (state->activeOutputDevice) state->activeOutputDevice->Stop();
-
-			state->activeOutputDevice = state->nullOutputDevice.get();
-			state->outChannels = state->activeOutputDevice->GetChannelCount();
-			state->speakerLayout = state->activeOutputDevice->GetSpeakerLayout();
-			state->rtSystem->SetOutputFormat(state->outChannels, state->speakerLayout);
-			state->activeOutputDevice->Start(state->rtSystem.get());
+			// Release ownership of active device
+			OutputDevice* deviceToKill = state->outputDevice.release();
+			state->activeOutputDevice = nullptr; // Temporarily without output
 
 			// Push swap request to async control system
-			AsyncControlRequest req = AsyncControlRequest::SwapOutputDevice(state->targetOutputDeviceId.c_str(), state->outSampleRate);
-			if (state->asyncControlRequests->Push(req)) state->asyncControlSystem->NotifyTaskAdded(); // Wake up control thread
+			AsyncControlRequest req = AsyncControlRequest::SwapOutputDevice(
+				deviceToKill,
+				state->targetOutputDeviceId.c_str(),
+				state->outSampleRate
+			);
+
+			if (state->asyncControlRequests->Push(req)) {
+				state->asyncControlSystem->NotifyTaskAdded(); // Wake up control thread
+			}
 		}
 	}
 
@@ -729,6 +726,8 @@ namespace dalia {
 		asyncControlSystemConfig.requestQueue = m_state->asyncControlRequests.get();
 		asyncControlSystemConfig.eventQueue = m_state->asyncControlEvents.get();
 		asyncControlSystemConfig.deviceManager = m_state->deviceManager.get();
+		asyncControlSystemConfig.nullOutputDevice = m_state->nullOutputDevice.get();
+		asyncControlSystemConfig.rtSystem = m_state->rtSystem.get();
 		m_state->asyncControlSystem = std::make_unique<AsyncControlSystem>(asyncControlSystemConfig);
 
 		// --- SYSTEMS START ---

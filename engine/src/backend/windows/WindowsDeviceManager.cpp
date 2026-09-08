@@ -6,6 +6,7 @@
 
 #include <functiondiscoverykeys_devpkey.h> // For PKEY_Device_FriendlyName
 #include <cstring>
+#include <memory>
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>

@@ -19,14 +19,17 @@ namespace dalia {
 
 		union Data {
 			struct {
+				OutputDevice* oldDevice;
 				char targetOutputDeviceId[MAX_STR_LEN_DEVICE];
 				uint32_t sampleRate;
 			} swapOutputDevice;
 		} data = {};
 
-		static AsyncControlRequest SwapOutputDevice(const char* targetOutputDeviceId, uint32_t sampleRate) {
+		static AsyncControlRequest SwapOutputDevice(OutputDevice* oldDevice, const char* targetOutputDeviceId,
+			uint32_t sampleRate) {
 			AsyncControlRequest req;
 			req.type = Type::SwapOutputDevice;
+			req.data.swapOutputDevice.oldDevice = oldDevice;
 			snprintf(req.data.swapOutputDevice.targetOutputDeviceId, MAX_STR_LEN_DEVICE, "%s", targetOutputDeviceId);
 			req.data.swapOutputDevice.sampleRate = sampleRate;
 			return req;

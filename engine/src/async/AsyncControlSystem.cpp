@@ -2,12 +2,16 @@
 
 #include "backend/windows/WindowsDeviceManager.h"
 #include "core/Logger.h"
+#include "mixer/RtSystem.h"
 
 namespace dalia {
 
 	AsyncControlSystem::AsyncControlSystem(const AsyncControlSystemConfig& config)
-		: m_requestQueue(config.requestQueue), m_eventQueue(config.eventQueue), m_deviceManager(config.deviceManager) {
-	}
+		: m_requestQueue(config.requestQueue),
+		m_eventQueue(config.eventQueue),
+		m_deviceManager(config.deviceManager),
+		m_nullOutputDevice(config.nullOutputDevice),
+		m_rtSystem(config.rtSystem) {}
 
 	AsyncControlSystem::~AsyncControlSystem() {
 		Stop();
@@ -52,6 +56,15 @@ namespace dalia {
 	void AsyncControlSystem::ProcessRequest(const AsyncControlRequest& req) {
 		switch (req.type) {
 			case AsyncControlRequest::Type::SwapOutputDevice: {
+				// Teardown old device
+				if (req.data.swapOutputDevice.oldDevice) {
+					req.data.swapOutputDevice.oldDevice->Stop();
+					delete req.data.swapOutputDevice.oldDevice;
+				}
+
+				m_rtSystem->SetOutputFormat(m_nullOutputDevice->GetChannelCount(), m_nullOutputDevice->GetSpeakerLayout());
+				m_nullOutputDevice->Start(m_rtSystem);
+
 				std::unique_ptr<OutputDevice> newDevice = m_deviceManager->CreateDevice(
 					req.data.swapOutputDevice.targetOutputDeviceId,
 					req.data.swapOutputDevice.sampleRate
@@ -63,6 +76,15 @@ namespace dalia {
 					newDevice = m_deviceManager->CreateDevice("default", req.data.swapOutputDevice.sampleRate);
 					fellBack = true;
 				}
+
+				if (newDevice) {
+					m_nullOutputDevice->Stop();
+
+					// Reconfigure mixer and start new device
+					m_rtSystem->SetOutputFormat(newDevice->GetChannelCount(), newDevice->GetSpeakerLayout());
+					newDevice->Start(m_rtSystem);
+				}
+				// If new device failed, we leave null device running
 
 				// Push new device back
 				auto ev = AsyncControlEvent::OutputDeviceSwapped(newDevice.release(), fellBack);

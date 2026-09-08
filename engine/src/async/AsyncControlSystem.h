@@ -9,12 +9,15 @@
 namespace dalia {
 
 	class DeviceManager;
+	class RtSystem;
 
 	struct AsyncControlSystemConfig {
 		AsyncControlRequestQueue* requestQueue = nullptr;
 		AsyncControlEventQueue* eventQueue = nullptr;
 
 		DeviceManager* deviceManager = nullptr;
+		OutputDevice* nullOutputDevice = nullptr;
+		RtSystem* rtSystem = nullptr;
 	};
 
 	class AsyncControlSystem {
@@ -37,6 +40,9 @@ namespace dalia {
 
 		AsyncControlRequestQueue* m_requestQueue = nullptr;
 		AsyncControlEventQueue* m_eventQueue = nullptr;
+
 		DeviceManager* m_deviceManager = nullptr;
+		OutputDevice* m_nullOutputDevice = nullptr;
+		RtSystem* m_rtSystem = nullptr;
 	};
 }
