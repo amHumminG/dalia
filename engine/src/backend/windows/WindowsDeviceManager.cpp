@@ -7,12 +7,15 @@
 #include <functiondiscoverykeys_devpkey.h> // For PKEY_Device_FriendlyName
 #include <cstring>
 
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+
 namespace dalia {
 
 	// --- Notification Client Implementation ---
 
-	WindowsDeviceManager::NotificationClient::NotificationClient(std::atomic<bool>& changeFlag, std::string& idStr, std::mutex& mtx)
-		: m_changeFlag(changeFlag), m_idStr(idStr), m_mutex(mtx) {}
+	WindowsDeviceManager::NotificationClient::NotificationClient(SPSCRingBuffer<OSDeviceNotification>& queue)
+		: m_notificationQueue(queue) {}
 
 	ULONG STDMETHODCALLTYPE WindowsDeviceManager::NotificationClient::AddRef() {
 		return InterlockedIncrement(&m_refCount);
@@ -39,17 +42,23 @@ namespace dalia {
 	HRESULT STDMETHODCALLTYPE WindowsDeviceManager::NotificationClient::OnDefaultDeviceChanged(EDataFlow flow, ERole role, LPCWSTR pwstrDeviceId) {
 		// Only account for cases where the default rendering device changed
 		if (flow == eRender && role == eConsole) {
-			// Capture new default device id
-			int size = WideCharToMultiByte(CP_UTF8, 0, pwstrDeviceId, -1, nullptr, 0, nullptr, nullptr);
-			if (size > 0) {
-				std::string newId(size - 1, 0);
-				WideCharToMultiByte(CP_UTF8, 0, pwstrDeviceId, -1, newId.data(), size, nullptr, nullptr);
+			OSDeviceNotification notification = {};
 
-				// Lock mutex while copying
-				std::lock_guard<std::mutex> lock(m_mutex);
-				m_idStr = std::move(newId);
-				m_changeFlag.store(true, std::memory_order_release);
+			// Capture new default device id
+			if (pwstrDeviceId != nullptr) {
+				WideCharToMultiByte(
+					CP_UTF8,
+					0,
+					pwstrDeviceId,
+					-1,
+					notification.deviceId,
+					MAX_STR_LEN_DEVICE,
+					nullptr,
+					nullptr
+				);
 			}
+
+			m_notificationQueue.Push(notification);
 		}
 
 		return S_OK;
@@ -68,7 +77,7 @@ namespace dalia {
 	}
 
 	HRESULT STDMETHODCALLTYPE WindowsDeviceManager::NotificationClient::OnPropertyValueChanged(LPCWSTR /*pwstrDeviceId*/, const PROPERTYKEY /*key*/) {
-		return S_OK; // Ignore volume/property changes
+		return S_OK;
 	}
 
 	// -------
@@ -101,7 +110,7 @@ namespace dalia {
 		if (FAILED(hr)) return Result::SystemError;
 
 		// Create notification client
-		m_notificationClient = new NotificationClient(m_defaultOutputDeviceChangedFlag, m_notificationDefaultId, m_notificationMutex);
+		m_notificationClient = new NotificationClient(m_notificationQueue);
 		hr = m_enumerator->RegisterEndpointNotificationCallback(m_notificationClient.Get());
 		if (FAILED(hr)) return Result::SystemError;
 
@@ -164,15 +173,17 @@ namespace dalia {
 		return deviceList;
 	}
 
-	bool WindowsDeviceManager::PollDefaultOutputDeviceChanged(std::string& newDeviceId) {
-		if (m_defaultOutputDeviceChangedFlag.exchange(false, std::memory_order_acquire)) {
-			// Lock mutex while we read the string
-			std::lock_guard<std::mutex> lock(m_notificationMutex);
-			newDeviceId = m_notificationDefaultId;
-			return true;
+	bool WindowsDeviceManager::PopDeviceChangeNotification(std::string& newDeviceId) {
+		OSDeviceNotification notification = {};
+		bool changeDetected = false;
+
+		// Pop until queue is emtpy
+		while (m_notificationQueue.Pop(notification)) {
+			newDeviceId = notification.deviceId;
+			changeDetected = true;
 		}
 
-		return false;
+		return changeDetected;
 	}
 
 	std::unique_ptr<OutputDevice> WindowsDeviceManager::CreateDevice(const char* identifier, uint32_t engineSampleRate) {

@@ -22,6 +22,9 @@
 
 namespace dalia {
 
+	// --- Backend ---
+	constexpr size_t DEVICE_NOTIFICATION_QUEUE_CAPACITY = 8;
+
     // --- Mixing ---
 	constexpr float EPSILON = 1e-5f;
     constexpr float EPSILON_VOLUME = 1e-5f;

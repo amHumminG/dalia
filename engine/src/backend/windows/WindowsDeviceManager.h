@@ -1,11 +1,9 @@
 #pragma once
 
 #include "backend/DeviceManager.h"
+#include "core/SPSCRingBuffer.h"
+#include "core/Constants.h"
 
-#include <atomic>
-
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
 #include <mmdeviceapi.h>
 #include <wrl/client.h>
 
@@ -20,7 +18,7 @@ namespace dalia {
 
 		std::vector<OutputDeviceInfo> Enumerate() override;
 
-		bool PollDefaultOutputDeviceChanged(std::string& newDeviceId) override;
+		bool PopDeviceChangeNotification(std::string& newDeviceId) override;
 
 		std::unique_ptr<OutputDevice> CreateDevice(const char* identifier, uint32_t engineSampleRate) override;
 		std::unique_ptr<OutputDevice> CreateNullDevice(uint32_t engineSampleRate, uint32_t periodSizeInFrames) override;
@@ -28,7 +26,7 @@ namespace dalia {
 	private:
 		class NotificationClient final : public IMMNotificationClient {
 		public:
-			NotificationClient(std::atomic<bool>& changeFlag, std::string& idStr, std::mutex& mtx);
+			NotificationClient(SPSCRingBuffer<OSDeviceNotification>& queue);
 			~NotificationClient() = default;
 
 			ULONG STDMETHODCALLTYPE AddRef() override;
@@ -43,18 +41,12 @@ namespace dalia {
 
 		private:
 			LONG m_refCount = 1;
-			std::atomic<bool>& m_changeFlag;
-			std::string& m_idStr;
-			std::mutex& m_mutex;
-
+			SPSCRingBuffer<OSDeviceNotification>& m_notificationQueue;
 		};
 
 		Microsoft::WRL::ComPtr<NotificationClient> m_notificationClient;
 		Microsoft::WRL::ComPtr<IMMDeviceEnumerator> m_enumerator;
 
-		std::mutex m_notificationMutex;
-		std::string m_notificationDefaultId;
-		std::atomic<bool> m_defaultOutputDeviceChangedFlag{false};
-
+		SPSCRingBuffer<OSDeviceNotification> m_notificationQueue{DEVICE_NOTIFICATION_QUEUE_CAPACITY};
 	};
 }

@@ -325,7 +325,7 @@ namespace dalia {
 
 		// --- Phase 3 (Initiate Swap If Needed) ---
 		std::string newOsDefaultOutputId;
-		bool osDefaultOutputChanged = state->deviceManager->PollDefaultOutputDeviceChanged(newOsDefaultOutputId);
+		bool osDefaultOutputChanged = state->deviceManager->PopDeviceChangeNotification(newOsDefaultOutputId);
 		bool shouldReactToOsDefaultChanged = osDefaultOutputChanged && (state->targetOutputDeviceId == "default");
 		bool manualChangePending = state->pendingOutputDeviceSwap;
 		bool deviceFailed = state->activeOutputDevice && state->activeOutputDevice->HasFailed();
