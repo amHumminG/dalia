@@ -92,6 +92,8 @@ set(ENGINE_FILES
     src/resources/AssetRegistry.cpp
     src/resources/AssetRegistry.h
     src/resources/StreamSound.h
+    src/backend/HighResTimer.h
+    src/backend/windows/HighResTimer.cpp
 )
 
 add_library(dalia_engine STATIC ${ENGINE_FILES})
