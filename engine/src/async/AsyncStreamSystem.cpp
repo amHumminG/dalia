@@ -83,7 +83,7 @@ namespace dalia {
 
                     // Channels check
                     if (info.channels <= 0 || static_cast<uint32_t>(info.channels) > CHANNELS_STEREO) {
-                        DALIA_LOG_ERR(LOG_CTX_IO, "Failed to load file (%s). Unsupported channel count (%d)",
+                        DALIA_LOG_ERR(LOG_CTX_ASYNC, "Failed to load file (%s). Unsupported channel count (%d)",
                             filepath, info.channels);
                     	stb_vorbis_close(stream.decoder);
                     	stream.decoder = nullptr;
@@ -96,11 +96,11 @@ namespace dalia {
                     FillBuffer(stream, 1);
                     stream.state.store(StreamState::Streaming, std::memory_order_release);
 
-                    DALIA_LOG_DEBUG(LOG_CTX_IO, "Finished preparing stream %d from file: %s.", sIndex, filepath);
+                    DALIA_LOG_DEBUG(LOG_CTX_ASYNC, "Finished preparing stream %d from file: %s.", sIndex, filepath);
                     break;
                 }
                 else {
-                    DALIA_LOG_ERR(LOG_CTX_IO, "Failed to open stream for %s. %s.",
+                    DALIA_LOG_ERR(LOG_CTX_ASYNC, "Failed to open stream for %s. %s.",
                         filepath, GetStbVorbisErrorString(error));
                     stream.state.store(StreamState::Error, std::memory_order_release);
                 }
@@ -121,7 +121,7 @@ namespace dalia {
 
                 stream.Reset();
                 m_freeStreams->Push(sIndex);
-                DALIA_LOG_DEBUG(LOG_CTX_IO, "Freed stream %d.", sIndex);
+                DALIA_LOG_DEBUG(LOG_CTX_ASYNC, "Freed stream %d.", sIndex);
                 break;
             }
             case AsyncStreamRequest::Type::RefillStreamBuffer: {
@@ -152,7 +152,7 @@ namespace dalia {
 
                 stream.state.store(StreamState::Streaming, std::memory_order_release);
 
-                DALIA_LOG_DEBUG(LOG_CTX_IO, "Finished seeking stream %d to frame %d.", sIndex, seekFrame);
+                DALIA_LOG_DEBUG(LOG_CTX_ASYNC, "Finished seeking stream %d to frame %d.", sIndex, seekFrame);
                 break;
             }
             default:
@@ -162,7 +162,7 @@ namespace dalia {
 
     void AsyncStreamSystem::FillBuffer(StreamContext& stream, uint32_t bufferIndex) {
         if (!stream.decoder) {
-            DALIA_LOG_ERR(LOG_CTX_IO, "Invalid stream decoder.");
+            DALIA_LOG_ERR(LOG_CTX_ASYNC, "Invalid stream decoder.");
             stream.state.store(StreamState::Error, std::memory_order_release);
             return;
         }
@@ -189,13 +189,13 @@ namespace dalia {
             if (framesRead == 0) {
                 // Hit EOF
                 if (justLooped) {
-                    DALIA_LOG_ERR(LOG_CTX_IO, "Stream loop failed. Corrupted file.");
+                    DALIA_LOG_ERR(LOG_CTX_ASYNC, "Stream loop failed. Corrupted file.");
                     stream.state.store(StreamState::Error, std::memory_order_release);
                     return;
                 }
 
                 stream.eofIndex[bufferIndex] = framesWritten;
-                DALIA_LOG_DEBUG(LOG_CTX_IO, "Stream buffer found EOF at index %d.", framesWritten);
+                DALIA_LOG_DEBUG(LOG_CTX_ASYNC, "Stream buffer found EOF at index %d.", framesWritten);
                 stb_vorbis_seek_start(stream.decoder);
                 justLooped = true;
                 foundEOF = true;

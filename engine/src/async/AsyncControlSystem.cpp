@@ -39,7 +39,7 @@ namespace dalia {
 	void AsyncControlSystem::ThreadMain() {
 		// Initialize COM for this thread
 		HRESULT hr = CoInitializeEx(nullptr, COINIT_MULTITHREADED);
-		if (FAILED(hr)) DALIA_LOG_ERR(LOG_CTX_CONTROL, "Failed to initialize COM on AsyncControlThread.");
+		if (FAILED(hr)) DALIA_LOG_ERR(LOG_CTX_ASYNC, "Failed to initialize COM on AsyncControlThread.");
 
 		while (m_isRunning.load(std::memory_order_relaxed)) {
 			m_taskSemaphore.acquire(); // Sleep (wake on notification)
