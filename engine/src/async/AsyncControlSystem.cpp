@@ -58,6 +58,7 @@ namespace dalia {
 			case AsyncControlRequest::Type::SwapOutputDevice: {
 				// Teardown old device
 				if (req.data.swapOutputDevice.oldDevice) {
+					DALIA_LOG_DEBUG(LOG_CTX_BACKEND, "Stopping output device \"%s\".", req.data.swapOutputDevice.oldDevice->GetName().c_str());
 					req.data.swapOutputDevice.oldDevice->Stop();
 					delete req.data.swapOutputDevice.oldDevice;
 				}
@@ -75,6 +76,7 @@ namespace dalia {
 				if (!newDevice && std::string(req.data.swapOutputDevice.targetOutputDeviceId) != "default") {
 					newDevice = m_deviceManager->CreateDevice("default", req.data.swapOutputDevice.sampleRate);
 					fellBack = true;
+					DALIA_LOG_DEBUG(LOG_CTX_BACKEND, "Fell back to OS default output device \"%s\".", newDevice->GetName().c_str());
 				}
 
 				if (newDevice) {

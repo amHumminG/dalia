@@ -829,6 +829,7 @@ namespace dalia {
 	Result Engine::GetOutputDeviceInfo(uint32_t index, OutputDeviceInfo& info) const {
 		if (!IsInitialized(m_state)) return Result::NotInitialized;
 		if (index >= m_state->cachedOutputDeviceList.size()) return Result::InvalidArgs;
+		DALIA_LOG_DEBUG(LOG_CTX_API, "Acquired output device info (index: %u).", index);
 
 		info = m_state->cachedOutputDeviceList[index];
 
@@ -864,6 +865,8 @@ namespace dalia {
 		m_state->targetOutputDeviceId = target;
 		m_state->pendingOutputDeviceSwap = true;
 
+		DALIA_LOG_DEBUG(LOG_CTX_API, "Set output device (id: %s).", identifier);
+
 		return Result::Ok;
 	}
 
@@ -887,6 +890,9 @@ namespace dalia {
 
 				if (callback) callback(INVALID_REQUEST_ID, Result::Ok);
 				if (outRequestId) *outRequestId = INVALID_REQUEST_ID;
+
+				DALIA_LOG_DEBUG(LOG_CTX_API, "Sound from filepath: %s is already loaded. Incremented reference count.",
+					filepath);
 
 				return Result::Ok;
 			}
@@ -919,7 +925,13 @@ namespace dalia {
 
 		uint32_t requestId = m_state->GenerateIoLoadRequestId();
 		if (outRequestId) *outRequestId = requestId;
-		if (callback) m_state->loadCallbacks[requestId] = std::move(callback);
+		if (callback) {
+			m_state->loadCallbacks[requestId] = std::move(callback);
+		}
+
+		const char* typeStr = (soundType == SoundType::Resident) ? "Resident" : "Stream";
+		DALIA_LOG_DEBUG(LOG_CTX_API, "Queued async sound load (%s) from %s [ReqID: %u, Callback: %s]",
+			typeStr, filepath, requestId, callback ? "Yes" : "No");
 
 		m_state->asyncLoadRequests->Push(AsyncLoadRequest::LoadSound(requestId, sound, filepath));
 
@@ -988,10 +1000,12 @@ namespace dalia {
 
 			if (!pendingUnload.voicesToStop.empty()) {
 				m_state->pendingSoundUnloads.push_back(std::move(pendingUnload));
+				DALIA_LOG_DEBUG(LOG_CTX_API,
+					"Deferring sound unload (handle rawId: 0x%016llx) until playbacks have been explicitly stopped.");
 			}
 			else {
 				m_state->assetRegistry->FreeSound(sound);
-				DALIA_LOG_DEBUG(LOG_CTX_API, "Unloaded sound with handle %d.", sound.GetRawId());
+				DALIA_LOG_DEBUG(LOG_CTX_API, "Unloaded sound (handle rawId: 0x%016llx.", sound.GetRawId());
 			}
 		}
 
@@ -1202,8 +1216,6 @@ namespace dalia {
 		bMirror->params.gain = math::DbToGain(clampedVolumeDb);
 		bMirror->isParamsDirty = true;
 
-		DALIA_LOG_DEBUG(LOG_CTX_API, "Set bus (%s) volume to %.2f dB.", identifier, clampedVolumeDb);
-
 		return Result::Ok;
 	}
 
@@ -1272,7 +1284,6 @@ namespace dalia {
 			static_assert(sizeof(TParams) == 0, "Unsupported effect parameters passed to SetEffectParams.");
 		}
 
-		DALIA_LOG_DEBUG(LOG_CTX_API, "Set effect params for handle with rawId: 0x%016llx.", effect.GetRawId());
 		return Result::Ok;
 	}
 
@@ -1739,8 +1750,6 @@ namespace dalia {
 		vMirror->params.gain = math::DbToGain(clampedVolumeDb);
 		vMirror->isParamsDirty = true;
 
-		DALIA_LOG_DEBUG(LOG_CTX_API, "Set Voice %u volume to %.2f.", vIndex, clampedVolumeDb);
-
 		return Result::Ok;
 	}
 
@@ -1759,8 +1768,6 @@ namespace dalia {
 		vMirror->params.playbackRate = clampedRate;
 		vMirror->isParamsDirty = true;
 
-		DALIA_LOG_DEBUG(LOG_CTX_API, "Set Voice %u playback rate to %.2f.", vIndex, clampedRate);
-
 		return Result::Ok;
 	}
 
@@ -1778,8 +1785,6 @@ namespace dalia {
 		float clampedStereoPan = std::clamp(pan, PAN_STEREO_MIN, PAN_STEREO_MAX);
 		vMirror->params.stereoPan = clampedStereoPan;
 		vMirror->isParamsDirty = true;
-
-		DALIA_LOG_DEBUG(LOG_CTX_API, "Set Voice %u stereo pan to %.2f.", vIndex, clampedStereoPan);
 
 		return Result::Ok;
 	}
@@ -1912,8 +1917,6 @@ namespace dalia {
 		vMirror->params.maxDistance = clampedMaxDistance;
 		vMirror->isParamsDirty = true;
 
-		DALIA_LOG_DEBUG(LOG_CTX_API, "Set Voice %u min/max distance to %.2f/%.2f.", vIndex, clampedMinDistance, clampedMaxDistance);
-
 		return Result::Ok;
 	}
 
@@ -1951,8 +1954,6 @@ namespace dalia {
 		float clampedDopplerFactor = std::clamp(dopplerFactor, DOPPLER_FACTOR_MIN, DOPPLER_FACTOR_MAX);
 		vMirror->params.dopplerFactor = clampedDopplerFactor;
 		vMirror->isParamsDirty = true;
-
-		DALIA_LOG_DEBUG(LOG_CTX_API, "Set Voice %u doppler factor to %.2f.", vIndex, clampedDopplerFactor);
 
 		return Result::Ok;
 	}
