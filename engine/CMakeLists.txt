@@ -122,9 +122,14 @@ target_include_directories(dalia_engine
 target_link_libraries(dalia_engine
     PRIVATE dalia_common
     PRIVATE stb_vorbis_lib
-    PRIVATE ole32 # Backend (COM initialization)
-    PRIVATE avrt  # Backend (MMCSS)
 )
+
+if (WIN32)
+    target_link_libraries(dalia_engine
+        PRIVATE ole32 # Backend (COM initialization)
+        PRIVATE avrt  # Backend (MMCSS)
+    )
+endif()
 
 add_library(dalia::engine ALIAS dalia_engine)
 
@@ -134,5 +139,5 @@ install(TARGETS dalia_engine
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     RUNTIME DESTINATION ${CMAKE_INSTALL_LIBDIR}
 )
-install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
 )
