@@ -43,7 +43,6 @@ namespace dalia {
 
 		while (m_isRunning.load(std::memory_order_relaxed)) {
 			m_taskSemaphore.acquire(); // Sleep (wake on notification)
-
 			if (!m_isRunning.load(std::memory_order_relaxed)) break;
 
 			AsyncControlRequest req;

@@ -353,8 +353,12 @@ namespace dalia {
 				state->outSampleRate
 			);
 
-			if (state->asyncControlRequests->Push(req)) {
-				state->asyncControlSystem->NotifyTaskAdded(); // Wake up control thread
+			bool wasEmpty = false;
+			if (state->asyncControlRequests->Push(req, wasEmpty)) {
+				if (wasEmpty) state->asyncControlSystem->NotifyTaskAdded(); // Wake up control thread
+			}
+			else {
+				DALIA_LOG_ERR(LOG_CTX_API, "Failed to push control request. Queue is full.");
 			}
 		}
 	}
