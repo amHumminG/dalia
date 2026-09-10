@@ -127,3 +127,12 @@ target_link_libraries(dalia_engine
 )
 
 add_library(dalia::engine ALIAS dalia_engine)
+
+include(GNUInstallDirs)
+install(TARGETS dalia_engine
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    RUNTIME DESTINATION ${CMAKE_INSTALL_LIBDIR}
+)
+install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+)

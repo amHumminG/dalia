@@ -4,14 +4,14 @@ project(dalia VERSION 0.1.0 LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# Check if Dalia is the main project or included as a submodule
+# Check if Dalia is the main project (CMake only)
 if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
     set(DALIA_IS_TOP_LEVEL ON)
 else()
     set(DALIA_IS_TOP_LEVEL OFF)
 endif()
 
-option(DALIA_BUILD_STUDIO "Build the DALIA Studio editor" OFF})
+option(DALIA_BUILD_STUDIO "Build the DALIA Studio editor" OFF)
 option(DALIA_BUILD_SANDBOX "Build the DALIA Engine sandbox" ${DALIA_IS_TOP_LEVEL})
 
 add_subdirectory(common)
