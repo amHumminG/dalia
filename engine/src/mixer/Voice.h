@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../../include/dalia/PlaybackControl.h"
+#include "dalia/PlaybackControl.h"
 #include "dalia/SoundControl.h"
 #include "core/Constants.h"
 #include "core/Math.h"

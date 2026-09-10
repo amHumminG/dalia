@@ -1,7 +1,7 @@
 #include "async/AsyncStreamSystem.h"
 
 #include "core/Logger.h"
-
+#include "backend/HighResTimer.h"
 #include "core/SPSCRingBuffer.h"
 #include "messaging/AsyncStreamMessaging.h"
 #include "mixer/StreamContext.h"
@@ -41,18 +41,13 @@ namespace dalia {
     }
 
     void AsyncStreamSystem::ThreadMain() {
+    	HighResTimer wakeupTimer;
+
         while (m_isRunning.load(std::memory_order_relaxed)) {
-            bool didWork = false;
             AsyncStreamRequest req;
+            while (m_ioStreamRequests->Pop(req)) ProcessRequest(req);
 
-            while (m_ioStreamRequests->Pop(req)) {
-                didWork = true;
-                ProcessRequest(req);
-            }
-
-            if (!didWork) {
-                std::this_thread::sleep_for(std::chrono::milliseconds(1)); // Based on OS interrupt (Windows: 15.6ms)
-            }
+        	wakeupTimer.SleepMicroseconds(m_wakeupPeriodMicroseconds);
         }
     }
 

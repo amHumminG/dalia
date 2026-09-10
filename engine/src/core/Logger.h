@@ -1,5 +1,5 @@
 #pragma once
-#include "../../include/dalia/LogLevel.h"
+#include "dalia/LogLevel.h"
 
 namespace dalia {
 

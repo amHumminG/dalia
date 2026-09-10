@@ -1,11 +1,10 @@
 #include "backend/windows/WindowsNullOutputDevice.h"
 
+#include "backend/PlatformThread.h"
+#include "backend/HighResTimer.h"
+
 #include "mixer/RtSystem.h"
 #include "core/Logger.h"
-
-#ifndef CREATE_WAITABLE_TIMER_HIGH_RESOLUTION
-#define CREATE_WAITABLE_TIMER_HIGH_RESOLUTION 0x00000002
-#endif
 
 namespace dalia {
 
@@ -56,34 +55,16 @@ namespace dalia {
 	}
 
 	void WindowsNullOutputDevice::AudioThreadMain() {
-		SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_TIME_CRITICAL);
+		PlatformThread::SetCurrentThreadPriority(ThreadPriority::TimeCritical);
 
-		// Create high resolution timer
-		HANDLE timer = CreateWaitableTimerExW(
-			nullptr,
-			nullptr,
-			CREATE_WAITABLE_TIMER_HIGH_RESOLUTION,
-			TIMER_ALL_ACCESS
-		);
+		HighResTimer timer;
+		uint32_t periodMicroseconds = (m_periodSizeInFrames * 1000000) / m_sampleRate;
 
-		if (!timer) {
-			DALIA_LOG_WARN(LOG_CTX_BACKEND, "Failed to create high-resolution timer. Falling back to legacy timer.");
-			timer = CreateWaitableTimerW(nullptr, FALSE, nullptr);
-		}
-
-		// Timer uses 100-nanosecond intervals. Negative values indicate relative time
-		LONGLONG interval100ns = -static_cast<LONGLONG>((m_periodSizeInFrames * 10000000ULL) / m_sampleRate);
-
-		LARGE_INTEGER dueTime;
 		while (m_isRunning.load(std::memory_order_relaxed)) {
-			dueTime.QuadPart = interval100ns;
+			timer.SleepMicroseconds(periodMicroseconds);
 
-			SetWaitableTimer(timer, &dueTime, 0, nullptr, nullptr, FALSE);
-			WaitForSingleObject(timer, INFINITE);
-
+			if (!m_isRunning.load(std::memory_order_relaxed)) break;
 			if (m_system) m_system->Tick(m_voidBuffer.get(), m_periodSizeInFrames);
 		}
-
-		if (timer) CloseHandle(timer);
 	}
 }

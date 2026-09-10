@@ -1,6 +1,6 @@
 #include "RtSystem.h"
 
-#include "../../include/dalia/EffectControl.h"
+#include "dalia/EffectControl.h"
 
 #include "core/Logger.h"
 #include "core/Constants.h"
@@ -18,7 +18,7 @@
 
 #include "effects/Biquad.h"
 
-#include "../../include/dalia/SoundControl.h"
+#include "dalia/SoundControl.h"
 
 #include <cmath>
 #include <cstring>

@@ -25,6 +25,11 @@ namespace dalia {
 	// --- Backend ---
 	constexpr size_t DEVICE_NOTIFICATION_QUEUE_CAPACITY = 8;
 
+	// --- Async ---
+	static constexpr uint32_t STREAM_SYSTEM_WAKEUP_PERIOD_MICROSECONDS = 5000; // 5ms
+
+	static constexpr uint32_t COUNTING_SEMAPHORE_SIZE = 1024;
+
     // --- Mixing ---
 	constexpr float EPSILON = 1e-5f;
     constexpr float EPSILON_VOLUME = 1e-5f;
