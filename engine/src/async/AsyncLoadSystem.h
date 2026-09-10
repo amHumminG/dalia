@@ -4,6 +4,7 @@
 
 #include <thread>
 #include <atomic>
+#include <semaphore>
 
 namespace dalia {
 
@@ -26,6 +27,8 @@ namespace dalia {
         void Start();
         void Stop();
 
+    	void NotifyTaskAdded();
+
     private:
         void ThreadMain();
         void ProcessRequest(const AsyncLoadRequest& request);
@@ -39,5 +42,6 @@ namespace dalia {
 
         std::thread m_thread;
         std::atomic<bool> m_isRunning;
+    	std::counting_semaphore<COUNTING_SEMAPHORE_SIZE> m_taskSemaphore{0};
     };
 }

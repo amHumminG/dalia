@@ -11,6 +11,7 @@ namespace dalia {
     template <typename T> class SPSCRingBuffer;
 
     struct AsyncStreamSystemConfig {
+    	uint32_t wakeupPeriodMicroseconds;
     	uint32_t outSampleRate;
         AsyncStreamRequestQueue* ioStreamRequests = nullptr;
         std::span<StreamContext> streamPool;
@@ -37,5 +38,6 @@ namespace dalia {
 
         std::thread m_thread;
         std::atomic<bool> m_isRunning{false};
+    	uint32_t m_wakeupPeriodMicroseconds = 0;
     };
 }

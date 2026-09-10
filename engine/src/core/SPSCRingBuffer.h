@@ -36,6 +36,24 @@ namespace dalia {
 			return true;
 		}
 
+		// WasEmtpy is populated with true if the buffer was empty before the push
+		bool Push(const T& item, bool& wasEmpty) {
+			const size_t currentPush = m_pushCursor.load(std::memory_order_relaxed);
+			const size_t currentPop = m_popCursor.load(std::memory_order_acquire);
+			const size_t nextPush = (currentPush + 1) & (m_mask);
+
+			if (nextPush == currentPop) {
+				// Buffer is full
+				return false;
+			}
+
+			wasEmpty = (currentPush == currentPop);
+
+			m_buffer[currentPush] = item;
+			m_pushCursor.store(nextPush, std::memory_order_release);
+			return true;
+		}
+
 		bool Pop(T& item) {
 			const size_t currentPop = m_popCursor.load(std::memory_order_relaxed);
 

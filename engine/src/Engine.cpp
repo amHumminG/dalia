@@ -353,8 +353,12 @@ namespace dalia {
 				state->outSampleRate
 			);
 
-			if (state->asyncControlRequests->Push(req)) {
-				state->asyncControlSystem->NotifyTaskAdded(); // Wake up control thread
+			bool wasEmpty = false;
+			if (state->asyncControlRequests->Push(req, wasEmpty)) {
+				if (wasEmpty) state->asyncControlSystem->NotifyTaskAdded(); // Wake up control thread
+			}
+			else {
+				DALIA_LOG_ERR(LOG_CTX_API, "Failed to push control request. Queue is full.");
 			}
 		}
 	}
@@ -709,6 +713,7 @@ namespace dalia {
 		m_state->rtSystem = std::make_unique<RtSystem>(rtConfig);
 
 		AsyncStreamSystemConfig ioStreamingConfig;
+		ioStreamingConfig.wakeupPeriodMicroseconds = STREAM_SYSTEM_WAKEUP_PERIOD_MICROSECONDS;
 		ioStreamingConfig.outSampleRate		= m_state->outSampleRate;
 		ioStreamingConfig.ioStreamRequests	= m_state->asyncStreamRequests.get();
 		ioStreamingConfig.streamPool		= m_state->streams.GetSpan();
@@ -933,7 +938,13 @@ namespace dalia {
 		DALIA_LOG_DEBUG(LOG_CTX_API, "Queued async sound load (%s) from %s [ReqID: %u, Callback: %s]",
 			typeStr, filepath, requestId, callback ? "Yes" : "No");
 
-		m_state->asyncLoadRequests->Push(AsyncLoadRequest::LoadSound(requestId, sound, filepath));
+		bool wasEmpty = false;
+		if (m_state->asyncLoadRequests->Push(AsyncLoadRequest::LoadSound(requestId, sound, filepath), wasEmpty)) {
+			if (wasEmpty) m_state->asyncLoadSystem->NotifyTaskAdded();
+		}
+		else {
+			DALIA_LOG_ERR(LOG_CTX_API, "Failed to queue async sound load from %s. Queue is full.", filepath);
+		}
 
 		return Result::Ok;
 	}

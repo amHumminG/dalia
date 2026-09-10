@@ -1,6 +1,7 @@
 #pragma once
 
 #include "messaging/AsyncControlMessaging.h"
+#include "core/Constants.h"
 
 #include <thread>
 #include <atomic>
@@ -36,7 +37,7 @@ namespace dalia {
 
 		std::thread m_thread;
 		std::atomic<bool> m_isRunning{false};
-		std::counting_semaphore<1024> m_taskSemaphore{0};
+		std::counting_semaphore<COUNTING_SEMAPHORE_SIZE> m_taskSemaphore{0};
 
 		AsyncControlRequestQueue* m_requestQueue = nullptr;
 		AsyncControlEventQueue* m_eventQueue = nullptr;
