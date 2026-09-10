@@ -5,7 +5,7 @@
 #include "rlImGui.h"
 #include "imgui.h"
 
-#include "dalia.h"
+#include "dalia/dalia.h"
 #include "UI.h"
 #include "Movement.h"
 

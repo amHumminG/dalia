@@ -1,7 +1,5 @@
 #pragma once
 
-#include "dalia.h"
-
 class Panel {
 public:
 	virtual ~Panel() = default;

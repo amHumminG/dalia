@@ -18,7 +18,7 @@ add_subdirectory(vendor/stb_vorbis)
 # Source files
 set(ENGINE_FILES
     # Public headers
-    include/dalia.h
+    include/dalia/dalia.h
     include/dalia/Engine.h
     include/dalia/PlaybackControl.h
     include/dalia/SoundControl.h

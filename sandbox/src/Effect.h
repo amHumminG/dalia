@@ -1,6 +1,6 @@
 #pragma once
 
-#include "dalia.h"
+#include "dalia/dalia.h"
 #include "UI.h"
 
 #include <memory>

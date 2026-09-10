@@ -9,7 +9,7 @@
 
 #include "UI.h"
 
-#include "dalia.h"
+#include "dalia/dalia.h"
 #include "Listener.h"
 #include "PlaybackInstance.h"
 #include "SoundAsset.h"

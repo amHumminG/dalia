@@ -58,7 +58,7 @@ Before an instance of `Engine` can be used to play sounds, it must be initialize
 it is recommended to create an `EngineConfig`. This config can be used to specify how the memory-footprint of the 
 engine along with some other settings. For simplicity, we will leave the config to use its default values in this guide.
 ```c++
-#include <dalia.h>
+#include <dalia/dalia.h>
 #include <iostream>
 
 int main() {
