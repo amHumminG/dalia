@@ -1,0 +1,63 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.9.8" xml:lang="en-US">
+  <compounddef id="structdalia_1_1OutputDeviceInfo" kind="struct" language="C++" prot="public">
+    <compoundname>dalia::OutputDeviceInfo</compoundname>
+    <includes refid="DeviceControl_8h" local="no">DeviceControl.h</includes>
+    <sectiondef kind="public-attrib">
+      <memberdef kind="variable" id="structdalia_1_1OutputDeviceInfo_1acf2c05cfcd9523037450d361bc342b05" prot="public" static="no" mutable="no">
+        <type>char</type>
+        <definition>char dalia::OutputDeviceInfo::name[MAX_STR_LEN_DEVICE]</definition>
+        <argsstring>[MAX_STR_LEN_DEVICE]</argsstring>
+        <name>name</name>
+        <qualifiedname>dalia::OutputDeviceInfo::name</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="dalia/DeviceControl.h" line="15" column="6" bodyfile="dalia/DeviceControl.h" bodystart="15" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structdalia_1_1OutputDeviceInfo_1a0b6bf79b256ccd151b5286cd02e16ce2" prot="public" static="no" mutable="no">
+        <type>char</type>
+        <definition>char dalia::OutputDeviceInfo::identifier[MAX_STR_LEN_DEVICE]</definition>
+        <argsstring>[MAX_STR_LEN_DEVICE]</argsstring>
+        <name>identifier</name>
+        <qualifiedname>dalia::OutputDeviceInfo::identifier</qualifiedname>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="dalia/DeviceControl.h" line="16" column="6" bodyfile="dalia/DeviceControl.h" bodystart="16" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structdalia_1_1OutputDeviceInfo_1a54c30034f5a4ba9503b29a2ee94eba7a" prot="public" static="no" mutable="no">
+        <type>bool</type>
+        <definition>bool dalia::OutputDeviceInfo::isDefault</definition>
+        <argsstring></argsstring>
+        <name>isDefault</name>
+        <qualifiedname>dalia::OutputDeviceInfo::isDefault</qualifiedname>
+        <initializer>= false</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="dalia/DeviceControl.h" line="17" column="6" bodyfile="dalia/DeviceControl.h" bodystart="17" bodyend="-1"/>
+      </memberdef>
+    </sectiondef>
+    <briefdescription>
+<para>Contains metadata for an audio output device. </para>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <location file="dalia/DeviceControl.h" line="14" column="1" bodyfile="dalia/DeviceControl.h" bodystart="14" bodyend="18"/>
+    <listofallmembers>
+      <member refid="structdalia_1_1OutputDeviceInfo_1a0b6bf79b256ccd151b5286cd02e16ce2" prot="public" virt="non-virtual"><scope>dalia::OutputDeviceInfo</scope><name>identifier</name></member>
+      <member refid="structdalia_1_1OutputDeviceInfo_1a54c30034f5a4ba9503b29a2ee94eba7a" prot="public" virt="non-virtual"><scope>dalia::OutputDeviceInfo</scope><name>isDefault</name></member>
+      <member refid="structdalia_1_1OutputDeviceInfo_1acf2c05cfcd9523037450d361bc342b05" prot="public" virt="non-virtual"><scope>dalia::OutputDeviceInfo</scope><name>name</name></member>
+    </listofallmembers>
+  </compounddef>
+</doxygen>
