@@ -1,7 +1,7 @@
 #pragma once
 
 #include "core/Constants.h"
-#include "../../include/dalia/EffectControl.h"
+#include "dalia/EffectControl.h"
 #include "dsp/Slew.h"
 
 namespace dalia {

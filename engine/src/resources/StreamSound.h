@@ -1,7 +1,7 @@
 #pragma once
 
 #include "core/Types.h"
-#include "../../include/dalia/SoundControl.h"
+#include "dalia/SoundControl.h"
 
 #include <cstdint>
 #include <atomic>

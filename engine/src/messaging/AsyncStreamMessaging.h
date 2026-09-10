@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../../include/dalia/SoundControl.h"
+#include "dalia/SoundControl.h"
 #include "core/MPSCRingBuffer.h"
 
 namespace dalia {
