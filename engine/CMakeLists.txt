@@ -32,12 +32,8 @@ set(ENGINE_FILES
 
     src/backend/DeviceManager.h
     src/backend/OutputDevice.h
-    src/backend/windows/WindowsDeviceManager.cpp
-    src/backend/windows/WindowsDeviceManager.h
-    src/backend/windows/WasapiOutputDevice.cpp
-    src/backend/windows/WasapiOutputDevice.h
-    src/backend/windows/WindowsNullOutputDevice.cpp
-    src/backend/windows/WindowsNullOutputDevice.h
+    src/backend/HighResTimer.h
+    src/backend/PlatformThread.h
 
     src/core/Constants.h
     src/core/Logger.h
@@ -92,9 +88,28 @@ set(ENGINE_FILES
     src/resources/AssetRegistry.cpp
     src/resources/AssetRegistry.h
     src/resources/StreamSound.h
-    src/backend/HighResTimer.h
-    src/backend/windows/HighResTimer.cpp
 )
+
+if (WIN32)
+    list(APPEND ENGINE_FILES
+        src/backend/windows/WindowsDeviceManager.cpp
+        src/backend/windows/WindowsDeviceManager.h
+        src/backend/windows/WasapiOutputDevice.cpp
+        src/backend/windows/WasapiOutputDevice.h
+        src/backend/windows/WindowsNullOutputDevice.cpp
+        src/backend/windows/WindowsNullOutputDevice.h
+        src/backend/windows/HighResTimer.cpp
+        src/backend/windows/PlatformThread.cpp
+    )
+elseif (APPLE)
+    list(APPEND ENGINE_FILES
+        # Not supported
+    )
+elseif (UNIX AND NOT APPLE)
+    list(APPEND ENGINE_FILES
+        # Not supported
+    )
+endif()
 
 add_library(dalia_engine STATIC ${ENGINE_FILES})
 dalia_treat_warnings_as_errors(dalia_engine)
