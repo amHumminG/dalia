@@ -38,22 +38,21 @@ namespace dalia {
         if (!m_isRunning.load(std::memory_order_relaxed)) return;
 
         m_isRunning.store(false, std::memory_order_release);
+    	m_taskSemaphore.release(); // Wake thread for safe exit
         if (m_thread.joinable()) m_thread.join();
+    }
+
+    void AsyncLoadSystem::NotifyTaskAdded() {
+    	m_taskSemaphore.release();
     }
 
     void AsyncLoadSystem::ThreadMain() {
         while (m_isRunning.load(std::memory_order_relaxed)) {
-            bool didWork = false;
+        	m_taskSemaphore.acquire(); // Sleep (wake on notification)
+        	if (!m_isRunning.load(std::memory_order_relaxed)) break;
+
             AsyncLoadRequest req;
-
-            while (m_ioLoadRequests->Pop(req)) {
-                didWork = true;
-                ProcessRequest(req);
-            }
-
-            if (!didWork) {
-                std::this_thread::sleep_for(std::chrono::milliseconds(1)); // Based on OS interrupt (Windows: 15.6ms)
-            }
+            while (m_ioLoadRequests->Pop(req)) ProcessRequest(req);
         }
     }
 

@@ -934,7 +934,13 @@ namespace dalia {
 		DALIA_LOG_DEBUG(LOG_CTX_API, "Queued async sound load (%s) from %s [ReqID: %u, Callback: %s]",
 			typeStr, filepath, requestId, callback ? "Yes" : "No");
 
-		m_state->asyncLoadRequests->Push(AsyncLoadRequest::LoadSound(requestId, sound, filepath));
+		bool wasEmpty = false;
+		if (m_state->asyncLoadRequests->Push(AsyncLoadRequest::LoadSound(requestId, sound, filepath), wasEmpty)) {
+			if (wasEmpty) m_state->asyncLoadSystem->NotifyTaskAdded();
+		}
+		else {
+			DALIA_LOG_ERR(LOG_CTX_API, "Failed to queue async sound load from %s. Queue is full.", filepath);
+		}
 
 		return Result::Ok;
 	}
