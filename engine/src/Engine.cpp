@@ -709,6 +709,7 @@ namespace dalia {
 		m_state->rtSystem = std::make_unique<RtSystem>(rtConfig);
 
 		AsyncStreamSystemConfig ioStreamingConfig;
+		ioStreamingConfig.wakeupPeriodMicroseconds = STREAM_SYSTEM_WAKEUP_PERIOD_MICROSECONDS;
 		ioStreamingConfig.outSampleRate		= m_state->outSampleRate;
 		ioStreamingConfig.ioStreamRequests	= m_state->asyncStreamRequests.get();
 		ioStreamingConfig.streamPool		= m_state->streams.GetSpan();
