@@ -14,7 +14,7 @@
 
 namespace dalia {
 
-	class RtSystem;
+	class MixerSystem;
 
 	class WasapiOutputDevice : public OutputDevice {
 	public:
@@ -23,7 +23,7 @@ namespace dalia {
 
 		Result Initialize(uint32_t engineSampleRate);
 
-		Result Start(RtSystem* system) override;
+		Result Start(MixerSystem* system) override;
 		void Stop() override;
 
 		bool HasFailed() const override;
@@ -36,7 +36,7 @@ namespace dalia {
 	private:
 		void AudioThreadMain();
 
-		RtSystem* m_system = nullptr;
+		MixerSystem* m_system = nullptr;
 
 		Microsoft::WRL::ComPtr<IMMDevice> m_device;
 		Microsoft::WRL::ComPtr<IAudioClient> m_audioClient;

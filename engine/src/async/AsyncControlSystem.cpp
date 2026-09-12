@@ -2,7 +2,7 @@
 
 #include "backend/windows/WindowsDeviceManager.h"
 #include "core/Logger.h"
-#include "mixer/RtSystem.h"
+#include "mixer/MixerSystem.h"
 
 namespace dalia {
 
@@ -11,7 +11,7 @@ namespace dalia {
 		m_eventQueue(config.eventQueue),
 		m_deviceManager(config.deviceManager),
 		m_nullOutputDevice(config.nullOutputDevice),
-		m_rtSystem(config.rtSystem) {}
+		m_mixerSystem(config.mixerSystem) {}
 
 	AsyncControlSystem::~AsyncControlSystem() {
 		Stop();
@@ -62,8 +62,8 @@ namespace dalia {
 					delete req.data.swapOutputDevice.oldDevice;
 				}
 
-				m_rtSystem->SetOutputFormat(m_nullOutputDevice->GetChannelCount(), m_nullOutputDevice->GetSpeakerLayout());
-				m_nullOutputDevice->Start(m_rtSystem);
+				m_mixerSystem->SetOutputFormat(m_nullOutputDevice->GetChannelCount(), m_nullOutputDevice->GetSpeakerLayout());
+				m_nullOutputDevice->Start(m_mixerSystem);
 
 				std::unique_ptr<OutputDevice> newDevice = m_deviceManager->CreateDevice(
 					req.data.swapOutputDevice.targetOutputDeviceId,
@@ -82,8 +82,8 @@ namespace dalia {
 					m_nullOutputDevice->Stop();
 
 					// Reconfigure mixer and start new device
-					m_rtSystem->SetOutputFormat(newDevice->GetChannelCount(), newDevice->GetSpeakerLayout());
-					newDevice->Start(m_rtSystem);
+					m_mixerSystem->SetOutputFormat(newDevice->GetChannelCount(), newDevice->GetSpeakerLayout());
+					newDevice->Start(m_mixerSystem);
 				}
 				// If new device failed, we leave null device running
 

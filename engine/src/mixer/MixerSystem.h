@@ -1,6 +1,6 @@
 #pragma once
 
-#include "messaging/RtMessaging.h"
+#include "messaging/MixerMessaging.h"
 #include "messaging/AsyncStreamMessaging.h"
 #include "core/Constants.h"
 #include "core/ParameterBridge.h"
@@ -29,7 +29,7 @@ namespace dalia {
 
 	class MixGraphCompiler;
 
-    struct RtSystemConfig {
+    struct MixerSystemConfig {
     	CoordinateSystem coordinateSystem;
     	float globalDopplerFactor = 1.0f;
 
@@ -38,8 +38,8 @@ namespace dalia {
         uint32_t outChannels			= 0;
         uint32_t outSampleRate			= 0;
 
-        RtCommandQueue* rtCommands					= nullptr;
-        RtEventQueue* rtEvents						= nullptr;
+        MixerCommandQueue* mixerCommands				= nullptr;
+        MixerEventQueue* mixerEvents					= nullptr;
         AsyncStreamRequestQueue* asyncStreamRequests	= nullptr;
 
     	std::span<StreamContext> streamPool;
@@ -62,9 +62,9 @@ namespace dalia {
         std::span<float> dspScratchBuffer;
     };
 
-    class RtSystem {
+    class MixerSystem {
     public:
-        explicit RtSystem(const RtSystemConfig& config);
+        explicit MixerSystem(const MixerSystemConfig& config);
         void Tick(float* output, uint32_t frameCount);
 
     	// Must only be called when the audio thread is stopped
@@ -109,8 +109,8 @@ namespace dalia {
         uint32_t m_outSampleRate		= 0;
 
     	// Messaging
-        RtCommandQueue* m_rtCommands					= nullptr;
-        RtEventQueue* m_rtEvents						= nullptr;
+        MixerCommandQueue* m_mixerCommands				= nullptr;
+        MixerEventQueue* m_mixerEvents					= nullptr;
         AsyncStreamRequestQueue* m_asyncStreamRequests	= nullptr;
 
     	// Streams

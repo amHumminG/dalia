@@ -60,8 +60,8 @@ set(ENGINE_FILES
     src/async/AsyncControlSystem.cpp
     src/async/AsyncControlSystem.h
 
-    src/messaging/RtMessaging.h
-    src/messaging/RtMessaging.cpp
+    src/messaging/MixerMessaging.h
+    src/messaging/MixerMessaging.cpp
     src/messaging/AsyncStreamMessaging.h
     src/messaging/AsyncLoadMessaging.h
     src/messaging/AsyncControlMessaging.h
@@ -69,8 +69,8 @@ set(ENGINE_FILES
     src/mixer/Voice.h
     src/mixer/StreamContext.h
     src/mixer/Bus.h
-    src/mixer/RtSystem.cpp
-    src/mixer/RtSystem.h
+    src/mixer/MixerSystem.cpp
+    src/mixer/MixerSystem.h
     src/mixer/MixGraphCompiler.cpp
     src/mixer/MixGraphCompiler.h
     src/mixer/effects/Biquad.h

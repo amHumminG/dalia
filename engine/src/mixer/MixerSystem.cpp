@@ -1,4 +1,4 @@
-#include "RtSystem.h"
+#include "MixerSystem.h"
 
 #include "dalia/EffectControl.h"
 
@@ -13,7 +13,7 @@
 #include "mixer/Listener.h"
 #include "mixer/MixGraphCompiler.h"
 
-#include "messaging/RtMessaging.h"
+#include "messaging/MixerMessaging.h"
 #include "messaging/AsyncStreamMessaging.h"
 
 #include "effects/Biquad.h"
@@ -354,13 +354,13 @@ namespace dalia {
 
 	// ------------
 
-    RtSystem::RtSystem(const RtSystemConfig& config)
+    MixerSystem::MixerSystem(const MixerSystemConfig& config)
         : m_coordinateSystem(config.coordinateSystem),
 		m_maxSamplesPerPeriod(config.maxSamplesPerPeriod),
 		m_outChannels(config.outChannels),
 		m_outSampleRate(config.outSampleRate),
-		m_rtCommands(config.rtCommands),
-		m_rtEvents(config.rtEvents),
+		m_mixerCommands(config.mixerCommands),
+		m_mixerEvents(config.mixerEvents),
 		m_asyncStreamRequests(config.asyncStreamRequests),
 		m_streamPool(config.streamPool),
 		m_voicePool(config.voicePool),
@@ -381,23 +381,23 @@ namespace dalia {
 		m_masterPeakLimiter.Init(static_cast<float>(m_outSampleRate));
     }
 
-    void RtSystem::Tick(float* output, uint32_t frameCount) {
+    void MixerSystem::Tick(float* output, uint32_t frameCount) {
         ProcessCommands();			// Process incoming commands from the API thread
 		ProcessParams();			// Process continuous parameter updates from the API thread
         Render(output, frameCount); // Render the audio frame
     }
 
-    void RtSystem::SetOutputFormat(uint32_t channels, SpeakerLayout layout) {
+    void MixerSystem::SetOutputFormat(uint32_t channels, SpeakerLayout layout) {
 		m_outChannels = channels;
 		m_speakerLayout = layout;
 		ConfigureSpeakerLayout(layout);
     }
 
-    void RtSystem::ProcessCommands() {
-        RtCommand cmd;
-        while (m_rtCommands->Pop(cmd)) {
+    void MixerSystem::ProcessCommands() {
+        MixerCommand cmd;
+        while (m_mixerCommands->Pop(cmd)) {
             switch (cmd.type) {
-				case RtCommand::Type::AllocateVoice: {
+				case MixerCommand::Type::AllocateVoice: {
 	            	Voice& voice = m_voicePool[cmd.targetIndex];
 
 	            	voice.gen = cmd.targetGen;
@@ -405,14 +405,14 @@ namespace dalia {
 	            	voice.targetState = VoiceState::Inactive;
 		            break;
 	            }
-				case RtCommand::Type::FreeVoice: {
+				case MixerCommand::Type::FreeVoice: {
 	            	Voice& voice = m_voicePool[cmd.targetIndex];
 	            	if (voice.gen != cmd.targetGen) break;
 
 	            	voice.Reset();
 	            	break;
 				}
-	            case RtCommand::Type::PrepareVoiceResident: {
+	            case MixerCommand::Type::PrepareVoiceResident: {
 	            	Voice& voice = m_voicePool[cmd.targetIndex];
 	            	if (voice.gen != cmd.targetGen || voice.isExiting) break;
 
@@ -426,7 +426,7 @@ namespace dalia {
 	            	voice.sampleRate = cmd.data.prepResident.sampleRate;
 	            	break;
 	            }
-				case RtCommand::Type::PrepareVoiceStreaming: {
+				case MixerCommand::Type::PrepareVoiceStreaming: {
 	            	Voice& voice = m_voicePool[cmd.targetIndex];
 	            	if (voice.gen != cmd.targetGen || voice.isExiting) break;
 
@@ -441,7 +441,7 @@ namespace dalia {
 					voice.sampleRate = cmd.data.prepStreaming.sampleRate;
 	            	break;
 	            }
-				case RtCommand::Type::SeekVoice: {
+				case MixerCommand::Type::SeekVoice: {
 	            	Voice& voice = m_voicePool[cmd.targetIndex];
 	            	if (voice.gen != cmd.targetGen || voice.isExiting) break;
 
@@ -449,21 +449,21 @@ namespace dalia {
 	            	voice.pendingSeekFrame = cmd.data.seek.seekFrame;
 	            	break;
 	            }
-				case RtCommand::Type::PlayVoice: {
+				case MixerCommand::Type::PlayVoice: {
 	            	Voice& voice = m_voicePool[cmd.targetIndex];
 	            	if (voice.gen != cmd.targetGen || voice.isExiting) break;
 
 	            	voice.targetState = VoiceState::Playing;
 	            	break;
 				}
-                case RtCommand::Type::PauseVoice: {
+                case MixerCommand::Type::PauseVoice: {
 	            	Voice& voice = m_voicePool[cmd.targetIndex];
 	            	if (voice.gen != cmd.targetGen || voice.isExiting) break;
 
 					voice.targetState = VoiceState::Paused;
 	            	break;
                 }
-                case RtCommand::Type::StopVoice: {
+                case MixerCommand::Type::StopVoice: {
 	            	Voice& voice = m_voicePool[cmd.targetIndex];
 	            	if (voice.gen != cmd.targetGen || voice.isExiting) break;
 
@@ -471,14 +471,14 @@ namespace dalia {
 	            	voice.isExiting = true;
 	            	break;
                 }
-				case RtCommand::Type::SetVoiceParent: {
+				case MixerCommand::Type::SetVoiceParent: {
 	            	Voice& voice = m_voicePool[cmd.targetIndex];
 	            	if (voice.gen != cmd.targetGen || voice.isExiting) break;
 
 					voice.targetBusIndex = cmd.data.setParent.parentIndex;
 	            	break;
 				}
-				case RtCommand::Type::AllocateBus: {
+				case MixerCommand::Type::AllocateBus: {
 		            Bus& bus = m_busPool[cmd.targetIndex];
 
 	            	bus.currentParentIndex = cmd.data.setParent.parentIndex;
@@ -488,7 +488,7 @@ namespace dalia {
 					m_isMixOrderDirty = true;
 	            	break;
 	            }
-				case RtCommand::Type::FreeBus: {
+				case MixerCommand::Type::FreeBus: {
 	            	uint32_t bIndex = cmd.targetIndex;
 
 	            	m_busPool[bIndex].Reset();
@@ -496,14 +496,14 @@ namespace dalia {
 					m_isMixOrderDirty = true;
 	            	break;
 				}
-				case RtCommand::Type::SetBusParent: {
+				case MixerCommand::Type::SetBusParent: {
 	            	uint32_t bIndex = cmd.targetIndex;
 	            	uint32_t bIndexParent = cmd.data.setParent.parentIndex;
 
 	            	m_busPool[bIndex].targetParentIndex = bIndexParent;
 		            break;
 	            }
-				case RtCommand::Type::AllocateEffect: {
+				case MixerCommand::Type::AllocateEffect: {
 					uint32_t eIndex = cmd.targetIndex;
 					uint32_t eGen = cmd.targetGen;
 
@@ -518,7 +518,7 @@ namespace dalia {
 					}
 	            	break;
 				}
-            	case RtCommand::Type::FreeEffect: {
+            	case MixerCommand::Type::FreeEffect: {
 					uint32_t eIndex = cmd.targetIndex;
 					uint32_t eGen = cmd.targetGen;
 
@@ -533,22 +533,22 @@ namespace dalia {
 					}
 					break;
             	}
-				case RtCommand::Type::AttachEffect: {
+				case MixerCommand::Type::AttachEffect: {
 	            	EffectHandle effect = EffectHandle::Create(cmd.targetIndex, cmd.targetGen, cmd.data.effect.type);
 					AttachEffect(effect, cmd.data.effect.busIndex, cmd.data.effect.effectSlot);
 	            	break;
 				}
-				case RtCommand::Type::FadeDetachEffect: {
+				case MixerCommand::Type::FadeDetachEffect: {
 					EffectHandle effect = EffectHandle::Create(cmd.targetIndex, cmd.targetGen, cmd.data.effect.type);
 	            	FadeOutEffect(effect, cmd.data.effect.busIndex, cmd.data.effect.effectSlot);
 	            	break;
 				}
-				case RtCommand::Type::ForceDetachEffect: {
+				case MixerCommand::Type::ForceDetachEffect: {
 					EffectHandle effect = EffectHandle::Create(cmd.targetIndex, cmd.targetGen, cmd.data.effect.type);
 	            	DetachEffect(effect, cmd.data.effect.busIndex, cmd.data.effect.effectSlot);
 	            	break;
 				}
-            	case RtCommand::Type::SetGlobalDopplerFactor: {
+            	case MixerCommand::Type::SetGlobalDopplerFactor: {
             		m_globalDopplerFactor = cmd.data.floatVal.value;
             		break;
             	}
@@ -558,7 +558,7 @@ namespace dalia {
         }
     }
 
-    void RtSystem::ProcessParams() {
+    void MixerSystem::ProcessParams() {
 		VoiceParams vParams;
 		for (uint32_t vIndex = 0; vIndex < m_voiceParamBridges.size(); vIndex++) {
 			if (m_voiceParamBridges[vIndex].ConsumeUpdate(vParams)) {
@@ -588,7 +588,7 @@ namespace dalia {
 		}
     }
 
-    void RtSystem::Render(float* output, uint32_t frameCount) {
+    void MixerSystem::Render(float* output, uint32_t frameCount) {
         const uint32_t sampleCount = frameCount * m_outChannels;
 
 		// Memory initialization
@@ -623,7 +623,7 @@ namespace dalia {
         std::copy_n(masterBuffer, sampleCount, output); // Output to OS
 	}
 
-    bool RtSystem::CompileMixGraph() {
+    bool MixerSystem::CompileMixGraph() {
 		m_mixOrderSize = m_mixGraphCompiler->Compile(m_busPool, m_mixOrder);
 
 		if (m_mixOrderSize == 0) {
@@ -635,7 +635,7 @@ namespace dalia {
 		return true;
     }
 
-    void RtSystem::ResolveVoiceStates() {
+    void MixerSystem::ResolveVoiceStates() {
 		for (uint32_t vIndex = 0; vIndex < m_voicePool.size(); vIndex++) {
 			Voice& voice = m_voicePool[vIndex];
 
@@ -715,7 +715,7 @@ namespace dalia {
 		}
     }
 
-	void RtSystem::ResolveVoiceAcoustics() {
+	void MixerSystem::ResolveVoiceAcoustics() {
 		for (uint32_t vIndex = 0; vIndex < m_voicePool.size(); vIndex++) {
 			Voice& voice = m_voicePool[vIndex];
 			if (voice.currentState != VoiceState::Playing) continue;
@@ -852,7 +852,7 @@ namespace dalia {
 		}
     }
 
-	uint32_t RtSystem::RenderVoices(uint32_t frameCount) {
+	uint32_t MixerSystem::RenderVoices(uint32_t frameCount) {
 		uint32_t voicesRendered = 0;
 
 		for (uint32_t vIndex = 0; vIndex < m_voicePool.size(); vIndex++) {
@@ -929,7 +929,7 @@ namespace dalia {
 		return voicesRendered;
 	}
 
-    void RtSystem::FreeVoice(uint32_t vIndex) {
+    void MixerSystem::FreeVoice(uint32_t vIndex) {
     	Voice& voice = m_voicePool[vIndex];
 
     	if (voice.soundType == SoundType::Stream) {
@@ -953,11 +953,11 @@ namespace dalia {
     		DALIA_LOG_DEBUG(LOG_CTX_MIXER, "Voice %d stopped by error.", vIndex);
     	}
 
-    	m_rtEvents->Push(RtEvent::VoiceStopped(vIndex, voice.gen, voice.exitCondition));
+    	m_mixerEvents->Push(MixerEvent::VoiceStopped(vIndex, voice.gen, voice.exitCondition));
     	voice.Reset();
     }
 
-    bool RtSystem::ResolveBusStates() {
+    bool MixerSystem::ResolveBusStates() {
 		bool topologyChanged = false;
 
 		for (uint32_t bIndex = 0; bIndex < m_busPool.size(); bIndex++) {
@@ -987,7 +987,7 @@ namespace dalia {
 		return topologyChanged;
     }
 
-    uint32_t RtSystem::RenderBuses(uint32_t frameCount) {
+    uint32_t MixerSystem::RenderBuses(uint32_t frameCount) {
 		std::span activeMixOrder = m_mixOrder.subspan(0, m_mixOrderSize);
 		uint32_t busesRendered = 0;
 
@@ -1018,7 +1018,7 @@ namespace dalia {
 		return busesRendered;
     }
 
-    void RtSystem::ApplyBusEffect(float* buffer, EffectSlot& slot, uint32_t frameCount) {
+    void MixerSystem::ApplyBusEffect(float* buffer, EffectSlot& slot, uint32_t frameCount) {
 		uint32_t eIndex = slot.handle.GetIndex();
 		EffectType eType = slot.handle.GetType();
 
@@ -1062,16 +1062,16 @@ namespace dalia {
 
 			if (slot.state == EffectState::FadingIn && slot.currentMix >= 1.0f) {
 				slot.state = EffectState::Active;
-				m_rtEvents->Push(RtEvent::EffectActive(slot.handle.GetRawId()));
+				m_mixerEvents->Push(MixerEvent::EffectActive(slot.handle.GetRawId()));
 			}
 			else if (slot.state == EffectState::FadingOut && slot.currentMix <= 0.0f) {
-				m_rtEvents->Push(RtEvent::EffectDetached(slot.handle.GetRawId()));
+				m_mixerEvents->Push(MixerEvent::EffectDetached(slot.handle.GetRawId()));
 				slot.Reset();
 			}
 		}
     }
 
-    void RtSystem::AttachEffect(EffectHandle handle, uint32_t busIndex, uint32_t effectSlot) {
+    void MixerSystem::AttachEffect(EffectHandle handle, uint32_t busIndex, uint32_t effectSlot) {
 		uint32_t eIndex = handle.GetIndex();
 		uint32_t eGen = handle.GetGeneration();
 		EffectType eType = handle.GetType();
@@ -1094,18 +1094,18 @@ namespace dalia {
 		slot.currentMix = 0.0f;
     }
 
-    void RtSystem::DetachEffect(EffectHandle handle, uint32_t busIndex,
+    void MixerSystem::DetachEffect(EffectHandle handle, uint32_t busIndex,
     	uint32_t effectSlot) {
 		EffectSlot& slot = m_busPool[busIndex].effectSlots[effectSlot];
 		if (slot.handle == handle) slot.Reset();
     }
 
-    void RtSystem::FadeOutEffect(EffectHandle handle, uint32_t busIndex, uint32_t effectSlot) {
+    void MixerSystem::FadeOutEffect(EffectHandle handle, uint32_t busIndex, uint32_t effectSlot) {
 		EffectSlot& slot = m_busPool[busIndex].effectSlots[effectSlot];
 		if (slot.handle == handle && slot.state != EffectState::None) slot.state = EffectState::FadingOut;
     }
 
-    void RtSystem::ConfigureSpeakerLayout(SpeakerLayout layout) {
+    void MixerSystem::ConfigureSpeakerLayout(SpeakerLayout layout) {
 		for (uint32_t c = 0; c < CHANNELS_MAX; c++) {
 			m_speakerMatrix[c] = { math::Vector3(0, 0, 0), c };
 		}

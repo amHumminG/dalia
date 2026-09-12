@@ -31,6 +31,9 @@ namespace dalia {
 	static constexpr uint32_t COUNTING_SEMAPHORE_SIZE = 1024;
 
     // --- Mixing ---
+	static constexpr size_t MIXER_PROCESSING_BLOCK_SIZE = 1024;
+	static constexpr size_t PCM_RING_BUFFER_CAPACITY = 2 * MIXER_PROCESSING_BLOCK_SIZE;
+
 	constexpr float EPSILON = 1e-5f;
     constexpr float EPSILON_VOLUME = 1e-5f;
     constexpr float EPSILON_GAIN = 1e-5f;

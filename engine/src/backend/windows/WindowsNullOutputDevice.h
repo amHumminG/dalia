@@ -12,14 +12,14 @@
 
 namespace dalia {
 
-	class RtSystem;
+	class MixerSystem;
 
 	class WindowsNullOutputDevice : public OutputDevice {
 	public:
 		WindowsNullOutputDevice(uint32_t engineSampleRate, uint32_t periodSizeInFrames);
 		~WindowsNullOutputDevice() override;
 
-		Result Start(RtSystem* system) override;
+		Result Start(MixerSystem* system) override;
 		void Stop() override;
 
 		bool HasFailed() const override;
@@ -32,7 +32,7 @@ namespace dalia {
 	private:
 		void AudioThreadMain();
 
-		RtSystem* m_system = nullptr;
+		MixerSystem* m_system = nullptr;
 
 		std::thread m_audioThread;
 		std::atomic<bool> m_isRunning{false};

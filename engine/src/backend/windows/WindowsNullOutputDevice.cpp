@@ -3,7 +3,7 @@
 #include "backend/PlatformThread.h"
 #include "backend/HighResTimer.h"
 
-#include "mixer/RtSystem.h"
+#include "mixer/MixerSystem.h"
 #include "core/Logger.h"
 
 namespace dalia {
@@ -17,7 +17,7 @@ namespace dalia {
 		Stop();
 	}
 
-	Result WindowsNullOutputDevice::Start(RtSystem* system) {
+	Result WindowsNullOutputDevice::Start(MixerSystem* system) {
 		if (m_isRunning.load(std::memory_order_relaxed)) return Result::Ok;
 
 		m_system = system;

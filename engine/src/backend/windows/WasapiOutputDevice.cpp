@@ -1,6 +1,6 @@
 #include "backend/windows/WasapiOutputDevice.h"
 
-#include "mixer/RtSystem.h"
+#include "mixer/MixerSystem.h"
 #include "core/Logger.h"
 
 #include <cstring>
@@ -163,7 +163,7 @@ namespace dalia {
 		return Result::Ok;
 	}
 
-	Result WasapiOutputDevice::Start(RtSystem* system) {
+	Result WasapiOutputDevice::Start(MixerSystem* system) {
 		if (m_isRunning.load(std::memory_order_relaxed)) return Result::Ok;
 
 		m_system = system;
