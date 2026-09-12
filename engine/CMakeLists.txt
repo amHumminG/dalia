@@ -40,6 +40,7 @@ set(ENGINE_FILES
     src/core/Logger.cpp
     src/core/FixedStack.h
     src/core/SPSCRingBuffer.h
+    src/core/SPSCRingBufferPCM.h
     src/core/MPSCRingBuffer.h
     src/core/ResourcePool.h
     src/core/Utility.cpp
@@ -126,8 +127,8 @@ target_link_libraries(dalia_engine
 
 if (WIN32)
     target_link_libraries(dalia_engine
-        PRIVATE ole32 # Backend (COM initialization)
-        PRIVATE avrt  # Backend (MMCSS)
+        PRIVATE ole32 # Backend COM
+        PRIVATE avrt  # Backend MMCSS
     )
 endif()
 
