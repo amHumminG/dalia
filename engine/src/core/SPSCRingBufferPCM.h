@@ -73,7 +73,7 @@ namespace dalia {
 			std::memcpy(data, m_buffer.get() + popIndex, firstPart * sizeof(T));
 			if (secondPart > 0) std::memcpy(data + firstPart, m_buffer.get(), secondPart * sizeof(T));
 
-			m_pushCursor.store(currentPush + count, std::memory_order_release);
+			m_popCursor.store(currentPop + count, std::memory_order_release);
 			return true;
 		}
 
@@ -85,6 +85,7 @@ namespace dalia {
 			if (count > (currentPush - currentPop)) return false;
 
 			m_popCursor.store(currentPop + count, std::memory_order_release);
+			return true;
 		}
 
 	private:
