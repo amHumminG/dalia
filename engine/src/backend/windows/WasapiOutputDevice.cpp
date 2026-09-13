@@ -12,6 +12,14 @@
 #define AUDCLNT_STREAMFLAGS_AUTOCONVERTPCM 0x80000000
 #endif
 
+namespace {
+
+	// The 16-byte value of KSDATAFORMAT_SUBTYPE_IEEE_FLOAT. We define this here to avoid linking winmm and ksuser
+	constexpr GUID DALIA_SUBTYPE_IEEE_FLOAT = {
+		0x00000003, 0x0000, 0x0010, {0x80, 0x00, 0x00, 0xaa, 0x00, 0x38, 0x9b, 0x71}
+	};
+}
+
 namespace dalia {
 
 	WasapiOutputDevice::WasapiOutputDevice(Microsoft::WRL::ComPtr<IMMDevice> device)
@@ -72,7 +80,7 @@ namespace dalia {
 		if (mixFormat->wFormatTag == WAVE_FORMAT_EXTENSIBLE) {
 			auto* extFormat = reinterpret_cast<WAVEFORMATEXTENSIBLE*>(mixFormat);
 		 	extFormat->Samples.wValidBitsPerSample = mixFormat->wBitsPerSample;
-		 	extFormat->SubFormat = KSDATAFORMAT_SUBTYPE_IEEE_FLOAT;
+		 	extFormat->SubFormat = DALIA_SUBTYPE_IEEE_FLOAT;
 		}
 		else {
 			mixFormat->wFormatTag = WAVE_FORMAT_IEEE_FLOAT;
