@@ -37,6 +37,7 @@ namespace dalia {
 		void ThreadMain();
 
 		MixerSystem* m_mixerSystem = nullptr;
+		bool m_mixerIsPriming = true;
 
 		Microsoft::WRL::ComPtr<IMMDevice> m_device;
 		Microsoft::WRL::ComPtr<IAudioClient> m_audioClient;
