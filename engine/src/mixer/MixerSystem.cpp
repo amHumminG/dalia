@@ -20,8 +20,11 @@
 
 #include "dalia/SoundControl.h"
 
+#include "backend/PlatformThread.h"
+
 #include <cmath>
 #include <cstring>
+#include <chrono>
 
 namespace dalia {
 
@@ -374,23 +377,68 @@ namespace dalia {
 		m_biquadParamBridges(config.biquadParamBridges),
 		m_mixGraphCompiler(config.mixGraphCompiler),
 		m_mixOrder(config.mixOrder),
-		m_dspScratchBuffer(config.dspScratchBuffer) {
+		m_mixScratchBuffer(config.dspScratchBuffer) {
 		m_smoothingCoefficient = 1.0f - std::exp(-2.0f * PI * SMOOTHING_CUTOFF_HZ / static_cast<float>(config.outSampleRate));
 		m_fadeStep = CalculateLinearFadeStep(FADE_TIME_GAIN, m_outSampleRate);
 		ConfigureSpeakerLayout(config.speakerLayout);
 		m_masterPeakLimiter.Init(static_cast<float>(m_outSampleRate));
     }
 
-    void MixerSystem::Tick(float* output, uint32_t frameCount) {
-        ProcessCommands();			// Process incoming commands from the API thread
-		ProcessParams();			// Process continuous parameter updates from the API thread
-        Render(output, frameCount); // Render the audio frame
+    MixerSystem::~MixerSystem() {
+		Stop();
+    }
+
+    void MixerSystem::Start() {
+		if (m_isRunning.load(std::memory_order_relaxed)) return;
+
+		m_isRunning.store(true, std::memory_order_release);
+		m_thread = std::thread(&MixerSystem::ThreadMain, this);
+    }
+
+    void MixerSystem::Stop() {
+		if (!m_isRunning.load(std::memory_order_relaxed)) return;
+
+		m_isRunning.store(false, std::memory_order_release);
+		m_wakeSemaphore.release(); // Wake thread so it can perform safe exit
+		if (m_thread.joinable()) m_thread.join();
+    }
+
+    size_t MixerSystem::ReadDiscardAudio(float* buffer, uint32_t frameCount) {
+		return m_pcmRingBuffer.PopFrames(buffer, frameCount);
+    }
+
+    bool MixerSystem::DiscardAudio(uint32_t frameCount) {
+		return m_pcmRingBuffer.DiscardFrames(frameCount);
+    }
+
+    void MixerSystem::Wake() {
+		m_wakeSemaphore.release();
     }
 
     void MixerSystem::SetOutputFormat(uint32_t channels, SpeakerLayout layout) {
 		m_outChannels = channels;
 		m_speakerLayout = layout;
 		ConfigureSpeakerLayout(layout);
+
+		m_pcmRingBuffer.ClearAndSetFormat(MIXER_PROCESSING_BLOCK_FRAMES * 2, channels);
+    }
+
+    void MixerSystem::ThreadMain() {
+		PlatformThread::SetCurrentThreadPriority(ThreadPriority::TimeCritical);
+
+		while (m_isRunning.load(std::memory_order_relaxed)) {
+			m_wakeSemaphore.acquire();
+			if (!m_isRunning) break;
+
+			while (m_pcmRingBuffer.GetAvailableFramesWrite() >= MIXER_PROCESSING_BLOCK_FRAMES) {
+				ProcessCommands();	// Process incoming commands from the API thread
+				ProcessParams();	// Process continuous parameter updates from the API thread
+
+				// Render and submit an audio frame
+				Render(m_mixScratchBuffer.data(), MIXER_PROCESSING_BLOCK_FRAMES);
+				m_pcmRingBuffer.PushFrames(m_mixScratchBuffer.data(), MIXER_PROCESSING_BLOCK_FRAMES);
+			}
+		}
     }
 
     void MixerSystem::ProcessCommands() {
@@ -893,7 +941,7 @@ namespace dalia {
 						block.pcmData,
 						block.framesAvailable,
 						block.channels,
-						m_dspScratchBuffer.data(),
+						m_mixScratchBuffer.data(),
 						outputFramesNeeded,
 						phaseInc,
 						outputFramesGenerated,
@@ -901,7 +949,7 @@ namespace dalia {
 					);
 
 					MixVoiceBlock(
-						m_dspScratchBuffer.data(),
+						m_mixScratchBuffer.data(),
 						&busBuffer[framesMixed * m_outChannels],
 						outputFramesGenerated,
 						block.channels,
@@ -1026,8 +1074,8 @@ namespace dalia {
 		uint32_t sampleCount = frameCount * m_outChannels;
 
 		if (slot.state != EffectState::Active) {
-			std::memcpy(m_dspScratchBuffer.data(), buffer, sampleCount * sizeof(float));
-			processBuffer = m_dspScratchBuffer.data();
+			std::memcpy(m_mixScratchBuffer.data(), buffer, sampleCount * sizeof(float));
+			processBuffer = m_mixScratchBuffer.data();
 		}
 
 		switch (eType) {

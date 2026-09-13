@@ -1,13 +1,18 @@
 #pragma once
 
+#include <semaphore>
+
 #include "messaging/MixerMessaging.h"
 #include "messaging/AsyncStreamMessaging.h"
 #include "core/Constants.h"
 #include "core/ParameterBridge.h"
 #include "mixer/Speakers.h"
 #include "mixer/PeakLimiter.h"
+#include "core/SPSCRingBufferPCM.h"
 
 #include <span>
+#include <semaphore>
+#include <thread>
 
 namespace dalia {
 
@@ -65,12 +70,21 @@ namespace dalia {
     class MixerSystem {
     public:
         explicit MixerSystem(const MixerSystemConfig& config);
-        void Tick(float* output, uint32_t frameCount);
+    	~MixerSystem();
+
+    	void Start();
+    	void Stop();
+
+    	size_t ReadDiscardAudio(float* buffer, uint32_t frameCount);
+    	bool DiscardAudio(uint32_t frameCount);
+    	void Wake();
 
     	// Must only be called when the audio thread is stopped
     	void SetOutputFormat(uint32_t channels, SpeakerLayout layout);
 
     private:
+    	void ThreadMain();
+
         void ProcessCommands();
     	void ProcessParams();
         void Render(float* output, uint32_t frameCount);
@@ -91,6 +105,12 @@ namespace dalia {
         void FadeOutEffect(EffectHandle handle, uint32_t busIndex, uint32_t effectSlot);
 
     	void ConfigureSpeakerLayout(SpeakerLayout layout); // Also sets the spatial speaker count
+
+    	std::thread m_thread;
+    	std::atomic<bool> m_isRunning{false};
+
+    	std::binary_semaphore m_wakeSemaphore{0};
+    	SPSCRingBufferPCM<float> m_pcmRingBuffer{PCM_RING_BUFFER_CAPACITY};
 
     	PeakLimiter m_masterPeakLimiter;
     	float m_smoothingCoefficient	= 0.0f; // Used for volume and gain smoothing
@@ -139,6 +159,6 @@ namespace dalia {
     	uint32_t m_mixOrderSize = 0;
     	bool m_isMixOrderDirty = true;
 
-    	std::span<float> m_dspScratchBuffer;
+    	std::span<float> m_mixScratchBuffer;
     };
 }

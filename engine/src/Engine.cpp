@@ -147,7 +147,7 @@ namespace dalia {
 		std::unique_ptr<MixGraphCompiler> mixGraphCompiler;
 		std::unique_ptr<uint32_t[]> mixOrder;
 
-		std::unique_ptr<float[]> dspScratchBuffer;
+		std::unique_ptr<float[]> mixScratchBuffer;
 
 		// Assets
 		std::unique_ptr<AssetRegistry> assetRegistry;
@@ -683,50 +683,50 @@ namespace dalia {
 		}
 
 		// -- Periodicity Dependent Buffer Allocations ---
-		m_state->maxSamplesPerPeriod = MAX_PERIOD_FRAMES * CHANNELS_MAX;
+		m_state->maxSamplesPerPeriod = MIXER_PROCESSING_BLOCK_FRAMES * CHANNELS_MAX;
 		uint32_t busBufferPoolSize = m_state->busCapacity * m_state->maxSamplesPerPeriod;
 		m_state->busBufferPool = std::make_unique<float[]>(busBufferPoolSize);
-		m_state->dspScratchBuffer = std::make_unique<float[]>(m_state->maxSamplesPerPeriod);
+		m_state->mixScratchBuffer = std::make_unique<float[]>(m_state->maxSamplesPerPeriod);
 
 		// --- SYSTEMS SETUP ---
-		MixerSystemConfig rtConfig;
-		rtConfig.coordinateSystem		= m_state->coordinateSystem;
-		rtConfig.speakerLayout			= m_state->speakerLayout;
-		rtConfig.maxSamplesPerPeriod	= m_state->maxSamplesPerPeriod;
-		rtConfig.outChannels			= m_state->outChannels;
-		rtConfig.outSampleRate			= m_state->outSampleRate;
-		rtConfig.mixerCommands				= m_state->mixerCommands.get();
-		rtConfig.mixerEvents				= m_state->mixerEvents.get();
-		rtConfig.asyncStreamRequests		= m_state->asyncStreamRequests.get();
-		rtConfig.streamPool				= m_state->streams.GetSpan();
-		rtConfig.listenerPool			= m_state->listeners.GetSpan();
-		rtConfig.listenerParamBridges	= m_state->listeners.GetParamBridgeSpan();
-		rtConfig.voicePool				= m_state->voices.GetSpan();
-		rtConfig.voiceParamBridges		= m_state->voices.GetParamBridgeSpan();
-		rtConfig.busPool				= m_state->buses.GetSpan();
-		rtConfig.busParamBridges		= m_state->buses.GetParamBridgeSpan();
-		rtConfig.busBufferPool			= std::span(m_state->busBufferPool.get(), busBufferPoolSize);
-		rtConfig.biquadPool				= m_state->biquads.GetSpan();
-		rtConfig.biquadParamBridges		= m_state->biquads.GetParamBridgeSpan();
-		rtConfig.mixGraphCompiler		= m_state->mixGraphCompiler.get();
-		rtConfig.mixOrder				= std::span(m_state->mixOrder.get(), m_state->busCapacity);
-		rtConfig.dspScratchBuffer		= std::span(m_state->dspScratchBuffer.get(), m_state->maxSamplesPerPeriod);
-		m_state->mixerSystem = std::make_unique<MixerSystem>(rtConfig);
+		MixerSystemConfig mixerConfig;
+		mixerConfig.coordinateSystem		= m_state->coordinateSystem;
+		mixerConfig.speakerLayout			= m_state->speakerLayout;
+		mixerConfig.maxSamplesPerPeriod	= m_state->maxSamplesPerPeriod;
+		mixerConfig.outChannels			= m_state->outChannels;
+		mixerConfig.outSampleRate			= m_state->outSampleRate;
+		mixerConfig.mixerCommands			= m_state->mixerCommands.get();
+		mixerConfig.mixerEvents			= m_state->mixerEvents.get();
+		mixerConfig.asyncStreamRequests	= m_state->asyncStreamRequests.get();
+		mixerConfig.streamPool				= m_state->streams.GetSpan();
+		mixerConfig.listenerPool			= m_state->listeners.GetSpan();
+		mixerConfig.listenerParamBridges	= m_state->listeners.GetParamBridgeSpan();
+		mixerConfig.voicePool				= m_state->voices.GetSpan();
+		mixerConfig.voiceParamBridges		= m_state->voices.GetParamBridgeSpan();
+		mixerConfig.busPool				= m_state->buses.GetSpan();
+		mixerConfig.busParamBridges		= m_state->buses.GetParamBridgeSpan();
+		mixerConfig.busBufferPool			= std::span(m_state->busBufferPool.get(), busBufferPoolSize);
+		mixerConfig.biquadPool				= m_state->biquads.GetSpan();
+		mixerConfig.biquadParamBridges		= m_state->biquads.GetParamBridgeSpan();
+		mixerConfig.mixGraphCompiler		= m_state->mixGraphCompiler.get();
+		mixerConfig.mixOrder				= std::span(m_state->mixOrder.get(), m_state->busCapacity);
+		mixerConfig.dspScratchBuffer		= std::span(m_state->mixScratchBuffer.get(), m_state->maxSamplesPerPeriod);
+		m_state->mixerSystem = std::make_unique<MixerSystem>(mixerConfig);
 
-		AsyncStreamSystemConfig ioStreamingConfig;
-		ioStreamingConfig.wakeupPeriodMicroseconds = STREAM_SYSTEM_WAKEUP_PERIOD_MICROSECONDS;
-		ioStreamingConfig.outSampleRate		= m_state->outSampleRate;
-		ioStreamingConfig.ioStreamRequests	= m_state->asyncStreamRequests.get();
-		ioStreamingConfig.streamPool		= m_state->streams.GetSpan();
-		ioStreamingConfig.freeStreams		= m_state->streams.GetFreeList();
-		m_state->asyncStreamSystem	= std::make_unique<AsyncStreamSystem>(ioStreamingConfig);
+		AsyncStreamSystemConfig asyncStreamConfig;
+		asyncStreamConfig.wakeupPeriodMicroseconds = STREAM_SYSTEM_WAKEUP_PERIOD_MICROSECONDS;
+		asyncStreamConfig.outSampleRate				= m_state->outSampleRate;
+		asyncStreamConfig.ioStreamRequests			= m_state->asyncStreamRequests.get();
+		asyncStreamConfig.streamPool				= m_state->streams.GetSpan();
+		asyncStreamConfig.freeStreams				= m_state->streams.GetFreeList();
+		m_state->asyncStreamSystem	= std::make_unique<AsyncStreamSystem>(asyncStreamConfig);
 
-		AsyncLoadSystemConfig ioLoadSystemConfig;
-		ioLoadSystemConfig.outSampleRate	= m_state->outSampleRate;
-		ioLoadSystemConfig.ioLoadRequests	= m_state->asyncLoadRequests.get();
-		ioLoadSystemConfig.ioLoadEvents		= m_state->asyncLoadEvents.get();
-		ioLoadSystemConfig.assetRegistry	= m_state->assetRegistry.get();
-		m_state->asyncLoadSystem = std::make_unique<AsyncLoadSystem>(ioLoadSystemConfig);
+		AsyncLoadSystemConfig asyncLoadConfig;
+		asyncLoadConfig.outSampleRate	= m_state->outSampleRate;
+		asyncLoadConfig.ioLoadRequests	= m_state->asyncLoadRequests.get();
+		asyncLoadConfig.ioLoadEvents	= m_state->asyncLoadEvents.get();
+		asyncLoadConfig.assetRegistry	= m_state->assetRegistry.get();
+		m_state->asyncLoadSystem = std::make_unique<AsyncLoadSystem>(asyncLoadConfig);
 
 		AsyncControlSystemConfig asyncControlSystemConfig;
 		asyncControlSystemConfig.requestQueue = m_state->asyncControlRequests.get();
@@ -737,6 +737,7 @@ namespace dalia {
 		m_state->asyncControlSystem = std::make_unique<AsyncControlSystem>(asyncControlSystemConfig);
 
 		// --- SYSTEMS START ---
+		m_state->mixerSystem->Start();
 		m_state->asyncStreamSystem->Start();
 		m_state->asyncLoadSystem->Start();
 		m_state->asyncControlSystem->Start();
@@ -2112,11 +2113,13 @@ namespace dalia {
 	void Engine::TeardownInternal() {
 		if (!m_state) return;
 
-		if (m_state->outputDevice)		m_state->outputDevice->Stop();
+		if (m_state->outputDevice)			m_state->outputDevice->Stop();
 		if (m_state->nullOutputDevice)		m_state->nullOutputDevice->Stop();
 
+		if (m_state->mixerSystem)			m_state->mixerSystem->Stop();
 		if (m_state->asyncLoadSystem)		m_state->asyncLoadSystem->Stop();
-		if (m_state->asyncStreamSystem)	m_state->asyncStreamSystem->Stop();
+		if (m_state->asyncStreamSystem)		m_state->asyncStreamSystem->Stop();
+		if (m_state->asyncControlSystem)	m_state->asyncControlSystem->Stop();
 
 		delete m_state;
 		m_state = nullptr;

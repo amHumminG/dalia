@@ -10,7 +10,6 @@ namespace dalia {
 
 	WindowsNullOutputDevice::WindowsNullOutputDevice(uint32_t engineSampleRate, uint32_t periodSizeInFrames)
 		: m_sampleRate(engineSampleRate), m_periodSizeInFrames(periodSizeInFrames) {
-		m_voidBuffer = std::make_unique<float[]>(m_periodSizeInFrames);
 	}
 
 	WindowsNullOutputDevice::~WindowsNullOutputDevice() {
@@ -20,7 +19,9 @@ namespace dalia {
 	Result WindowsNullOutputDevice::Start(MixerSystem* system) {
 		if (m_isRunning.load(std::memory_order_relaxed)) return Result::Ok;
 
-		m_system = system;
+		m_mixerSystem = system;
+		m_mixerSystem->SetOutputFormat(m_channelCount, m_speakerLayout);
+
 		m_isRunning.store(true, std::memory_order_release);
 
 		m_audioThread = std::thread(&WindowsNullOutputDevice::AudioThreadMain, this);
@@ -31,7 +32,7 @@ namespace dalia {
 		if (!m_isRunning.exchange(false, std::memory_order_release)) return;
 
 		if (m_audioThread.joinable()) m_audioThread.join();
-		m_system = nullptr;
+		m_mixerSystem = nullptr;
 	}
 
 	bool WindowsNullOutputDevice::HasFailed() const {
@@ -47,11 +48,11 @@ namespace dalia {
 	}
 
 	uint32_t WindowsNullOutputDevice::GetChannelCount() const {
-		return 1;
+		return m_channelCount;
 	}
 
 	SpeakerLayout WindowsNullOutputDevice::GetSpeakerLayout() const {
-		return SpeakerLayout::Mono;
+		return m_speakerLayout;
 	}
 
 	void WindowsNullOutputDevice::AudioThreadMain() {
@@ -60,11 +61,15 @@ namespace dalia {
 		HighResTimer timer;
 		uint32_t periodMicroseconds = (m_periodSizeInFrames * 1000000) / m_sampleRate;
 
+		uint32_t samplesToDiscard = m_periodSizeInFrames * m_channelCount;
 		while (m_isRunning.load(std::memory_order_relaxed)) {
 			timer.SleepMicroseconds(periodMicroseconds);
-
 			if (!m_isRunning.load(std::memory_order_relaxed)) break;
-			if (m_system) m_system->Tick(m_voidBuffer.get(), m_periodSizeInFrames);
+
+			if (m_mixerSystem) {
+				m_mixerSystem->DiscardAudio(samplesToDiscard);
+				m_mixerSystem->Wake();
+			}
 		}
 	}
 }

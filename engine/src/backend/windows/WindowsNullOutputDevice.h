@@ -32,7 +32,7 @@ namespace dalia {
 	private:
 		void AudioThreadMain();
 
-		MixerSystem* m_system = nullptr;
+		MixerSystem* m_mixerSystem = nullptr;
 
 		std::thread m_audioThread;
 		std::atomic<bool> m_isRunning{false};
@@ -40,9 +40,8 @@ namespace dalia {
 		std::string m_identifier = "No Output Device";
 		std::string m_name = "null_device";
 		uint32_t m_sampleRate = 0;
+		uint32_t m_channelCount = CHANNELS_MONO;
 		uint32_t m_periodSizeInFrames = 0;
-
-		std::unique_ptr<float[]> m_voidBuffer;
-
+		SpeakerLayout m_speakerLayout = SpeakerLayout::Mono;
 	};
 }

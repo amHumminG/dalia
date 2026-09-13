@@ -37,7 +37,7 @@ namespace dalia {
 	}
 
 	void AsyncControlSystem::ThreadMain() {
-		// Initialize COM for this thread
+		// Initialize COM for this thread TODO: Remove this!
 		HRESULT hr = CoInitializeEx(nullptr, COINIT_MULTITHREADED);
 		if (FAILED(hr)) DALIA_LOG_ERR(LOG_CTX_ASYNC, "Failed to initialize COM on AsyncControlThread.");
 

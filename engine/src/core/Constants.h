@@ -23,6 +23,7 @@
 namespace dalia {
 
 	// --- Backend ---
+	constexpr size_t OUTPUT_FORMAT_BITS_PER_SAMPLE = 32;
 	constexpr size_t DEVICE_NOTIFICATION_QUEUE_CAPACITY = 8;
 
 	// --- Async ---
@@ -31,9 +32,6 @@ namespace dalia {
 	static constexpr uint32_t COUNTING_SEMAPHORE_SIZE = 1024;
 
     // --- Mixing ---
-	static constexpr size_t MIXER_PROCESSING_BLOCK_SIZE = 1024;
-	static constexpr size_t PCM_RING_BUFFER_CAPACITY = 2 * MIXER_PROCESSING_BLOCK_SIZE;
-
 	constexpr float EPSILON = 1e-5f;
     constexpr float EPSILON_VOLUME = 1e-5f;
     constexpr float EPSILON_GAIN = 1e-5f;
@@ -97,10 +95,11 @@ namespace dalia {
     constexpr float FILTER_RESONANCE_MAX = 10.0f;
 
 	// Static engine configs
-	static constexpr uint32_t MAX_PERIOD_FRAMES = 2048;
+	static constexpr size_t MIXER_PROCESSING_BLOCK_FRAMES = 512;
+	static constexpr size_t PCM_RING_BUFFER_CAPACITY = 2 * MIXER_PROCESSING_BLOCK_FRAMES * CHANNELS_MAX;
 
 	static constexpr size_t STREAM_BUFFER_FRAMES = 16384;
-	static constexpr size_t STREAM_BUFFER_SIZE = STREAM_BUFFER_FRAMES * CHANNELS_MAX;
+	static constexpr size_t STREAM_BUFFER_CAPACITY = STREAM_BUFFER_FRAMES * CHANNELS_MAX;
 
     // --- Handles, Indices & Generations ---
     static constexpr uint64_t INVALID_RAW_ID = 0;

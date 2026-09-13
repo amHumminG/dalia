@@ -24,7 +24,7 @@ namespace dalia {
         std::atomic<uint32_t> gen{0};
         std::atomic<StreamState> state = StreamState::Free;
 
-        alignas(64) float buffers[2][STREAM_BUFFER_SIZE];
+        alignas(64) float buffers[2][STREAM_BUFFER_CAPACITY];
 
         std::array<std::atomic<bool>, 2> bufferReady{false, false};
         std::array<uint32_t, 2> eofIndex = {NO_EOF, NO_EOF};
@@ -41,7 +41,7 @@ namespace dalia {
 
             state.store(StreamState::Free, std::memory_order_release);
 
-            std::fill_n(&buffers[0][0], (2 * STREAM_BUFFER_SIZE), 0.0f);
+            std::fill_n(&buffers[0][0], (2 * STREAM_BUFFER_CAPACITY), 0.0f);
 
             bufferReady[0].store(false);
             bufferReady[1].store(false);
