@@ -188,6 +188,7 @@ namespace dalia {
 
 		m_mixerSystem = system;
 		m_mixerSystem->SetOutputFormat(m_channels, m_speakerLayout);
+		m_mixerSystem->Wake();
 
 		HRESULT hr = m_audioClient->Start();
 		if (FAILED(hr)) return Result::ClientFailed;
@@ -292,7 +293,12 @@ namespace dalia {
 						size_t samplesToClear = missingFrames * m_channels;
 
 						std::memset(silenceStart, 0, samplesToClear * sizeof(float));
-						DALIA_LOG_WARN(LOG_CTX_BACKEND, "Unable to fill audio frame. %zu frames missing.", missingFrames);
+						if (!m_mixerIsPriming) {
+							DALIA_LOG_WARN(LOG_CTX_BACKEND, "Unable to fill audio frame. %zu frames missing.", missingFrames);
+						}
+					}
+					else {
+						if (m_mixerIsPriming) m_mixerIsPriming = false;
 					}
 
 					m_mixerSystem->Wake();
