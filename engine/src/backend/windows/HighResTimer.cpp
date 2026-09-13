@@ -36,7 +36,7 @@ namespace dalia {
 	}
 
 	void HighResTimer::SleepMicroseconds(uint32_t microseconds) {
-		if (m_timerHandle) return;
+		if (!m_timerHandle) return;
 
 		HANDLE timer = static_cast<HANDLE>(m_timerHandle);
 
