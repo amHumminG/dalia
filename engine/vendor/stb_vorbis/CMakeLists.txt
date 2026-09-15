@@ -10,5 +10,5 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(stb_vorbis)
 
-add_library(stb_vorbis_lib STATIC stb_vorbis_impl.cpp)
+add_library(stb_vorbis_lib OBJECT stb_vorbis_impl.cpp)
 target_include_directories(stb_vorbis_lib SYSTEM PUBLIC ${stb_vorbis_SOURCE_DIR})

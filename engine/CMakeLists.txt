@@ -119,6 +119,10 @@ target_include_directories(dalia_engine
     PRIVATE src
 )
 
+target_sources(dalia_engine
+    PRIVATE $<TARGET_OBJECTS:stb_vorbis_lib>
+)
+
 target_link_libraries(dalia_engine
     PRIVATE dalia_common
     PRIVATE stb_vorbis_lib
@@ -126,7 +130,7 @@ target_link_libraries(dalia_engine
 
 if (WIN32)
     target_link_libraries(dalia_engine
-        PRIVATE ole32 # Backend (COM initialization)
+        PRIVATE ole32 # Backend (COM)
         PRIVATE avrt  # Backend (MMCSS)
     )
 endif()
