@@ -1,0 +1,65 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.9.8" xml:lang="en-US">
+  <compounddef id="DeviceControl_8h" kind="file" language="C++">
+    <compoundname>DeviceControl.h</compoundname>
+    <includes local="no">cstdint</includes>
+    <includedby refid="Engine_8h" local="yes">dalia/Engine.h</includedby>
+    <includedby refid="dalia_8h" local="yes">dalia/dalia.h</includedby>
+    <incdepgraph>
+      <node id="1">
+        <label>dalia/DeviceControl.h</label>
+        <link refid="DeviceControl_8h"/>
+        <childnode refid="2" relation="include">
+        </childnode>
+      </node>
+      <node id="2">
+        <label>cstdint</label>
+      </node>
+    </incdepgraph>
+    <invincdepgraph>
+      <node id="1">
+        <label>dalia/DeviceControl.h</label>
+        <link refid="DeviceControl_8h"/>
+        <childnode refid="2" relation="include">
+        </childnode>
+        <childnode refid="3" relation="include">
+        </childnode>
+      </node>
+      <node id="2">
+        <label>dalia/Engine.h</label>
+        <link refid="Engine_8h"/>
+        <childnode refid="3" relation="include">
+        </childnode>
+      </node>
+      <node id="3">
+        <label>dalia/dalia.h</label>
+        <link refid="dalia_8h"/>
+      </node>
+    </invincdepgraph>
+    <innerclass refid="structdalia_1_1OutputDeviceInfo" prot="public">dalia::OutputDeviceInfo</innerclass>
+    <innernamespace refid="namespacedalia">dalia</innernamespace>
+    <briefdescription>
+<para>Audio output device metadata structures. </para>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <programlisting>
+<codeline lineno="1"><highlight class="preprocessor">#pragma<sp/>once</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="2"><highlight class="normal"></highlight></codeline>
+<codeline lineno="5"><highlight class="normal"></highlight></codeline>
+<codeline lineno="6"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;cstdint&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="7"><highlight class="normal"></highlight></codeline>
+<codeline lineno="8" refid="namespacedalia" refkind="compound"><highlight class="normal"></highlight><highlight class="keyword">namespace<sp/></highlight><highlight class="normal"><ref refid="namespacedalia" kindref="compound">dalia</ref><sp/>{</highlight></codeline>
+<codeline lineno="9"><highlight class="normal"></highlight></codeline>
+<codeline lineno="11" refid="namespacedalia_1a3293cabbf77d74ee1b62559a44535846" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">constexpr</highlight><highlight class="normal"><sp/></highlight><highlight class="keywordtype">size_t</highlight><highlight class="normal"><sp/><ref refid="namespacedalia_1a3293cabbf77d74ee1b62559a44535846" kindref="member">MAX_STR_LEN_DEVICE</ref><sp/>=<sp/>256;</highlight></codeline>
+<codeline lineno="12"><highlight class="normal"></highlight></codeline>
+<codeline lineno="14" refid="structdalia_1_1OutputDeviceInfo" refkind="compound"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">struct<sp/></highlight><highlight class="normal"><ref refid="structdalia_1_1OutputDeviceInfo" kindref="compound">OutputDeviceInfo</ref><sp/>{</highlight></codeline>
+<codeline lineno="15" refid="structdalia_1_1OutputDeviceInfo_1acf2c05cfcd9523037450d361bc342b05" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/><ref refid="structdalia_1_1OutputDeviceInfo_1acf2c05cfcd9523037450d361bc342b05" kindref="member">name</ref>[<ref refid="namespacedalia_1a3293cabbf77d74ee1b62559a44535846" kindref="member">MAX_STR_LEN_DEVICE</ref>];<sp/></highlight><highlight class="comment">//<sp/>Readable<sp/>device<sp/>name.</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="16" refid="structdalia_1_1OutputDeviceInfo_1a0b6bf79b256ccd151b5286cd02e16ce2" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal"><sp/><ref refid="structdalia_1_1OutputDeviceInfo_1a0b6bf79b256ccd151b5286cd02e16ce2" kindref="member">identifier</ref>[<ref refid="namespacedalia_1a3293cabbf77d74ee1b62559a44535846" kindref="member">MAX_STR_LEN_DEVICE</ref>];<sp/></highlight><highlight class="comment">//<sp/>OS-level<sp/>identifier.</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="17" refid="structdalia_1_1OutputDeviceInfo_1a54c30034f5a4ba9503b29a2ee94eba7a" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/></highlight><highlight class="keywordtype">bool</highlight><highlight class="normal"><sp/><ref refid="structdalia_1_1OutputDeviceInfo_1a54c30034f5a4ba9503b29a2ee94eba7a" kindref="member">isDefault</ref><sp/>=<sp/></highlight><highlight class="keyword">false</highlight><highlight class="normal">;<sp/></highlight><highlight class="comment">//<sp/>True<sp/>if<sp/>the<sp/>device<sp/>is<sp/>set<sp/>as<sp/>OS<sp/>default.</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="18"><highlight class="normal"><sp/><sp/><sp/><sp/>};</highlight></codeline>
+<codeline lineno="19"><highlight class="normal">}</highlight></codeline>
+    </programlisting>
+    <location file="dalia/DeviceControl.h"/>
+  </compounddef>
+</doxygen>
