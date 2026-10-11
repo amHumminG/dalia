@@ -32,6 +32,8 @@ set(ENGINE_FILES
 
     src/backend/DeviceManager.h
     src/backend/OutputDevice.h
+    src/backend/NullOutputDevice.h
+    src/backend/NullOutputDevice.cpp
     src/backend/HighResTimer.h
     src/backend/PlatformThread.h
 
