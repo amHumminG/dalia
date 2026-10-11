@@ -16,10 +16,12 @@ namespace dalia {
 	class NullOutputDevice : public OutputDevice {
 	public:
 		NullOutputDevice(uint32_t sampleRate, uint32_t periodSizeInFrames);
-		~NullOutputDevice();
+		~NullOutputDevice() override;
 
 		Result Start(MixerSystem* mixerSystem) override;
 		void Stop() override;
+
+		bool HasFailed() const override;
 
 		void SetOutputFormat(uint32_t channels, SpeakerLayout layout);
 

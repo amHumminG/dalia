@@ -8,8 +8,8 @@
 #include "async/AsyncControlSystem.h"
 
 #include "backend/windows/WindowsDeviceManager.h"
-#include "backend/windows/WindowsNullOutputDevice.h"
 #include "backend/windows/WasapiOutputDevice.h"
+#include "backend/NullOutputDevice.h"
 
 #include "core/Logger.h"
 #include "core/FixedStack.h"
@@ -87,7 +87,7 @@ namespace dalia {
 		// Devices
 		std::unique_ptr<DeviceManager> deviceManager;
 		std::unique_ptr<OutputDevice> outputDevice;
-		std::unique_ptr<OutputDevice> nullOutputDevice;
+		std::unique_ptr<NullOutputDevice> nullOutputDevice;
 		OutputDevice* activeOutputDevice; // Points to either outputDevice or nullDevice
 
 		std::vector<OutputDeviceInfo> cachedOutputDeviceList;
@@ -656,13 +656,23 @@ namespace dalia {
 		m_state->outSampleRate = config.sampleRate;
 
 		m_state->outputDevice = m_state->deviceManager->CreateDevice("default", m_state->outSampleRate);
-		m_state->nullOutputDevice = m_state->deviceManager->CreateNullDevice(
+
+		m_state->nullOutputDevice = std::make_unique<NullOutputDevice>(
 			m_state->outSampleRate,
 			(m_state->outSampleRate * 10) / 1000
 		);
 
-		if (m_state->outputDevice) m_state->activeOutputDevice = m_state->outputDevice.get();
-		else m_state->activeOutputDevice = m_state->nullOutputDevice.get();
+		if (m_state->outputDevice) {
+			m_state->activeOutputDevice = m_state->outputDevice.get();
+
+			m_state->nullOutputDevice->SetOutputFormat(
+				m_state->activeOutputDevice->GetChannelCount(),
+				m_state->activeOutputDevice->GetSpeakerLayout()
+			);
+		}
+		else {
+			m_state->activeOutputDevice = m_state->nullOutputDevice.get();
+		}
 
 		m_state->outChannels = m_state->activeOutputDevice->GetChannelCount();
 		m_state->speakerLayout = m_state->activeOutputDevice->GetSpeakerLayout();

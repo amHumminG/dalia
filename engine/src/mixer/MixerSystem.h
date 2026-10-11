@@ -79,7 +79,7 @@ namespace dalia {
     	bool DiscardAudio(uint32_t frameCount);
     	void Wake();
 
-    	// Must only be called when the audio thread is stopped
+    	// Must only be called when the audio thread is stopped. Clears the output ring buffer.
     	void SetOutputFormat(uint32_t channels, SpeakerLayout layout);
 
     private:

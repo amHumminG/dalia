@@ -11,13 +11,14 @@ namespace dalia {
 
 	class DeviceManager;
 	class MixerSystem;
+	class NullOutputDevice;
 
 	struct AsyncControlSystemConfig {
 		AsyncControlRequestQueue* requestQueue = nullptr;
 		AsyncControlEventQueue* eventQueue = nullptr;
 
 		DeviceManager* deviceManager = nullptr;
-		OutputDevice* nullOutputDevice = nullptr;
+		NullOutputDevice* nullOutputDevice = nullptr;
 		MixerSystem* mixerSystem = nullptr;
 	};
 
@@ -43,7 +44,7 @@ namespace dalia {
 		AsyncControlEventQueue* m_eventQueue = nullptr;
 
 		DeviceManager* m_deviceManager = nullptr;
-		OutputDevice* m_nullOutputDevice = nullptr;
+		NullOutputDevice* m_nullOutputDevice = nullptr;
 		MixerSystem* m_mixerSystem = nullptr;
 	};
 }

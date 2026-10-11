@@ -1,6 +1,7 @@
 #include "async/AsyncControlSystem.h"
 
 #include "backend/windows/WindowsDeviceManager.h"
+#include "backend/NullOutputDevice.h"
 #include "core/Logger.h"
 #include "mixer/MixerSystem.h"
 
@@ -57,37 +58,41 @@ namespace dalia {
 			case AsyncControlRequest::Type::SwapOutputDevice: {
 				// Teardown old device
 				if (req.data.swapOutputDevice.oldDevice) {
-					DALIA_LOG_DEBUG(LOG_CTX_BACKEND, "Stopping output device \"%s\".", req.data.swapOutputDevice.oldDevice->GetName().c_str());
+					// Check the format before stopping the old device
+					uint32_t oldChannels = req.data.swapOutputDevice.oldDevice->GetChannelCount();
+					SpeakerLayout oldLayout = req.data.swapOutputDevice.oldDevice->GetSpeakerLayout();
+					m_nullOutputDevice->SetOutputFormat(oldChannels, oldLayout);
+
+					DALIA_LOG_DEBUG(LOG_CTX_BACKEND, "Stopping output device \"%s\".",
+						req.data.swapOutputDevice.oldDevice->GetName().c_str());
 					req.data.swapOutputDevice.oldDevice->Stop();
 					delete req.data.swapOutputDevice.oldDevice;
 				}
 
-				m_mixerSystem->SetOutputFormat(m_nullOutputDevice->GetChannelCount(), m_nullOutputDevice->GetSpeakerLayout());
-				m_nullOutputDevice->Start(m_mixerSystem);
+				m_nullOutputDevice->Start(m_mixerSystem); // Start the null output device while new device is setting up
 
+				// Attempt to create requested output device
 				std::unique_ptr<OutputDevice> newDevice = m_deviceManager->CreateDevice(
 					req.data.swapOutputDevice.targetOutputDeviceId,
 					req.data.swapOutputDevice.sampleRate
 				);
 
-				// Fallback to default if requested device failed
+				// Fall back to default if requested device failed
 				bool fellBack = false;
 				if (!newDevice && std::string(req.data.swapOutputDevice.targetOutputDeviceId) != "default") {
 					newDevice = m_deviceManager->CreateDevice("default", req.data.swapOutputDevice.sampleRate);
 					fellBack = true;
-					DALIA_LOG_DEBUG(LOG_CTX_BACKEND, "Fell back to OS default output device \"%s\".", newDevice->GetName().c_str());
+					DALIA_LOG_DEBUG(LOG_CTX_BACKEND,
+						"Fell back to OS default output device \"%s\".", newDevice->GetName().c_str());
 				}
 
 				if (newDevice) {
 					m_nullOutputDevice->Stop();
-
-					// Reconfigure mixer and start new device
-					m_mixerSystem->SetOutputFormat(newDevice->GetChannelCount(), newDevice->GetSpeakerLayout());
-					newDevice->Start(m_mixerSystem);
+					newDevice->Start(m_mixerSystem); // Start new output device (reconfigures the mixer internally)
 				}
 				// If new device failed, we leave null device running
 
-				// Push new device back
+				// Push new device back to main thread
 				auto ev = AsyncControlEvent::OutputDeviceSwapped(newDevice.release(), fellBack);
 				m_eventQueue->Push(ev);
 

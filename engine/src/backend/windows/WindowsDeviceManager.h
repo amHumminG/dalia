@@ -21,7 +21,6 @@ namespace dalia {
 		bool PopDeviceChangeNotification(std::string& newDeviceId) override;
 
 		std::unique_ptr<OutputDevice> CreateDevice(const char* identifier, uint32_t engineSampleRate) override;
-		std::unique_ptr<OutputDevice> CreateNullDevice(uint32_t engineSampleRate, uint32_t periodSizeInFrames) override;
 
 	private:
 		class NotificationClient final : public IMMNotificationClient {

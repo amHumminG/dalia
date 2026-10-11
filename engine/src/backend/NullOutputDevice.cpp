@@ -33,6 +33,10 @@ namespace dalia {
 		m_mixerSystem = nullptr;
 	}
 
+	bool NullOutputDevice::HasFailed() const {
+		return false;
+	}
+
 	void NullOutputDevice::SetOutputFormat(uint32_t channels, SpeakerLayout layout) {
 		m_channels = channels;
 		m_speakerLayout = layout;
@@ -58,10 +62,19 @@ namespace dalia {
 		PlatformThread::SetCurrentThreadPriority(ThreadPriority::TimeCritical);
 
 		HighResTimer timer;
-		uint32_t periodMicroseconds = (m_periodSizeInFrames * 1000000) / m_sampleRate;
+		auto period = static_cast<std::chrono::microseconds>(m_periodSizeInFrames * 1000000) / m_sampleRate;
+
+		auto nextWakeTime = std::chrono::steady_clock::now();
 
 		while (m_isRunning.load(std::memory_order_relaxed)) {
-			timer.SleepMicroseconds(periodMicroseconds);
+			nextWakeTime += period;
+
+			auto now = std::chrono::steady_clock::now();
+			if (now < nextWakeTime) {
+				auto sleepDuration = std::chrono::duration_cast<std::chrono::microseconds>(nextWakeTime - now).count();
+				timer.SleepMicroseconds(sleepDuration);
+			}
+
 			if (!m_isRunning.load(std::memory_order_relaxed)) break;
 
 			if (m_mixerSystem) {

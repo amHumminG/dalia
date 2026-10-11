@@ -1,7 +1,6 @@
 #include "backend/windows/WindowsDeviceManager.h"
 
 #include "backend/windows/WasapiOutputDevice.h"
-#include "backend/windows/WindowsNullOutputDevice.h"
 #include "core/Logger.h"
 
 #include <functiondiscoverykeys_devpkey.h> // For PKEY_Device_FriendlyName
@@ -210,10 +209,6 @@ namespace dalia {
 		if (wasapiDevice->Initialize(engineSampleRate) != Result::Ok) return nullptr; // Negotiate format and buffer size
 
 		return wasapiDevice;
-	}
-
-	std::unique_ptr<OutputDevice> WindowsDeviceManager::CreateNullDevice(uint32_t targetSampleRate, uint32_t periodSizeInFrames) {
-		return std::make_unique<WindowsNullOutputDevice>(targetSampleRate, periodSizeInFrames);
 	}
 }
 

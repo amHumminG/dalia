@@ -99,8 +99,6 @@ if (WIN32)
         src/backend/windows/WindowsDeviceManager.h
         src/backend/windows/WasapiOutputDevice.cpp
         src/backend/windows/WasapiOutputDevice.h
-        src/backend/windows/WindowsNullOutputDevice.cpp
-        src/backend/windows/WindowsNullOutputDevice.h
         src/backend/windows/HighResTimer.cpp
         src/backend/windows/PlatformThread.cpp
     )
