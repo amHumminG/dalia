@@ -107,7 +107,9 @@ namespace dalia {
     	void ConfigureSpeakerLayout(SpeakerLayout layout); // Also sets the spatial speaker count
 
     	std::thread m_thread;
-    	std::atomic<bool> m_isRunning{false};
+    	std::atomic<bool> m_isRunning{false};		 // Determines if ThreadMain is running
+    	std::atomic<bool> m_isProcessing{false};   // Determines if mixer is processing
+    	std::atomic<bool> m_suspendRequest{false}; // Flags a request to suspend mixer
 
     	std::binary_semaphore m_wakeSemaphore{0};
     	SPSCRingBufferPCM<float> m_pcmRingBuffer{PCM_RING_BUFFER_CAPACITY};

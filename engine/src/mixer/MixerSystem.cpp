@@ -416,11 +416,19 @@ namespace dalia {
     }
 
     void MixerSystem::SetOutputFormat(uint32_t channels, SpeakerLayout layout) {
+		m_suspendRequest.store(true, std::memory_order_seq_cst);
+
+		// Wait for mixer to finish processing audio
+		while (m_isProcessing.load(std::memory_order_seq_cst)) {
+			std::this_thread::yield();
+		}
+
 		m_outChannels = channels;
 		m_speakerLayout = layout;
 		ConfigureSpeakerLayout(layout);
 
 		m_pcmRingBuffer.ClearAndSetFormat(MIXER_PROCESSING_BLOCK_FRAMES * 2, channels);
+		m_suspendRequest.store(false, std::memory_order_seq_cst);
     }
 
     void MixerSystem::ThreadMain() {
@@ -428,7 +436,14 @@ namespace dalia {
 
 		while (m_isRunning.load(std::memory_order_relaxed)) {
 			m_wakeSemaphore.acquire();
-			if (!m_isRunning) break;
+			if (!m_isRunning.load(std::memory_order_relaxed)) break;
+
+			m_isProcessing.store(true, std::memory_order_seq_cst);
+			// Is there a suspend request?
+			if (m_suspendRequest.load(std::memory_order_seq_cst)) {
+				m_isProcessing.store(false, std::memory_order_seq_cst);
+				continue;
+			}
 
 			while (m_pcmRingBuffer.GetAvailableFramesWrite() >= MIXER_PROCESSING_BLOCK_FRAMES) {
 				ProcessCommands();	// Process incoming commands from the API thread
@@ -438,6 +453,8 @@ namespace dalia {
 				Render(m_mixScratchBuffer.data(), MIXER_PROCESSING_BLOCK_FRAMES);
 				m_pcmRingBuffer.PushFrames(m_mixScratchBuffer.data(), MIXER_PROCESSING_BLOCK_FRAMES);
 			}
+
+			m_isProcessing.store(false, std::memory_order_seq_cst);
 		}
     }
 
