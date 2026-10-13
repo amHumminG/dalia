@@ -29,12 +29,23 @@ namespace dalia {
 		void ClearAndSetFormat(size_t logicalCapacityFrames, uint32_t channels) {
 			assert(logicalCapacityFrames * channels <= m_maxPhysicalSamples);
 
-			m_capacityFrames = std::bit_ceil(logicalCapacityFrames);
+			const size_t newCapacityFrames = std::bit_ceil(logicalCapacityFrames);
+			if (newCapacityFrames == m_capacityFrames && channels == m_channels) return; // Fast path
+
+			// Format changed
+			const size_t currentPush = m_pushCursor.load(std::memory_order_acquire);
+			const size_t currentPop = m_popCursor.load(std::memory_order_acquire);
+			const size_t unreadFrames = std::min(currentPush - currentPop, newCapacityFrames);
+
+			m_capacityFrames = newCapacityFrames;
 			m_frameMask = m_capacityFrames - 1;
 			m_channels = channels;
 
+			// Replace the wiped frames with an equal duration of silence
+			if (unreadFrames > 0 ) std::memset(m_buffer.get(), 0, unreadFrames * m_channels * sizeof(T));
+
 			m_pushCursor.store(0, std::memory_order_release);
-			m_popCursor.store(0, std::memory_order_release);
+			m_popCursor.store(unreadFrames, std::memory_order_release);
 		}
 
 		size_t CapacitySamples() const { return m_maxPhysicalSamples; }
