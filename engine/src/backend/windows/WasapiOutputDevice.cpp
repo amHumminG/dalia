@@ -24,7 +24,7 @@ namespace dalia {
 
 	WasapiOutputDevice::WasapiOutputDevice(Microsoft::WRL::ComPtr<IMMDevice> device)
 		: m_device(std::move(device)) {
-		m_bufferEvent = CreateEvent(nullptr, FALSE, TRUE, nullptr);
+		m_bufferEvent = CreateEvent(nullptr, FALSE, FALSE, nullptr);
 		m_shutdownEvent = CreateEvent(nullptr, TRUE, FALSE, nullptr);
 	}
 
@@ -190,7 +190,15 @@ namespace dalia {
 		m_mixerSystem->SetOutputFormat(m_channels, m_speakerLayout);
 		m_mixerSystem->Wake();
 
-		HRESULT hr = m_audioClient->Start();
+		// Pre-fill buffer with silence before starting the device thread. This should ensure that the first wakeup
+		// only asks for 1 period instead of the entire buffer capacity.
+		BYTE* pData = nullptr;
+		HRESULT hr = m_renderClient->GetBuffer(m_bufferCapacityInFrames, &pData);
+		if (SUCCEEDED(hr)) {
+			m_renderClient->ReleaseBuffer(m_bufferCapacityInFrames, AUDCLNT_BUFFERFLAGS_SILENT);
+		}
+
+		hr = m_audioClient->Start();
 		if (FAILED(hr)) return Result::ClientFailed;
 
 		m_isRunning.store(true, std::memory_order_release);
