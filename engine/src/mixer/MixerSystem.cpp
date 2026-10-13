@@ -121,16 +121,24 @@ namespace dalia {
 		float& currentMix,
 		float targetMix,
 		float mixDelta) {
+
+		// Fast path (finished fade)
+		if (math::NearlyEqual(currentMix, targetMix, EPSILON_GAIN)) {
+			currentMix = targetMix;
+			uint32_t sampleCount = frameCount * channels;
+
+			if (math::NearlyEqual(currentMix, GAIN_SILENCE, EPSILON_GAIN)) {
+				return; // 100% dry
+			}
+			if (math::NearlyEqual(currentMix, GAIN_DEFAULT, EPSILON_GAIN)) {
+				std::memcpy(inOutDryBuffer, inWetBuffer, sampleCount * sizeof(float));
+				return; // 100% wet
+			}
+		}
+
+		// Slow path (active cross-fade)
 		for (uint32_t frame = 0; frame < frameCount; frame++) {
-			// Increment mix coefficient
-			if (currentMix < targetMix) {
-				currentMix += mixDelta;
-				if (currentMix >= targetMix) currentMix = targetMix;
-			}
-			else if (currentMix > targetMix) {
-				currentMix -= mixDelta;
-				if (currentMix < targetMix) currentMix = targetMix;
-			}
+			StepFadeGain(currentMix, targetMix, mixDelta);
 
 			for (uint32_t channel = 0; channel < channels; channel++) {
 				uint32_t index = (frame * channels) + channel;
