@@ -449,7 +449,14 @@ namespace dalia {
     }
 
     size_t MixerSystem::ReadDiscardAudio(float* buffer, uint32_t frameCount) {
-		return m_pcmRingBuffer.PopFrames(buffer, frameCount);
+		size_t framesRead = m_pcmRingBuffer.PopFrames(buffer, frameCount);
+
+		if (framesRead > 0) {
+			ApplyBlockFade(buffer, static_cast<uint32_t>(framesRead), m_outChannels,
+				m_outputFadeGain, GAIN_DEFAULT, m_fadeStep);
+		}
+
+		return framesRead;
     }
 
     bool MixerSystem::DiscardAudio(uint32_t frameCount) {
@@ -473,6 +480,8 @@ namespace dalia {
 		ConfigureSpeakerLayout(layout);
 
 		m_pcmRingBuffer.ClearAndSetFormat(MIXER_PROCESSING_BLOCK_FRAMES * 2, channels);
+
+		m_outputFadeGain = GAIN_SILENCE;
 		m_suspendRequest.store(false, std::memory_order_seq_cst);
     }
 

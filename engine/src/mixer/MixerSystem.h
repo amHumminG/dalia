@@ -117,6 +117,7 @@ namespace dalia {
     	PeakLimiter m_masterPeakLimiter;
     	float m_smoothingCoefficient	= 0.0f; // Used for volume and gain smoothing
     	float m_fadeStep				= 0.0f;	// Per sample step for gain fading
+    	float m_outputFadeGain			= 0.0f; // Consumer side fade-in for device start (post-swap)
 
     	// Global User Settings
     	CoordinateSystem m_coordinateSystem;
