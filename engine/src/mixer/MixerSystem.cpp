@@ -112,6 +112,43 @@ namespace dalia {
 		}
 	}
 
+	// Applies a linear fade over a block of frames
+	static inline void ApplyBlockFade(
+		float* DALIA_RESTRICT buffer,
+		uint32_t frameCount,
+		uint32_t channels,
+		float& currentFade,
+		float targetFade,
+		float fadeStep) {
+
+		// Fast path (finished fade)
+		if (math::NearlyEqual(currentFade, targetFade, EPSILON_GAIN)) {
+			currentFade = targetFade;
+
+			if (math::NearlyEqual(currentFade, GAIN_DEFAULT, EPSILON_GAIN)) {
+				return; // 1.0f gain (nothing to do)
+			}
+
+			uint32_t sampleCount = frameCount * channels;
+			if (math::NearlyEqual(currentFade, GAIN_SILENCE, EPSILON_GAIN)) {
+				std::memset(buffer, 0, sampleCount * sizeof(float));
+				return; // 0.0f gain
+			}
+
+			for (uint32_t sample = 0; sample < sampleCount; sample++) buffer[sample] *= currentFade;
+			return;
+		}
+
+		// Slow path (active fade)
+		for (uint32_t frame = 0; frame < frameCount; frame++) {
+			StepFadeGain(currentFade, targetFade, fadeStep);
+
+			for (uint32_t channel = 0; channel < channels; channel++) {
+				buffer[(frame * channels) + channel] *= currentFade;
+			}
+		}
+	}
+
 	// Applies a cross-fade between a dry and wet buffer over a block of frames
 	static inline void ApplyBlockCrossFade(
 		float* DALIA_RESTRICT inOutDryBuffer,
