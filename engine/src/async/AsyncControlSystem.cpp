@@ -66,10 +66,11 @@ namespace dalia {
 					DALIA_LOG_DEBUG(LOG_CTX_BACKEND, "Stopping output device \"%s\".",
 						req.data.swapOutputDevice.oldDevice->GetName().c_str());
 					req.data.swapOutputDevice.oldDevice->Stop();
-					delete req.data.swapOutputDevice.oldDevice;
+					// Delay deletion until null device has been started
 				}
 
 				m_nullOutputDevice->Start(m_mixerSystem); // Start the null output device while new device is setting up
+				if (req.data.swapOutputDevice.oldDevice) delete req.data.swapOutputDevice.oldDevice; // Delete old device
 
 				// Attempt to create requested output device
 				std::unique_ptr<OutputDevice> newDevice = m_deviceManager->CreateDevice(
