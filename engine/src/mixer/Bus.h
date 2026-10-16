@@ -69,7 +69,6 @@ namespace dalia {
         uint32_t parentBusIndex = NO_PARENT;
 
         BusParams params;
-    	bool isParamsDirty = false;
 
         EffectHandle effectSlots[MAX_EFFECTS_PER_BUS] = {
             InvalidEffectHandle,
@@ -83,7 +82,6 @@ namespace dalia {
             parentBusIndex = NO_PARENT;
 
             params = BusParams{};
-        	isParamsDirty = false;
 
             for (uint32_t i = 0; i < MAX_EFFECTS_PER_BUS; i++) {
                 effectSlots[i] = InvalidEffectHandle;

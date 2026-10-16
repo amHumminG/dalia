@@ -43,7 +43,6 @@ namespace dalia {
 			gen++;
 
 			params = BiquadParams{};
-			isParamsDirty = false;
 		}
 	};
 

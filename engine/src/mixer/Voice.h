@@ -142,7 +142,6 @@ namespace dalia {
         uint32_t parentBusIndex = MASTER_BUS_INDEX;
 
     	VoiceParams params;
-    	bool isParamsDirty = false;
 
         // Asset
         uint32_t frameCount = 0;

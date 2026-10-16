@@ -24,6 +24,5 @@ namespace dalia {
 
 	struct ListenerMirror {
 		ListenerParams params;
-		bool isParamsDirty = false;
 	};
 }
