@@ -19,10 +19,10 @@ namespace dalia {
 		InvalidArgs					= -5,
 		InvalidHandle				= -6,
 		ExpiredHandle				= -7,
-		BusNotFound					= -8,
+		InvalidBus					= -8,
 		InvalidRouting				= -9,
 		InvalidEffectSlot			= -10,
-		ListenerNotFound			= -11,
+		InvalidListener				= -11,
 
 		// Pool Capacity Errors
 		PoolExhausted				= -100,
@@ -70,10 +70,10 @@ namespace dalia {
 			case Result::InvalidArgs: return "Invalid arguments.";
 			case Result::InvalidHandle: return "Invalid handle";
 			case Result::ExpiredHandle: return "Expired handle";
-			case Result::BusNotFound: return "Bus not found";
+			case Result::InvalidBus: return "Bus not found";
 			case Result::InvalidRouting: return "Invalid routing";
 			case Result::InvalidEffectSlot: return "Invalid effect slot";
-			case Result::ListenerNotFound: return "Listener not found";
+			case Result::InvalidListener: return "Listener not found";
 
 			case Result::PoolExhausted: return "Pool exhausted (generic)";
 			case Result::ResidentSoundPoolExhausted: return "Resident sound pool exhausted";
