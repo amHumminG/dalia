@@ -1154,7 +1154,7 @@ namespace dalia {
 				DALIA_LOG_DEBUG(LOG_CTX_API, "Orphaned voice (index: %d).", i);
 			}
 		}
-		if (orphanedBuses > 0) DALIA_LOG_WARN(LOG_CTX_API, "Destroying bus %s. Orphaned %d playbacks.",
+		if (orphanedPlaybacks > 0) DALIA_LOG_WARN(LOG_CTX_API, "Destroying bus %s. Orphaned %d playbacks.",
 			identifier, orphanedPlaybacks);
 
 		bMirror.Reset();
@@ -2023,6 +2023,7 @@ namespace dalia {
 		if (res != Result::Ok) {
 			DALIA_LOG_ERR(LOG_CTX_API, "Failed to set listener active/inactive. Listener with index %u does not exist.",
 				listenerIndex);
+			return res;
 		}
 
 		lMirror->params.isActive = active;
@@ -2042,6 +2043,7 @@ namespace dalia {
 		if (res != Result::Ok) {
 			DALIA_LOG_ERR(LOG_CTX_API, "Failed to set listener attributes. Listener with index %u does not exist.",
 				listenerIndex);
+			return res;
 		}
 
 		lMirror->params.position				= FromPublic(attributes.position);
@@ -2062,6 +2064,7 @@ namespace dalia {
 		if (res != Result::Ok) {
 			DALIA_LOG_ERR(LOG_CTX_API, "Failed to set listener position. Listener with index %u does not exist.",
 				listenerIndex);
+			return res;
 		}
 
 		lMirror->params.position = FromPublic(position);
@@ -2079,6 +2082,7 @@ namespace dalia {
 			DALIA_LOG_ERR(LOG_CTX_API,
 				"Failed to set listener distance probe position. Listener with index %u does not exist.",
 				listenerIndex);
+			return res;
 		}
 
 		lMirror->params.distanceProbePosition = FromPublic(distanceProbePosition);
@@ -2095,6 +2099,7 @@ namespace dalia {
 		if (res != Result::Ok) {
 			DALIA_LOG_ERR(LOG_CTX_API, "Failed to set listener orientation. Listener with index %u does not exist.",
 				listenerIndex);
+			return res;
 		}
 
 		lMirror->params.forward	= math::Vector3::Normalize(FromPublic(forward));
@@ -2112,6 +2117,7 @@ namespace dalia {
 		if (res != Result::Ok) {
 			DALIA_LOG_ERR(LOG_CTX_API, "Failed to set listener velocity. Listener with index %u does not exist.",
 				listenerIndex);
+			return res;
 		}
 
 		lMirror->params.velocity = FromPublic(velocity);
