@@ -192,13 +192,13 @@ namespace dalia {
 
 		// Pre-fill buffer with silence before starting the device thread. This should ensure that the first wakeup
 		// only asks for 1 period instead of the entire buffer capacity.
-		BYTE* pData = nullptr;
-		HRESULT hr = m_renderClient->GetBuffer(m_bufferCapacityInFrames, &pData);
-		if (SUCCEEDED(hr)) {
-			m_renderClient->ReleaseBuffer(m_bufferCapacityInFrames, AUDCLNT_BUFFERFLAGS_SILENT);
-		}
+		// BYTE* pData = nullptr;
+		// HRESULT hr = m_renderClient->GetBuffer(m_bufferCapacityInFrames, &pData);
+		// if (SUCCEEDED(hr)) {
+		// 	m_renderClient->ReleaseBuffer(m_bufferCapacityInFrames, AUDCLNT_BUFFERFLAGS_SILENT);
+		// }
 
-		hr = m_audioClient->Start();
+		HRESULT hr = m_audioClient->Start();
 		if (FAILED(hr)) return Result::ClientFailed;
 
 		m_isRunning.store(true, std::memory_order_release);
@@ -296,17 +296,23 @@ namespace dalia {
 					// Underrun protection
 					if (framesRead < framesToWrite) {
 						size_t missingFrames = framesToWrite - framesRead;
-
-						float* silenceStart = outBuffer + (framesRead * m_channels);
-						size_t samplesToClear = missingFrames * m_channels;
-
-						std::memset(silenceStart, 0, samplesToClear * sizeof(float));
-						if (!m_mixerIsPriming) {
+						if (m_mixerIsPriming) {
+							// Move the read frames to the end of the buffer
+							float* audioStart = outBuffer + (missingFrames * m_channels);
+							std::memmove(audioStart, outBuffer, framesRead * m_channels * sizeof(float));
+							// Silence the start of the buffer
+							std::memset(outBuffer, 0, missingFrames  * m_channels * sizeof(float));
+							m_mixerIsPriming = false;
+						}
+						else {
+							float* silenceStart = outBuffer + (framesRead * m_channels);
+							size_t samplesToClear = missingFrames * m_channels;
+							std::memset(silenceStart, 0, samplesToClear * sizeof(float));
 							DALIA_LOG_WARN(LOG_CTX_BACKEND, "Unable to fill audio frame. %zu frames missing.", missingFrames);
 						}
 					}
 					else {
-						if (m_mixerIsPriming) m_mixerIsPriming = false;
+						m_mixerIsPriming = false;
 					}
 
 					m_mixerSystem->Wake();
