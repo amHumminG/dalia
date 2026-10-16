@@ -205,6 +205,47 @@ namespace dalia {
 		uint32_t GetEffectIndex(EffectHandle effect) const { return effect.GetIndex(); }
 		uint32_t GetEffectGen(EffectHandle effect) const { return effect.GetGeneration(); }
 
+		template<typename TFunc>
+		Result ModifyVoice(PlaybackHandle playback, TFunc&& fn) {
+			if (!playback.IsValid()) return Result::InvalidHandle;
+
+			uint32_t vIndex = playback.GetIndex();
+			if (vIndex >= voices.GetCapacity()) return Result::InvalidHandle;
+
+			VoiceMirror& vMirror = voices.GetMirror(vIndex);
+			if (vMirror.gen != playback.GetGeneration()) return Result::ExpiredHandle;
+
+			return fn(vMirror, vIndex);
+		}
+
+		template<typename TFunc>
+		Result ModifyVoiceParams(PlaybackHandle playback, TFunc&& fn) {
+			return ModifyVoice(playback, [&](VoiceMirror& vMirror, uint32_t vIndex) -> Result {
+				fn(vMirror.params);
+				voices.MarkDirty(vIndex);
+				return Result::Ok;
+			});
+		}
+
+		template<typename TFunc>
+		Result ModifyListener(uint32_t listenerIndex, TFunc&& fn) {
+			if (listenerIndex >= listeners.GetCapacity()) return Result::InvalidListener;
+
+			return fn(listeners.GetMirror(listenerIndex), listenerIndex);
+		}
+
+		template<typename TFunc>
+		Result ModifyListenerParams(uint32_t listenerIndex, TFunc&& fn) {
+			return ModifyListener(listenerIndex, [&](ListenerMirror& lMirror, uint32_t lIndex) -> Result {
+				fn(lMirror.params);
+				listeners.MarkDirty(lIndex);
+				return Result::Ok;
+			});
+		}
+
+		// TODO: Write modification functions for buses and biquads
+		// Not sure how we should handle this for effects though...
+
 		Result ResolveMirror(uint32_t index, uint32_t gen, VoiceMirror*& mirror) {
 			if (index >= voiceCapacity) return Result::InvalidHandle;
 
@@ -216,7 +257,7 @@ namespace dalia {
 		}
 
 		Result ResolveMirror(uint32_t index, ListenerMirror*& mirror) {
-			if (index >= listenerCapacity) return Result::ListenerNotFound;
+			if (index >= listenerCapacity) return Result::InvalidListener;
 
 			mirror = &listeners.GetMirror(index);
 			return Result::Ok;
@@ -225,7 +266,7 @@ namespace dalia {
 		Result ResolveMirror(const char* busIdentifier, BusMirror*& mirror) {
 			const BusID bId(busIdentifier);
 			auto it = busMap.find(bId);
-			if (it == busMap.end()) return Result::BusNotFound;
+			if (it == busMap.end()) return Result::InvalidBus;
 
 			mirror = &buses.GetMirror(it->second);
 			return Result::Ok;
@@ -234,7 +275,7 @@ namespace dalia {
 		Result ResolveIndex(const char* busIdentifier, uint32_t& index) {
 			const BusID bId(busIdentifier);
 			auto it = busMap.find(bId);
-			if (it == busMap.end()) return Result::BusNotFound;
+			if (it == busMap.end()) return Result::InvalidBus;
 
 			index = it->second;
 			return Result::Ok;
@@ -788,38 +829,11 @@ namespace dalia {
 		AsyncLoadEvent loadEv;
 		while (m_state->asyncLoadEvents->Pop(loadEv)) ProcessAsyncLoadEvent(m_state, loadEv);
 
-		// --- Update Parameter Bridges ---
-		for (uint32_t vIndex = 0; vIndex < m_state->voiceCapacity; vIndex++) {
-			VoiceMirror& vMirror = m_state->voices.GetMirror(vIndex);
-			if (vMirror.state == VoiceState::Free || !vMirror.isParamsDirty) continue;
-
-			m_state->voices.GetParamBridge(vIndex).PushUpdate(vMirror.params);
-			vMirror.isParamsDirty = false;
-		}
-
-		for (uint32_t lIndex = 0; lIndex < m_state->listenerCapacity; lIndex++) {
-			ListenerMirror& lMirror = m_state->listeners.GetMirror(lIndex);
-			if (!lMirror.isParamsDirty) continue;
-
-			m_state->listeners.GetParamBridge(lIndex).PushUpdate(lMirror.params);
-			lMirror.isParamsDirty = false;
-		}
-
-		for (uint32_t bIndex = 0; bIndex < m_state->busCapacity; bIndex++) {
-			BusMirror& bMirror = m_state->buses.GetMirror(bIndex);
-			if (!bMirror.isParamsDirty) continue;
-
-			m_state->buses.GetParamBridge(bIndex).PushUpdate(bMirror.params);
-			bMirror.isParamsDirty = false;
-		}
-
-		for (uint32_t eIndex = 0; eIndex < m_state->biquadCapacity; eIndex++) {
-			BiquadMirror& eMirror = m_state->biquads.GetMirror(eIndex);
-			if (!eMirror.isParamsDirty) continue;
-
-			m_state->biquads.GetParamBridge(eIndex).PushUpdate(eMirror.params);
-			eMirror.isParamsDirty = false;
-		}
+		// --- Sync Pools ---
+		m_state->voices.Sync();
+		m_state->listeners.Sync();
+		m_state->buses.Sync();
+		m_state->biquads.Sync();
 
 		m_state->mixerCommands->Dispatch(); // Send all commands accumulated from this frame to the audio thread
 		Logger::ProcessLogs(); // Print all logs accumulated from this frame
@@ -1113,7 +1127,7 @@ namespace dalia {
 		auto it = m_state->busMap.find(BusID(identifier));
 		if (it == m_state->busMap.end()) {
 			DALIA_LOG_ERR(LOG_CTX_API, "Failed to destroy bus (%s). Bus does not exist.", identifier);
-			return Result::BusNotFound;
+			return Result::InvalidBus;
 		}
 		uint32_t bIndex = it->second;
 
@@ -1243,7 +1257,7 @@ namespace dalia {
 	}
 
 	template <typename TParams>
-	requires requires(TParams p) {p.Sanitize(); }
+	requires requires(TParams p) { p.Sanitize(); }
 	Result Engine::CreateEffect(EffectHandle& effect, const TParams& params) {
 		if (!IsInitialized(m_state)) return Result::NotInitialized;
 
@@ -1761,369 +1775,171 @@ namespace dalia {
 	Result Engine::SetPlaybackVolumeDb(PlaybackHandle playback, float volumeDb) {
 		if (!IsInitialized(m_state)) return Result::NotInitialized;
 
-		if (!playback.IsValid()) return Result::InvalidHandle;
-		uint32_t vIndex = playback.GetIndex();
-		uint32_t vGen = playback.GetGeneration();
-
-		VoiceMirror* vMirror = nullptr;
-		Result res = m_state->ResolveMirror(vIndex, vGen, vMirror);
-		if (res != Result::Ok) return res;
-
-		float clampedVolumeDb = std::clamp(volumeDb, VOLUME_DB_MIN, VOLUME_DB_MAX);
-		vMirror->params.gain = math::DbToGain(clampedVolumeDb);
-		vMirror->isParamsDirty = true;
-
-		return Result::Ok;
+		return m_state->ModifyVoiceParams(playback, [&](VoiceParams& params) {
+			float clampedVolumeDb = std::clamp(volumeDb, VOLUME_DB_MIN, VOLUME_DB_MAX);
+			params.gain = math::DbToGain(clampedVolumeDb);
+		});
 	}
 
 	Result Engine::SetPlaybackRate(PlaybackHandle playback, float rate) {
 		if (!IsInitialized(m_state)) return Result::NotInitialized;
 
-		if (!playback.IsValid()) return Result::InvalidHandle;
-		uint32_t vIndex = playback.GetIndex();
-		uint32_t vGen = playback.GetGeneration();
-
-		VoiceMirror* vMirror = nullptr;
-		Result res = m_state->ResolveMirror(vIndex, vGen, vMirror);
-		if (res != Result::Ok) return res;
-
-		float clampedRate = std::clamp(rate, PLAYBACK_RATE_MIN, PLAYBACK_RATE_MAX);
-		vMirror->params.playbackRate = clampedRate;
-		vMirror->isParamsDirty = true;
-
-		return Result::Ok;
+		return m_state->ModifyVoiceParams(playback, [&](VoiceParams& params) {
+			float clampedRate = std::clamp(rate, PLAYBACK_RATE_MIN, PLAYBACK_RATE_MAX);
+			params.playbackRate = clampedRate;
+		});
 	}
 
 	Result Engine::SetPlaybackStereoPan(PlaybackHandle playback, float pan) {
 		if (!IsInitialized(m_state)) return Result::NotInitialized;
 
-		if (!playback.IsValid()) return Result::InvalidHandle;
-		uint32_t vIndex = playback.GetIndex();
-		uint32_t vGen = playback.GetGeneration();
-
-		VoiceMirror* vMirror = nullptr;
-		Result res = m_state->ResolveMirror(vIndex, vGen, vMirror);
-		if (res != Result::Ok) return res;
-
-		float clampedStereoPan = std::clamp(pan, PAN_STEREO_MIN, PAN_STEREO_MAX);
-		vMirror->params.stereoPan = clampedStereoPan;
-		vMirror->isParamsDirty = true;
-
-		return Result::Ok;
+		return m_state->ModifyVoiceParams(playback, [&](VoiceParams& params) {
+			float clampedStereoPan = std::clamp(pan, PAN_STEREO_MIN, PAN_STEREO_MAX);
+			params.stereoPan = clampedStereoPan;
+		});
 	}
 
 	Result Engine::SetPlaybackLooping(PlaybackHandle playback, bool looping) {
 		if (!IsInitialized(m_state)) return Result::NotInitialized;
 
-		if (!playback.IsValid()) return Result::InvalidHandle;
-		uint32_t vIndex = playback.GetIndex();
-		uint32_t vGen = playback.GetGeneration();
-
-		VoiceMirror* vMirror = nullptr;
-		Result res = m_state->ResolveMirror(vIndex, vGen, vMirror);
-		if (res != Result::Ok) return res;
-
-		if (vMirror->params.isLooping == looping) {
-			if (looping) DALIA_LOG_WARN(LOG_CTX_API, "Setting playback to loop. Playback is already set to loop.");
-			else DALIA_LOG_WARN(LOG_CTX_API, "Setting playback to not loop. Playback is already set to not loop.");
-			return Result::Ok;
-		}
-
-		vMirror->params.isLooping = looping;
-		vMirror->isParamsDirty = true;
-
-		if (looping) DALIA_LOG_DEBUG(LOG_CTX_API, "Set Voice %u to loop.", vIndex);
-		else DALIA_LOG_DEBUG(LOG_CTX_API, "Set Voice %u to not loop.", vIndex);
-
-		return Result::Ok;
+		return m_state->ModifyVoiceParams(playback, [&](VoiceParams& params) {
+			params.isLooping = looping;
+		});
 	}
 
 	Result Engine::SetPlaybackSpatial(PlaybackHandle playback, bool spatial) {
 		if (!IsInitialized(m_state)) return Result::NotInitialized;
 
-		if (!playback.IsValid()) return Result::InvalidHandle;
-		uint32_t vIndex = playback.GetIndex();
-		uint32_t vGen = playback.GetGeneration();
-
-		VoiceMirror* vMirror = nullptr;
-		Result res = m_state->ResolveMirror(vIndex, vGen, vMirror);
-		if (res != Result::Ok) return res;
-
-		if (vMirror->params.isSpatial == spatial) {
-			if (spatial) DALIA_LOG_WARN(LOG_CTX_API, "Setting playback to spatial. Playback is already spatial.");
-			else DALIA_LOG_WARN(LOG_CTX_API, "Setting playback to non-spatial. Playback is already set to non-spatial.");
-			return Result::Ok;
-		}
-
-		vMirror->params.isSpatial = spatial;
-		vMirror->isParamsDirty = true;
-
-		if (spatial) DALIA_LOG_DEBUG(LOG_CTX_API, "Set Voice %u to spatial.", vIndex);
-		else DALIA_LOG_DEBUG(LOG_CTX_API, "Set Voice %u to not spatial.", vIndex);
-
-		return Result::Ok;
+		return m_state->ModifyVoiceParams(playback, [&](VoiceParams& params) {
+			params.isSpatial = spatial;
+		});
 	}
 
 	Result Engine::SetPlaybackDistanceMode(PlaybackHandle playback, DistanceMode mode) {
 		if (!IsInitialized(m_state)) return Result::NotInitialized;
 
-		if (!playback.IsValid()) return Result::InvalidHandle;
-		uint32_t vIndex = playback.GetIndex();
-		uint32_t vGen = playback.GetGeneration();
-
-		VoiceMirror* vMirror = nullptr;
-		Result res = m_state->ResolveMirror(vIndex, vGen, vMirror);
-		if (res != Result::Ok) return res;
-
-		vMirror->params.distanceMode = mode;
-		vMirror->isParamsDirty = true;
-
-		if (mode == DistanceMode::FromListener) DALIA_LOG_DEBUG(LOG_CTX_API, "Set Voice %u distance mode to FromListener.", vIndex);
-		else DALIA_LOG_DEBUG(LOG_CTX_API, "Set Voice %u distance mode to FromProbe.", vIndex);
-
-		return Result::Ok;
+		return m_state->ModifyVoiceParams(playback, [&](VoiceParams& params) {
+			params.distanceMode = mode;
+		});
 	}
 
 	Result Engine::SetPlaybackAttenuationCurve(PlaybackHandle playback, AttenuationCurve curve) {
 		if (!IsInitialized(m_state)) return Result::NotInitialized;
 
-		if (!playback.IsValid()) return Result::InvalidHandle;
-		uint32_t vIndex = playback.GetIndex();
-		uint32_t vGen = playback.GetGeneration();
-
-		VoiceMirror* vMirror = nullptr;
-		Result res = m_state->ResolveMirror(vIndex, vGen, vMirror);
-		if (res != Result::Ok) return res;
-
-		vMirror->params.attenuationCurve = curve;
-		vMirror->isParamsDirty = true;
-
-		if (curve == AttenuationCurve::InverseSquare) DALIA_LOG_DEBUG(LOG_CTX_API, "Set Voice %u attenuation curve to InverseSquare.", vIndex);
-		else if (curve == AttenuationCurve::Linear) DALIA_LOG_DEBUG(LOG_CTX_API, "Set Voice %u attenuation curve to Linear.", vIndex);
-		else if (curve == AttenuationCurve::Quadratic) DALIA_LOG_DEBUG(LOG_CTX_API, "Set Voice %u attenuation curve to Quadratic.", vIndex);
-
-		return Result::Ok;
+		return m_state->ModifyVoiceParams(playback, [&](VoiceParams& params) {
+			params.attenuationCurve = curve;
+		});
 	}
 
 	Result Engine::SetPlaybackPosition(PlaybackHandle playback, const Vec3& position) {
 		if (!IsInitialized(m_state)) return Result::NotInitialized;
 
-		if (!playback.IsValid()) return Result::InvalidHandle;
-		uint32_t vIndex = playback.GetIndex();
-		uint32_t vGen = playback.GetGeneration();
-
-		VoiceMirror* vMirror = nullptr;
-		Result res = m_state->ResolveMirror(vIndex, vGen, vMirror);
-		if (res != Result::Ok) return res;
-
-		vMirror->params.position = FromPublic(position);
-		vMirror->isParamsDirty = true;
-
-		return Result::Ok;
+		return m_state->ModifyVoiceParams(playback, [&](VoiceParams& params) {
+			params.position = FromPublic(position);
+		});
 	}
 
 	Result Engine::SetPlaybackMinMaxDistance(PlaybackHandle playback, float minDistance, float maxDistance) {
 		if (!IsInitialized(m_state)) return Result::NotInitialized;
 
-		if (!playback.IsValid()) return Result::InvalidHandle;
-		uint32_t vIndex = playback.GetIndex();
-		uint32_t vGen = playback.GetGeneration();
-
-		VoiceMirror* vMirror = nullptr;
-		Result res = m_state->ResolveMirror(vIndex, vGen, vMirror);
-		if (res != Result::Ok) return res;
-
-		float clampedMinDistance = std::max(minDistance, MIN_DIST_MIN);
-		float clampedMaxDistance = std::max(maxDistance, clampedMinDistance);
-
-		vMirror->params.minDistance = clampedMinDistance;
-		vMirror->params.maxDistance = clampedMaxDistance;
-		vMirror->isParamsDirty = true;
-
-		return Result::Ok;
+		return m_state->ModifyVoiceParams(playback, [&](VoiceParams& params) {
+			float clampedMinDistance = std::max(minDistance, MIN_DIST_MIN);
+			float clampedMaxDistance = std::max(maxDistance, clampedMinDistance);
+			params.minDistance = clampedMinDistance;
+			params.maxDistance = clampedMaxDistance;
+		});
 	}
 
 	Result Engine::SetPlaybackUseDoppler(PlaybackHandle playback, bool useDoppler) {
 		if (!IsInitialized(m_state)) return Result::NotInitialized;
 
-		if (!playback.IsValid()) return Result::InvalidHandle;
-		uint32_t vIndex = playback.GetIndex();
-		uint32_t vGen = playback.GetGeneration();
-
-		VoiceMirror* vMirror = nullptr;
-		Result res = m_state->ResolveMirror(vIndex, vGen, vMirror);
-		if (res != Result::Ok) return res;
-
-		vMirror->params.useDoppler = useDoppler;
-		vMirror->isParamsDirty = true;
-
-		if (useDoppler) DALIA_LOG_DEBUG(LOG_CTX_API, "Set Voice %u to use doppler.", vIndex);
-		else DALIA_LOG_DEBUG(LOG_CTX_API, "Set Voice %u to not use doppler.", vIndex);
-
-		return Result::Ok;
+		return m_state->ModifyVoiceParams(playback, [&](VoiceParams& params) {
+			params.useDoppler = useDoppler;
+		});
 	}
 
 	Result Engine::SetPlaybackDopplerFactor(PlaybackHandle playback, float dopplerFactor) {
 		if (!IsInitialized(m_state)) return Result::NotInitialized;
 
-		if (!playback.IsValid()) return Result::InvalidHandle;
-		uint32_t vIndex = playback.GetIndex();
-		uint32_t vGen = playback.GetGeneration();
-
-		VoiceMirror* vMirror = nullptr;
-		Result res = m_state->ResolveMirror(vIndex, vGen, vMirror);
-		if (res != Result::Ok) return res;
-
-		float clampedDopplerFactor = std::clamp(dopplerFactor, DOPPLER_FACTOR_MIN, DOPPLER_FACTOR_MAX);
-		vMirror->params.dopplerFactor = clampedDopplerFactor;
-		vMirror->isParamsDirty = true;
-
-		return Result::Ok;
+		return m_state->ModifyVoiceParams(playback, [&](VoiceParams& params) {
+			params.dopplerFactor = std::clamp(dopplerFactor, DOPPLER_FACTOR_MIN, DOPPLER_FACTOR_MAX);
+		});
 	}
 
 	Result Engine::SetPlaybackVelocity(PlaybackHandle playback, const Vec3& velocity) {
 		if (!IsInitialized(m_state)) return Result::NotInitialized;
 
-		if (!playback.IsValid()) return Result::InvalidHandle;
-		uint32_t vIndex = playback.GetIndex();
-		uint32_t vGen = playback.GetGeneration();
-
-		VoiceMirror* vMirror = nullptr;
-		Result res = m_state->ResolveMirror(vIndex, vGen, vMirror);
-		if (res != Result::Ok) return res;
-
-		vMirror->params.velocity = FromPublic(velocity);
-		vMirror->isParamsDirty = true;
-
-		return Result::Ok;
+		return m_state->ModifyVoiceParams(playback, [&](VoiceParams& params) {
+			params.velocity = FromPublic(velocity);
+		});
 	}
 
 	Result Engine::SetPlaybackListenerMask(PlaybackHandle playback, ListenerMask mask) {
 		if (!IsInitialized(m_state)) return Result::NotInitialized;
 
-		if (!playback.IsValid()) return Result::InvalidHandle;
-		uint32_t vIndex = playback.GetIndex();
-		uint32_t vGen = playback.GetGeneration();
-
-		VoiceMirror* vMirror = nullptr;
-		Result res = m_state->ResolveMirror(vIndex, vGen, vMirror);
-		if (res != Result::Ok) return res;
-
-		vMirror->params.listenerMask = mask; // Should we double-check this somehow?
-		vMirror->isParamsDirty = true;
-
-		return Result::Ok;
+		return m_state->ModifyVoiceParams(playback, [&](VoiceParams& params) {
+			params.listenerMask = mask;
+		});
 	}
 
 	Result Engine::SetListenerActive(uint32_t listenerIndex, bool active) {
 		if (!IsInitialized(m_state)) return Result::NotInitialized;
 
-		ListenerMirror* lMirror = nullptr;
-		Result res = m_state->ResolveMirror(listenerIndex, lMirror);
-		if (res != Result::Ok) {
-			DALIA_LOG_ERR(LOG_CTX_API, "Failed to set listener active/inactive. Listener with index %u does not exist.",
-				listenerIndex);
-			return res;
+		if (active) {
+			return m_state->ModifyListenerParams(listenerIndex, [&](ListenerParams& params) {
+				params.isActive = true;
+				DALIA_LOG_DEBUG(LOG_CTX_API, "Set listener %u active.", listenerIndex);
+			});
 		}
-
-		lMirror->params.isActive = active;
-		lMirror->isParamsDirty = true;
-
-		if (active) DALIA_LOG_DEBUG(LOG_CTX_API, "Set listener %u active", listenerIndex);
-		else DALIA_LOG_DEBUG(LOG_CTX_API, "Set listener %u inactive", listenerIndex);
-
-		return Result::Ok;
+		return m_state->ModifyListenerParams(listenerIndex, [&](ListenerParams& params) {
+			params.isActive = false;
+			DALIA_LOG_DEBUG(LOG_CTX_API, "Set listener %u inactive.", listenerIndex);
+		});
 	}
 
 	Result Engine::SetListener3DAttributes(uint32_t listenerIndex, const Listener3DAttributes& attributes) {
 		if (!IsInitialized(m_state)) return Result::NotInitialized;
 
-		ListenerMirror* lMirror = nullptr;
-		Result res = m_state->ResolveMirror(listenerIndex, lMirror);
-		if (res != Result::Ok) {
-			DALIA_LOG_ERR(LOG_CTX_API, "Failed to set listener attributes. Listener with index %u does not exist.",
-				listenerIndex);
-			return res;
-		}
-
-		lMirror->params.position				= FromPublic(attributes.position);
-		lMirror->params.distanceProbePosition	= FromPublic(attributes.distanceProbePosition);
-		lMirror->params.forward					= math::Vector3::Normalize(FromPublic(attributes.forward));
-		lMirror->params.up						= math::Vector3::Normalize(FromPublic(attributes.up));
-		lMirror->params.velocity				= FromPublic(attributes.velocity);
-		lMirror->isParamsDirty = true;
-
-		return Result::Ok;
+		return m_state->ModifyListenerParams(listenerIndex, [&](ListenerParams& params) {
+			params.position					= FromPublic(attributes.position);
+			params.distanceProbePosition	= FromPublic(attributes.distanceProbePosition);
+			params.forward					= math::Vector3::Normalize(FromPublic(attributes.forward));
+			params.up						= math::Vector3::Normalize(FromPublic(attributes.up));
+			params.velocity					= FromPublic(attributes.velocity);
+		});
 	}
 
 	Result Engine::SetListenerPosition(uint32_t listenerIndex, const Vec3& position) {
 		if (!IsInitialized(m_state)) return Result::NotInitialized;
 
-		ListenerMirror* lMirror = nullptr;
-		Result res = m_state->ResolveMirror(listenerIndex, lMirror);
-		if (res != Result::Ok) {
-			DALIA_LOG_ERR(LOG_CTX_API, "Failed to set listener position. Listener with index %u does not exist.",
-				listenerIndex);
-			return res;
-		}
-
-		lMirror->params.position = FromPublic(position);
-		lMirror->isParamsDirty = true;
-
-		return Result::Ok;
+		return m_state->ModifyListenerParams(listenerIndex, [&](ListenerParams& params) {
+			params.position = FromPublic(position);
+		});
 	}
 
 	Result Engine::SetListenerDistanceProbePosition(uint32_t listenerIndex, const Vec3& distanceProbePosition) {
 		if (!IsInitialized(m_state)) return Result::NotInitialized;
 
-		ListenerMirror* lMirror = nullptr;
-		Result res = m_state->ResolveMirror(listenerIndex, lMirror);
-		if (res != Result::Ok) {
-			DALIA_LOG_ERR(LOG_CTX_API,
-				"Failed to set listener distance probe position. Listener with index %u does not exist.",
-				listenerIndex);
-			return res;
-		}
-
-		lMirror->params.distanceProbePosition = FromPublic(distanceProbePosition);
-		lMirror->isParamsDirty = true;
-
-		return Result::Ok;
+		return m_state->ModifyListenerParams(listenerIndex, [&](ListenerParams& params) {
+			params.distanceProbePosition = FromPublic(distanceProbePosition);
+		});
 	}
 
 	Result Engine::SetListenerOrientation(uint32_t listenerIndex, const Vec3& forward, const Vec3& up) {
 		if (!IsInitialized(m_state)) return Result::NotInitialized;
 
-		ListenerMirror* lMirror = nullptr;
-		Result res = m_state->ResolveMirror(listenerIndex, lMirror);
-		if (res != Result::Ok) {
-			DALIA_LOG_ERR(LOG_CTX_API, "Failed to set listener orientation. Listener with index %u does not exist.",
-				listenerIndex);
-			return res;
-		}
-
-		lMirror->params.forward	= math::Vector3::Normalize(FromPublic(forward));
-		lMirror->params.up		= math::Vector3::Normalize(FromPublic(up));
-		lMirror->isParamsDirty = true;
-
-		return Result::Ok;
+		return m_state->ModifyListenerParams(listenerIndex, [&](ListenerParams& params) {
+			params.forward	= math::Vector3::Normalize(FromPublic(forward));
+			params.up		= math::Vector3::Normalize(FromPublic(up));
+		});
 	}
 
 	Result Engine::SetListenerVelocity(uint32_t listenerIndex, const Vec3& velocity) {
 		if (!IsInitialized(m_state)) return Result::NotInitialized;
 
-		ListenerMirror* lMirror = nullptr;
-		Result res = m_state->ResolveMirror(listenerIndex, lMirror);
-		if (res != Result::Ok) {
-			DALIA_LOG_ERR(LOG_CTX_API, "Failed to set listener velocity. Listener with index %u does not exist.",
-				listenerIndex);
-			return res;
-		}
-
-		lMirror->params.velocity = FromPublic(velocity);
-		lMirror->isParamsDirty = true;
-
-		return Result::Ok;
+		return m_state->ModifyListenerParams(listenerIndex, [&](ListenerParams& params) {
+			params.velocity = FromPublic(velocity);
+		});
 	}
 
 	void Engine::TeardownInternal() {
