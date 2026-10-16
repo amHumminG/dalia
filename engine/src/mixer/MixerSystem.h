@@ -1,13 +1,18 @@
 #pragma once
 
-#include "messaging/RtMessaging.h"
+#include <semaphore>
+
+#include "messaging/MixerMessaging.h"
 #include "messaging/AsyncStreamMessaging.h"
 #include "core/Constants.h"
 #include "core/ParameterBridge.h"
 #include "mixer/Speakers.h"
 #include "mixer/PeakLimiter.h"
+#include "core/SPSCRingBufferPCM.h"
 
 #include <span>
+#include <semaphore>
+#include <thread>
 
 namespace dalia {
 
@@ -29,7 +34,7 @@ namespace dalia {
 
 	class MixGraphCompiler;
 
-    struct RtSystemConfig {
+    struct MixerSystemConfig {
     	CoordinateSystem coordinateSystem;
     	float globalDopplerFactor = 1.0f;
 
@@ -38,8 +43,8 @@ namespace dalia {
         uint32_t outChannels			= 0;
         uint32_t outSampleRate			= 0;
 
-        RtCommandQueue* rtCommands					= nullptr;
-        RtEventQueue* rtEvents						= nullptr;
+        MixerCommandQueue* mixerCommands				= nullptr;
+        MixerEventQueue* mixerEvents					= nullptr;
         AsyncStreamRequestQueue* asyncStreamRequests	= nullptr;
 
     	std::span<StreamContext> streamPool;
@@ -62,15 +67,24 @@ namespace dalia {
         std::span<float> dspScratchBuffer;
     };
 
-    class RtSystem {
+    class MixerSystem {
     public:
-        explicit RtSystem(const RtSystemConfig& config);
-        void Tick(float* output, uint32_t frameCount);
+        explicit MixerSystem(const MixerSystemConfig& config);
+    	~MixerSystem();
 
-    	// Must only be called when the audio thread is stopped
+    	void Start();
+    	void Stop();
+
+    	size_t ReadDiscardAudio(float* buffer, uint32_t frameCount);
+    	bool DiscardAudio(uint32_t frameCount);
+    	void Wake();
+
+    	// Must only be called when the audio thread is stopped. Clears the output ring buffer.
     	void SetOutputFormat(uint32_t channels, SpeakerLayout layout);
 
     private:
+    	void ThreadMain();
+
         void ProcessCommands();
     	void ProcessParams();
         void Render(float* output, uint32_t frameCount);
@@ -92,9 +106,18 @@ namespace dalia {
 
     	void ConfigureSpeakerLayout(SpeakerLayout layout); // Also sets the spatial speaker count
 
+    	std::thread m_thread;
+    	std::atomic<bool> m_isRunning{false};		 // Determines if ThreadMain is running
+    	std::atomic<bool> m_isProcessing{false};   // Determines if mixer is processing
+    	std::atomic<bool> m_suspendRequest{false}; // Flags a request to suspend mixer
+
+    	std::binary_semaphore m_wakeSemaphore{0};
+    	SPSCRingBufferPCM<float> m_pcmRingBuffer{PCM_RING_BUFFER_CAPACITY};
+
     	PeakLimiter m_masterPeakLimiter;
     	float m_smoothingCoefficient	= 0.0f; // Used for volume and gain smoothing
     	float m_fadeStep				= 0.0f;	// Per sample step for gain fading
+    	float m_outputFadeGain			= 0.0f; // Consumer side fade-in for device start (post-swap)
 
     	// Global User Settings
     	CoordinateSystem m_coordinateSystem;
@@ -109,8 +132,8 @@ namespace dalia {
         uint32_t m_outSampleRate		= 0;
 
     	// Messaging
-        RtCommandQueue* m_rtCommands					= nullptr;
-        RtEventQueue* m_rtEvents						= nullptr;
+        MixerCommandQueue* m_mixerCommands				= nullptr;
+        MixerEventQueue* m_mixerEvents					= nullptr;
         AsyncStreamRequestQueue* m_asyncStreamRequests	= nullptr;
 
     	// Streams
@@ -139,6 +162,6 @@ namespace dalia {
     	uint32_t m_mixOrderSize = 0;
     	bool m_isMixOrderDirty = true;
 
-    	std::span<float> m_dspScratchBuffer;
+    	std::span<float> m_mixScratchBuffer;
     };
 }

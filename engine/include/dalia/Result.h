@@ -34,8 +34,8 @@ namespace dalia {
 		EffectPoolExhausted			= -106,
 
 		// Messaging Errors
-		RtCommandQueueFull			= -200,
-		RtEventQueueFull			= -201,
+		MixerCommandQueueFull		= -200,
+		MixerEventQueueFull			= -201,
 		IoStreamRequestQueueFull	= -202,
 		IoLoadRequestQueueFull		= -203,
 
@@ -83,8 +83,8 @@ namespace dalia {
 			case Result::BusPoolExhausted: return "Bus pool exhausted";
 			case Result::EffectPoolExhausted: return "Effect pool exhausted";
 
-			case Result::RtCommandQueueFull: return "Real-time command queue full";
-			case Result::RtEventQueueFull: return "Real-time event queue full";
+			case Result::MixerCommandQueueFull: return "Mixer command queue full";
+			case Result::MixerEventQueueFull: return "Mixer event queue full";
 			case Result::IoStreamRequestQueueFull: return "I/O stream request queue full";
 			case Result::IoLoadRequestQueueFull: return "I/O load request queue full";
 

@@ -1,8 +1,9 @@
 #include "async/AsyncControlSystem.h"
 
 #include "backend/windows/WindowsDeviceManager.h"
+#include "backend/NullOutputDevice.h"
 #include "core/Logger.h"
-#include "mixer/RtSystem.h"
+#include "mixer/MixerSystem.h"
 
 namespace dalia {
 
@@ -11,7 +12,7 @@ namespace dalia {
 		m_eventQueue(config.eventQueue),
 		m_deviceManager(config.deviceManager),
 		m_nullOutputDevice(config.nullOutputDevice),
-		m_rtSystem(config.rtSystem) {}
+		m_mixerSystem(config.mixerSystem) {}
 
 	AsyncControlSystem::~AsyncControlSystem() {
 		Stop();
@@ -37,7 +38,7 @@ namespace dalia {
 	}
 
 	void AsyncControlSystem::ThreadMain() {
-		// Initialize COM for this thread
+		// Initialize COM for this thread TODO: Remove this!
 		HRESULT hr = CoInitializeEx(nullptr, COINIT_MULTITHREADED);
 		if (FAILED(hr)) DALIA_LOG_ERR(LOG_CTX_ASYNC, "Failed to initialize COM on AsyncControlThread.");
 
@@ -57,37 +58,42 @@ namespace dalia {
 			case AsyncControlRequest::Type::SwapOutputDevice: {
 				// Teardown old device
 				if (req.data.swapOutputDevice.oldDevice) {
-					DALIA_LOG_DEBUG(LOG_CTX_BACKEND, "Stopping output device \"%s\".", req.data.swapOutputDevice.oldDevice->GetName().c_str());
+					// Check the format before stopping the old device
+					uint32_t oldChannels = req.data.swapOutputDevice.oldDevice->GetChannelCount();
+					SpeakerLayout oldLayout = req.data.swapOutputDevice.oldDevice->GetSpeakerLayout();
+					m_nullOutputDevice->SetOutputFormat(oldChannels, oldLayout);
+
+					DALIA_LOG_DEBUG(LOG_CTX_BACKEND, "Stopping output device \"%s\".",
+						req.data.swapOutputDevice.oldDevice->GetName().c_str());
 					req.data.swapOutputDevice.oldDevice->Stop();
-					delete req.data.swapOutputDevice.oldDevice;
+					// Delay deletion until null device has been started
 				}
 
-				m_rtSystem->SetOutputFormat(m_nullOutputDevice->GetChannelCount(), m_nullOutputDevice->GetSpeakerLayout());
-				m_nullOutputDevice->Start(m_rtSystem);
+				m_nullOutputDevice->Start(m_mixerSystem); // Start the null output device while new device is setting up
+				if (req.data.swapOutputDevice.oldDevice) delete req.data.swapOutputDevice.oldDevice; // Delete old device
 
+				// Attempt to create requested output device
 				std::unique_ptr<OutputDevice> newDevice = m_deviceManager->CreateDevice(
 					req.data.swapOutputDevice.targetOutputDeviceId,
 					req.data.swapOutputDevice.sampleRate
 				);
 
-				// Fallback to default if requested device failed
+				// Fall back to default if requested device failed
 				bool fellBack = false;
 				if (!newDevice && std::string(req.data.swapOutputDevice.targetOutputDeviceId) != "default") {
 					newDevice = m_deviceManager->CreateDevice("default", req.data.swapOutputDevice.sampleRate);
 					fellBack = true;
-					DALIA_LOG_DEBUG(LOG_CTX_BACKEND, "Fell back to OS default output device \"%s\".", newDevice->GetName().c_str());
+					DALIA_LOG_DEBUG(LOG_CTX_BACKEND,
+						"Fell back to OS default output device \"%s\".", newDevice->GetName().c_str());
 				}
 
 				if (newDevice) {
 					m_nullOutputDevice->Stop();
-
-					// Reconfigure mixer and start new device
-					m_rtSystem->SetOutputFormat(newDevice->GetChannelCount(), newDevice->GetSpeakerLayout());
-					newDevice->Start(m_rtSystem);
+					newDevice->Start(m_mixerSystem); // Start new output device (reconfigures the mixer internally)
 				}
 				// If new device failed, we leave null device running
 
-				// Push new device back
+				// Push new device back to main thread
 				auto ev = AsyncControlEvent::OutputDeviceSwapped(newDevice.release(), fellBack);
 				m_eventQueue->Push(ev);
 

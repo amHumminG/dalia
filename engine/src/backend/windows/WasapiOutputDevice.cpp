@@ -1,6 +1,6 @@
 #include "backend/windows/WasapiOutputDevice.h"
 
-#include "mixer/RtSystem.h"
+#include "mixer/MixerSystem.h"
 #include "core/Logger.h"
 
 #include <cstring>
@@ -12,11 +12,19 @@
 #define AUDCLNT_STREAMFLAGS_AUTOCONVERTPCM 0x80000000
 #endif
 
+namespace {
+
+	// The 16-byte value of KSDATAFORMAT_SUBTYPE_IEEE_FLOAT. We define this here to avoid linking winmm and ksuser
+	constexpr GUID DALIA_SUBTYPE_IEEE_FLOAT = {
+		0x00000003, 0x0000, 0x0010, {0x80, 0x00, 0x00, 0xaa, 0x00, 0x38, 0x9b, 0x71}
+	};
+}
+
 namespace dalia {
 
 	WasapiOutputDevice::WasapiOutputDevice(Microsoft::WRL::ComPtr<IMMDevice> device)
 		: m_device(std::move(device)) {
-		m_bufferEvent = CreateEvent(nullptr, FALSE, TRUE, nullptr);
+		m_bufferEvent = CreateEvent(nullptr, FALSE, FALSE, nullptr);
 		m_shutdownEvent = CreateEvent(nullptr, TRUE, FALSE, nullptr);
 	}
 
@@ -59,15 +67,27 @@ namespace dalia {
 		HRESULT hr = m_device->Activate(__uuidof(IAudioClient), CLSCTX_ALL, nullptr, (void**)&m_audioClient);
 		if (FAILED(hr)) return Result::DeviceFailed;
 
+		// --- Format ---
 		WAVEFORMATEX* mixFormat = nullptr;
 		hr = m_audioClient->GetMixFormat(&mixFormat);
 		if (FAILED(hr)) return Result::ClientFailed;
 
+		mixFormat->wBitsPerSample = OUTPUT_FORMAT_BITS_PER_SAMPLE;
 		mixFormat->nSamplesPerSec = engineSampleRate; // Set device sample rate to match engine output
+		mixFormat->nBlockAlign = (mixFormat->nChannels * mixFormat->wBitsPerSample) / 8; // Recalculate block align
 		mixFormat->nAvgBytesPerSec = mixFormat->nSamplesPerSec * mixFormat->nBlockAlign; // Recalculate byte rate
-		m_sampleRate = engineSampleRate;
+		// Force OS to use floats
+		if (mixFormat->wFormatTag == WAVE_FORMAT_EXTENSIBLE) {
+			auto* extFormat = reinterpret_cast<WAVEFORMATEXTENSIBLE*>(mixFormat);
+		 	extFormat->Samples.wValidBitsPerSample = mixFormat->wBitsPerSample;
+		 	extFormat->SubFormat = DALIA_SUBTYPE_IEEE_FLOAT;
+		}
+		else {
+			mixFormat->wFormatTag = WAVE_FORMAT_IEEE_FLOAT;
+		}
 
-		m_channelCount = mixFormat->nChannels;
+		m_sampleRate = engineSampleRate;
+		m_channels = mixFormat->nChannels;
 
 		// --- Determine Speaker Layout ---
 		m_speakerLayout = SpeakerLayout::Stereo;
@@ -79,38 +99,38 @@ namespace dalia {
 			switch (mask) {
 				case KSAUDIO_SPEAKER_MONO:
 					m_speakerLayout = SpeakerLayout::Mono;
-					DALIA_LOG_DEBUG(LOG_CTX_BACKEND, "Detected speaker layout (Mono) with %u channel(s).", m_channelCount);
+					DALIA_LOG_DEBUG(LOG_CTX_BACKEND, "Detected speaker layout (Mono) with %u channel(s).", m_channels);
 					break;
 				case KSAUDIO_SPEAKER_STEREO:
 					m_speakerLayout = SpeakerLayout::Stereo;
-					DALIA_LOG_DEBUG(LOG_CTX_BACKEND, "Detected speaker layout (Stereo) with %u channel(s).", m_channelCount);
+					DALIA_LOG_DEBUG(LOG_CTX_BACKEND, "Detected speaker layout (Stereo) with %u channel(s).", m_channels);
 					break;
 				case KSAUDIO_SPEAKER_5POINT1:
 				case KSAUDIO_SPEAKER_5POINT1_SURROUND:
 					m_speakerLayout = SpeakerLayout::Surround51;
-					DALIA_LOG_DEBUG(LOG_CTX_BACKEND, "Detected speaker layout (5.1 Surround) with %u channel(s).", m_channelCount);
+					DALIA_LOG_DEBUG(LOG_CTX_BACKEND, "Detected speaker layout (5.1 Surround) with %u channel(s).", m_channels);
 					break;
 				case KSAUDIO_SPEAKER_7POINT1:
 				case KSAUDIO_SPEAKER_7POINT1_SURROUND:
 					m_speakerLayout = SpeakerLayout::Surround71;
-					DALIA_LOG_DEBUG(LOG_CTX_BACKEND, "Detected speaker layout (7.1 Surround) with %u channel(s).", m_channelCount);
+					DALIA_LOG_DEBUG(LOG_CTX_BACKEND, "Detected speaker layout (7.1 Surround) with %u channel(s).", m_channels);
 					break;
 				default:
 					DALIA_LOG_WARN(LOG_CTX_BACKEND,
 						"Non-standard speaker layout detected (mask: 0x%X). Falling back to estimation based on %u channel(s).",
-						mask, m_channelCount);
-					if (m_channelCount >= 8) m_speakerLayout = SpeakerLayout::Surround71;
-					else if (m_channelCount >= 6) m_speakerLayout = SpeakerLayout::Surround51;
-					else if (m_channelCount >= 2) m_speakerLayout = SpeakerLayout::Stereo;
+						mask, m_channels);
+					if (m_channels >= 8) m_speakerLayout = SpeakerLayout::Surround71;
+					else if (m_channels >= 6) m_speakerLayout = SpeakerLayout::Surround51;
+					else if (m_channels >= 2) m_speakerLayout = SpeakerLayout::Stereo;
 					else m_speakerLayout = SpeakerLayout::Mono;
 			}
 		}
 		else {
 			DALIA_LOG_WARN(LOG_CTX_BACKEND,
-				"Missing speaker layout. Falling back to estimation based on %u channel(s).", m_channelCount);
-			if (m_channelCount >= 8) m_speakerLayout = SpeakerLayout::Surround71;
-			else if (m_channelCount >= 6) m_speakerLayout = SpeakerLayout::Surround51;
-			else if (m_channelCount >= 2) m_speakerLayout = SpeakerLayout::Stereo;
+				"Missing speaker layout. Falling back to estimation based on %u channel(s).", m_channels);
+			if (m_channels >= 8) m_speakerLayout = SpeakerLayout::Surround71;
+			else if (m_channels >= 6) m_speakerLayout = SpeakerLayout::Surround51;
+			else if (m_channels >= 2) m_speakerLayout = SpeakerLayout::Stereo;
 			else m_speakerLayout = SpeakerLayout::Mono;
 		}
 
@@ -163,16 +183,26 @@ namespace dalia {
 		return Result::Ok;
 	}
 
-	Result WasapiOutputDevice::Start(RtSystem* system) {
+	Result WasapiOutputDevice::Start(MixerSystem* system) {
 		if (m_isRunning.load(std::memory_order_relaxed)) return Result::Ok;
 
-		m_system = system;
+		m_mixerSystem = system;
+		m_mixerSystem->SetOutputFormat(m_channels, m_speakerLayout);
+		m_mixerSystem->Wake();
+
+		// Pre-fill buffer with silence before starting the device thread. This should ensure that the first wakeup
+		// only asks for 1 period instead of the entire buffer capacity.
+		// BYTE* pData = nullptr;
+		// HRESULT hr = m_renderClient->GetBuffer(m_bufferCapacityInFrames, &pData);
+		// if (SUCCEEDED(hr)) {
+		// 	m_renderClient->ReleaseBuffer(m_bufferCapacityInFrames, AUDCLNT_BUFFERFLAGS_SILENT);
+		// }
 
 		HRESULT hr = m_audioClient->Start();
 		if (FAILED(hr)) return Result::ClientFailed;
 
 		m_isRunning.store(true, std::memory_order_release);
-		m_audioThread = std::thread(&WasapiOutputDevice::AudioThreadMain, this);
+		m_thread = std::thread(&WasapiOutputDevice::ThreadMain, this);
 
 		return Result::Ok;
 	}
@@ -181,10 +211,10 @@ namespace dalia {
 		if (!m_isRunning.exchange(false, std::memory_order_release)) return;
 
 		SetEvent(m_shutdownEvent); // Wake up thread if it's asleep
-		if (m_audioThread.joinable()) m_audioThread.join();
+		if (m_thread.joinable()) m_thread.join();
 
 		if (m_audioClient) m_audioClient->Stop();
-		m_system = nullptr;
+		m_mixerSystem = nullptr;
 	}
 
 	bool WasapiOutputDevice::HasFailed() const {
@@ -200,14 +230,14 @@ namespace dalia {
 	}
 
 	uint32_t WasapiOutputDevice::GetChannelCount() const {
-		return m_channelCount;
+		return m_channels;
 	}
 
 	SpeakerLayout WasapiOutputDevice::GetSpeakerLayout() const {
 		return m_speakerLayout;
 	}
 
-	void WasapiOutputDevice::AudioThreadMain() {
+	void WasapiOutputDevice::ThreadMain() {
 		// Ensure this thread is very high priority
 		DWORD taskIndex = 0;
 		HANDLE mmcssHandle = AvSetMmThreadCharacteristics(TEXT("Pro Audio"), &taskIndex);
@@ -258,13 +288,37 @@ namespace dalia {
 				}
 				if (FAILED(hr)) continue;
 
-				// Let system fill the buffer (render the audio frame)
-				if (m_system) {
-					float* outBuffer = reinterpret_cast<float*>(pData);
-					m_system->Tick(outBuffer, framesToWrite);
+				if (m_mixerSystem) {
+					// Pull frames from mixer system ring buffer
+					auto* outBuffer = reinterpret_cast<float*>(pData);
+					size_t framesRead = m_mixerSystem->ReadDiscardAudio(outBuffer, framesToWrite);
+
+					// Underrun protection
+					if (framesRead < framesToWrite) {
+						size_t missingFrames = framesToWrite - framesRead;
+						if (m_mixerIsPriming) {
+							// Move the read frames to the end of the buffer
+							float* audioStart = outBuffer + (missingFrames * m_channels);
+							std::memmove(audioStart, outBuffer, framesRead * m_channels * sizeof(float));
+							// Silence the start of the buffer
+							std::memset(outBuffer, 0, missingFrames  * m_channels * sizeof(float));
+							m_mixerIsPriming = false;
+						}
+						else {
+							float* silenceStart = outBuffer + (framesRead * m_channels);
+							size_t samplesToClear = missingFrames * m_channels;
+							std::memset(silenceStart, 0, samplesToClear * sizeof(float));
+							DALIA_LOG_WARN(LOG_CTX_BACKEND, "Unable to fill audio frame. %zu frames missing.", missingFrames);
+						}
+					}
+					else {
+						m_mixerIsPriming = false;
+					}
+
+					m_mixerSystem->Wake();
 				}
 				else {
-					std::memset(pData, 0, framesToWrite * m_channelCount * sizeof(float));
+					std::memset(pData, 0, framesToWrite * m_channels * sizeof(float));
 				}
 
 				hr = m_renderClient->ReleaseBuffer(framesToWrite, 0);

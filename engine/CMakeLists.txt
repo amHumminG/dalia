@@ -32,6 +32,8 @@ set(ENGINE_FILES
 
     src/backend/DeviceManager.h
     src/backend/OutputDevice.h
+    src/backend/NullOutputDevice.h
+    src/backend/NullOutputDevice.cpp
     src/backend/HighResTimer.h
     src/backend/PlatformThread.h
 
@@ -40,6 +42,7 @@ set(ENGINE_FILES
     src/core/Logger.cpp
     src/core/FixedStack.h
     src/core/SPSCRingBuffer.h
+    src/core/SPSCRingBufferPCM.h
     src/core/MPSCRingBuffer.h
     src/core/ResourcePool.h
     src/core/Utility.cpp
@@ -59,8 +62,8 @@ set(ENGINE_FILES
     src/async/AsyncControlSystem.cpp
     src/async/AsyncControlSystem.h
 
-    src/messaging/RtMessaging.h
-    src/messaging/RtMessaging.cpp
+    src/messaging/MixerMessaging.h
+    src/messaging/MixerMessaging.cpp
     src/messaging/AsyncStreamMessaging.h
     src/messaging/AsyncLoadMessaging.h
     src/messaging/AsyncControlMessaging.h
@@ -68,8 +71,8 @@ set(ENGINE_FILES
     src/mixer/Voice.h
     src/mixer/StreamContext.h
     src/mixer/Bus.h
-    src/mixer/RtSystem.cpp
-    src/mixer/RtSystem.h
+    src/mixer/MixerSystem.cpp
+    src/mixer/MixerSystem.h
     src/mixer/MixGraphCompiler.cpp
     src/mixer/MixGraphCompiler.h
     src/mixer/effects/Biquad.h
@@ -96,8 +99,6 @@ if (WIN32)
         src/backend/windows/WindowsDeviceManager.h
         src/backend/windows/WasapiOutputDevice.cpp
         src/backend/windows/WasapiOutputDevice.h
-        src/backend/windows/WindowsNullOutputDevice.cpp
-        src/backend/windows/WindowsNullOutputDevice.h
         src/backend/windows/HighResTimer.cpp
         src/backend/windows/PlatformThread.cpp
     )

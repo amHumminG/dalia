@@ -14,7 +14,7 @@
 
 namespace dalia {
 
-	class RtSystem;
+	class MixerSystem;
 
 	class WasapiOutputDevice : public OutputDevice {
 	public:
@@ -23,7 +23,7 @@ namespace dalia {
 
 		Result Initialize(uint32_t engineSampleRate);
 
-		Result Start(RtSystem* system) override;
+		Result Start(MixerSystem* system) override;
 		void Stop() override;
 
 		bool HasFailed() const override;
@@ -34,9 +34,10 @@ namespace dalia {
 		SpeakerLayout GetSpeakerLayout() const override;
 
 	private:
-		void AudioThreadMain();
+		void ThreadMain();
 
-		RtSystem* m_system = nullptr;
+		MixerSystem* m_mixerSystem = nullptr;
+		bool m_mixerIsPriming = true;
 
 		Microsoft::WRL::ComPtr<IMMDevice> m_device;
 		Microsoft::WRL::ComPtr<IAudioClient> m_audioClient;
@@ -45,14 +46,14 @@ namespace dalia {
 		HANDLE m_bufferEvent = nullptr;
 		HANDLE m_shutdownEvent = nullptr;
 
-		std::thread m_audioThread;
+		std::thread m_thread;
 		std::atomic<bool> m_isRunning{false};
 		std::atomic<bool> m_hasFailed{false};
 
 		std::string m_identifier;
 		std::string m_name;
 		uint32_t m_sampleRate = 0;
-		uint32_t m_channelCount = 0;
+		uint32_t m_channels = 0;
 		uint32_t m_periodSizeInFrames = 0;
 		uint32_t m_bufferCapacityInFrames = 0;
 		SpeakerLayout m_speakerLayout = SpeakerLayout::Mono;

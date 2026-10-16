@@ -5,10 +5,11 @@
 #include "../include/dalia/PlaybackControl.h"
 #include "dalia/SoundControl.h"
 #include "../include/dalia/EffectControl.h"
+#include "async/AsyncControlSystem.h"
 
 #include "backend/windows/WindowsDeviceManager.h"
-#include "backend/windows/WindowsNullOutputDevice.h"
 #include "backend/windows/WasapiOutputDevice.h"
+#include "backend/NullOutputDevice.h"
 
 #include "core/Logger.h"
 #include "core/FixedStack.h"
@@ -17,7 +18,7 @@
 #include "core/Types.h"
 #include "core/Math.h"
 
-#include "messaging/RtMessaging.h"
+#include "messaging/MixerMessaging.h"
 #include "messaging/AsyncStreamMessaging.h"
 #include "messaging/AsyncLoadMessaging.h"
 #include "messaging/AsyncControlMessaging.h"
@@ -31,7 +32,7 @@
 #include "mixer/effects/Biquad.h"
 #include "mixer/MixGraphCompiler.h"
 #include "mixer/Listener.h"
-#include "mixer/RtSystem.h"
+#include "mixer/MixerSystem.h"
 #include "mixer/Speakers.h"
 
 #include "async/AsyncStreamSystem.h"
@@ -86,7 +87,7 @@ namespace dalia {
 		// Devices
 		std::unique_ptr<DeviceManager> deviceManager;
 		std::unique_ptr<OutputDevice> outputDevice;
-		std::unique_ptr<OutputDevice> nullOutputDevice;
+		std::unique_ptr<NullOutputDevice> nullOutputDevice;
 		OutputDevice* activeOutputDevice; // Points to either outputDevice or nullDevice
 
 		std::vector<OutputDeviceInfo> cachedOutputDeviceList;
@@ -104,8 +105,8 @@ namespace dalia {
 		CoordinateSystem coordinateSystem;
 
 		// Messaging Queues
-		std::unique_ptr<RtCommandQueue>				rtCommands;
-		std::unique_ptr<RtEventQueue>				rtEvents;
+		std::unique_ptr<MixerCommandQueue>			mixerCommands;
+		std::unique_ptr<MixerEventQueue>			mixerEvents;
 		std::unique_ptr<AsyncStreamRequestQueue>	asyncStreamRequests;
 		std::unique_ptr<AsyncLoadRequestQueue>		asyncLoadRequests;
 		std::unique_ptr<AsyncLoadEventQueue>		asyncLoadEvents;
@@ -146,7 +147,7 @@ namespace dalia {
 		std::unique_ptr<MixGraphCompiler> mixGraphCompiler;
 		std::unique_ptr<uint32_t[]> mixOrder;
 
-		std::unique_ptr<float[]> dspScratchBuffer;
+		std::unique_ptr<float[]> mixScratchBuffer;
 
 		// Assets
 		std::unique_ptr<AssetRegistry> assetRegistry;
@@ -158,7 +159,7 @@ namespace dalia {
 		std::vector<PendingPlayback> pendingPlaybacks;
 
 		// Systems
-		std::unique_ptr<RtSystem> rtSystem;
+		std::unique_ptr<MixerSystem> mixerSystem;
 		std::unique_ptr<AsyncStreamSystem> asyncStreamSystem;
 		std::unique_ptr<AsyncLoadSystem> asyncLoadSystem;
 		std::unique_ptr<AsyncControlSystem> asyncControlSystem;
@@ -176,8 +177,8 @@ namespace dalia {
 			buses(config.busCapacity),
 			biquads(config.biquadCapacity) {
 			// Message Queues
-			rtCommands				= std::make_unique<RtCommandQueue>(config.advanced.RealTimeQueueCapacity);
-			rtEvents				= std::make_unique<RtEventQueue>(config.advanced.RealTimeQueueCapacity);
+			mixerCommands				= std::make_unique<MixerCommandQueue>(config.advanced.RealTimeQueueCapacity);
+			mixerEvents				= std::make_unique<MixerEventQueue>(config.advanced.RealTimeQueueCapacity);
 			asyncStreamRequests		= std::make_unique<AsyncStreamRequestQueue>(config.advanced.AsyncStreamQueueCapacity);
 			asyncLoadRequests		= std::make_unique<AsyncLoadRequestQueue>(config.advanced.AsyncLoadQueueCapacity);
 			asyncLoadEvents			= std::make_unique<AsyncLoadEventQueue>(config.advanced.AsyncLoadQueueCapacity);
@@ -382,9 +383,9 @@ namespace dalia {
 		return Result::Ok;
 	}
 
-	static void ProcessRtEvent(EngineInternalState* state,  RtEvent& ev) {
+	static void ProcessMixerEvent(EngineInternalState* state,  MixerEvent& ev) {
 		switch (ev.type) {
-			case RtEvent::Type::VoiceStopped: {
+			case MixerEvent::Type::VoiceStopped: {
 				uint32_t vIndex = ev.data.voice.index;
 				uint32_t vGen = ev.data.voice.generation;
 				VoiceMirror* vMirror;
@@ -425,7 +426,7 @@ namespace dalia {
 				}
 				break;
 			}
-			case RtEvent::Type::EffectActive: {
+			case MixerEvent::Type::EffectActive: {
 				auto it = state->effectRoutingTable.find(ev.data.effect.handleRawId);
 				if (it != state->effectRoutingTable.end()) {
 					EffectRouting& routing = it->second;
@@ -433,7 +434,7 @@ namespace dalia {
 				}
 				break;
 			}
-			case RtEvent::Type::EffectDetached: {
+			case MixerEvent::Type::EffectDetached: {
 				auto it = state->effectRoutingTable.find(ev.data.effect.handleRawId);
 				if (it != state->effectRoutingTable.end()) {
 					EffectRouting routing = it->second;
@@ -479,7 +480,7 @@ namespace dalia {
 							if (soundType == SoundType::Resident) {
 								ResidentSound* sound = state->assetRegistry->GetResidentSound(handle);
 
-								RtCommand cmd = RtCommand::PrepareVoiceResident(
+								MixerCommand cmd = MixerCommand::PrepareVoiceResident(
 									vIndex,
 									vGen,
 									sound->pcmData.data(),
@@ -487,7 +488,7 @@ namespace dalia {
 									sound->channels,
 									sound->sampleRate
 								);
-								state->rtCommands->Enqueue(cmd);
+								state->mixerCommands->Enqueue(cmd);
 
 								frameCount = sound->frameCount;
 								channels = sound->channels;
@@ -518,7 +519,7 @@ namespace dalia {
 									continue;
 								}
 
-								RtCommand cmd = RtCommand::PrepareVoiceStreaming(
+								MixerCommand cmd = MixerCommand::PrepareVoiceStreaming(
 									vIndex,
 									vGen,
 									sIndex,
@@ -526,7 +527,7 @@ namespace dalia {
 									sound->channels,
 									sound->sampleRate
 								);
-								state->rtCommands->Enqueue(cmd);
+								state->mixerCommands->Enqueue(cmd);
 
 								frameCount = sound->frameCount;
 								channels = sound->channels;
@@ -540,13 +541,13 @@ namespace dalia {
 
 							// Send voice commands based on current vMirror state
 							if (vMirror->state == VoiceState::Playing) {
-								state->rtCommands->Enqueue(RtCommand::PlayVoice(vIndex, vGen));
+								state->mixerCommands->Enqueue(MixerCommand::PlayVoice(vIndex, vGen));
 							}
 							else if (vMirror->state == VoiceState::Paused) {
-								state->rtCommands->Enqueue(RtCommand::PauseVoice(vIndex, vGen));
+								state->mixerCommands->Enqueue(MixerCommand::PauseVoice(vIndex, vGen));
 							}
 							else if (vMirror->state == VoiceState::Stopped) {
-								state->rtCommands->Enqueue(RtCommand::StopVoice(vIndex, vGen));
+								state->mixerCommands->Enqueue(MixerCommand::StopVoice(vIndex, vGen));
 							}
 						}
 
@@ -576,7 +577,7 @@ namespace dalia {
 								vMirror->onStopCallback(playback, PlaybackExitCondition::Error);
 							}
 
-							state->rtCommands->Enqueue(RtCommand::FreeVoice(vIndex, vGen));
+							state->mixerCommands->Enqueue(MixerCommand::FreeVoice(vIndex, vGen));
 							vMirror->Reset();
 							state->voices.Free(vIndex);
 						}
@@ -655,13 +656,23 @@ namespace dalia {
 		m_state->outSampleRate = config.sampleRate;
 
 		m_state->outputDevice = m_state->deviceManager->CreateDevice("default", m_state->outSampleRate);
-		m_state->nullOutputDevice = m_state->deviceManager->CreateNullDevice(
+
+		m_state->nullOutputDevice = std::make_unique<NullOutputDevice>(
 			m_state->outSampleRate,
 			(m_state->outSampleRate * 10) / 1000
 		);
 
-		if (m_state->outputDevice) m_state->activeOutputDevice = m_state->outputDevice.get();
-		else m_state->activeOutputDevice = m_state->nullOutputDevice.get();
+		if (m_state->outputDevice) {
+			m_state->activeOutputDevice = m_state->outputDevice.get();
+
+			m_state->nullOutputDevice->SetOutputFormat(
+				m_state->activeOutputDevice->GetChannelCount(),
+				m_state->activeOutputDevice->GetSpeakerLayout()
+			);
+		}
+		else {
+			m_state->activeOutputDevice = m_state->nullOutputDevice.get();
+		}
 
 		m_state->outChannels = m_state->activeOutputDevice->GetChannelCount();
 		m_state->speakerLayout = m_state->activeOutputDevice->GetSpeakerLayout();
@@ -682,65 +693,66 @@ namespace dalia {
 		}
 
 		// -- Periodicity Dependent Buffer Allocations ---
-		m_state->maxSamplesPerPeriod = MAX_PERIOD_FRAMES * CHANNELS_MAX;
+		m_state->maxSamplesPerPeriod = MIXER_PROCESSING_BLOCK_FRAMES * CHANNELS_MAX;
 		uint32_t busBufferPoolSize = m_state->busCapacity * m_state->maxSamplesPerPeriod;
 		m_state->busBufferPool = std::make_unique<float[]>(busBufferPoolSize);
-		m_state->dspScratchBuffer = std::make_unique<float[]>(m_state->maxSamplesPerPeriod);
+		m_state->mixScratchBuffer = std::make_unique<float[]>(m_state->maxSamplesPerPeriod);
 
 		// --- SYSTEMS SETUP ---
-		RtSystemConfig rtConfig;
-		rtConfig.coordinateSystem		= m_state->coordinateSystem;
-		rtConfig.speakerLayout			= m_state->speakerLayout;
-		rtConfig.maxSamplesPerPeriod	= m_state->maxSamplesPerPeriod;
-		rtConfig.outChannels			= m_state->outChannels;
-		rtConfig.outSampleRate			= m_state->outSampleRate;
-		rtConfig.rtCommands				= m_state->rtCommands.get();
-		rtConfig.rtEvents				= m_state->rtEvents.get();
-		rtConfig.asyncStreamRequests		= m_state->asyncStreamRequests.get();
-		rtConfig.streamPool				= m_state->streams.GetSpan();
-		rtConfig.listenerPool			= m_state->listeners.GetSpan();
-		rtConfig.listenerParamBridges	= m_state->listeners.GetParamBridgeSpan();
-		rtConfig.voicePool				= m_state->voices.GetSpan();
-		rtConfig.voiceParamBridges		= m_state->voices.GetParamBridgeSpan();
-		rtConfig.busPool				= m_state->buses.GetSpan();
-		rtConfig.busParamBridges		= m_state->buses.GetParamBridgeSpan();
-		rtConfig.busBufferPool			= std::span(m_state->busBufferPool.get(), busBufferPoolSize);
-		rtConfig.biquadPool				= m_state->biquads.GetSpan();
-		rtConfig.biquadParamBridges		= m_state->biquads.GetParamBridgeSpan();
-		rtConfig.mixGraphCompiler		= m_state->mixGraphCompiler.get();
-		rtConfig.mixOrder				= std::span(m_state->mixOrder.get(), m_state->busCapacity);
-		rtConfig.dspScratchBuffer		= std::span(m_state->dspScratchBuffer.get(), m_state->maxSamplesPerPeriod);
-		m_state->rtSystem = std::make_unique<RtSystem>(rtConfig);
+		MixerSystemConfig mixerConfig;
+		mixerConfig.coordinateSystem		= m_state->coordinateSystem;
+		mixerConfig.speakerLayout			= m_state->speakerLayout;
+		mixerConfig.maxSamplesPerPeriod	= m_state->maxSamplesPerPeriod;
+		mixerConfig.outChannels			= m_state->outChannels;
+		mixerConfig.outSampleRate			= m_state->outSampleRate;
+		mixerConfig.mixerCommands			= m_state->mixerCommands.get();
+		mixerConfig.mixerEvents			= m_state->mixerEvents.get();
+		mixerConfig.asyncStreamRequests	= m_state->asyncStreamRequests.get();
+		mixerConfig.streamPool				= m_state->streams.GetSpan();
+		mixerConfig.listenerPool			= m_state->listeners.GetSpan();
+		mixerConfig.listenerParamBridges	= m_state->listeners.GetParamBridgeSpan();
+		mixerConfig.voicePool				= m_state->voices.GetSpan();
+		mixerConfig.voiceParamBridges		= m_state->voices.GetParamBridgeSpan();
+		mixerConfig.busPool				= m_state->buses.GetSpan();
+		mixerConfig.busParamBridges		= m_state->buses.GetParamBridgeSpan();
+		mixerConfig.busBufferPool			= std::span(m_state->busBufferPool.get(), busBufferPoolSize);
+		mixerConfig.biquadPool				= m_state->biquads.GetSpan();
+		mixerConfig.biquadParamBridges		= m_state->biquads.GetParamBridgeSpan();
+		mixerConfig.mixGraphCompiler		= m_state->mixGraphCompiler.get();
+		mixerConfig.mixOrder				= std::span(m_state->mixOrder.get(), m_state->busCapacity);
+		mixerConfig.dspScratchBuffer		= std::span(m_state->mixScratchBuffer.get(), m_state->maxSamplesPerPeriod);
+		m_state->mixerSystem = std::make_unique<MixerSystem>(mixerConfig);
 
-		AsyncStreamSystemConfig ioStreamingConfig;
-		ioStreamingConfig.wakeupPeriodMicroseconds = STREAM_SYSTEM_WAKEUP_PERIOD_MICROSECONDS;
-		ioStreamingConfig.outSampleRate		= m_state->outSampleRate;
-		ioStreamingConfig.ioStreamRequests	= m_state->asyncStreamRequests.get();
-		ioStreamingConfig.streamPool		= m_state->streams.GetSpan();
-		ioStreamingConfig.freeStreams		= m_state->streams.GetFreeList();
-		m_state->asyncStreamSystem	= std::make_unique<AsyncStreamSystem>(ioStreamingConfig);
+		AsyncStreamSystemConfig asyncStreamConfig;
+		asyncStreamConfig.wakeupPeriodMicroseconds = STREAM_SYSTEM_WAKEUP_PERIOD_MICROSECONDS;
+		asyncStreamConfig.outSampleRate				= m_state->outSampleRate;
+		asyncStreamConfig.ioStreamRequests			= m_state->asyncStreamRequests.get();
+		asyncStreamConfig.streamPool				= m_state->streams.GetSpan();
+		asyncStreamConfig.freeStreams				= m_state->streams.GetFreeList();
+		m_state->asyncStreamSystem	= std::make_unique<AsyncStreamSystem>(asyncStreamConfig);
 
-		AsyncLoadSystemConfig ioLoadSystemConfig;
-		ioLoadSystemConfig.outSampleRate	= m_state->outSampleRate;
-		ioLoadSystemConfig.ioLoadRequests	= m_state->asyncLoadRequests.get();
-		ioLoadSystemConfig.ioLoadEvents		= m_state->asyncLoadEvents.get();
-		ioLoadSystemConfig.assetRegistry	= m_state->assetRegistry.get();
-		m_state->asyncLoadSystem = std::make_unique<AsyncLoadSystem>(ioLoadSystemConfig);
+		AsyncLoadSystemConfig asyncLoadConfig;
+		asyncLoadConfig.outSampleRate	= m_state->outSampleRate;
+		asyncLoadConfig.ioLoadRequests	= m_state->asyncLoadRequests.get();
+		asyncLoadConfig.ioLoadEvents	= m_state->asyncLoadEvents.get();
+		asyncLoadConfig.assetRegistry	= m_state->assetRegistry.get();
+		m_state->asyncLoadSystem = std::make_unique<AsyncLoadSystem>(asyncLoadConfig);
 
 		AsyncControlSystemConfig asyncControlSystemConfig;
 		asyncControlSystemConfig.requestQueue = m_state->asyncControlRequests.get();
 		asyncControlSystemConfig.eventQueue = m_state->asyncControlEvents.get();
 		asyncControlSystemConfig.deviceManager = m_state->deviceManager.get();
 		asyncControlSystemConfig.nullOutputDevice = m_state->nullOutputDevice.get();
-		asyncControlSystemConfig.rtSystem = m_state->rtSystem.get();
+		asyncControlSystemConfig.mixerSystem = m_state->mixerSystem.get();
 		m_state->asyncControlSystem = std::make_unique<AsyncControlSystem>(asyncControlSystemConfig);
 
 		// --- SYSTEMS START ---
+		m_state->mixerSystem->Start();
 		m_state->asyncStreamSystem->Start();
 		m_state->asyncLoadSystem->Start();
 		m_state->asyncControlSystem->Start();
 
-		res = m_state->activeOutputDevice->Start(m_state->rtSystem.get());
+		res = m_state->activeOutputDevice->Start(m_state->mixerSystem.get());
 		if (res != Result::Ok) {
 			DALIA_LOG_CRIT(LOG_CTX_API, "Failed to initialize engine. Failed to start audio thread.");
 			TeardownInternal();
@@ -770,8 +782,8 @@ namespace dalia {
 		ProcessOutputDeviceSwapping(m_state);
 
 		// --- Process Event Inbox ---
-		RtEvent RtEv;
-		while (m_state->rtEvents->Pop(RtEv)) ProcessRtEvent(m_state, RtEv);
+		MixerEvent RtEv;
+		while (m_state->mixerEvents->Pop(RtEv)) ProcessMixerEvent(m_state, RtEv);
 
 		AsyncLoadEvent loadEv;
 		while (m_state->asyncLoadEvents->Pop(loadEv)) ProcessAsyncLoadEvent(m_state, loadEv);
@@ -809,7 +821,7 @@ namespace dalia {
 			eMirror.isParamsDirty = false;
 		}
 
-		m_state->rtCommands->Dispatch(); // Send all commands accumulated from this frame to the audio thread
+		m_state->mixerCommands->Dispatch(); // Send all commands accumulated from this frame to the audio thread
 		Logger::ProcessLogs(); // Print all logs accumulated from this frame
 	}
 
@@ -817,7 +829,7 @@ namespace dalia {
 		if (!IsInitialized(m_state)) return Result::NotInitialized;
 
 		float clampedGlobalDopplerFactor = std::clamp(globalDopplerFactor, DOPPLER_FACTOR_MIN, DOPPLER_FACTOR_MAX);
-		m_state->rtCommands->Enqueue(RtCommand::SetGlobalDopplerFactor(clampedGlobalDopplerFactor));
+		m_state->mixerCommands->Enqueue(MixerCommand::SetGlobalDopplerFactor(clampedGlobalDopplerFactor));
 
 		return Result::Ok;
 	}
@@ -1004,7 +1016,7 @@ namespace dalia {
 				if (vMirror.state != VoiceState::Free && vMirror.assetRawId == sound.GetRawId()) {
 					pendingUnload.voicesToStop.push_back(VoiceID(i, vMirror.gen));
 
-					m_state->rtCommands->Enqueue(RtCommand::StopVoice(i, vMirror.gen));
+					m_state->mixerCommands->Enqueue(MixerCommand::StopVoice(i, vMirror.gen));
 					DALIA_LOG_DEBUG(LOG_CTX_API, "Commanded to stop voice %d.", i);
 				}
 			}
@@ -1090,7 +1102,7 @@ namespace dalia {
 
 		DALIA_LOG_DEBUG(LOG_CTX_API, "Created bus with routing: %s (index: %d) -> %s (index: %d).",
 			identifier, bIndex, parentIdentifier, bIndexParent);
-		m_state->rtCommands->Enqueue(RtCommand::AllocateBus(bIndex, bIndexParent));
+		m_state->mixerCommands->Enqueue(MixerCommand::AllocateBus(bIndex, bIndexParent));
 
 		return Result::Ok;
 	}
@@ -1124,7 +1136,7 @@ namespace dalia {
 			BusMirror* bMirrorChild = &m_state->buses.GetMirror(i);
 			if (bMirrorChild->parentBusIndex == bIndex) {
 				bMirrorChild->parentBusIndex = NO_PARENT;
-				m_state->rtCommands->Enqueue(RtCommand::SetBusParent(i, NO_PARENT));
+				m_state->mixerCommands->Enqueue(MixerCommand::SetBusParent(i, NO_PARENT));
 				orphanedBuses++;
 				DALIA_LOG_DEBUG(LOG_CTX_API, "Orphaned bus (index: %d).", i);
 			}
@@ -1137,7 +1149,7 @@ namespace dalia {
 			VoiceMirror& vMirrorChild = m_state->voices.GetMirror(i);
 			if (vMirrorChild.parentBusIndex == bIndex) {
 				vMirrorChild.parentBusIndex = NO_PARENT;
-				m_state->rtCommands->Enqueue(RtCommand::SetVoiceParent(i, vMirrorChild.gen, NO_PARENT));
+				m_state->mixerCommands->Enqueue(MixerCommand::SetVoiceParent(i, vMirrorChild.gen, NO_PARENT));
 				orphanedPlaybacks++;
 				DALIA_LOG_DEBUG(LOG_CTX_API, "Orphaned voice (index: %d).", i);
 			}
@@ -1154,7 +1166,7 @@ namespace dalia {
 		m_state->buses.Free(bIndex);
 
 		DALIA_LOG_DEBUG(LOG_CTX_API, "Destroyed bus %s (index: %d).", identifier, bIndex);
-		m_state->rtCommands->Enqueue(RtCommand::FreeBus(bIndex));
+		m_state->mixerCommands->Enqueue(MixerCommand::FreeBus(bIndex));
 
 		return Result::Ok;
 	}
@@ -1207,7 +1219,7 @@ namespace dalia {
 
 		DALIA_LOG_DEBUG(LOG_CTX_API, "Routed bus %s (index: %d) -> %s (index: %d).",
 			identifier, bIndex, parentIdentifier, bIndexParent);
-		m_state->rtCommands->Enqueue(RtCommand::SetBusParent(bIndex, bIndexParent));
+		m_state->mixerCommands->Enqueue(MixerCommand::SetBusParent(bIndex, bIndexParent));
 
 		return Result::Ok;
 	}
@@ -1258,7 +1270,7 @@ namespace dalia {
 			static_assert(sizeof(TParams) == 0, "Unsupported effect parameters passed to CreateEffect.");
 		}
 
-		m_state->rtCommands->Enqueue(RtCommand::AllocateEffect(EffectType::Biquad, eIndex, eGen));
+		m_state->mixerCommands->Enqueue(MixerCommand::AllocateEffect(EffectType::Biquad, eIndex, eGen));
 
 		DALIA_LOG_DEBUG(LOG_CTX_API, "Created effect (index: %u, gen: %u).", eIndex, eGen);
 		return Result::Ok;
@@ -1332,14 +1344,14 @@ namespace dalia {
 			BusMirror& bMirror = m_state->buses.GetMirror(routing.busIndex);
 			bMirror.effectSlots[routing.effectSlot] = InvalidEffectHandle;
 
-			RtCommand cmd = RtCommand::ForceDetachEffect(
+			MixerCommand cmd = MixerCommand::ForceDetachEffect(
 				effect.GetIndex(),
 				effect.GetGeneration(),
 				effect.GetType(),
 				routing.busIndex,
 				routing.effectSlot
 			);
-			m_state->rtCommands->Enqueue(cmd);
+			m_state->mixerCommands->Enqueue(cmd);
 
 			DALIA_LOG_DEBUG(LOG_CTX_API,
 				"Attaching effect to %s (index: %d) (slot: %d) but effect is already attached. Stealing effect.",
@@ -1358,27 +1370,27 @@ namespace dalia {
 			EffectHandle oldEffect = bMirror.effectSlots[effectSlot];
 			m_state->effectRoutingTable.erase(oldEffect.GetRawId());
 
-			RtCommand detachCmd = RtCommand::ForceDetachEffect(
+			MixerCommand detachCmd = MixerCommand::ForceDetachEffect(
 				oldEffect.GetIndex(),
 				oldEffect.GetGeneration(),
 				oldEffect.GetType(),
 				bIndex,
 				effectSlot
 			);
-			m_state->rtCommands->Enqueue(detachCmd);
+			m_state->mixerCommands->Enqueue(detachCmd);
 		}
 
 		bMirror.effectSlots[effectSlot] = effect;
 		m_state->effectRoutingTable[effect.GetRawId()] = EffectRouting(bIndex, effectSlot);
 
-		RtCommand cmd = RtCommand::AttachEffect(
+		MixerCommand cmd = MixerCommand::AttachEffect(
 			effect.GetIndex(),
 			effect.GetGeneration(),
 			effect.GetType(),
 			bIndex,
 			effectSlot
 		);
-		m_state->rtCommands->Enqueue(cmd);
+		m_state->mixerCommands->Enqueue(cmd);
 
 		DALIA_LOG_DEBUG(LOG_CTX_API, "Attached effect (handle rawId: 0x%016llx) to bus %s (slot %d).",
 			effect.GetRawId(), busIdentifier, effectSlot);
@@ -1401,14 +1413,14 @@ namespace dalia {
 			EffectRouting& routing = it->second;
 			routing.effectState = EffectState::FadingOut;
 
-			RtCommand cmd = RtCommand::FadeDetachEffect(
+			MixerCommand cmd = MixerCommand::FadeDetachEffect(
 				effect.GetIndex(),
 				effect.GetGeneration(),
 				effect.GetType(),
 				routing.busIndex,
 				routing.effectSlot
 			);
-			m_state->rtCommands->Enqueue(cmd);
+			m_state->mixerCommands->Enqueue(cmd);
 
 			DALIA_LOG_DEBUG(LOG_CTX_API,
 				"Detached effect (rawId: 0x%016llx) from bus (index: %d) (slot: %d).",
@@ -1450,14 +1462,14 @@ namespace dalia {
 			BusMirror& bMirror = m_state->buses.GetMirror(routing.busIndex);
 			bMirror.effectSlots[routing.effectSlot] = InvalidEffectHandle;
 
-			RtCommand detachCmd = RtCommand::ForceDetachEffect(
+			MixerCommand detachCmd = MixerCommand::ForceDetachEffect(
 				effect.GetIndex(),
 				effect.GetGeneration(),
 				effect.GetType(),
 				routing.busIndex,
 				routing.effectSlot
 			);
-			m_state->rtCommands->Enqueue(detachCmd);
+			m_state->mixerCommands->Enqueue(detachCmd);
 
 			DALIA_LOG_DEBUG(LOG_CTX_API, "Detaching effect from bus (index: %d) (slot %d).",
 				routing.busIndex, routing.effectSlot);
@@ -1465,8 +1477,8 @@ namespace dalia {
 			m_state->effectRoutingTable.erase(it);
 		}
 
-		RtCommand cmd = RtCommand::FreeEffect(effect.GetIndex(), effect.GetGeneration(), effect.GetType());
-		m_state->rtCommands->Enqueue(cmd);
+		MixerCommand cmd = MixerCommand::FreeEffect(effect.GetIndex(), effect.GetGeneration(), effect.GetType());
+		m_state->mixerCommands->Enqueue(cmd);
 
 		DALIA_LOG_DEBUG(LOG_CTX_API, "Destroyed effect (handle rawId: 0x%016llx).", effect.GetRawId());
 
@@ -1533,13 +1545,13 @@ namespace dalia {
 			DALIA_LOG_DEBUG(LOG_CTX_API, "Deferring playback for voice %d. Sound not yet loaded.", vIndex);
 
 			pbkHandle = PlaybackHandle::Create(vIndex, vMirror.gen);
-			m_state->rtCommands->Enqueue(RtCommand::AllocateVoice(vIndex, vMirror.gen));
+			m_state->mixerCommands->Enqueue(MixerCommand::AllocateVoice(vIndex, vMirror.gen));
 			return Result::Ok;
 		}
 
 		if (soundType == SoundType::Resident) {
-			m_state->rtCommands->Enqueue(RtCommand::AllocateVoice(vIndex, vMirror.gen));
-			RtCommand cmd = RtCommand::PrepareVoiceResident(
+			m_state->mixerCommands->Enqueue(MixerCommand::AllocateVoice(vIndex, vMirror.gen));
+			MixerCommand cmd = MixerCommand::PrepareVoiceResident(
 				vIndex,
 				vMirror.gen,
 				residentSound->pcmData.data(),
@@ -1547,7 +1559,7 @@ namespace dalia {
 				residentSound->channels,
 				residentSound->sampleRate
 			);
-			m_state->rtCommands->Enqueue(cmd);
+			m_state->mixerCommands->Enqueue(cmd);
 		}
 		else if (soundType == SoundType::Stream) {
 			uint32_t sIndex;
@@ -1567,8 +1579,8 @@ namespace dalia {
 				return streamRes;
 			}
 
-			m_state->rtCommands->Enqueue(RtCommand::AllocateVoice(vIndex, vMirror.gen));
-			RtCommand cmd = RtCommand::PrepareVoiceStreaming(
+			m_state->mixerCommands->Enqueue(MixerCommand::AllocateVoice(vIndex, vMirror.gen));
+			MixerCommand cmd = MixerCommand::PrepareVoiceStreaming(
 				vIndex,
 				vMirror.gen,
 				sIndex,
@@ -1576,7 +1588,7 @@ namespace dalia {
 				streamSound->channels,
 				streamSound->sampleRate
 			);
-			m_state->rtCommands->Enqueue(cmd);
+			m_state->mixerCommands->Enqueue(cmd);
 		}
 
 		pbkHandle = PlaybackHandle::Create(vIndex, vMirror.gen);
@@ -1610,7 +1622,7 @@ namespace dalia {
 			return Result::Ok;
 		}
 		vMirror->parentBusIndex = bIndex;
-		m_state->rtCommands->Enqueue(RtCommand::SetVoiceParent(vIndex, vGen, bIndex));
+		m_state->mixerCommands->Enqueue(MixerCommand::SetVoiceParent(vIndex, vGen, bIndex));
 		DALIA_LOG_DEBUG(LOG_CTX_API, "Routed voice %d to bus %s (index: %d).", vIndex, busIdentifier, bIndex);
 
 		return Result::Ok;
@@ -1650,7 +1662,7 @@ namespace dalia {
 
 		vMirror->state = VoiceState::Playing;
 
-		m_state->rtCommands->Enqueue(RtCommand::PlayVoice(vIndex, vGen));
+		m_state->mixerCommands->Enqueue(MixerCommand::PlayVoice(vIndex, vGen));
 		DALIA_LOG_DEBUG(LOG_CTX_API, "Setting voice %d to play.", vIndex);
 
 		return Result::Ok;
@@ -1674,7 +1686,7 @@ namespace dalia {
 		vMirror->state = VoiceState::Paused;
 		if (vMirror->pendingLoad) return Result::Ok;
 
-		m_state->rtCommands->Enqueue(RtCommand::PauseVoice(vIndex, vGen));
+		m_state->mixerCommands->Enqueue(MixerCommand::PauseVoice(vIndex, vGen));
 		DALIA_LOG_DEBUG(LOG_CTX_API, "Setting voice %d to pause.", vIndex);
 
 		return Result::Ok;
@@ -1711,7 +1723,7 @@ namespace dalia {
 
 		vMirror->state = VoiceState::Stopped;
 
-		m_state->rtCommands->Enqueue(RtCommand::StopVoice(vIndex, vGen));
+		m_state->mixerCommands->Enqueue(MixerCommand::StopVoice(vIndex, vGen));
 		DALIA_LOG_DEBUG(LOG_CTX_API, "Setting voice %d to stop.", vIndex);
 
 		return Result::Ok;
@@ -1740,7 +1752,7 @@ namespace dalia {
 		}
 
 		uint32_t seekFrame = static_cast<uint32_t>(seekFrame64);
-		m_state->rtCommands->Enqueue(RtCommand::SeekVoice(vIndex, vGen, seekFrame));
+		m_state->mixerCommands->Enqueue(MixerCommand::SeekVoice(vIndex, vGen, seekFrame));
 		DALIA_LOG_DEBUG(LOG_CTX_API, "Seeking voice %d to frame %d.", vIndex, seekFrame);
 
 		return Result::Ok;
@@ -2111,11 +2123,13 @@ namespace dalia {
 	void Engine::TeardownInternal() {
 		if (!m_state) return;
 
-		if (m_state->outputDevice)		m_state->outputDevice->Stop();
+		if (m_state->outputDevice)			m_state->outputDevice->Stop();
 		if (m_state->nullOutputDevice)		m_state->nullOutputDevice->Stop();
 
+		if (m_state->mixerSystem)			m_state->mixerSystem->Stop();
 		if (m_state->asyncLoadSystem)		m_state->asyncLoadSystem->Stop();
-		if (m_state->asyncStreamSystem)	m_state->asyncStreamSystem->Stop();
+		if (m_state->asyncStreamSystem)		m_state->asyncStreamSystem->Stop();
+		if (m_state->asyncControlSystem)	m_state->asyncControlSystem->Stop();
 
 		delete m_state;
 		m_state = nullptr;

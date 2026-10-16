@@ -39,8 +39,8 @@ namespace dalia {
     	uint32_t targetParentIndex = NO_PARENT;
 
         // Mixing Properties
-    	float currentFadeGain = 1.0f;
-    	float targetFadeGain = 1.0f;
+    	float currentFadeGain = GAIN_DEFAULT;
+    	float targetFadeGain = GAIN_DEFAULT;
 
         float targetGain = GAIN_DEFAULT;
         float currentGain = GAIN_DEFAULT;
@@ -55,8 +55,8 @@ namespace dalia {
             currentParentIndex = NO_PARENT;
         	targetParentIndex = NO_PARENT;
 
-        	currentFadeGain = 1.0f;
-        	targetFadeGain = 1.0f;
+        	currentFadeGain = GAIN_DEFAULT;
+        	targetFadeGain = GAIN_DEFAULT;
 
             for (uint32_t i = 0; i < MAX_EFFECTS_PER_BUS; i++) {
                 effectSlots[i].Reset();

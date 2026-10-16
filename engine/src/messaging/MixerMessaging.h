@@ -8,7 +8,7 @@
 
 namespace dalia {
 
-	struct RtCommand {
+	struct MixerCommand {
 		enum class Type : uint8_t {
 			None,
 
@@ -89,25 +89,25 @@ namespace dalia {
 
 		} data = {};
 
-		static RtCommand AllocateVoice(uint32_t index, uint32_t gen) {
-			RtCommand cmd{};
+		static MixerCommand AllocateVoice(uint32_t index, uint32_t gen) {
+			MixerCommand cmd{};
 			cmd.type = Type::AllocateVoice;
 			cmd.targetIndex = index;
 			cmd.targetGen = gen;
 			return cmd;
 		}
 
-		static RtCommand FreeVoice(uint32_t index, uint32_t gen) {
-			RtCommand cmd{};
+		static MixerCommand FreeVoice(uint32_t index, uint32_t gen) {
+			MixerCommand cmd{};
 			cmd.type = Type::FreeVoice;
 			cmd.targetIndex = index;
 			cmd.targetGen = gen;
 			return cmd;
 		}
 
-		static RtCommand PrepareVoiceResident(uint32_t index, uint32_t gen, const float* dataPtr,
+		static MixerCommand PrepareVoiceResident(uint32_t index, uint32_t gen, const float* dataPtr,
 			uint32_t frameCount, uint32_t channels, uint32_t sampleRate) {
-			RtCommand cmd{};
+			MixerCommand cmd{};
 			cmd.type = Type::PrepareVoiceResident;
 			cmd.targetIndex = index;
 			cmd.targetGen = gen;
@@ -119,9 +119,9 @@ namespace dalia {
 			return cmd;
 		}
 
-		static RtCommand PrepareVoiceStreaming(uint32_t index, uint32_t gen, uint32_t streamIndex, uint32_t streamGen,
+		static MixerCommand PrepareVoiceStreaming(uint32_t index, uint32_t gen, uint32_t streamIndex, uint32_t streamGen,
 			uint32_t channels, uint32_t sampleRate) {
-			RtCommand cmd{};
+			MixerCommand cmd{};
 			cmd.type = Type::PrepareVoiceStreaming;
 			cmd.targetIndex = index;
 			cmd.targetGen = gen;
@@ -133,8 +133,8 @@ namespace dalia {
 			return cmd;
 		}
 
-		static RtCommand SeekVoice(uint32_t index, uint32_t gen, uint32_t seekFrame) {
-			RtCommand cmd{};
+		static MixerCommand SeekVoice(uint32_t index, uint32_t gen, uint32_t seekFrame) {
+			MixerCommand cmd{};
 			cmd.type = Type::SeekVoice;
 			cmd.targetIndex = index;
 			cmd.targetGen = gen;
@@ -142,32 +142,32 @@ namespace dalia {
 			return cmd;
 		}
 
-		static RtCommand PlayVoice(uint32_t index, uint32_t gen) {
-			RtCommand cmd{};
+		static MixerCommand PlayVoice(uint32_t index, uint32_t gen) {
+			MixerCommand cmd{};
 			cmd.type = Type::PlayVoice;
 			cmd.targetIndex = index;
 			cmd.targetGen = gen;
 			return cmd;
 		}
 
-		static RtCommand PauseVoice(uint32_t index, uint32_t gen) {
-			RtCommand cmd{};
+		static MixerCommand PauseVoice(uint32_t index, uint32_t gen) {
+			MixerCommand cmd{};
 			cmd.type = Type::PauseVoice;
 			cmd.targetIndex = index;
 			cmd.targetGen = gen;
 			return cmd;
 		}
 
-		static RtCommand StopVoice(uint32_t index, uint32_t gen) {
-			RtCommand cmd{};
+		static MixerCommand StopVoice(uint32_t index, uint32_t gen) {
+			MixerCommand cmd{};
 			cmd.type = Type::StopVoice;
 			cmd.targetIndex = index;
 			cmd.targetGen = gen;
 			return cmd;
 		}
 
-		static RtCommand SetVoiceParent(uint32_t index, uint32_t gen, uint32_t parentBusIndex) {
-			RtCommand cmd{};
+		static MixerCommand SetVoiceParent(uint32_t index, uint32_t gen, uint32_t parentBusIndex) {
+			MixerCommand cmd{};
 			cmd.type = Type::SetVoiceParent;
 			cmd.targetIndex = index;
 			cmd.targetGen = gen;
@@ -175,31 +175,31 @@ namespace dalia {
 			return cmd;
 		}
 
-		static RtCommand AllocateBus(uint32_t index, uint32_t parentIndex) {
-			RtCommand cmd{};
+		static MixerCommand AllocateBus(uint32_t index, uint32_t parentIndex) {
+			MixerCommand cmd{};
 			cmd.type = Type::AllocateBus;
 			cmd.targetIndex = index;
 			cmd.data.setParent.parentIndex = parentIndex;
 			return cmd;
 		}
 
-		static RtCommand FreeBus(uint32_t index) {
-			RtCommand cmd{};
+		static MixerCommand FreeBus(uint32_t index) {
+			MixerCommand cmd{};
 			cmd.type = Type::FreeBus;
 			cmd.targetIndex = index;
 			return cmd;
 		}
 
-		static RtCommand SetBusParent(uint32_t index, uint32_t parentIndex) {
-			RtCommand cmd{};
+		static MixerCommand SetBusParent(uint32_t index, uint32_t parentIndex) {
+			MixerCommand cmd{};
 			cmd.type = Type::SetBusParent;
 			cmd.targetIndex = index;
 			cmd.data.setParent.parentIndex = parentIndex;
 			return cmd;
 		}
 
-		static RtCommand AllocateEffect(EffectType type, uint32_t index, uint32_t gen) {
-			RtCommand cmd{};
+		static MixerCommand AllocateEffect(EffectType type, uint32_t index, uint32_t gen) {
+			MixerCommand cmd{};
 			cmd.type = Type::AllocateEffect;
 			cmd.targetIndex = index;
 			cmd.targetGen = gen;
@@ -207,8 +207,8 @@ namespace dalia {
 			return cmd;
 		}
 
-		static RtCommand FreeEffect(uint32_t index, uint32_t gen, EffectType type) {
-			RtCommand cmd{};
+		static MixerCommand FreeEffect(uint32_t index, uint32_t gen, EffectType type) {
+			MixerCommand cmd{};
 			cmd.type = Type::FreeEffect;
 			cmd.targetIndex = index;
 			cmd.targetGen = gen;
@@ -216,9 +216,9 @@ namespace dalia {
 			return cmd;
 		}
 
-		static RtCommand AttachEffect(uint32_t index, uint32_t gen, EffectType type,
+		static MixerCommand AttachEffect(uint32_t index, uint32_t gen, EffectType type,
 			uint32_t busIndex, uint32_t effectSlot) {
-			RtCommand cmd{};
+			MixerCommand cmd{};
 			cmd.type = Type::AttachEffect;
 			cmd.targetIndex = index;
 			cmd.targetGen = gen;
@@ -228,9 +228,9 @@ namespace dalia {
 			return cmd;
 		}
 
-		static RtCommand FadeDetachEffect(uint32_t index, uint32_t gen, EffectType type,
+		static MixerCommand FadeDetachEffect(uint32_t index, uint32_t gen, EffectType type,
 			uint32_t busIndex, uint32_t effectSlot) {
-			RtCommand cmd{};
+			MixerCommand cmd{};
 			cmd.type = Type::FadeDetachEffect;
 			cmd.targetIndex = index;
 			cmd.targetGen = gen;
@@ -240,9 +240,9 @@ namespace dalia {
 			return cmd;
 		}
 
-		static RtCommand ForceDetachEffect(uint32_t index, uint32_t gen, EffectType type,
+		static MixerCommand ForceDetachEffect(uint32_t index, uint32_t gen, EffectType type,
 			uint32_t busIndex, uint32_t effectSlot) {
-			RtCommand cmd{};
+			MixerCommand cmd{};
 			cmd.type = Type::ForceDetachEffect;
 			cmd.targetIndex = index;
 			cmd.targetGen = gen;
@@ -252,15 +252,15 @@ namespace dalia {
 			return cmd;
 		}
 
-		static RtCommand SetGlobalDopplerFactor(float value) {
-			RtCommand cmd{};
+		static MixerCommand SetGlobalDopplerFactor(float value) {
+			MixerCommand cmd{};
 			cmd.type = Type::SetGlobalDopplerFactor;
 			cmd.data.floatVal.value = value;
 			return cmd;
 		}
 	};
 
-	struct  RtEvent {
+	struct  MixerEvent {
 		enum class Type {
 			None,
 
@@ -288,8 +288,8 @@ namespace dalia {
 
 		} data = {};
 
-		static RtEvent VoiceStopped(uint32_t index, uint32_t generation, PlaybackExitCondition exitCondition) {
-			RtEvent ev;
+		static MixerEvent VoiceStopped(uint32_t index, uint32_t generation, PlaybackExitCondition exitCondition) {
+			MixerEvent ev;
 			ev.type = Type::VoiceStopped;
 			ev.data.voice.index = index;
 			ev.data.voice.generation = generation;
@@ -297,15 +297,15 @@ namespace dalia {
 			return ev;
 		}
 
-		static RtEvent EffectActive(uint64_t handleRawId) {
-			RtEvent ev;
+		static MixerEvent EffectActive(uint64_t handleRawId) {
+			MixerEvent ev;
 			ev.type = Type::EffectActive;
 			ev.data.effect.handleRawId = handleRawId;
 			return ev;
 		}
 
-		static RtEvent EffectDetached(uint64_t handleRawId) {
-			RtEvent ev;
+		static MixerEvent EffectDetached(uint64_t handleRawId) {
+			MixerEvent ev;
 			ev.type = Type::EffectDetached;
 			ev.data.effect.handleRawId = handleRawId;
 			return ev;
@@ -315,20 +315,20 @@ namespace dalia {
 	// --- Queues ---
 
 	// Wrapper due to the need for a staging area
-	class RtCommandQueue {
+	class MixerCommandQueue {
 	public:
-		RtCommandQueue(size_t commandCapacity);
-		~RtCommandQueue() = default;
+		MixerCommandQueue(size_t commandCapacity);
+		~MixerCommandQueue() = default;
 
-		void Enqueue(const RtCommand& command);
+		void Enqueue(const MixerCommand& command);
 		void Dispatch();
 
-		bool Pop(RtCommand& command);
+		bool Pop(MixerCommand& command);
 
 	private:
-		std::vector<RtCommand> m_stagingArea;
-		SPSCRingBuffer<RtCommand> m_buffer;
+		std::vector<MixerCommand> m_stagingArea;
+		SPSCRingBuffer<MixerCommand> m_buffer;
 	};
 
-	using RtEventQueue = SPSCRingBuffer<RtEvent>;
+	using MixerEventQueue = SPSCRingBuffer<MixerEvent>;
 }
