@@ -1,6 +1,7 @@
 #pragma once
 
 #include "dalia/EffectControl.h"
+#include "mixer/effects/EffectMirror.h"
 #include "core/Constants.h"
 #include "dsp/Slew.h"
 
@@ -33,15 +34,11 @@ namespace dalia {
 
     };
 
-	struct BiquadMirror {
-		uint32_t gen = START_GENERATION;
-
-		BiquadParams params;
-		bool isParamsDirty = false;
+	struct BiquadMirror : EffectMirror {
+		BiquadParams params{};
 
 		void Reset() {
-			gen++;
-
+			ResetBase();
 			params = BiquadParams{};
 		}
 	};

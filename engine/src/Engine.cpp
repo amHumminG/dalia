@@ -78,7 +78,7 @@ namespace dalia {
 	struct EffectRouting {
 		uint32_t busIndex = NO_INDEX;
 		uint32_t effectSlot = NO_INDEX;
-		EffectState effectState = EffectState::None;
+		EffectSlotState effectState = EffectSlotState::None;
 	};
 
 	struct EngineInternalState {
@@ -112,14 +112,6 @@ namespace dalia {
 		std::unique_ptr<AsyncLoadEventQueue>		asyncLoadEvents;
 		std::unique_ptr<AsyncControlRequestQueue>	asyncControlRequests;
 		std::unique_ptr<AsyncControlEventQueue>		asyncControlEvents;
-
-		// Resource Capacities
-		uint32_t streamCapacity		= 0;
-		uint32_t voiceCapacity		= 0;
-		uint32_t listenerCapacity	= 0;
-		uint32_t busCapacity		= 0;
-
-		uint32_t biquadCapacity		= 0;
 
 		// Streams
 		AsyncPool<StreamContext> streams;
@@ -166,18 +158,14 @@ namespace dalia {
 
 		EngineInternalState(const EngineConfig& config)
 			: coordinateSystem(config.coordinateSystem),
-			streamCapacity(config.streamCapacity),
-			voiceCapacity(config.voiceCapacity),
-			listenerCapacity(std::clamp(config.listenerCapacity, LISTENERS_MIN, LISTENERS_MAX)),
-			busCapacity(config.busCapacity),
-			biquadCapacity(config.biquadCapacity),
 			streams(config.streamCapacity),
 			voices(config.voiceCapacity),
 			listeners(std::clamp(config.listenerCapacity, LISTENERS_MIN, LISTENERS_MAX)),
 			buses(config.busCapacity),
 			biquads(config.biquadCapacity) {
+
 			// Message Queues
-			mixerCommands				= std::make_unique<MixerCommandQueue>(config.advanced.RealTimeQueueCapacity);
+			mixerCommands			= std::make_unique<MixerCommandQueue>(config.advanced.RealTimeQueueCapacity);
 			mixerEvents				= std::make_unique<MixerEventQueue>(config.advanced.RealTimeQueueCapacity);
 			asyncStreamRequests		= std::make_unique<AsyncStreamRequestQueue>(config.advanced.AsyncStreamQueueCapacity);
 			asyncLoadRequests		= std::make_unique<AsyncLoadRequestQueue>(config.advanced.AsyncLoadQueueCapacity);
@@ -210,7 +198,7 @@ namespace dalia {
 			if (!playback.IsValid()) return Result::InvalidHandle;
 
 			uint32_t vIndex = playback.GetIndex();
-			if (vIndex >= voices.GetCapacity()) return Result::InvalidHandle;
+			if (vIndex >= voices.Capacity()) return Result::InvalidHandle;
 
 			VoiceMirror& vMirror = voices.GetMirror(vIndex);
 			if (vMirror.gen != playback.GetGeneration()) return Result::ExpiredHandle;
@@ -229,7 +217,7 @@ namespace dalia {
 
 		template<typename TFunc>
 		Result ModifyListener(uint32_t listenerIndex, TFunc&& fn) {
-			if (listenerIndex >= listeners.GetCapacity()) return Result::InvalidListener;
+			if (listenerIndex >= listeners.Capacity()) return Result::InvalidListener;
 
 			return fn(listeners.GetMirror(listenerIndex), listenerIndex);
 		}
@@ -243,11 +231,31 @@ namespace dalia {
 			});
 		}
 
+		template<typename TFunc>
+		Result ModifyBus(const char* identifier, TFunc&& fn) {
+			if (!identifier) return Result::InvalidBus;
+
+			const BusID bId{identifier};
+			auto it = busMap.find(bId);
+			if (it == busMap.end()) return Result::InvalidBus;
+
+			return fn(buses.GetMirror(it->second), it->second);
+		}
+
+		template<typename TFunc>
+		Result ModifyBusParams(const char* identifier, TFunc&& fn) {
+			return ModifyBus(identifier, [&](BusMirror& bMirror, uint32_t bIndex) -> Result {
+				fn(bMirror.params);
+				buses.MarkDirty(bIndex);
+				return Result::Ok;
+			});
+		}
+
 		// TODO: Write modification functions for buses and biquads
 		// Not sure how we should handle this for effects though...
 
 		Result ResolveMirror(uint32_t index, uint32_t gen, VoiceMirror*& mirror) {
-			if (index >= voiceCapacity) return Result::InvalidHandle;
+			if (index >= voices.Capacity()) return Result::InvalidHandle;
 
 			VoiceMirror& vMirror = voices.GetMirror(index);
 			if (vMirror.gen != gen) return Result::ExpiredHandle;
@@ -257,7 +265,7 @@ namespace dalia {
 		}
 
 		Result ResolveMirror(uint32_t index, ListenerMirror*& mirror) {
-			if (index >= listenerCapacity) return Result::InvalidListener;
+			if (index >= listeners.Capacity()) return Result::InvalidListener;
 
 			mirror = &listeners.GetMirror(index);
 			return Result::Ok;
@@ -272,7 +280,7 @@ namespace dalia {
 			return Result::Ok;
 		}
 
-		Result ResolveIndex(const char* busIdentifier, uint32_t& index) {
+		Result GetBusIndex(const char* busIdentifier, uint32_t& index) {
 			const BusID bId(busIdentifier);
 			auto it = busMap.find(bId);
 			if (it == busMap.end()) return Result::InvalidBus;
@@ -471,7 +479,7 @@ namespace dalia {
 				auto it = state->effectRoutingTable.find(ev.data.effect.handleRawId);
 				if (it != state->effectRoutingTable.end()) {
 					EffectRouting& routing = it->second;
-					routing.effectState = EffectState::Active;
+					routing.effectState = EffectSlotState::Active;
 				}
 				break;
 			}
@@ -735,7 +743,7 @@ namespace dalia {
 
 		// -- Periodicity Dependent Buffer Allocations ---
 		m_state->maxSamplesPerPeriod = MIXER_PROCESSING_BLOCK_FRAMES * CHANNELS_MAX;
-		uint32_t busBufferPoolSize = m_state->busCapacity * m_state->maxSamplesPerPeriod;
+		uint32_t busBufferPoolSize = m_state->buses.Capacity() * m_state->maxSamplesPerPeriod;
 		m_state->busBufferPool = std::make_unique<float[]>(busBufferPoolSize);
 		m_state->mixScratchBuffer = std::make_unique<float[]>(m_state->maxSamplesPerPeriod);
 
@@ -760,7 +768,7 @@ namespace dalia {
 		mixerConfig.biquadPool				= m_state->biquads.GetSpan();
 		mixerConfig.biquadParamBridges		= m_state->biquads.GetParamBridgeSpan();
 		mixerConfig.mixGraphCompiler		= m_state->mixGraphCompiler.get();
-		mixerConfig.mixOrder				= std::span(m_state->mixOrder.get(), m_state->busCapacity);
+		mixerConfig.mixOrder				= std::span(m_state->mixOrder.get(), m_state->buses.Capacity());
 		mixerConfig.dspScratchBuffer		= std::span(m_state->mixScratchBuffer.get(), m_state->maxSamplesPerPeriod);
 		m_state->mixerSystem = std::make_unique<MixerSystem>(mixerConfig);
 
@@ -1024,7 +1032,7 @@ namespace dalia {
 			}
 
 			// Command active voices using the asset to stop
-			for (uint32_t i = 0; i < m_state->voiceCapacity; i++) {
+			for (uint32_t i = 0; i < m_state->voices.Capacity(); i++) {
 				VoiceMirror& vMirror = m_state->voices.GetMirror(i);
 
 				if (vMirror.state != VoiceState::Free && vMirror.assetRawId == sound.GetRawId()) {
@@ -1076,11 +1084,11 @@ namespace dalia {
 		bool parentFound = false;
 
 		// Fetch parent bus
-		Result resParent = m_state->ResolveIndex(parentIdentifier, bIndexParent);
+		Result resParent = m_state->GetBusIndex(parentIdentifier, bIndexParent);
 		if (resParent == Result::Ok) parentFound = true;
 
 		// Fetch bus
-		Result res = m_state->ResolveIndex(identifier, bIndex);
+		Result res = m_state->GetBusIndex(identifier, bIndex);
 		if (res == Result::Ok) {
 			BusMirror& bMirror  = m_state->buses.GetMirror(bIndex);
 			bMirror.refCount++;
@@ -1146,7 +1154,7 @@ namespace dalia {
 
 		// Remove parent from child buses
 		uint32_t orphanedBuses = 0;
-		for (uint32_t i = 0; i < m_state->busCapacity; i++) {
+		for (uint32_t i = 0; i < m_state->buses.Capacity(); i++) {
 			BusMirror* bMirrorChild = &m_state->buses.GetMirror(i);
 			if (bMirrorChild->parentBusIndex == bIndex) {
 				bMirrorChild->parentBusIndex = NO_PARENT;
@@ -1159,7 +1167,7 @@ namespace dalia {
 			identifier, orphanedBuses);
 
 		uint32_t orphanedPlaybacks = 0;
-		for (uint32_t i = 0; i < m_state->voiceCapacity; i++) {
+		for (uint32_t i = 0; i < m_state->voices.Capacity(); i++) {
 			VoiceMirror& vMirrorChild = m_state->voices.GetMirror(i);
 			if (vMirrorChild.parentBusIndex == bIndex) {
 				vMirrorChild.parentBusIndex = NO_PARENT;
@@ -1190,7 +1198,7 @@ namespace dalia {
 
 		// Fetch bus
 		uint32_t bIndex;
-		Result res = m_state->ResolveIndex(identifier, bIndex);
+		Result res = m_state->GetBusIndex(identifier, bIndex);
 		if (res != Result::Ok) {
 			DALIA_LOG_ERR(LOG_CTX_API, "Failed to route bus (%s -> %s). No bus with identifier %s exists.",
 				identifier, parentIdentifier, identifier);
@@ -1205,7 +1213,7 @@ namespace dalia {
 
 		// Fetch parent bus
 		uint32_t bIndexParent;
-		Result resParent = m_state->ResolveIndex(parentIdentifier, bIndexParent);
+		Result resParent = m_state->GetBusIndex(parentIdentifier, bIndexParent);
 		if (resParent != Result::Ok) {
 			DALIA_LOG_ERR(LOG_CTX_API, "Failed to route bus (%s -> %s). No bus with identifier %s exists.",
 				identifier, parentIdentifier, parentIdentifier);
@@ -1241,19 +1249,9 @@ namespace dalia {
 	Result Engine::SetBusVolumeDb(const char* identifier, float volumeDb) {
 		if (!IsInitialized(m_state)) return Result::NotInitialized;
 
-		// Fetch bus
-		BusMirror* bMirror;
-		Result res = m_state->ResolveMirror(identifier, bMirror);
-		if (res != Result::Ok) {
-			DALIA_LOG_ERR(LOG_CTX_API, "Failed to set bus volume. No bus with identifier (%s) exists", identifier);
-			return res;
-		}
-
-		float clampedVolumeDb = std::clamp(volumeDb, VOLUME_DB_MIN, VOLUME_DB_MAX);
-		bMirror->params.gain = math::DbToGain(clampedVolumeDb);
-		bMirror->isParamsDirty = true;
-
-		return Result::Ok;
+		return m_state->ModifyBusParams(identifier, [&](BusParams& params) {
+			params.gain = math::DbToGain(std::clamp(volumeDb, VOLUME_DB_MIN, VOLUME_DB_MAX));
+		});
 	}
 
 	template <typename TParams>
@@ -1337,7 +1335,7 @@ namespace dalia {
 
 		// Fetch bus
 		uint32_t bIndex;
-		Result resBus = m_state->ResolveIndex(busIdentifier, bIndex);
+		Result resBus = m_state->GetBusIndex(busIdentifier, bIndex);
 		if (resBus != Result::Ok) {
 			DALIA_LOG_ERR(LOG_CTX_API, "Failed to attach effect to bus %s (slot %d). No bus with identifier %s exists.",
 				busIdentifier, effectSlot, busIdentifier);
@@ -1425,7 +1423,7 @@ namespace dalia {
 		auto it = m_state->effectRoutingTable.find(effect.GetRawId());
 		if (it != m_state->effectRoutingTable.end()) {
 			EffectRouting& routing = it->second;
-			routing.effectState = EffectState::FadingOut;
+			routing.effectState = EffectSlotState::FadingOut;
 
 			MixerCommand cmd = MixerCommand::FadeDetachEffect(
 				effect.GetIndex(),
@@ -1624,7 +1622,7 @@ namespace dalia {
 
 		// Fetch bus
 		uint32_t bIndex;
-		const Result resBus = m_state->ResolveIndex(busIdentifier, bIndex);
+		const Result resBus = m_state->GetBusIndex(busIdentifier, bIndex);
 		if (resBus != Result::Ok) {
 			DALIA_LOG_ERR(LOG_CTX_API, "Failed to route playback. No bus with identifier %s exists.", busIdentifier);
 			return resBus;

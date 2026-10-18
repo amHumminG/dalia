@@ -1118,7 +1118,7 @@ namespace dalia {
 
 			for (uint32_t i = 0; i < MAX_EFFECTS_PER_BUS; i++) {
 				EffectSlot& slot = bus.effectSlots[i];
-				if (slot.state == EffectState::None) continue;
+				if (slot.state == EffectSlotState::None) continue;
 				ApplyBusEffect(buffer, slot, frameCount);
 			}
 
@@ -1144,7 +1144,7 @@ namespace dalia {
 		float* processBuffer = buffer;
 		uint32_t sampleCount = frameCount * m_outChannels;
 
-		if (slot.state != EffectState::Active) {
+		if (slot.state != EffectSlotState::Active) {
 			std::memcpy(m_mixScratchBuffer.data(), buffer, sampleCount * sizeof(float));
 			processBuffer = m_mixScratchBuffer.data();
 		}
@@ -1161,13 +1161,13 @@ namespace dalia {
 		}
 
 		// Process DSP
-		if (slot.state != EffectState::Active) {
+		if (slot.state != EffectSlotState::Active) {
 			float fadeDurationInSeconds = 0.01f;
 			float fadeDelta = 1.0f / (static_cast<float>(m_outSampleRate) * fadeDurationInSeconds);
 
 			float targetMix = 0.0f;
-			if (slot.state == EffectState::FadingIn) targetMix = 1.0f;
-			else if (slot.state == EffectState::FadingOut) targetMix = 0.0f;
+			if (slot.state == EffectSlotState::FadingIn) targetMix = 1.0f;
+			else if (slot.state == EffectSlotState::FadingOut) targetMix = 0.0f;
 
 			ApplyBlockCrossFade(
 				buffer,
@@ -1179,11 +1179,11 @@ namespace dalia {
 				fadeDelta
 			);
 
-			if (slot.state == EffectState::FadingIn && slot.currentMix >= 1.0f) {
-				slot.state = EffectState::Active;
+			if (slot.state == EffectSlotState::FadingIn && slot.currentMix >= 1.0f) {
+				slot.state = EffectSlotState::Active;
 				m_mixerEvents->Push(MixerEvent::EffectActive(slot.handle.GetRawId()));
 			}
-			else if (slot.state == EffectState::FadingOut && slot.currentMix <= 0.0f) {
+			else if (slot.state == EffectSlotState::FadingOut && slot.currentMix <= 0.0f) {
 				m_mixerEvents->Push(MixerEvent::EffectDetached(slot.handle.GetRawId()));
 				slot.Reset();
 			}
@@ -1209,7 +1209,7 @@ namespace dalia {
 
 		EffectSlot& slot = m_busPool[busIndex].effectSlots[effectSlot];
 		slot.handle = handle;
-		slot.state = EffectState::FadingIn;
+		slot.state = EffectSlotState::FadingIn;
 		slot.currentMix = 0.0f;
     }
 
@@ -1221,7 +1221,7 @@ namespace dalia {
 
     void MixerSystem::FadeOutEffect(EffectHandle handle, uint32_t busIndex, uint32_t effectSlot) {
 		EffectSlot& slot = m_busPool[busIndex].effectSlots[effectSlot];
-		if (slot.handle == handle && slot.state != EffectState::None) slot.state = EffectState::FadingOut;
+		if (slot.handle == handle && slot.state != EffectSlotState::None) slot.state = EffectSlotState::FadingOut;
     }
 
     void MixerSystem::ConfigureSpeakerLayout(SpeakerLayout layout) {

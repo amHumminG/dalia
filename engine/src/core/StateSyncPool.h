@@ -48,7 +48,7 @@ namespace dalia {
 		}
 
 		/// @brief Retrieves the capacity of the pool.
-		[[nodiscard]] uint32_t GetCapacity() const { return m_capacity; }
+		[[nodiscard]] uint32_t Capacity() const { return m_capacity; }
 		T& Get(uint32_t index) const {
 			assert(index < m_capacity && "StateSyncPool::Get index out of bounds.");
 			return m_pool[index];
