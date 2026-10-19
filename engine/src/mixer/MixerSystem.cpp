@@ -42,7 +42,7 @@ namespace dalia {
 	}
 
 	static inline float* GetBusBuffer(float* busBufferPool, uint32_t busIndex, uint32_t maxSamplesPerPeriod) {
-		return busBufferPool + (busIndex * maxSamplesPerPeriod * CHANNELS_MAX);
+		return busBufferPool + (busIndex * maxSamplesPerPeriod);
 	}
 
 	static inline void StepMatrixGains(
@@ -1139,7 +1139,22 @@ namespace dalia {
 
     void MixerSystem::ApplyBusEffect(float* buffer, EffectSlot& slot, uint32_t frameCount) {
 		uint32_t eIndex = slot.handle.GetIndex();
+		uint32_t eGen = slot.handle.GetGeneration();
 		EffectType eType = slot.handle.GetType();
+
+		// Validate that the effect instance is still alive before mixing it
+		switch (eType) {
+			case EffectType::Biquad: {
+				if (m_biquadPool[eIndex].gen != eGen) {
+					slot.Reset();
+					return;
+				}
+				break;
+			}
+			default:
+				slot.Reset();
+				break;
+		}
 
 		float* processBuffer = buffer;
 		uint32_t sampleCount = frameCount * m_outChannels;
@@ -1179,12 +1194,10 @@ namespace dalia {
 				fadeDelta
 			);
 
-			if (slot.state == EffectSlotState::FadingIn && slot.currentMix >= 1.0f) {
+			if (slot.state == EffectSlotState::FadingIn && slot.currentMix >= GAIN_DEFAULT) {
 				slot.state = EffectSlotState::Active;
-				m_mixerEvents->Push(MixerEvent::EffectActive(slot.handle.GetRawId()));
 			}
-			else if (slot.state == EffectSlotState::FadingOut && slot.currentMix <= 0.0f) {
-				m_mixerEvents->Push(MixerEvent::EffectDetached(slot.handle.GetRawId()));
+			else if (slot.state == EffectSlotState::FadingOut && slot.currentMix <= GAIN_SILENCE) {
 				slot.Reset();
 			}
 		}
@@ -1207,10 +1220,19 @@ namespace dalia {
 				return;
 		}
 
+		// Ensure the effect is not still fading out on another bus slot
+		for (Bus& bus : m_busPool) {
+			for (uint32_t i = 0; i < MAX_EFFECTS_PER_BUS; i++) {
+				if (bus.effectSlots[i].handle == handle) {
+					bus.effectSlots[i].Reset();
+				}
+			}
+		}
+
 		EffectSlot& slot = m_busPool[busIndex].effectSlots[effectSlot];
 		slot.handle = handle;
 		slot.state = EffectSlotState::FadingIn;
-		slot.currentMix = 0.0f;
+		slot.currentMix = GAIN_SILENCE;
     }
 
     void MixerSystem::DetachEffect(EffectHandle handle, uint32_t busIndex,

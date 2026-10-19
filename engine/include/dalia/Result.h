@@ -25,13 +25,12 @@ namespace dalia {
 		InvalidListener				= -11,
 
 		// Pool Capacity Errors
-		PoolExhausted				= -100,
-		ResidentSoundPoolExhausted	= -101,
-		StreamSoundPoolExhausted	= -102,
-		VoicePoolExhausted			= -103,
-		StreamPoolExhausted			= -104,
-		BusPoolExhausted			= -105,
-		EffectPoolExhausted			= -106,
+		CapacityReached				= -100,
+		SoundCapacityReached		= -101,
+		VoiceCapacityReached		= -103,
+		StreamCapacityReached		= -104,
+		BusCapacityReached			= -105,
+		EffectCapacityReached		= -106,
 
 		// Messaging Errors
 		MixerCommandQueueFull		= -200,
@@ -75,13 +74,12 @@ namespace dalia {
 			case Result::InvalidEffectSlot: return "Invalid effect slot";
 			case Result::InvalidListener: return "Listener not found";
 
-			case Result::PoolExhausted: return "Pool exhausted (generic)";
-			case Result::ResidentSoundPoolExhausted: return "Resident sound pool exhausted";
-			case Result::StreamSoundPoolExhausted: return "Stream sound pool exhausted";
-			case Result::VoicePoolExhausted: return "Voice pool exhausted";
-			case Result::StreamPoolExhausted: return "Stream pool exhausted";
-			case Result::BusPoolExhausted: return "Bus pool exhausted";
-			case Result::EffectPoolExhausted: return "Effect pool exhausted";
+			case Result::CapacityReached: return "Pool capacity reached (generic)";
+			case Result::SoundCapacityReached: return "Resident/Stream sound pool capacity reached";
+			case Result::VoiceCapacityReached: return "Voice pool capacity reached";
+			case Result::StreamCapacityReached: return "Stream pool capacity reached";
+			case Result::BusCapacityReached: return "Bus pool capacity reached";
+			case Result::EffectCapacityReached: return "Effect pool capacity reached";
 
 			case Result::MixerCommandQueueFull: return "Mixer command queue full";
 			case Result::MixerEventQueueFull: return "Mixer event queue full";

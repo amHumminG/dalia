@@ -265,11 +265,7 @@ namespace dalia {
 			None,
 
 			// Voice Lifecycle
-			VoiceStopped,
-
-			// Effects
-			EffectActive,
-			EffectDetached,
+			VoiceStopped
 		};
 
 		Type type = Type::None;
@@ -294,20 +290,6 @@ namespace dalia {
 			ev.data.voice.index = index;
 			ev.data.voice.generation = generation;
 			ev.data.voice.exitCondition = exitCondition;
-			return ev;
-		}
-
-		static MixerEvent EffectActive(uint64_t handleRawId) {
-			MixerEvent ev;
-			ev.type = Type::EffectActive;
-			ev.data.effect.handleRawId = handleRawId;
-			return ev;
-		}
-
-		static MixerEvent EffectDetached(uint64_t handleRawId) {
-			MixerEvent ev;
-			ev.type = Type::EffectDetached;
-			ev.data.effect.handleRawId = handleRawId;
 			return ev;
 		}
 	};

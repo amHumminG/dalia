@@ -161,7 +161,6 @@ namespace dalia {
         	parentBusIndex = MASTER_BUS_INDEX;
 
         	params = VoiceParams{};
-        	isParamsDirty = false;
 
         	frameCount = 0;
         	channels = 0;

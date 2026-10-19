@@ -84,6 +84,7 @@ set(ENGINE_FILES
     src/mixer/PeakLimiter.h
     src/mixer/PeakLimiter.cpp
     src/mixer/effects/EffectMirror.h
+    src/mixer/effects/EffectTraits.h
 
     src/dsp/Slew.h
     src/dsp/Slew.cpp
@@ -92,7 +93,6 @@ set(ENGINE_FILES
     src/resources/AssetRegistry.cpp
     src/resources/AssetRegistry.h
     src/resources/StreamSound.h
-    src/mixer/effects/EffectTraits.h
 )
 
 if (WIN32)
