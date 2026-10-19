@@ -28,7 +28,9 @@ set(ENGINE_FILES
     include/dalia/Result.h
 
     # Internal headers and cpp-files
-    src/Engine.cpp
+    src/engine/Engine.cpp
+    src/engine/EngineInternalState.cpp
+    src/engine/EngineInternalState.h
 
     src/backend/DeviceManager.h
     src/backend/OutputDevice.h

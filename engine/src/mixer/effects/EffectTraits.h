@@ -1,7 +1,8 @@
 #pragma once
 
-// #include "core/InternalState.h" // TODO: Implement internal state header
+#include "engine/EngineInternalState.h"
 #include "dalia/EffectControl.h"
+#include "engine/EngineInternalState.h"
 #include "mixer/effects/Biquad.h"
 
 namespace dalia {
@@ -15,6 +16,6 @@ namespace dalia {
 		using DSPType = Biquad;
 		using MirrorType = BiquadMirror;
 
-		static auto& GetPool(EngineInternalState& state) { return state.biquads; }
+		static auto& GetPool(EngineInternalState& state) { return EngineInternalState::biquads; } // TODO: Fix
 	};
 }

@@ -1,46 +1,48 @@
 #include "dalia/Engine.h"
 
+#include "engine/EngineInternalState.h"
+
 #include "dalia/PlaybackControl.h"
 #include "dalia/SoundControl.h"
 #include "dalia/EffectControl.h"
-#include "async/AsyncControlSystem.h"
+#include "../async/AsyncControlSystem.h"
 
-#include "backend/windows/WindowsDeviceManager.h"
-#include "backend/windows/WasapiOutputDevice.h"
-#include "backend/NullOutputDevice.h"
+#include "../backend/windows/WindowsDeviceManager.h"
+#include "../backend/windows/WasapiOutputDevice.h"
+#include "../backend/NullOutputDevice.h"
 
-#include "core/Logger.h"
-#include "core/FixedStack.h"
-#include "core/SPSCRingBuffer.h"
-#include "core/Constants.h"
-#include "core/Types.h"
-#include "core/Math.h"
+#include "../core/Logger.h"
+#include "../core/FixedStack.h"
+#include "../core/SPSCRingBuffer.h"
+#include "../core/Constants.h"
+#include "../core/Types.h"
+#include "../core/Math.h"
 
-#include "messaging/MixerMessaging.h"
-#include "messaging/AsyncStreamMessaging.h"
-#include "messaging/AsyncLoadMessaging.h"
-#include "messaging/AsyncControlMessaging.h"
+#include "../messaging/MixerMessaging.h"
+#include "../messaging/AsyncStreamMessaging.h"
+#include "../messaging/AsyncLoadMessaging.h"
+#include "../messaging/AsyncControlMessaging.h"
 
-#include "core/StateSyncPool.h"
-#include "core/AsyncPool.h"
-#include "core/ParameterBridge.h"
-#include "mixer/Voice.h"
-#include "mixer/StreamContext.h"
-#include "mixer/Bus.h"
-#include "mixer/effects/Biquad.h"
-#include "mixer/MixGraphCompiler.h"
-#include "mixer/Listener.h"
-#include "mixer/MixerSystem.h"
-#include "mixer/Speakers.h"
-#include "mixer/effects/EffectTraits.h"
+#include "../core/StateSyncPool.h"
+#include "../core/AsyncPool.h"
+#include "../core/ParameterBridge.h"
+#include "../mixer/Voice.h"
+#include "../mixer/StreamContext.h"
+#include "../mixer/Bus.h"
+#include "../mixer/effects/Biquad.h"
+#include "../mixer/MixGraphCompiler.h"
+#include "../mixer/Listener.h"
+#include "../mixer/MixerSystem.h"
+#include "../mixer/Speakers.h"
+#include "../mixer/effects/EffectTraits.h"
 
-#include "async/AsyncStreamSystem.h"
-#include "async/AsyncLoadSystem.h"
-#include "async/AsyncControlSystem.h"
+#include "../async/AsyncStreamSystem.h"
+#include "../async/AsyncLoadSystem.h"
+#include "../async/AsyncControlSystem.h"
 
-#include "resources/AssetRegistry.h"
-#include "resources/ResidentSound.h"
-#include "resources/StreamSound.h"
+#include "../resources/AssetRegistry.h"
+#include "../resources/ResidentSound.h"
+#include "../resources/StreamSound.h"
 
 #include "common/StringID.h"
 
@@ -55,364 +57,6 @@
 #endif
 
 namespace dalia {
-
-	struct VoiceID {
-		uint32_t index;
-		uint32_t gen;
-
-		bool operator==(const VoiceID& other) const {
-			return index == other.index && gen == other.gen;
-		}
-	};
-
-	struct PendingSoundUnload {
-		SoundHandle handle;
-		std::vector<VoiceID> voicesToStop;
-	};
-
-	struct PendingPlayback {
-		uint32_t voiceIndex = NO_INDEX;
-		uint32_t voiceGen = NO_GENERATION;
-		uint64_t assetRawId = INVALID_RAW_ID;
-	};
-
-	struct EngineInternalState {
-		bool initialized = false;
-
-		// Devices
-		std::unique_ptr<DeviceManager> deviceManager;
-		std::unique_ptr<OutputDevice> outputDevice;
-		std::unique_ptr<NullOutputDevice> nullOutputDevice;
-		OutputDevice* activeOutputDevice; // Points to either outputDevice or nullDevice
-
-		std::vector<OutputDeviceInfo> cachedOutputDeviceList;
-		std::string targetOutputDeviceId = "default";
-		bool activeOutputDeviceIsDefault = true;
-		bool pendingOutputDeviceSwap = false;
-		bool isSwappingOutputDevice = false;
-
-		SpeakerLayout speakerLayout;
-		uint32_t maxSamplesPerPeriod = 0;
-		uint32_t outChannels = 0;
-		uint32_t outSampleRate = 0;
-
-		// Engine Settings
-		CoordinateSystem coordinateSystem;
-
-		// Messaging Queues
-		std::unique_ptr<MixerCommandQueue>			mixerCommands;
-		std::unique_ptr<MixerEventQueue>			mixerEvents;
-		std::unique_ptr<AsyncStreamRequestQueue>	asyncStreamRequests;
-		std::unique_ptr<AsyncLoadRequestQueue>		asyncLoadRequests;
-		std::unique_ptr<AsyncLoadEventQueue>		asyncLoadEvents;
-		std::unique_ptr<AsyncControlRequestQueue>	asyncControlRequests;
-		std::unique_ptr<AsyncControlEventQueue>		asyncControlEvents;
-
-		// Streams
-		AsyncPool<StreamContext> streams;
-
-		// Voices
-		StateSyncPool<Voice, VoiceMirror, VoiceParams> voices;
-
-		// Listeners
-		StateSyncPool<Listener, ListenerMirror, ListenerParams> listeners;
-
-		// Buses
-		StateSyncPool<Bus, BusMirror, BusParams> buses;
-		std::unordered_map<BusID, uint32_t>		busMap;
-#if DALIA_DEBUG
-		std::unordered_map<BusID, std::string>	busDebugNameMap; // Unused
-#endif
-		std::unique_ptr<float[]>				busBufferPool;
-
-		// Effects
-		StateSyncPool<Biquad, BiquadMirror, BiquadParams> biquads;
-
-		// Mixing & DSP
-		std::unique_ptr<MixGraphCompiler> mixGraphCompiler;
-		std::unique_ptr<uint32_t[]> mixOrder;
-
-		std::unique_ptr<float[]> mixScratchBuffer;
-
-		// Assets
-		std::unique_ptr<AssetRegistry> assetRegistry;
-		uint32_t nextIoLoadRequestId = 1;
-		std::unordered_map<uint32_t, AssetLoadCallback> loadCallbacks;
-
-		// Deferred Unloads & Playbacks
-		std::vector<PendingSoundUnload> pendingSoundUnloads;
-		std::vector<PendingPlayback> pendingPlaybacks;
-
-		// Systems
-		std::unique_ptr<MixerSystem> mixerSystem;
-		std::unique_ptr<AsyncStreamSystem> asyncStreamSystem;
-		std::unique_ptr<AsyncLoadSystem> asyncLoadSystem;
-		std::unique_ptr<AsyncControlSystem> asyncControlSystem;
-
-		EngineInternalState(const EngineConfig& config)
-			: coordinateSystem(config.coordinateSystem),
-			streams(config.streamCapacity),
-			voices(config.voiceCapacity),
-			listeners(std::clamp(config.listenerCapacity, LISTENERS_MIN, LISTENERS_MAX)),
-			buses(config.busCapacity),
-			biquads(config.biquadCapacity) {
-
-			// Message Queues
-			mixerCommands			= std::make_unique<MixerCommandQueue>(config.advanced.RealTimeQueueCapacity);
-			mixerEvents				= std::make_unique<MixerEventQueue>(config.advanced.RealTimeQueueCapacity);
-			asyncStreamRequests		= std::make_unique<AsyncStreamRequestQueue>(config.advanced.AsyncStreamQueueCapacity);
-			asyncLoadRequests		= std::make_unique<AsyncLoadRequestQueue>(config.advanced.AsyncLoadQueueCapacity);
-			asyncLoadEvents			= std::make_unique<AsyncLoadEventQueue>(config.advanced.AsyncLoadQueueCapacity);
-			asyncControlRequests	= std::make_unique<SPSCRingBuffer<AsyncControlRequest>>(config.advanced.AsyncControlQueueCapacity);
-			asyncControlEvents		= std::make_unique<SPSCRingBuffer<AsyncControlEvent>>(config.advanced.AsyncControlQueueCapacity);
-
-			// Mixing
-			mixGraphCompiler	= std::make_unique<MixGraphCompiler>(config.busCapacity);
-			mixOrder			= std::make_unique<uint32_t[]>(config.busCapacity);
-
-			// Resources
-			assetRegistry	= std::make_unique<AssetRegistry>(config.residentSoundCapacity, config.streamSoundCapacity);
-		}
-
-		uint32_t GenerateIoLoadRequestId() {return nextIoLoadRequestId++; }
-
-		PlaybackHandle ForgePlaybackHandle(uint32_t index, uint32_t generation) {
-			return PlaybackHandle::Create(index, generation);
-		}
-
-		SoundHandle ForgeSoundHandle(uint64_t rawId) { return SoundHandle::FromRawId(rawId); }
-
-		EffectHandle ForgeEffectHandle(uint64_t rawId) { return EffectHandle::FromRawId(rawId); }
-		uint32_t GetEffectIndex(EffectHandle effect) const { return effect.GetIndex(); }
-		uint32_t GetEffectGen(EffectHandle effect) const { return effect.GetGeneration(); }
-
-
-		/// @brief Primitive for modifying the state of a voice. Handles all validation checks.
-		/// @tparam TFunc The type of the callable task.
-		/// @param playback The handle to the playback instance representing the voice.
-		/// @param fn Modification task taking (VoiceMirror& vMirror, uint32_t vIndex). Should return a dalia::Result.
-		/// @return Dalia result code.
-		template<typename TFunc>
-		Result ModifyVoice(PlaybackHandle playback, TFunc&& fn) {
-			if (!playback.IsValid()) return Result::InvalidHandle;
-
-			uint32_t vIndex = playback.GetIndex();
-			if (vIndex >= voices.Capacity()) return Result::InvalidHandle;
-
-			VoiceMirror& vMirror = voices.GetMirror(vIndex);
-			if (vMirror.gen != playback.GetGeneration()) return Result::ExpiredHandle;
-
-			return fn(vMirror, vIndex);
-		}
-
-		/// @brief Convenience wrapper for modifying the DSP parameters of a voice. Automatically flags the parameters
-		/// as dirty.
-		/// @tparam TFunc The type of the callable task.
-		/// @param playback The handle to the playback instance representing the voice.
-		/// @param fn Modification task taking (VoiceParams& params).
-		/// @return Dalia result code.
-		template<typename TFunc>
-		Result ModifyVoiceParams(PlaybackHandle playback, TFunc&& fn) {
-			return ModifyVoice(playback, [&](VoiceMirror& vMirror, uint32_t vIndex) -> Result {
-				fn(vMirror.params);
-				voices.MarkDirty(vIndex);
-				return Result::Ok;
-			});
-		}
-
-		/// @brief Primitive for modifying the state of a listener. Handles all validation checks.
-		/// @tparam TFunc The type of the callable task.
-		/// @param listenerIndex The index of the listener instance.
-		/// @param fn Modification task taking (ListenerMirror& lMirror, uint32_t lIndex). Should return a dalia::Result.
-		/// @return Dalia result code.
-		template<typename TFunc>
-		Result ModifyListener(uint32_t listenerIndex, TFunc&& fn) {
-			if (listenerIndex >= listeners.Capacity()) return Result::InvalidListener;
-
-			return fn(listeners.GetMirror(listenerIndex), listenerIndex);
-		}
-
-		/// @brief Convenience wrapper for modifying the DSP parameters of a listener. Automatically flags the parameters
-		/// as dirty.
-		/// @tparam TFunc The type of the callable task.
-		/// @param listenerIndex The index of the listener instance.
-		/// @param fn Modification task taking (ListenerParams& params).
-		/// @return Dalia result code.
-		template<typename TFunc>
-		Result ModifyListenerParams(uint32_t listenerIndex, TFunc&& fn) {
-			return ModifyListener(listenerIndex, [&](ListenerMirror& lMirror, uint32_t lIndex) -> Result {
-				fn(lMirror.params);
-				listeners.MarkDirty(lIndex);
-				return Result::Ok;
-			});
-		}
-
-		/// @brief Primitive for modifying the state of a bus. Handles all validation checks.
-		/// @tparam TFunc The type of the callable task.
-		/// @param identifier The identifier of the bus instance.
-		/// @param fn Modification task taking (BusMirror& bMirror, uint32_t bIndex). Should return a dalia::Result.
-		/// @return Dalia result code.
-		template<typename TFunc>
-		Result ModifyBus(const char* identifier, TFunc&& fn) {
-			if (!identifier) return Result::InvalidBus;
-
-			const BusID bId{identifier};
-			auto it = busMap.find(bId);
-			if (it == busMap.end()) return Result::InvalidBus;
-
-			return fn(buses.GetMirror(it->second), it->second);
-		}
-
-		/// @brief Convenience wrapper for modifying the DSP parameters of a bus. Automatically flags the parameters
-		/// as dirty.
-		/// @tparam TFunc The type of the callable task.
-		/// @param identifier The identifier of the bus instance.
-		/// @param fn Modification task taking (BusParams& params).
-		/// @return Dalia result code.
-		template<typename TFunc>
-		Result ModifyBusParams(const char* identifier, TFunc&& fn) {
-			return ModifyBus(identifier, [&](BusMirror& bMirror, uint32_t bIndex) -> Result {
-				fn(bMirror.params);
-				buses.MarkDirty(bIndex);
-				return Result::Ok;
-			});
-		}
-
-		/// @brief Retrieves the index of a bus instance based on its identifier.
-		/// @param busIdentifier The identifier of the bus instance.
-		/// @param index The index to be populated.
-		/// @return Dalia result code. Result::InvalidBus if the identifier does not match a valid bus instance.
-		Result GetBusIndex(const char* busIdentifier, uint32_t& index) {
-			if (!busIdentifier) return Result::InvalidBus;
-
-			const BusID bId(busIdentifier);
-			auto it = busMap.find(bId);
-			if (it == busMap.end()) return Result::InvalidBus;
-
-			index = it->second;
-			return Result::Ok;
-		}
-
-		/// @brief Primitive for modifying the state of an effect. Handles all validation checks.
-		/// @tparam TParams The parameter struct defining the effect type.
-		/// @tparam TFunc The type of the callable task.
-		/// @param effect The handle to the effect instance.
-		/// @param fn Modification task taking (EffectMirror& eMirror, uint32_t eIndex). Should return a dalia::Result.
-		/// @return Dalia result code.
-		template<typename TParams, typename TFunc>
-		Result ModifyEffect(EffectHandle effect, TFunc&& fn) {
-			using Traits = EffectTraits<TParams>;
-			if (!effect.IsValid() || effect.GetType() != Traits::TYPE) return Result::InvalidHandle;
-
-			auto& ePool = Traits::GetPool(*this);
-			uint32_t eIndex = effect.GetIndex();
-			if (eIndex >= ePool.Capacity()) return Result::InvalidHandle;
-
-			auto& eMirror = ePool.GetMirror(eIndex);
-			if (eMirror.gen != effect.GetGeneration()) return Result::ExpiredHandle;
-
-			return fn(eMirror, eIndex);
-		}
-
-		/// @brief Runtime dispatcher for effect modification.
-		/// @tparam TFunc The parameter struct defining the effect type.
-		/// @param effect The handle to the effect instance.
-		/// @param fn Modification task taking (auto& eMirror, uint32_t eIndex). Should return a dalia::Result.
-		/// @return Dalia result code.
-		template<typename TFunc>
-		Result ModifyEffect(EffectHandle effect, TFunc&& fn) {
-			switch (effect.GetType()) {
-				case EffectType::Biquad:
-					return ModifyEffect<BiquadParams>(effect, std::forward<TFunc>(fn));
-				default:
-					return Result::InvalidHandle;
-			}
-		}
-
-		/// @brief Convenience wrapper for modifying the DSP parameters of an effect. Automatically flags the parameters
-		/// as dirty.
-		/// @tparam TParams The parameter struct defining the effect type.
-		/// @tparam TFunc The type of the callable task.
-		/// @param effect The handle to the effect instance.
-		/// @param fn Modification task taking (TParams& params).
-		/// @return Dalia result code.
-		template<typename TParams, typename TFunc>
-		Result ModifyEffectParams(EffectHandle effect, TFunc&& fn) {
-			return ModifyEffect<TParams>(effect, [&](auto& eMirror, uint32_t eIndex) -> Result {
-				fn(eMirror.params);
-				EffectTraits<TParams>::GetPool(*this).MarkDirty(eIndex);
-				return Result::Ok;
-			});
-		}
-
-		/// @brief Validates a playback handle.
-		/// @param playback The handle to the playback instance.
-		/// @return Dalia result code. Result::Ok if valid.
-		Result Validate(PlaybackHandle playback) {
-			return ModifyVoice(playback, [](const VoiceMirror&, uint32_t) { return Result::Ok; });
-		}
-
-		/// @brief Validates a listener index.
-		/// @param listenerIndex The index of the listener instance.
-		/// @return Dalia result code. Result::Ok if valid.
-		Result Validate(uint32_t listenerIndex) {
-			return ModifyListener(listenerIndex, [](const ListenerMirror&, uint32_t) { return Result::Ok; });
-		}
-
-		/// @brief Validates a bus identifier.
-		/// @param busIdentifier The identifier of the bus instance.
-		/// @return Dalia result code. Result::Ok if valid.
-		Result Validate(const char* busIdentifier) {
-			return ModifyBus(busIdentifier, [](const BusMirror&, uint32_t) { return Result::Ok; });
-		}
-
-		/// @brief Validates a effect handle.
-		/// @param effect The handle to the effect instance.
-		/// @return Dalia result code. Result::Ok if valid.
-		Result Validate(EffectHandle effect) {
-			return ModifyEffect(effect, [](const EffectMirror&, uint32_t) { return Result::Ok; });
-		}
-
-		Result FreeEffectFromPool(EffectHandle effect) {
-			uint32_t eIndex = effect.GetIndex();
-			switch (effect.GetType()) {
-				case EffectType::Biquad:
-					if (eIndex >= biquads.Capacity()) return Result::InvalidHandle;
-					biquads.Free(eIndex);
-					return Result::Ok;
-				default:
-					return Result::InvalidHandle;
-			}
-		}
-
-		Result UnlinkEffectFromBus(EffectHandle effect, bool fadeOut) {
-			return ModifyEffect(effect, [&](EffectMirror& eMirror, uint32_t) -> Result {
-				if (!eMirror.IsAttached()) return Result::Ok;
-
-				uint32_t bIndex = eMirror.busIndex;
-				uint32_t slot = eMirror.effectSlot;
-
-				BusMirror& bMirror = buses.GetMirror(bIndex);
-				if (bMirror.effectSlots[slot] == effect) bMirror.effectSlots[slot] = InvalidEffectHandle;
-
-				eMirror.busIndex = NO_INDEX;
-				eMirror.effectSlot = NO_INDEX;
-
-				if (fadeOut) {
-					mixerCommands->Enqueue(MixerCommand::FadeDetachEffect(
-						effect.GetIndex(), eMirror.gen, effect.GetType(), bIndex, slot
-					));
-				}
-				else {
-					mixerCommands->Enqueue(MixerCommand::ForceDetachEffect(
-						effect.GetIndex(), eMirror.gen, effect.GetType(), bIndex, slot
-					));
-				}
-
-				return Result::Ok;
-			});
-		}
-	};
 
 	// --- INTERNAL HELPERS ---
 	static inline bool IsInitialized(const EngineInternalState* state) {
@@ -549,12 +193,12 @@ namespace dalia {
 
 				if (res == Result::Ok) {
 					// --- Check garbage collection ---
-					VoiceID stoppedVoice = {vIndex, vGen};
+					PlaybackHandle stopped = EngineInternalState::ForgePlaybackHandle(vIndex, vGen);
 					for (auto it = state->pendingSoundUnloads.begin(); it != state->pendingSoundUnloads.end(); ) {
 						auto& waitingList = it->voicesToStop;
 
 						for (size_t i = 0; i < waitingList.size(); i++) {
-							if (waitingList[i] == stoppedVoice) {
+							if (waitingList[i] == stopped) {
 								waitingList[i] = waitingList.back();
 								waitingList.pop_back();
 								break;
@@ -593,8 +237,9 @@ namespace dalia {
 				// Process deferred playbacks
 				for (auto it = state->pendingPlaybacks.begin(); it != state->pendingPlaybacks.end(); ) {
 					if (it->assetRawId == ev.assetRawId) {
-						uint32_t vIndex = it->voiceIndex, vGen = it->voiceGen;
-						Result res = state->Validate(state->ForgePlaybackHandle(vIndex, vGen));
+						uint32_t vIndex = EngineInternalState::GetPlaybackIndex(it->playback);
+						uint32_t vGen = EngineInternalState::GetPlaybackGeneration(it->playback);
+						Result res = state->Validate(it->playback);
 						VoiceMirror& vMirror = state->voices.GetMirror(vIndex);
 
 						if (res == Result::Ok && vMirror.pendingLoad) {
@@ -689,19 +334,15 @@ namespace dalia {
 			case AsyncLoadEvent::Type::SoundLoadFailed: {
 				for (auto it = state->pendingPlaybacks.begin(); it != state->pendingPlaybacks.end(); ) {
 					if (it->assetRawId == ev.assetRawId) {
-						uint32_t vIndex = it->voiceIndex, vGen = it->voiceGen;
-						state->ModifyVoice(state->ForgePlaybackHandle(vIndex, vGen), [&](VoiceMirror& vMirror, uint32_t) -> Result {
+						state->ModifyVoice(it->playback, [&](VoiceMirror& vMirror, uint32_t vIndex) -> Result {
 							DALIA_LOG_ERR(LOG_CTX_CORE, "Aborting deferred playback. Sound failed to load.");
 
 							if (vMirror.onStopCallback) {
-								PlaybackHandle playback = state->ForgePlaybackHandle(
-									vIndex,
-									vGen
-								);
-								vMirror.onStopCallback(playback, PlaybackExitCondition::Error);
+								vMirror.onStopCallback(it->playback, PlaybackExitCondition::Error);
 							}
 
-							state->mixerCommands->Enqueue(MixerCommand::FreeVoice(vIndex, vGen));
+							state->mixerCommands->Enqueue(MixerCommand::FreeVoice(vIndex,
+								EngineInternalState::GetPlaybackGeneration(it->playback)));
 							vMirror.Reset();
 							state->voices.Free(vIndex);
 
@@ -1091,18 +732,17 @@ namespace dalia {
 			// Remove pending playbacks for the sound
 			for (auto it = m_state->pendingPlaybacks.begin(); it != m_state->pendingPlaybacks.end(); ) {
 				if (it->assetRawId == sound.GetRawId()) {
-					VoiceMirror& vMirror = m_state->voices.GetMirror(it->voiceIndex);
+					VoiceMirror& vMirror = m_state->voices.GetMirror(it->playback.GetIndex());
 
 					if (vMirror.onStopCallback) {
-						PlaybackHandle playback = PlaybackHandle::Create(it->voiceIndex, it->voiceGen);
-						vMirror.onStopCallback(playback, PlaybackExitCondition::ExplicitStop);
+						vMirror.onStopCallback(it->playback, PlaybackExitCondition::ExplicitStop);
 					}
 
 					vMirror.Reset();
-					m_state->voices.Free(it->voiceIndex);
+					m_state->voices.Free(it->playback.GetIndex());
 
 					DALIA_LOG_DEBUG(LOG_CTX_API, "Aborted deferred playback for voice %d due to early unload.",
-						it->voiceIndex);
+						it->playback.GetIndex());
 					it = m_state->pendingPlaybacks.erase(it);
 				}
 				else it++;
@@ -1113,7 +753,7 @@ namespace dalia {
 				VoiceMirror& vMirror = m_state->voices.GetMirror(i);
 
 				if (vMirror.state != VoiceState::Free && vMirror.assetRawId == sound.GetRawId()) {
-					pendingUnload.voicesToStop.push_back(VoiceID(i, vMirror.gen));
+					pendingUnload.voicesToStop.push_back(EngineInternalState::ForgePlaybackHandle(i, vMirror.gen));
 
 					m_state->mixerCommands->Enqueue(MixerCommand::StopVoice(i, vMirror.gen));
 					DALIA_LOG_DEBUG(LOG_CTX_API, "Commanded to stop voice %d.", i);
@@ -1417,7 +1057,7 @@ namespace dalia {
 				DALIA_LOG_WARN(LOG_CTX_API, "Detaching effect from bus %s (slot %u). Attaching new effect to slot.",
 					busIdentifier, effectSlot);
 
-				m_state->UnlinkEffectFromBus(oldEffect, false);
+				m_state->DetachEffectFromBus(oldEffect, false);
 			}
 
 			// Link the effect to the new bus slot
@@ -1449,7 +1089,7 @@ namespace dalia {
 				DALIA_LOG_WARN(LOG_CTX_API, "Failed to detach effect. Effect is not attached.");
 				return Result::Ok;
 			}
-			m_state->UnlinkEffectFromBus(effect, true);
+			m_state->DetachEffectFromBus(effect, true);
 
 			return Result::Ok;
 		});
@@ -1460,7 +1100,7 @@ namespace dalia {
 	Result Engine::DestroyEffect(EffectHandle effect) {
 		if (!IsInitialized(m_state)) return Result::NotInitialized;
 
-		Result res = m_state->UnlinkEffectFromBus(effect, false);
+		Result res = m_state->DetachEffectFromBus(effect, false);
 		if (res != Result::Ok) {
 			DALIA_LOG_ERR(LOG_CTX_API, "Failed to destroy effect. Invalid or expired handle.");
 			return res;
@@ -1528,8 +1168,7 @@ namespace dalia {
 		// Deferred playback
 		if (soundLoadState == LoadState::Loading) {
 			m_state->pendingPlaybacks.push_back({
-				vIndex,
-				vMirror.gen,
+				EngineInternalState::ForgePlaybackHandle(vIndex, vMirror.gen),
 				soundHandle.GetRawId()
 			});
 			vMirror.pendingLoad = true;
@@ -1670,7 +1309,7 @@ namespace dalia {
 			// Handle pending playbacks
 			if (vMirror.pendingLoad) {
 				for (auto it = m_state->pendingPlaybacks.begin(); it != m_state->pendingPlaybacks.end(); ) {
-					if (it->voiceIndex == vIndex) {
+					if (it->playback.GetIndex() == vIndex) {
 						if (vMirror.onStopCallback) {
 							vMirror.onStopCallback(playback, PlaybackExitCondition::ExplicitStop);
 						}
