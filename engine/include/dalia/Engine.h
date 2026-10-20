@@ -117,6 +117,14 @@ namespace dalia {
 		/// @retval Result::NotInitialized	The engine is not initialized.
 		Result SetGlobalDopplerFactor(float globalDopplerFactor);
 
+#pragma endregion ENGINE_SETTINGS
+
+		// ============================================================================
+		// [ DEVICE MANAGEMENT ]
+		// Methods for handling output devices.
+		// ============================================================================
+#pragma region DEVICE_MANAGEMENT
+
 		/// @brief Queries the OS for available output devices and retrieves the total count.
 		///
 		/// This function forces the engine to scan for all available audio devices and refresh its internal cache.
@@ -174,7 +182,7 @@ namespace dalia {
 		/// @retval Result::NotInitialized	The engine is not initialized.
 		Result SetOutputDevice(const char* identifier);
 
-#pragma endregion ENGINE_SETTINGS
+#pragma endregion ENGINE_DEVICE
 
 		// ============================================================================
 		// [ ASSET MANAGEMENT ]
@@ -756,9 +764,6 @@ namespace dalia {
 #pragma endregion LISTENER_MANAGEMENT
 
 	private:
-		void TeardownInternal();
-
 		EngineInternalState* m_state = nullptr;
-
 	};
 }

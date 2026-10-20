@@ -27,19 +27,19 @@ namespace dalia {
 }
 
 #define DALIA_LOG_DEBUG(context, fmt, ...) \
-dalia::Logger::Log(dalia::LogLevel::Debug, context, "%s() - " fmt, __func__, ##__VA_ARGS__)
+dalia::Logger::Log(dalia::LogLevel::Debug, context, "%s() - " fmt, ##__VA_ARGS__)
 
 #define DALIA_LOG_INFO(context, fmt, ...) \
-dalia::Logger::Log(dalia::LogLevel::Info, context, "%s() - " fmt, __func__, ##__VA_ARGS__)
+dalia::Logger::Log(dalia::LogLevel::Info, context, "%s() - " fmt, ##__VA_ARGS__)
 
 #define DALIA_LOG_WARN(context, fmt, ...) \
-dalia::Logger::Log(dalia::LogLevel::Warning, context, "%s() - " fmt, __func__, ##__VA_ARGS__)
+dalia::Logger::Log(dalia::LogLevel::Warning, context, "%s() - " fmt, ##__VA_ARGS__)
 
 #define DALIA_LOG_ERR(context, fmt, ...) \
-dalia::Logger::Log(dalia::LogLevel::Error, context, "%s() - " fmt, __func__, ##__VA_ARGS__)
+dalia::Logger::Log(dalia::LogLevel::Error, context, "%s() - " fmt, ##__VA_ARGS__)
 
 #define DALIA_LOG_CRIT(context, fmt, ...) \
-dalia::Logger::Log(dalia::LogLevel::Critical, context, "%s() - " fmt, __func__, ##__VA_ARGS__)
+dalia::Logger::Log(dalia::LogLevel::Critical, context, "%s() - " fmt, ##__VA_ARGS__)
 
 
 

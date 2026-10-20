@@ -1,8 +1,17 @@
 #include "engine/EngineInternalState.h"
 
+#include "backend/DeviceManager.h"
+#include "backend/NullOutputDevice.h"
+
+#include "async/AsyncControlSystem.h"
+#include "async/AsyncLoadSystem.h"
+#include "async/AsyncStreamSystem.h"
+
 #include "resources/AssetRegistry.h"
-#include "mixer/StreamContext.h"
+
+#include "mixer/MixerSystem.h"
 #include "mixer/MixGraphCompiler.h"
+#include "mixer/StreamContext.h"
 
 #include <algorithm>
 
@@ -28,6 +37,10 @@ namespace dalia {
 
 		// Resources
 		assetRegistry	= std::make_unique<AssetRegistry>(config.residentSoundCapacity, config.streamSoundCapacity);
+	}
+
+	bool EngineInternalState::IsInitialized(const EngineInternalState* state) {
+		return state != nullptr && state->initialized;
 	}
 
 	uint32_t EngineInternalState::GenerateIoLoadRequestId() {

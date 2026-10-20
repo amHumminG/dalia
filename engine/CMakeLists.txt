@@ -28,9 +28,13 @@ set(ENGINE_FILES
     include/dalia/Result.h
 
     # Internal headers and cpp-files
-    src/engine/Engine.cpp
     src/engine/EngineInternalState.cpp
     src/engine/EngineInternalState.h
+    src/engine/Engine.cpp
+    src/engine/EngineDevice.cpp
+    src/engine/EngineAsset.cpp
+    src/engine/EngineBus.cpp
+    src/engine/EngineEffect.cpp
 
     src/backend/DeviceManager.h
     src/backend/OutputDevice.h
@@ -95,6 +99,9 @@ set(ENGINE_FILES
     src/resources/AssetRegistry.cpp
     src/resources/AssetRegistry.h
     src/resources/StreamSound.h
+    src/engine/EnginePlayback.cpp
+    src/engine/EngineListener.cpp
+    src/engine/EngineSettings.cpp
 )
 
 if (WIN32)

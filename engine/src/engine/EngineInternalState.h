@@ -2,11 +2,10 @@
 
 #include "dalia/Engine.h"
 
-#include "dalia/Engine.h"
-
 #include "core/Types.h"
 #include "core/StateSyncPool.h"
 #include "core/AsyncPool.h"
+#include "core/Logger.h"
 
 #include "messaging/AsyncControlMessaging.h"
 #include "messaging/AsyncLoadMessaging.h"
@@ -37,16 +36,19 @@ namespace dalia {
 
 	struct StreamContext;
 
+	/// @brief Represents a sound waiting on voices that use it to stop before it can be unloaded.
 	struct PendingSoundUnload {
 		SoundHandle handle;
 		std::vector<PlaybackHandle> voicesToStop;
 	};
 
+	/// @brief Represents a playback instance waiting for an asset to be loaded before it can start playing.
 	struct PendingPlayback {
 		PlaybackHandle playback;
 		uint64_t assetRawId = INVALID_RAW_ID;
 	};
 
+	/// @brief The internal implementation state of the DALIA engine.
 	struct EngineInternalState {
 		bool initialized = false;
 
@@ -54,7 +56,7 @@ namespace dalia {
 		std::unique_ptr<DeviceManager> deviceManager;
 		std::unique_ptr<OutputDevice> outputDevice;
 		std::unique_ptr<NullOutputDevice> nullOutputDevice;
-		OutputDevice* activeOutputDevice; // Points to either outputDevice or nullDevice
+		OutputDevice* activeOutputDevice = nullptr; // Points to either outputDevice or nullDevice
 
 		std::vector<OutputDeviceInfo> cachedOutputDeviceList;
 		std::string targetOutputDeviceId = "default";
@@ -62,13 +64,13 @@ namespace dalia {
 		bool pendingOutputDeviceSwap = false;
 		bool isSwappingOutputDevice = false;
 
-		SpeakerLayout speakerLayout;
+		SpeakerLayout speakerLayout = SpeakerLayout::Mono;
 		uint32_t maxSamplesPerPeriod = 0;
 		uint32_t outChannels = 0;
 		uint32_t outSampleRate = 0;
 
 		// Engine Settings
-		CoordinateSystem coordinateSystem;
+		CoordinateSystem coordinateSystem = CoordinateSystem::LeftHanded;
 
 		// Messaging Queues
 		std::unique_ptr<MixerCommandQueue>			mixerCommands;
@@ -91,9 +93,6 @@ namespace dalia {
 		// Buses
 		StateSyncPool<Bus, BusMirror, BusParams> buses;
 		std::unordered_map<BusID, uint32_t>		busMap;
-#if DALIA_DEBUG
-		std::unordered_map<BusID, std::string>	busDebugNameMap; // Unused
-#endif
 		std::unique_ptr<float[]>				busBufferPool;
 
 		// Effects
@@ -102,7 +101,6 @@ namespace dalia {
 		// Mixing & DSP
 		std::unique_ptr<MixGraphCompiler> mixGraphCompiler;
 		std::unique_ptr<uint32_t[]> mixOrder;
-
 		std::unique_ptr<float[]> mixScratchBuffer;
 
 		// Assets
@@ -121,6 +119,11 @@ namespace dalia {
 		std::unique_ptr<AsyncControlSystem> asyncControlSystem;
 
 		EngineInternalState(const EngineConfig& config);
+
+		/// @brief Engine helper to check if internal state is initialized.
+		/// @param state The engine internal state.
+		/// @return True if initialized, otherwise false.
+		static bool IsInitialized(const EngineInternalState* state);
 
 		/// @brief Generates a new load request identifier.
 		/// @return The new request identifier.

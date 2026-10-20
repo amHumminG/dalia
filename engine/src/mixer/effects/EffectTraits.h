@@ -16,6 +16,6 @@ namespace dalia {
 		using DSPType = Biquad;
 		using MirrorType = BiquadMirror;
 
-		static auto& GetPool(EngineInternalState& state) { return EngineInternalState::biquads; } // TODO: Fix
+		static auto& GetPool(EngineInternalState* state) { return state->biquads; } // TODO: Fix
 	};
 }
