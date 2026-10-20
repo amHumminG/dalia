@@ -4,16 +4,16 @@
 
 namespace dalia {
 
-	MixerCommandQueue::MixerCommandQueue(size_t commandCapacity)
+	AsyncMixerCommandQueue::AsyncMixerCommandQueue(size_t commandCapacity)
 		: m_buffer(commandCapacity) {
 		m_stagingArea.reserve(commandCapacity);
 	}
 
-	void MixerCommandQueue::Enqueue(const MixerCommand& command) {
+	void AsyncMixerCommandQueue::Enqueue(const AsyncMixerCommand& command) {
 		m_stagingArea.push_back(command);
 	}
 
-	void MixerCommandQueue::Dispatch() {
+	void AsyncMixerCommandQueue::Dispatch() {
 		size_t commandsPushed = 0;
 		for (const auto& command : m_stagingArea) {
 			if (!m_buffer.Push(command)) {
@@ -34,7 +34,7 @@ namespace dalia {
 		}
 	}
 
-	bool MixerCommandQueue::Pop(MixerCommand& command) {
+	bool AsyncMixerCommandQueue::Pop(AsyncMixerCommand& command) {
 		if (!m_buffer.Pop(command)) {
 			return false;
 		}

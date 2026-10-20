@@ -2,6 +2,9 @@
 
 #include "dalia/Engine.h"
 
+#include "engine/DeviceCoordinator.h"
+#include "async/AsyncDirector.h"
+
 #include "core/Types.h"
 #include "core/StateSyncPool.h"
 #include "core/AsyncPool.h"
@@ -27,7 +30,7 @@ namespace dalia {
 	class DeviceManager;
 	class OutputDevice;
 	class NullOutputDevice;
-	class MixerSystem;
+	class AsyncMixerSystem;
 	class AsyncStreamSystem;
 	class AsyncLoadSystem;
 	class AsyncControlSystem;
@@ -52,33 +55,20 @@ namespace dalia {
 	struct EngineInternalState {
 		bool initialized = false;
 
-		// Devices
-		std::unique_ptr<DeviceManager> deviceManager;
-		std::unique_ptr<OutputDevice> outputDevice;
-		std::unique_ptr<NullOutputDevice> nullOutputDevice;
-		OutputDevice* activeOutputDevice = nullptr; // Points to either outputDevice or nullDevice
+		DeviceCoordinator deviceCoordinator;
 
-		std::vector<OutputDeviceInfo> cachedOutputDeviceList;
-		std::string targetOutputDeviceId = "default";
-		bool activeOutputDeviceIsDefault = true;
-		bool pendingOutputDeviceSwap = false;
-		bool isSwappingOutputDevice = false;
-
-		SpeakerLayout speakerLayout = SpeakerLayout::Mono;
-		uint32_t maxSamplesPerPeriod = 0;
-		uint32_t outChannels = 0;
-		uint32_t outSampleRate = 0;
+		AsyncDirector asyncDirector;
 
 		// Engine Settings
 		CoordinateSystem coordinateSystem = CoordinateSystem::LeftHanded;
 
 		// Messaging Queues
-		std::unique_ptr<MixerCommandQueue>			mixerCommands;
-		std::unique_ptr<MixerEventQueue>			mixerEvents;
-		std::unique_ptr<AsyncStreamRequestQueue>	asyncStreamRequests;
-		std::unique_ptr<AsyncLoadRequestQueue>		asyncLoadRequests;
+		std::unique_ptr<AsyncMixerCommandQueue>		mixerCommands;
+		std::unique_ptr<AsyncMixerEventQueue>		mixerEvents;
+		std::unique_ptr<AsyncStreamCommandQueue>	asyncStreamRequests;
+		std::unique_ptr<AsyncLoadCommandQueue>		asyncLoadRequests;
 		std::unique_ptr<AsyncLoadEventQueue>		asyncLoadEvents;
-		std::unique_ptr<AsyncControlRequestQueue>	asyncControlRequests;
+		std::unique_ptr<AsyncControlCommandQueue>	asyncControlRequests;
 		std::unique_ptr<AsyncControlEventQueue>		asyncControlEvents;
 
 		// Streams
@@ -110,12 +100,12 @@ namespace dalia {
 
 		// Deferred Unloads & Playbacks
 		std::vector<PendingSoundUnload> pendingSoundUnloads;
-		std::vector<PendingPlayback> pendingPlaybacks;
+		std::vector<PendingPlayback>	pendingPlaybacks;
 
 		// Systems
-		std::unique_ptr<MixerSystem> mixerSystem;
-		std::unique_ptr<AsyncStreamSystem> asyncStreamSystem;
-		std::unique_ptr<AsyncLoadSystem> asyncLoadSystem;
+		std::unique_ptr<AsyncMixerSystem>		asyncMixerSystem;
+		std::unique_ptr<AsyncStreamSystem>	asyncStreamSystem;
+		std::unique_ptr<AsyncLoadSystem>	asyncLoadSystem;
 		std::unique_ptr<AsyncControlSystem> asyncControlSystem;
 
 		EngineInternalState(const EngineConfig& config);

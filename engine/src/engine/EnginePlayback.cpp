@@ -66,13 +66,13 @@ namespace dalia {
 			DALIA_LOG_DEBUG(LOG_CTX_API, "Deferring playback for voice %d. Sound not yet loaded.", vIndex);
 
 			pbkHandle = PlaybackHandle::Create(vIndex, vMirror.gen);
-			m_state->mixerCommands->Enqueue(MixerCommand::AllocateVoice(vIndex, vMirror.gen));
+			m_state->mixerCommands->Enqueue(AsyncMixerCommand::AllocateVoice(vIndex, vMirror.gen));
 			return Result::Ok;
 		}
 
 		if (soundType == SoundType::Resident) {
-			m_state->mixerCommands->Enqueue(MixerCommand::AllocateVoice(vIndex, vMirror.gen));
-			MixerCommand cmd = MixerCommand::PrepareVoiceResident(
+			m_state->mixerCommands->Enqueue(AsyncMixerCommand::AllocateVoice(vIndex, vMirror.gen));
+			AsyncMixerCommand cmd = AsyncMixerCommand::PrepareVoiceResident(
 				vIndex,
 				vMirror.gen,
 				residentSound->pcmData.data(),
@@ -100,8 +100,8 @@ namespace dalia {
 				return streamRes;
 			}
 
-			m_state->mixerCommands->Enqueue(MixerCommand::AllocateVoice(vIndex, vMirror.gen));
-			MixerCommand cmd = MixerCommand::PrepareVoiceStreaming(
+			m_state->mixerCommands->Enqueue(AsyncMixerCommand::AllocateVoice(vIndex, vMirror.gen));
+			AsyncMixerCommand cmd = AsyncMixerCommand::PrepareVoiceStreaming(
 				vIndex,
 				vMirror.gen,
 				sIndex,
@@ -136,7 +136,7 @@ namespace dalia {
 			}
 
 			vMirror.parentBusIndex = bIndex;
-			m_state->mixerCommands->Enqueue(MixerCommand::SetVoiceParent(vIndex, playback.GetGeneration(), bIndex));
+			m_state->mixerCommands->Enqueue(AsyncMixerCommand::SetVoiceParent(vIndex, playback.GetGeneration(), bIndex));
 			DALIA_LOG_DEBUG(LOG_CTX_API, "Routed voice %d to bus %s (index: %d).", vIndex, busIdentifier, bIndex);
 
 			return Result::Ok;
@@ -167,7 +167,7 @@ namespace dalia {
 			}
 
 			vMirror.state = VoiceState::Playing;
-			m_state->mixerCommands->Enqueue(MixerCommand::PlayVoice(vIndex, playback.GetGeneration()));
+			m_state->mixerCommands->Enqueue(AsyncMixerCommand::PlayVoice(vIndex, playback.GetGeneration()));
 			DALIA_LOG_DEBUG(LOG_CTX_API, "Setting voice %d state: Playing.", vIndex);
 
 			return Result::Ok;
@@ -186,7 +186,7 @@ namespace dalia {
 			vMirror.state = VoiceState::Paused;
 			if (vMirror.pendingLoad) return Result::Ok; // Do not send command if voice is pending load
 
-			m_state->mixerCommands->Enqueue(MixerCommand::PauseVoice(vIndex, playback.GetGeneration()));
+			m_state->mixerCommands->Enqueue(AsyncMixerCommand::PauseVoice(vIndex, playback.GetGeneration()));
 			DALIA_LOG_DEBUG(LOG_CTX_API, "Setting voice %d state: Paused.", vIndex);
 
 			return Result::Ok;
@@ -217,7 +217,7 @@ namespace dalia {
 
 			vMirror.state = VoiceState::Stopped;
 
-			m_state->mixerCommands->Enqueue(MixerCommand::StopVoice(vIndex, playback.GetGeneration()));
+			m_state->mixerCommands->Enqueue(AsyncMixerCommand::StopVoice(vIndex, playback.GetGeneration()));
 			DALIA_LOG_DEBUG(LOG_CTX_API, "Setting voice %d to stop.", vIndex);
 
 			return Result::Ok;
@@ -240,7 +240,7 @@ namespace dalia {
 			}
 
 			uint32_t seekFrame = static_cast<uint32_t>(seekFrame64);
-			m_state->mixerCommands->Enqueue(MixerCommand::SeekVoice(vIndex, playback.GetGeneration(), seekFrame));
+			m_state->mixerCommands->Enqueue(AsyncMixerCommand::SeekVoice(vIndex, playback.GetGeneration(), seekFrame));
 			DALIA_LOG_DEBUG(LOG_CTX_API, "Seeking voice %d to frame %d.", vIndex, seekFrame);
 
 			return Result::Ok;

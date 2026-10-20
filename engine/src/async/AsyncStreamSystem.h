@@ -13,7 +13,7 @@ namespace dalia {
     struct AsyncStreamSystemConfig {
     	uint32_t wakeupPeriodMicroseconds;
     	uint32_t outSampleRate;
-        AsyncStreamRequestQueue* ioStreamRequests = nullptr;
+        AsyncStreamCommandQueue* ioStreamRequests = nullptr;
         std::span<StreamContext> streamPool;
         SPSCRingBuffer<uint32_t>* freeStreams = nullptr;
     };
@@ -28,11 +28,11 @@ namespace dalia {
 
     private:
         void ThreadMain();
-        void ProcessRequest(const AsyncStreamRequest& req);
+        void ProcessRequest(const AsyncStreamCommand& req);
         void FillBuffer(StreamContext& stream, uint32_t bufferIndex);
 
     	uint32_t m_outSampleRate = 0;
-        AsyncStreamRequestQueue* m_ioStreamRequests;
+        AsyncStreamCommandQueue* m_ioStreamRequests;
         std::span<StreamContext> m_streamPool;
         SPSCRingBuffer<uint32_t>* m_freeStreams;
 

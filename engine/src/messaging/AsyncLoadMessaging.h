@@ -6,7 +6,7 @@
 
 namespace dalia {
 
-	struct AsyncLoadRequest {
+	struct AsyncLoadCommand {
 		enum class Type {
 			None,
 
@@ -25,8 +25,8 @@ namespace dalia {
 
 		} data = {};
 
-		static AsyncLoadRequest LoadSound(uint32_t reqId, SoundHandle handle, const char* filepath) {
-			AsyncLoadRequest req;
+		static AsyncLoadCommand LoadSound(uint32_t reqId, SoundHandle handle, const char* filepath) {
+			AsyncLoadCommand req;
 			req.type = Type::LoadSound;
 			req.requestId = reqId;
 
@@ -69,7 +69,7 @@ namespace dalia {
 
 	// --- Queues ---
 
-	using AsyncLoadRequestQueue = SPSCRingBuffer<AsyncLoadRequest>;
+	using AsyncLoadCommandQueue = SPSCRingBuffer<AsyncLoadCommand>;
 	using AsyncLoadEventQueue = SPSCRingBuffer<AsyncLoadEvent>;
 
 }

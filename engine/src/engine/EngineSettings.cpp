@@ -9,7 +9,7 @@ namespace dalia {
 		if (!EngineInternalState::IsInitialized(m_state)) return Result::NotInitialized;
 
 		float clampedGlobalDopplerFactor = std::clamp(globalDopplerFactor, DOPPLER_FACTOR_MIN, DOPPLER_FACTOR_MAX);
-		m_state->mixerCommands->Enqueue(MixerCommand::SetGlobalDopplerFactor(clampedGlobalDopplerFactor));
+		m_state->mixerCommands->Enqueue(AsyncMixerCommand::SetGlobalDopplerFactor(clampedGlobalDopplerFactor));
 
 		return Result::Ok;
 	}

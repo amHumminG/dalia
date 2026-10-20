@@ -14,7 +14,7 @@
 
 namespace dalia {
 
-	class MixerSystem;
+	class AsyncMixerSystem;
 
 	class WasapiOutputDevice : public OutputDevice {
 	public:
@@ -23,20 +23,20 @@ namespace dalia {
 
 		Result Initialize(uint32_t engineSampleRate);
 
-		Result Start(MixerSystem* system) override;
+		Result Start(AsyncMixerSystem* system) override;
 		void Stop() override;
 
 		bool HasFailed() const override;
 
 		const std::string& GetIdentifier() const override;
 		const std::string& GetName() const override;
-		uint32_t GetChannelCount() const override;
+		uint32_t GetChannels() const override;
 		SpeakerLayout GetSpeakerLayout() const override;
 
 	private:
 		void ThreadMain();
 
-		MixerSystem* m_mixerSystem = nullptr;
+		AsyncMixerSystem* m_mixerSystem = nullptr;
 		bool m_mixerIsPriming = true;
 
 		Microsoft::WRL::ComPtr<IMMDevice> m_device;

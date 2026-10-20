@@ -1,4 +1,4 @@
-#include "MixerSystem.h"
+#include "AsyncMixerSystem.h"
 
 #include "dalia/EffectControl.h"
 
@@ -323,7 +323,7 @@ namespace dalia {
 		return block;
 	}
 
-	inline bool HandleVoiceBoundary(Voice& voice, StreamContext* streamPool, AsyncStreamRequestQueue* ioStreamRequests) {
+	inline bool HandleVoiceBoundary(Voice& voice, StreamContext* streamPool, AsyncStreamCommandQueue* ioStreamRequests) {
 		if (voice.soundType == SoundType::Resident) {
 			if (voice.params.isLooping) {
 				voice.cursor -= static_cast<double>(voice.data.resident.frameCount);
@@ -348,7 +348,7 @@ namespace dalia {
 
 			// No exit -> Swap front buffer
 			stream.bufferReady[voice.data.stream.frontBufferIndex].store(false, std::memory_order_release);
-			ioStreamRequests->Push(AsyncStreamRequest::RefillStreamBuffer(
+			ioStreamRequests->Push(AsyncStreamCommand::RefillStreamBuffer(
 				voice.data.stream.streamContextIndex,
 				stream.gen.load(std::memory_order_relaxed),
 				voice.data.stream.frontBufferIndex
@@ -402,7 +402,7 @@ namespace dalia {
 
 	// ------------
 
-    MixerSystem::MixerSystem(const MixerSystemConfig& config)
+    AsyncMixerSystem::AsyncMixerSystem(const MixerSystemConfig& config)
         : m_coordinateSystem(config.coordinateSystem),
 		m_maxSamplesPerPeriod(config.maxSamplesPerPeriod),
 		m_outChannels(config.outChannels),
@@ -429,18 +429,18 @@ namespace dalia {
 		m_masterPeakLimiter.Init(static_cast<float>(m_outSampleRate));
     }
 
-    MixerSystem::~MixerSystem() {
+    AsyncMixerSystem::~AsyncMixerSystem() {
 		Stop();
     }
 
-    void MixerSystem::Start() {
+    void AsyncMixerSystem::Start() {
 		if (m_isRunning.load(std::memory_order_relaxed)) return;
 
 		m_isRunning.store(true, std::memory_order_release);
-		m_thread = std::thread(&MixerSystem::ThreadMain, this);
+		m_thread = std::thread(&AsyncMixerSystem::ThreadMain, this);
     }
 
-    void MixerSystem::Stop() {
+    void AsyncMixerSystem::Stop() {
 		if (!m_isRunning.load(std::memory_order_relaxed)) return;
 
 		m_isRunning.store(false, std::memory_order_release);
@@ -448,7 +448,7 @@ namespace dalia {
 		if (m_thread.joinable()) m_thread.join();
     }
 
-    size_t MixerSystem::ReadDiscardAudio(float* buffer, uint32_t frameCount) {
+    size_t AsyncMixerSystem::ReadDiscardAudio(float* buffer, uint32_t frameCount) {
 		size_t framesRead = m_pcmRingBuffer.PopFrames(buffer, frameCount);
 
 		if (framesRead > 0) {
@@ -459,15 +459,15 @@ namespace dalia {
 		return framesRead;
     }
 
-    bool MixerSystem::DiscardAudio(uint32_t frameCount) {
+    bool AsyncMixerSystem::DiscardAudio(uint32_t frameCount) {
 		return m_pcmRingBuffer.DiscardFrames(frameCount);
     }
 
-    void MixerSystem::Wake() {
+    void AsyncMixerSystem::Wake() {
 		m_wakeSemaphore.release();
     }
 
-    void MixerSystem::SetOutputFormat(uint32_t channels, SpeakerLayout layout) {
+    void AsyncMixerSystem::SetOutputFormat(uint32_t channels, SpeakerLayout layout) {
 		m_suspendRequest.store(true, std::memory_order_seq_cst);
 
 		// Wait for mixer to finish processing audio
@@ -485,7 +485,7 @@ namespace dalia {
 		m_suspendRequest.store(false, std::memory_order_seq_cst);
     }
 
-    void MixerSystem::ThreadMain() {
+    void AsyncMixerSystem::ThreadMain() {
 		PlatformThread::SetCurrentThreadPriority(ThreadPriority::TimeCritical);
 
 		while (m_isRunning.load(std::memory_order_relaxed)) {
@@ -512,11 +512,11 @@ namespace dalia {
 		}
     }
 
-    void MixerSystem::ProcessCommands() {
-        MixerCommand cmd;
+    void AsyncMixerSystem::ProcessCommands() {
+        AsyncMixerCommand cmd;
         while (m_mixerCommands->Pop(cmd)) {
             switch (cmd.type) {
-				case MixerCommand::Type::AllocateVoice: {
+				case AsyncMixerCommand::Type::AllocateVoice: {
 	            	Voice& voice = m_voicePool[cmd.targetIndex];
 
 	            	voice.gen = cmd.targetGen;
@@ -524,14 +524,14 @@ namespace dalia {
 	            	voice.targetState = VoiceState::Inactive;
 		            break;
 	            }
-				case MixerCommand::Type::FreeVoice: {
+				case AsyncMixerCommand::Type::FreeVoice: {
 	            	Voice& voice = m_voicePool[cmd.targetIndex];
 	            	if (voice.gen != cmd.targetGen) break;
 
 	            	voice.Reset();
 	            	break;
 				}
-	            case MixerCommand::Type::PrepareVoiceResident: {
+	            case AsyncMixerCommand::Type::PrepareVoiceResident: {
 	            	Voice& voice = m_voicePool[cmd.targetIndex];
 	            	if (voice.gen != cmd.targetGen || voice.isExiting) break;
 
@@ -545,7 +545,7 @@ namespace dalia {
 	            	voice.sampleRate = cmd.data.prepResident.sampleRate;
 	            	break;
 	            }
-				case MixerCommand::Type::PrepareVoiceStreaming: {
+				case AsyncMixerCommand::Type::PrepareVoiceStreaming: {
 	            	Voice& voice = m_voicePool[cmd.targetIndex];
 	            	if (voice.gen != cmd.targetGen || voice.isExiting) break;
 
@@ -560,7 +560,7 @@ namespace dalia {
 					voice.sampleRate = cmd.data.prepStreaming.sampleRate;
 	            	break;
 	            }
-				case MixerCommand::Type::SeekVoice: {
+				case AsyncMixerCommand::Type::SeekVoice: {
 	            	Voice& voice = m_voicePool[cmd.targetIndex];
 	            	if (voice.gen != cmd.targetGen || voice.isExiting) break;
 
@@ -568,21 +568,21 @@ namespace dalia {
 	            	voice.pendingSeekFrame = cmd.data.seek.seekFrame;
 	            	break;
 	            }
-				case MixerCommand::Type::PlayVoice: {
+				case AsyncMixerCommand::Type::PlayVoice: {
 	            	Voice& voice = m_voicePool[cmd.targetIndex];
 	            	if (voice.gen != cmd.targetGen || voice.isExiting) break;
 
 	            	voice.targetState = VoiceState::Playing;
 	            	break;
 				}
-                case MixerCommand::Type::PauseVoice: {
+                case AsyncMixerCommand::Type::PauseVoice: {
 	            	Voice& voice = m_voicePool[cmd.targetIndex];
 	            	if (voice.gen != cmd.targetGen || voice.isExiting) break;
 
 					voice.targetState = VoiceState::Paused;
 	            	break;
                 }
-                case MixerCommand::Type::StopVoice: {
+                case AsyncMixerCommand::Type::StopVoice: {
 	            	Voice& voice = m_voicePool[cmd.targetIndex];
 	            	if (voice.gen != cmd.targetGen || voice.isExiting) break;
 
@@ -590,14 +590,14 @@ namespace dalia {
 	            	voice.isExiting = true;
 	            	break;
                 }
-				case MixerCommand::Type::SetVoiceParent: {
+				case AsyncMixerCommand::Type::SetVoiceParent: {
 	            	Voice& voice = m_voicePool[cmd.targetIndex];
 	            	if (voice.gen != cmd.targetGen || voice.isExiting) break;
 
 					voice.targetBusIndex = cmd.data.setParent.parentIndex;
 	            	break;
 				}
-				case MixerCommand::Type::AllocateBus: {
+				case AsyncMixerCommand::Type::AllocateBus: {
 		            Bus& bus = m_busPool[cmd.targetIndex];
 
 	            	bus.currentParentIndex = cmd.data.setParent.parentIndex;
@@ -607,7 +607,7 @@ namespace dalia {
 					m_isMixOrderDirty = true;
 	            	break;
 	            }
-				case MixerCommand::Type::FreeBus: {
+				case AsyncMixerCommand::Type::FreeBus: {
 	            	uint32_t bIndex = cmd.targetIndex;
 
 	            	m_busPool[bIndex].Reset();
@@ -615,14 +615,14 @@ namespace dalia {
 					m_isMixOrderDirty = true;
 	            	break;
 				}
-				case MixerCommand::Type::SetBusParent: {
+				case AsyncMixerCommand::Type::SetBusParent: {
 	            	uint32_t bIndex = cmd.targetIndex;
 	            	uint32_t bIndexParent = cmd.data.setParent.parentIndex;
 
 	            	m_busPool[bIndex].targetParentIndex = bIndexParent;
 		            break;
 	            }
-				case MixerCommand::Type::AllocateEffect: {
+				case AsyncMixerCommand::Type::AllocateEffect: {
 					uint32_t eIndex = cmd.targetIndex;
 					uint32_t eGen = cmd.targetGen;
 
@@ -637,7 +637,7 @@ namespace dalia {
 					}
 	            	break;
 				}
-            	case MixerCommand::Type::FreeEffect: {
+            	case AsyncMixerCommand::Type::FreeEffect: {
 					uint32_t eIndex = cmd.targetIndex;
 					uint32_t eGen = cmd.targetGen;
 
@@ -652,22 +652,22 @@ namespace dalia {
 					}
 					break;
             	}
-				case MixerCommand::Type::AttachEffect: {
+				case AsyncMixerCommand::Type::AttachEffect: {
 	            	EffectHandle effect = EffectHandle::Create(cmd.targetIndex, cmd.targetGen, cmd.data.effect.type);
 					AttachEffect(effect, cmd.data.effect.busIndex, cmd.data.effect.effectSlot);
 	            	break;
 				}
-				case MixerCommand::Type::FadeDetachEffect: {
+				case AsyncMixerCommand::Type::FadeDetachEffect: {
 					EffectHandle effect = EffectHandle::Create(cmd.targetIndex, cmd.targetGen, cmd.data.effect.type);
 	            	FadeOutEffect(effect, cmd.data.effect.busIndex, cmd.data.effect.effectSlot);
 	            	break;
 				}
-				case MixerCommand::Type::ForceDetachEffect: {
+				case AsyncMixerCommand::Type::ForceDetachEffect: {
 					EffectHandle effect = EffectHandle::Create(cmd.targetIndex, cmd.targetGen, cmd.data.effect.type);
 	            	DetachEffect(effect, cmd.data.effect.busIndex, cmd.data.effect.effectSlot);
 	            	break;
 				}
-            	case MixerCommand::Type::SetGlobalDopplerFactor: {
+            	case AsyncMixerCommand::Type::SetGlobalDopplerFactor: {
             		m_globalDopplerFactor = cmd.data.floatVal.value;
             		break;
             	}
@@ -677,7 +677,7 @@ namespace dalia {
         }
     }
 
-    void MixerSystem::ProcessParams() {
+    void AsyncMixerSystem::ProcessParams() {
 		VoiceParams vParams;
 		for (uint32_t vIndex = 0; vIndex < m_voiceParamBridges.size(); vIndex++) {
 			if (m_voiceParamBridges[vIndex].ConsumeUpdate(vParams)) {
@@ -707,7 +707,7 @@ namespace dalia {
 		}
     }
 
-    void MixerSystem::Render(float* output, uint32_t frameCount) {
+    void AsyncMixerSystem::Render(float* output, uint32_t frameCount) {
         const uint32_t sampleCount = frameCount * m_outChannels;
 
 		// Memory initialization
@@ -742,7 +742,7 @@ namespace dalia {
         std::copy_n(masterBuffer, sampleCount, output); // Output to OS
 	}
 
-    bool MixerSystem::CompileMixGraph() {
+    bool AsyncMixerSystem::CompileMixGraph() {
 		m_mixOrderSize = m_mixGraphCompiler->Compile(m_busPool, m_mixOrder);
 
 		if (m_mixOrderSize == 0) {
@@ -754,7 +754,7 @@ namespace dalia {
 		return true;
     }
 
-    void MixerSystem::ResolveVoiceStates() {
+    void AsyncMixerSystem::ResolveVoiceStates() {
 		for (uint32_t vIndex = 0; vIndex < m_voicePool.size(); vIndex++) {
 			Voice& voice = m_voicePool[vIndex];
 
@@ -801,7 +801,7 @@ namespace dalia {
 							std::memory_order_release)) {
 							// If streaming we can push the request
 
-							m_asyncStreamRequests->Push(AsyncStreamRequest::SeekStream(
+							m_asyncStreamRequests->Push(AsyncStreamCommand::SeekStream(
 								voice.data.stream.streamContextIndex,
 								stream.gen,
 								voice.pendingSeekFrame
@@ -834,7 +834,7 @@ namespace dalia {
 		}
     }
 
-	void MixerSystem::ResolveVoiceAcoustics() {
+	void AsyncMixerSystem::ResolveVoiceAcoustics() {
 		for (uint32_t vIndex = 0; vIndex < m_voicePool.size(); vIndex++) {
 			Voice& voice = m_voicePool[vIndex];
 			if (voice.currentState != VoiceState::Playing) continue;
@@ -971,7 +971,7 @@ namespace dalia {
 		}
     }
 
-	uint32_t MixerSystem::RenderVoices(uint32_t frameCount) {
+	uint32_t AsyncMixerSystem::RenderVoices(uint32_t frameCount) {
 		uint32_t voicesRendered = 0;
 
 		for (uint32_t vIndex = 0; vIndex < m_voicePool.size(); vIndex++) {
@@ -1048,11 +1048,11 @@ namespace dalia {
 		return voicesRendered;
 	}
 
-    void MixerSystem::FreeVoice(uint32_t vIndex) {
+    void AsyncMixerSystem::FreeVoice(uint32_t vIndex) {
     	Voice& voice = m_voicePool[vIndex];
 
     	if (voice.soundType == SoundType::Stream) {
-    		m_asyncStreamRequests->Push(AsyncStreamRequest::ReleaseStream(
+    		m_asyncStreamRequests->Push(AsyncStreamCommand::ReleaseStream(
     			voice.data.stream.streamContextIndex,
     			m_streamPool[voice.data.stream.streamContextIndex].gen
     		));
@@ -1072,11 +1072,11 @@ namespace dalia {
     		DALIA_LOG_DEBUG(LOG_CTX_MIXER, "Voice %d stopped by error.", vIndex);
     	}
 
-    	m_mixerEvents->Push(MixerEvent::VoiceStopped(vIndex, voice.gen, voice.exitCondition));
+    	m_mixerEvents->Push(AsyncMixerEvent::VoiceStopped(vIndex, voice.gen, voice.exitCondition));
     	voice.Reset();
     }
 
-    bool MixerSystem::ResolveBusStates() {
+    bool AsyncMixerSystem::ResolveBusStates() {
 		bool topologyChanged = false;
 
 		for (uint32_t bIndex = 0; bIndex < m_busPool.size(); bIndex++) {
@@ -1106,7 +1106,7 @@ namespace dalia {
 		return topologyChanged;
     }
 
-    uint32_t MixerSystem::RenderBuses(uint32_t frameCount) {
+    uint32_t AsyncMixerSystem::RenderBuses(uint32_t frameCount) {
 		std::span activeMixOrder = m_mixOrder.subspan(0, m_mixOrderSize);
 		uint32_t busesRendered = 0;
 
@@ -1137,7 +1137,7 @@ namespace dalia {
 		return busesRendered;
     }
 
-    void MixerSystem::ApplyBusEffect(float* buffer, EffectSlot& slot, uint32_t frameCount) {
+    void AsyncMixerSystem::ApplyBusEffect(float* buffer, EffectSlot& slot, uint32_t frameCount) {
 		uint32_t eIndex = slot.handle.GetIndex();
 		uint32_t eGen = slot.handle.GetGeneration();
 		EffectType eType = slot.handle.GetType();
@@ -1203,7 +1203,7 @@ namespace dalia {
 		}
     }
 
-    void MixerSystem::AttachEffect(EffectHandle handle, uint32_t busIndex, uint32_t effectSlot) {
+    void AsyncMixerSystem::AttachEffect(EffectHandle handle, uint32_t busIndex, uint32_t effectSlot) {
 		uint32_t eIndex = handle.GetIndex();
 		uint32_t eGen = handle.GetGeneration();
 		EffectType eType = handle.GetType();
@@ -1235,18 +1235,18 @@ namespace dalia {
 		slot.currentMix = GAIN_SILENCE;
     }
 
-    void MixerSystem::DetachEffect(EffectHandle handle, uint32_t busIndex,
+    void AsyncMixerSystem::DetachEffect(EffectHandle handle, uint32_t busIndex,
     	uint32_t effectSlot) {
 		EffectSlot& slot = m_busPool[busIndex].effectSlots[effectSlot];
 		if (slot.handle == handle) slot.Reset();
     }
 
-    void MixerSystem::FadeOutEffect(EffectHandle handle, uint32_t busIndex, uint32_t effectSlot) {
+    void AsyncMixerSystem::FadeOutEffect(EffectHandle handle, uint32_t busIndex, uint32_t effectSlot) {
 		EffectSlot& slot = m_busPool[busIndex].effectSlots[effectSlot];
 		if (slot.handle == handle && slot.state != EffectSlotState::None) slot.state = EffectSlotState::FadingOut;
     }
 
-    void MixerSystem::ConfigureSpeakerLayout(SpeakerLayout layout) {
+    void AsyncMixerSystem::ConfigureSpeakerLayout(SpeakerLayout layout) {
 		for (uint32_t c = 0; c < CHANNELS_MAX; c++) {
 			m_speakerMatrix[c] = { math::Vector3(0, 0, 0), c };
 		}

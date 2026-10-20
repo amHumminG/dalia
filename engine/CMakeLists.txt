@@ -31,10 +31,13 @@ set(ENGINE_FILES
     src/engine/EngineInternalState.cpp
     src/engine/EngineInternalState.h
     src/engine/Engine.cpp
+    src/engine/EngineSettings.cpp
     src/engine/EngineDevice.cpp
     src/engine/EngineAsset.cpp
     src/engine/EngineBus.cpp
     src/engine/EngineEffect.cpp
+    src/engine/EnginePlayback.cpp
+    src/engine/EngineListener.cpp
 
     src/backend/DeviceManager.h
     src/backend/OutputDevice.h
@@ -47,6 +50,7 @@ set(ENGINE_FILES
     src/core/Logger.h
     src/core/Logger.cpp
     src/core/FixedStack.h
+    src/core/FixedQueue.h
     src/core/SPSCRingBuffer.h
     src/core/SPSCRingBufferPCM.h
     src/core/MPSCRingBuffer.h
@@ -77,8 +81,8 @@ set(ENGINE_FILES
     src/mixer/Voice.h
     src/mixer/StreamContext.h
     src/mixer/Bus.h
-    src/mixer/MixerSystem.cpp
-    src/mixer/MixerSystem.h
+    src/mixer/AsyncMixerSystem.cpp
+    src/mixer/AsyncMixerSystem.h
     src/mixer/MixGraphCompiler.cpp
     src/mixer/MixGraphCompiler.h
     src/mixer/effects/Biquad.h
@@ -95,13 +99,15 @@ set(ENGINE_FILES
     src/dsp/Slew.h
     src/dsp/Slew.cpp
 
-    src/resources/ResidentSound.h
-    src/resources/AssetRegistry.cpp
-    src/resources/AssetRegistry.h
-    src/resources/StreamSound.h
-    src/engine/EnginePlayback.cpp
-    src/engine/EngineListener.cpp
-    src/engine/EngineSettings.cpp
+    src/resource/ResidentSound.h
+    src/resource/AssetRegistry.cpp
+    src/resource/AssetRegistry.h
+    src/resource/StreamSound.h
+    src/engine/DeviceCoordinator.h
+    src/engine/DeviceCoordinator.cpp
+    src/async/AsyncDirector.cpp
+    src/async/AsyncDirector.h
+    src/engine/EngineHelpers.h
 )
 
 if (WIN32)

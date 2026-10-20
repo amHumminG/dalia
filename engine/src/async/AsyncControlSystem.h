@@ -10,16 +10,16 @@
 namespace dalia {
 
 	class DeviceManager;
-	class MixerSystem;
+	class AsyncMixerSystem;
 	class NullOutputDevice;
 
 	struct AsyncControlSystemConfig {
-		AsyncControlRequestQueue* requestQueue = nullptr;
+		AsyncControlCommandQueue* requestQueue = nullptr;
 		AsyncControlEventQueue* eventQueue = nullptr;
 
 		DeviceManager* deviceManager = nullptr;
 		NullOutputDevice* nullOutputDevice = nullptr;
-		MixerSystem* mixerSystem = nullptr;
+		AsyncMixerSystem* mixerSystem = nullptr;
 	};
 
 	class AsyncControlSystem {
@@ -34,17 +34,17 @@ namespace dalia {
 
 	private:
 		void ThreadMain();
-		void ProcessRequest(const AsyncControlRequest& req);
+		void ProcessRequest(const AsyncControlCommand& req);
 
 		std::thread m_thread;
 		std::atomic<bool> m_isRunning{false};
 		std::counting_semaphore<COUNTING_SEMAPHORE_SIZE> m_taskSemaphore{0};
 
-		AsyncControlRequestQueue* m_requestQueue = nullptr;
+		AsyncControlCommandQueue* m_requestQueue = nullptr;
 		AsyncControlEventQueue* m_eventQueue = nullptr;
 
 		DeviceManager* m_deviceManager = nullptr;
 		NullOutputDevice* m_nullOutputDevice = nullptr;
-		MixerSystem* m_mixerSystem = nullptr;
+		AsyncMixerSystem* m_mixerSystem = nullptr;
 	};
 }

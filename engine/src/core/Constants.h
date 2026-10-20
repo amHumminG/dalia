@@ -95,8 +95,8 @@ namespace dalia {
     constexpr float FILTER_RESONANCE_MAX = 10.0f;
 
 	// Static engine configs
-	static constexpr size_t MIXER_PROCESSING_BLOCK_FRAMES = 512;
-	static constexpr size_t PCM_RING_BUFFER_CAPACITY = 2 * MIXER_PROCESSING_BLOCK_FRAMES * CHANNELS_MAX;
+	static constexpr size_t MIXER_PROCESSING_BLOCK_FRAMES = 512; // TODO: Remove
+	static constexpr size_t PCM_RING_BUFFER_CAPACITY = 2 * MIXER_PROCESSING_BLOCK_FRAMES * CHANNELS_MAX; // TODO: Remove
 
 	static constexpr size_t STREAM_BUFFER_FRAMES = 16384;
 	static constexpr size_t STREAM_BUFFER_CAPACITY = STREAM_BUFFER_FRAMES * CHANNELS_MAX;

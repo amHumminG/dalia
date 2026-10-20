@@ -7,7 +7,7 @@
 #include "async/AsyncLoadSystem.h"
 #include "async/AsyncStreamSystem.h"
 
-#include "resources/AssetRegistry.h"
+#include "resource/AssetRegistry.h"
 
 #include "mixer/MixerSystem.h"
 #include "mixer/MixGraphCompiler.h"
@@ -18,18 +18,11 @@
 namespace dalia {
 
 	EngineInternalState::EngineInternalState(const EngineConfig& config)
-		: coordinateSystem(config.coordinateSystem), streams(config.streamCapacity), voices(config.voiceCapacity),
+		: asyncDirector(config.advanced.mixerQueueCapacity, config.advanced.streamQueueCapacity,
+			config.advanced.loadQueueCapacity, config.advanced.controlQueueCapacity),
+		coordinateSystem(config.coordinateSystem), streams(config.streamCapacity), voices(config.voiceCapacity),
 		listeners(std::clamp(config.listenerCapacity, LISTENERS_MIN, LISTENERS_MAX)),
 		buses(config.busCapacity), biquads(config.biquadCapacity) {
-
-		// Message Queues
-		mixerCommands			= std::make_unique<MixerCommandQueue>(config.advanced.RealTimeQueueCapacity);
-		mixerEvents				= std::make_unique<MixerEventQueue>(config.advanced.RealTimeQueueCapacity);
-		asyncStreamRequests		= std::make_unique<AsyncStreamRequestQueue>(config.advanced.AsyncStreamQueueCapacity);
-		asyncLoadRequests		= std::make_unique<AsyncLoadRequestQueue>(config.advanced.AsyncLoadQueueCapacity);
-		asyncLoadEvents			= std::make_unique<AsyncLoadEventQueue>(config.advanced.AsyncLoadQueueCapacity);
-		asyncControlRequests	= std::make_unique<SPSCRingBuffer<AsyncControlRequest>>(config.advanced.AsyncControlQueueCapacity);
-		asyncControlEvents		= std::make_unique<SPSCRingBuffer<AsyncControlEvent>>(config.advanced.AsyncControlQueueCapacity);
 
 		// Mixing
 		mixGraphCompiler	= std::make_unique<MixGraphCompiler>(config.busCapacity);
@@ -117,12 +110,12 @@ namespace dalia {
 			eMirror.effectSlot = NO_INDEX;
 
 			if (fadeOut) {
-				mixerCommands->Enqueue(MixerCommand::FadeDetachEffect(
+				mixerCommands->Enqueue(AsyncMixerCommand::FadeDetachEffect(
 					effect.GetIndex(), eMirror.gen, effect.GetType(), bIndex, slot
 				));
 			}
 			else {
-				mixerCommands->Enqueue(MixerCommand::ForceDetachEffect(
+				mixerCommands->Enqueue(AsyncMixerCommand::ForceDetachEffect(
 					effect.GetIndex(), eMirror.gen, effect.GetType(), bIndex, slot
 				));
 			}

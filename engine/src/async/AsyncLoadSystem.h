@@ -13,7 +13,7 @@ namespace dalia {
     struct AsyncLoadSystemConfig {
     	uint32_t outSampleRate = 0;
 
-        AsyncLoadRequestQueue* ioLoadRequests = nullptr;
+        AsyncLoadCommandQueue* ioLoadRequests = nullptr;
         AsyncLoadEventQueue* ioLoadEvents = nullptr;
 
         AssetRegistry*  assetRegistry = nullptr;
@@ -31,11 +31,11 @@ namespace dalia {
 
     private:
         void ThreadMain();
-        void ProcessRequest(const AsyncLoadRequest& request);
+        void ProcessRequest(const AsyncLoadCommand& request);
 
     	uint32_t m_outSampleRate = 0;
 
-        AsyncLoadRequestQueue* m_ioLoadRequests;
+        AsyncLoadCommandQueue* m_ioLoadRequests;
         AsyncLoadEventQueue* m_ioLoadEvents;
 
         AssetRegistry* m_assetRegistry;

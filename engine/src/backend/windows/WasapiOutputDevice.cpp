@@ -1,6 +1,6 @@
 #include "backend/windows/WasapiOutputDevice.h"
 
-#include "mixer/MixerSystem.h"
+#include "mixer/AsyncMixerSystem.h"
 #include "core/Logger.h"
 
 #include <cstring>
@@ -183,7 +183,7 @@ namespace dalia {
 		return Result::Ok;
 	}
 
-	Result WasapiOutputDevice::Start(MixerSystem* system) {
+	Result WasapiOutputDevice::Start(AsyncMixerSystem* system) {
 		if (m_isRunning.load(std::memory_order_relaxed)) return Result::Ok;
 
 		m_mixerSystem = system;
@@ -229,7 +229,7 @@ namespace dalia {
 		return m_name;
 	}
 
-	uint32_t WasapiOutputDevice::GetChannelCount() const {
+	uint32_t WasapiOutputDevice::GetChannels() const {
 		return m_channels;
 	}
 

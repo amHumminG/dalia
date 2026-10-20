@@ -10,7 +10,7 @@ namespace dalia {
 
 	class OutputDevice;
 
-	struct AsyncControlRequest {
+	struct AsyncControlCommand {
 		enum class Type : uint8_t {
 			None,
 
@@ -25,9 +25,9 @@ namespace dalia {
 			} swapOutputDevice;
 		} data = {};
 
-		static AsyncControlRequest SwapOutputDevice(OutputDevice* oldDevice, const char* targetOutputDeviceId,
+		static AsyncControlCommand SwapOutputDevice(OutputDevice* oldDevice, const char* targetOutputDeviceId,
 			uint32_t sampleRate) {
-			AsyncControlRequest req;
+			AsyncControlCommand req;
 			req.type = Type::SwapOutputDevice;
 			req.data.swapOutputDevice.oldDevice = oldDevice;
 			snprintf(req.data.swapOutputDevice.targetOutputDeviceId, MAX_STR_LEN_DEVICE, "%s", targetOutputDeviceId);
@@ -61,6 +61,6 @@ namespace dalia {
 
 	// --- Queues ---
 
-	using AsyncControlRequestQueue = SPSCRingBuffer<AsyncControlRequest>;
+	using AsyncControlCommandQueue = SPSCRingBuffer<AsyncControlCommand>;
 	using AsyncControlEventQueue = SPSCRingBuffer<AsyncControlEvent>;
 }

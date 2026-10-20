@@ -34,7 +34,7 @@ namespace dalia {
 
     private:
         friend class Engine;
-        friend class MixerSystem;
+        friend class AsyncMixerSystem;
         friend struct EngineInternalState;
 
         static EffectHandle Create(uint32_t index, uint32_t generation, EffectType type) {

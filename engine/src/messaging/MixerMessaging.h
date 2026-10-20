@@ -8,7 +8,7 @@
 
 namespace dalia {
 
-	struct MixerCommand {
+	struct AsyncMixerCommand {
 		enum class Type : uint8_t {
 			None,
 
@@ -89,25 +89,25 @@ namespace dalia {
 
 		} data = {};
 
-		static MixerCommand AllocateVoice(uint32_t index, uint32_t gen) {
-			MixerCommand cmd{};
+		static AsyncMixerCommand AllocateVoice(uint32_t index, uint32_t gen) {
+			AsyncMixerCommand cmd{};
 			cmd.type = Type::AllocateVoice;
 			cmd.targetIndex = index;
 			cmd.targetGen = gen;
 			return cmd;
 		}
 
-		static MixerCommand FreeVoice(uint32_t index, uint32_t gen) {
-			MixerCommand cmd{};
+		static AsyncMixerCommand FreeVoice(uint32_t index, uint32_t gen) {
+			AsyncMixerCommand cmd{};
 			cmd.type = Type::FreeVoice;
 			cmd.targetIndex = index;
 			cmd.targetGen = gen;
 			return cmd;
 		}
 
-		static MixerCommand PrepareVoiceResident(uint32_t index, uint32_t gen, const float* dataPtr,
+		static AsyncMixerCommand PrepareVoiceResident(uint32_t index, uint32_t gen, const float* dataPtr,
 			uint32_t frameCount, uint32_t channels, uint32_t sampleRate) {
-			MixerCommand cmd{};
+			AsyncMixerCommand cmd{};
 			cmd.type = Type::PrepareVoiceResident;
 			cmd.targetIndex = index;
 			cmd.targetGen = gen;
@@ -119,9 +119,9 @@ namespace dalia {
 			return cmd;
 		}
 
-		static MixerCommand PrepareVoiceStreaming(uint32_t index, uint32_t gen, uint32_t streamIndex, uint32_t streamGen,
+		static AsyncMixerCommand PrepareVoiceStreaming(uint32_t index, uint32_t gen, uint32_t streamIndex, uint32_t streamGen,
 			uint32_t channels, uint32_t sampleRate) {
-			MixerCommand cmd{};
+			AsyncMixerCommand cmd{};
 			cmd.type = Type::PrepareVoiceStreaming;
 			cmd.targetIndex = index;
 			cmd.targetGen = gen;
@@ -133,8 +133,8 @@ namespace dalia {
 			return cmd;
 		}
 
-		static MixerCommand SeekVoice(uint32_t index, uint32_t gen, uint32_t seekFrame) {
-			MixerCommand cmd{};
+		static AsyncMixerCommand SeekVoice(uint32_t index, uint32_t gen, uint32_t seekFrame) {
+			AsyncMixerCommand cmd{};
 			cmd.type = Type::SeekVoice;
 			cmd.targetIndex = index;
 			cmd.targetGen = gen;
@@ -142,32 +142,32 @@ namespace dalia {
 			return cmd;
 		}
 
-		static MixerCommand PlayVoice(uint32_t index, uint32_t gen) {
-			MixerCommand cmd{};
+		static AsyncMixerCommand PlayVoice(uint32_t index, uint32_t gen) {
+			AsyncMixerCommand cmd{};
 			cmd.type = Type::PlayVoice;
 			cmd.targetIndex = index;
 			cmd.targetGen = gen;
 			return cmd;
 		}
 
-		static MixerCommand PauseVoice(uint32_t index, uint32_t gen) {
-			MixerCommand cmd{};
+		static AsyncMixerCommand PauseVoice(uint32_t index, uint32_t gen) {
+			AsyncMixerCommand cmd{};
 			cmd.type = Type::PauseVoice;
 			cmd.targetIndex = index;
 			cmd.targetGen = gen;
 			return cmd;
 		}
 
-		static MixerCommand StopVoice(uint32_t index, uint32_t gen) {
-			MixerCommand cmd{};
+		static AsyncMixerCommand StopVoice(uint32_t index, uint32_t gen) {
+			AsyncMixerCommand cmd{};
 			cmd.type = Type::StopVoice;
 			cmd.targetIndex = index;
 			cmd.targetGen = gen;
 			return cmd;
 		}
 
-		static MixerCommand SetVoiceParent(uint32_t index, uint32_t gen, uint32_t parentBusIndex) {
-			MixerCommand cmd{};
+		static AsyncMixerCommand SetVoiceParent(uint32_t index, uint32_t gen, uint32_t parentBusIndex) {
+			AsyncMixerCommand cmd{};
 			cmd.type = Type::SetVoiceParent;
 			cmd.targetIndex = index;
 			cmd.targetGen = gen;
@@ -175,31 +175,31 @@ namespace dalia {
 			return cmd;
 		}
 
-		static MixerCommand AllocateBus(uint32_t index, uint32_t parentIndex) {
-			MixerCommand cmd{};
+		static AsyncMixerCommand AllocateBus(uint32_t index, uint32_t parentIndex) {
+			AsyncMixerCommand cmd{};
 			cmd.type = Type::AllocateBus;
 			cmd.targetIndex = index;
 			cmd.data.setParent.parentIndex = parentIndex;
 			return cmd;
 		}
 
-		static MixerCommand FreeBus(uint32_t index) {
-			MixerCommand cmd{};
+		static AsyncMixerCommand FreeBus(uint32_t index) {
+			AsyncMixerCommand cmd{};
 			cmd.type = Type::FreeBus;
 			cmd.targetIndex = index;
 			return cmd;
 		}
 
-		static MixerCommand SetBusParent(uint32_t index, uint32_t parentIndex) {
-			MixerCommand cmd{};
+		static AsyncMixerCommand SetBusParent(uint32_t index, uint32_t parentIndex) {
+			AsyncMixerCommand cmd{};
 			cmd.type = Type::SetBusParent;
 			cmd.targetIndex = index;
 			cmd.data.setParent.parentIndex = parentIndex;
 			return cmd;
 		}
 
-		static MixerCommand AllocateEffect(EffectType type, uint32_t index, uint32_t gen) {
-			MixerCommand cmd{};
+		static AsyncMixerCommand AllocateEffect(EffectType type, uint32_t index, uint32_t gen) {
+			AsyncMixerCommand cmd{};
 			cmd.type = Type::AllocateEffect;
 			cmd.targetIndex = index;
 			cmd.targetGen = gen;
@@ -207,8 +207,8 @@ namespace dalia {
 			return cmd;
 		}
 
-		static MixerCommand FreeEffect(uint32_t index, uint32_t gen, EffectType type) {
-			MixerCommand cmd{};
+		static AsyncMixerCommand FreeEffect(uint32_t index, uint32_t gen, EffectType type) {
+			AsyncMixerCommand cmd{};
 			cmd.type = Type::FreeEffect;
 			cmd.targetIndex = index;
 			cmd.targetGen = gen;
@@ -216,9 +216,9 @@ namespace dalia {
 			return cmd;
 		}
 
-		static MixerCommand AttachEffect(uint32_t index, uint32_t gen, EffectType type,
+		static AsyncMixerCommand AttachEffect(uint32_t index, uint32_t gen, EffectType type,
 			uint32_t busIndex, uint32_t effectSlot) {
-			MixerCommand cmd{};
+			AsyncMixerCommand cmd{};
 			cmd.type = Type::AttachEffect;
 			cmd.targetIndex = index;
 			cmd.targetGen = gen;
@@ -228,9 +228,9 @@ namespace dalia {
 			return cmd;
 		}
 
-		static MixerCommand FadeDetachEffect(uint32_t index, uint32_t gen, EffectType type,
+		static AsyncMixerCommand FadeDetachEffect(uint32_t index, uint32_t gen, EffectType type,
 			uint32_t busIndex, uint32_t effectSlot) {
-			MixerCommand cmd{};
+			AsyncMixerCommand cmd{};
 			cmd.type = Type::FadeDetachEffect;
 			cmd.targetIndex = index;
 			cmd.targetGen = gen;
@@ -240,9 +240,9 @@ namespace dalia {
 			return cmd;
 		}
 
-		static MixerCommand ForceDetachEffect(uint32_t index, uint32_t gen, EffectType type,
+		static AsyncMixerCommand ForceDetachEffect(uint32_t index, uint32_t gen, EffectType type,
 			uint32_t busIndex, uint32_t effectSlot) {
-			MixerCommand cmd{};
+			AsyncMixerCommand cmd{};
 			cmd.type = Type::ForceDetachEffect;
 			cmd.targetIndex = index;
 			cmd.targetGen = gen;
@@ -252,15 +252,15 @@ namespace dalia {
 			return cmd;
 		}
 
-		static MixerCommand SetGlobalDopplerFactor(float value) {
-			MixerCommand cmd{};
+		static AsyncMixerCommand SetGlobalDopplerFactor(float value) {
+			AsyncMixerCommand cmd{};
 			cmd.type = Type::SetGlobalDopplerFactor;
 			cmd.data.floatVal.value = value;
 			return cmd;
 		}
 	};
 
-	struct  MixerEvent {
+	struct  AsyncMixerEvent {
 		enum class Type {
 			None,
 
@@ -284,8 +284,8 @@ namespace dalia {
 
 		} data = {};
 
-		static MixerEvent VoiceStopped(uint32_t index, uint32_t generation, PlaybackExitCondition exitCondition) {
-			MixerEvent ev;
+		static AsyncMixerEvent VoiceStopped(uint32_t index, uint32_t generation, PlaybackExitCondition exitCondition) {
+			AsyncMixerEvent ev;
 			ev.type = Type::VoiceStopped;
 			ev.data.voice.index = index;
 			ev.data.voice.generation = generation;
@@ -297,20 +297,20 @@ namespace dalia {
 	// --- Queues ---
 
 	// Wrapper due to the need for a staging area
-	class MixerCommandQueue {
+	class AsyncMixerCommandQueue {
 	public:
-		MixerCommandQueue(size_t commandCapacity);
-		~MixerCommandQueue() = default;
+		AsyncMixerCommandQueue(size_t commandCapacity);
+		~AsyncMixerCommandQueue() = default;
 
-		void Enqueue(const MixerCommand& command);
+		void Enqueue(const AsyncMixerCommand& command);
 		void Dispatch();
 
-		bool Pop(MixerCommand& command);
+		bool Pop(AsyncMixerCommand& command);
 
 	private:
-		std::vector<MixerCommand> m_stagingArea;
-		SPSCRingBuffer<MixerCommand> m_buffer;
+		std::vector<AsyncMixerCommand> m_stagingArea;
+		SPSCRingBuffer<AsyncMixerCommand> m_buffer;
 	};
 
-	using MixerEventQueue = SPSCRingBuffer<MixerEvent>;
+	using AsyncMixerEventQueue = SPSCRingBuffer<AsyncMixerEvent>;
 }

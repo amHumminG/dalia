@@ -5,7 +5,7 @@
 
 namespace dalia {
 
-    struct AsyncStreamRequest {
+    struct AsyncStreamCommand {
         enum class Type {
             None,
             PrepareStream,
@@ -32,8 +32,8 @@ namespace dalia {
             } streamSeek;
         } data = {};
 
-        static AsyncStreamRequest PrepareStream(uint32_t index, uint32_t gen, const char* path) {
-            AsyncStreamRequest req;
+        static AsyncStreamCommand PrepareStream(uint32_t index, uint32_t gen, const char* path) {
+            AsyncStreamCommand req;
             req.type = Type::PrepareStream;
             req.index = index;
         	req.gen = gen;
@@ -41,16 +41,16 @@ namespace dalia {
             return req;
         }
 
-        static AsyncStreamRequest ReleaseStream(uint32_t index, uint32_t gen) {
-            AsyncStreamRequest req;
+        static AsyncStreamCommand ReleaseStream(uint32_t index, uint32_t gen) {
+            AsyncStreamCommand req;
             req.type = Type::ReleaseStream;
             req.index = index;
         	req.gen = gen;
             return req;
         }
 
-        static AsyncStreamRequest RefillStreamBuffer(uint32_t index, uint32_t gen, uint32_t bufferIndex) {
-            AsyncStreamRequest req;
+        static AsyncStreamCommand RefillStreamBuffer(uint32_t index, uint32_t gen, uint32_t bufferIndex) {
+            AsyncStreamCommand req;
             req.type = Type::RefillStreamBuffer;
             req.index = index;
             req.gen = gen;
@@ -58,8 +58,8 @@ namespace dalia {
             return req;
         }
 
-        static AsyncStreamRequest SeekStream(uint32_t index, uint32_t gen, uint32_t seekFrame) {
-            AsyncStreamRequest req{};
+        static AsyncStreamCommand SeekStream(uint32_t index, uint32_t gen, uint32_t seekFrame) {
+            AsyncStreamCommand req{};
             req.type = Type::SeekStream;
             req.index = index;
             req.gen = gen;
@@ -70,5 +70,5 @@ namespace dalia {
 
 	// --- Queues ---
 
-	using AsyncStreamRequestQueue = MPSCRingBuffer<AsyncStreamRequest>;
+	using AsyncStreamCommandQueue = MPSCRingBuffer<AsyncStreamCommand>;
 }

@@ -30,7 +30,7 @@
 #include "mixer/effects/Biquad.h"
 #include "mixer/MixGraphCompiler.h"
 #include "mixer/Listener.h"
-#include "mixer/MixerSystem.h"
+#include "mixer/AsyncMixerSystem.h"
 #include "mixer/Speakers.h"
 #include "mixer/effects/EffectTraits.h"
 
@@ -40,6 +40,8 @@
 #include "resources/AssetRegistry.h"
 #include "resources/ResidentSound.h"
 #include "resources/StreamSound.h"
+
+#include "engine/EngineHelpers.h"
 
 #include "common/StringID.h"
 
@@ -73,7 +75,7 @@ namespace dalia {
 
 				if (state->outputDevice) {
 					state->activeOutputDevice = state->outputDevice.get();
-					state->outChannels = state->activeOutputDevice->GetChannelCount();
+					state->outChannels = state->activeOutputDevice->GetChannels();
 					state->speakerLayout = state->activeOutputDevice->GetSpeakerLayout();
 
 					std::string layout;
@@ -89,7 +91,7 @@ namespace dalia {
 				else {
 					// Both the requested device and the OS default device failed
 					state->activeOutputDevice = state->nullOutputDevice.get(); // Fall back to null device
-					state->outChannels = state->activeOutputDevice->GetChannelCount();
+					state->outChannels = state->activeOutputDevice->GetChannels();
 					state->speakerLayout = state->activeOutputDevice->GetSpeakerLayout();
 					state->targetOutputDeviceId = "default";
 
@@ -132,7 +134,7 @@ namespace dalia {
 			state->activeOutputDevice = nullptr; // Temporarily without output
 
 			// Push swap request to async control system
-			AsyncControlRequest req = AsyncControlRequest::SwapOutputDevice(
+			AsyncControlCommand req = AsyncControlCommand::SwapOutputDevice(
 				deviceToKill,
 				state->targetOutputDeviceId.c_str(),
 				state->outSampleRate
@@ -148,223 +150,16 @@ namespace dalia {
 		}
 	}
 
-	static Result DispatchStreamPrepare(EngineInternalState* state, const char* filepath, uint32_t& streamIndex,
-		uint32_t& streamGen) {
-		if (!state->streams.Allocate(streamIndex)) return Result::StreamCapacityReached;
-		streamGen = state->streams.Get(streamIndex).gen.load(std::memory_order_acquire); // Read the current generation
 
-		// Send I/O request to prepare stream
-		state->streams.Get(streamIndex).state.store(StreamState::Preparing, std::memory_order_release);
-		AsyncStreamRequest req = AsyncStreamRequest::PrepareStream(streamIndex,state->streams.Get(streamIndex).gen ,filepath);
-		if (!state->asyncStreamRequests->Push(req)) {
-			// Rollback
-			state->streams.Get(streamIndex).state.store(StreamState::Free, std::memory_order_release);
-			state->streams.Free(streamIndex);
-
-			return Result::IoStreamRequestQueueFull;
-		}
-
-		return Result::Ok;
-	}
-
-	static void ProcessMixerEvent(EngineInternalState* state,  MixerEvent& ev) {
-		switch (ev.type) {
-			case MixerEvent::Type::VoiceStopped: {
-				uint32_t vIndex = ev.data.voice.index;
-				uint32_t vGen = ev.data.voice.generation;
-				PlaybackHandle forgedHandle = state->ForgePlaybackHandle(vIndex, vGen);
-
-				Result res = state->ModifyVoice(forgedHandle, [&](VoiceMirror& vMirror, uint32_t) -> Result {
-					PlaybackExitCallback callback = vMirror.onStopCallback;
-					vMirror.Reset();
-					state->voices.Free(vIndex);
-
-					DALIA_LOG_DEBUG(LOG_CTX_CORE, "Freed voice %d.", vIndex);
-					if (callback) callback(forgedHandle, ev.data.voice.exitCondition);
-
-					return Result::Ok;
-				});
-
-				if (res == Result::Ok) {
-					// --- Check garbage collection ---
-					PlaybackHandle stopped = EngineInternalState::ForgePlaybackHandle(vIndex, vGen);
-					for (auto it = state->pendingSoundUnloads.begin(); it != state->pendingSoundUnloads.end(); ) {
-						auto& waitingList = it->voicesToStop;
-
-						for (size_t i = 0; i < waitingList.size(); i++) {
-							if (waitingList[i] == stopped) {
-								waitingList[i] = waitingList.back();
-								waitingList.pop_back();
-								break;
-							}
-						}
-
-						if (waitingList.empty()) {
-							state->assetRegistry->FreeSound(it->handle);
-
-							const char* typeStr = (it->handle.GetType() == SoundType::Resident) ? "resident" : "stream";
-							DALIA_LOG_DEBUG(LOG_CTX_CORE, "Unloaded %s sound with handle %d (deferred)",
-								typeStr, it->handle.GetRawId());
-
-							it = state->pendingSoundUnloads.erase(it);
-						}
-						else it++;
-					}
-				}
-				break;
-			}
-			default: break;
-		}
-	}
-
-	static void ProcessAsyncLoadEvent(EngineInternalState* state, const AsyncLoadEvent& ev) {
-		// Execute user-registered callback
-		if (auto it = state->loadCallbacks.find(ev.requestId); it != state->loadCallbacks.end()) {
-			if (it->second) {
-				it->second(ev.requestId, ev.result); // Call it
-			}
-			state->loadCallbacks.erase(it);
-		}
-
-		switch (ev.type) {
-			case AsyncLoadEvent::Type::SoundLoaded: {
-				// Process deferred playbacks
-				for (auto it = state->pendingPlaybacks.begin(); it != state->pendingPlaybacks.end(); ) {
-					if (it->assetRawId == ev.assetRawId) {
-						uint32_t vIndex = EngineInternalState::GetPlaybackIndex(it->playback);
-						uint32_t vGen = EngineInternalState::GetPlaybackGeneration(it->playback);
-						Result res = state->Validate(it->playback);
-						VoiceMirror& vMirror = state->voices.GetMirror(vIndex);
-
-						if (res == Result::Ok && vMirror.pendingLoad) {
-							SoundHandle handle = state->ForgeSoundHandle(ev.assetRawId);
-							SoundType soundType = handle.GetType();
-							uint32_t frameCount = 0;
-							uint32_t channels = 0;
-							uint32_t sampleRate = 0;
-
-							if (soundType == SoundType::Resident) {
-								ResidentSound* sound = state->assetRegistry->GetResidentSound(handle);
-
-								MixerCommand cmd = MixerCommand::PrepareVoiceResident(
-									vIndex,
-									vGen,
-									sound->pcmData.data(),
-									sound->frameCount,
-									sound->channels,
-									sound->sampleRate
-								);
-								state->mixerCommands->Enqueue(cmd);
-
-								frameCount = sound->frameCount;
-								channels = sound->channels;
-								sampleRate = sound->sampleRate;
-							}
-							else if (soundType == SoundType::Stream) {
-								StreamSound* sound = state->assetRegistry->GetStreamSound(handle);
-
-								uint32_t sIndex;
-								uint32_t sGen;
-								Result streamResult = DispatchStreamPrepare(state, sound->filepath, sIndex, sGen);
-								if (streamResult != Result::Ok) {
-									DALIA_LOG_ERR(LOG_CTX_CORE,
-										"Aborting deferred playback. Stream preparation failed.");
-
-									if (vMirror.onStopCallback) {
-										PlaybackHandle playback = state->ForgePlaybackHandle(
-											vIndex,
-											vGen
-										);
-										vMirror.onStopCallback(playback, PlaybackExitCondition::Error);
-									}
-
-									vMirror.Reset();
-									state->voices.Free(vIndex);
-									it = state->pendingPlaybacks.erase(it);
-
-									continue;
-								}
-
-								MixerCommand cmd = MixerCommand::PrepareVoiceStreaming(
-									vIndex,
-									vGen,
-									sIndex,
-									sGen,
-									sound->channels,
-									sound->sampleRate
-								);
-								state->mixerCommands->Enqueue(cmd);
-
-								frameCount = sound->frameCount;
-								channels = sound->channels;
-								sampleRate = sound->sampleRate;
-							}
-
-							vMirror.pendingLoad = false;
-							vMirror.frameCount = frameCount;
-							vMirror.channels = channels;
-							vMirror.sampleRate = sampleRate;
-
-							// Send voice commands based on current vMirror state
-							if (vMirror.state == VoiceState::Playing) {
-								state->mixerCommands->Enqueue(MixerCommand::PlayVoice(vIndex, vGen));
-							}
-							else if (vMirror.state == VoiceState::Paused) {
-								state->mixerCommands->Enqueue(MixerCommand::PauseVoice(vIndex, vGen));
-							}
-							else if (vMirror.state == VoiceState::Stopped) {
-								state->mixerCommands->Enqueue(MixerCommand::StopVoice(vIndex, vGen));
-							}
-						}
-
-						it = state->pendingPlaybacks.erase(it);
-					}
-					else {
-						it++;
-					}
-				}
-				break;
-			}
-			case AsyncLoadEvent::Type::SoundLoadFailed: {
-				for (auto it = state->pendingPlaybacks.begin(); it != state->pendingPlaybacks.end(); ) {
-					if (it->assetRawId == ev.assetRawId) {
-						state->ModifyVoice(it->playback, [&](VoiceMirror& vMirror, uint32_t vIndex) -> Result {
-							DALIA_LOG_ERR(LOG_CTX_CORE, "Aborting deferred playback. Sound failed to load.");
-
-							if (vMirror.onStopCallback) {
-								vMirror.onStopCallback(it->playback, PlaybackExitCondition::Error);
-							}
-
-							state->mixerCommands->Enqueue(MixerCommand::FreeVoice(vIndex,
-								EngineInternalState::GetPlaybackGeneration(it->playback)));
-							vMirror.Reset();
-							state->voices.Free(vIndex);
-
-							return Result::Ok;
-						});
-
-						it = state->pendingPlaybacks.erase(it);
-					}
-					else {
-						it++;
-					}
-				}
-				break;
-			}
-			default:
-				break;
-		}
-	}
 
 	/// @brief Tears down the engine internal state.
 	/// @param state The engine internal state.
 	static void TeardownInternal(EngineInternalState* state) {
 		if (!state) return;
 
-		if (state->outputDevice)		state->outputDevice->Stop();
-		if (state->nullOutputDevice)	state->nullOutputDevice->Stop();
+		state->deviceCoordinator.Shutdown();
 
-		if (state->mixerSystem)			state->mixerSystem->Stop();
+		if (state->asyncMixerSystem)			state->asyncMixerSystem->Stop();
 		if (state->asyncLoadSystem)		state->asyncLoadSystem->Stop();
 		if (state->asyncStreamSystem)	state->asyncStreamSystem->Stop();
 		if (state->asyncControlSystem)	state->asyncControlSystem->Stop();
@@ -434,7 +229,7 @@ namespace dalia {
 			m_state->activeOutputDevice = m_state->outputDevice.get();
 
 			m_state->nullOutputDevice->SetOutputFormat(
-				m_state->activeOutputDevice->GetChannelCount(),
+				m_state->activeOutputDevice->GetChannels(),
 				m_state->activeOutputDevice->GetSpeakerLayout()
 			);
 		}
@@ -442,7 +237,7 @@ namespace dalia {
 			m_state->activeOutputDevice = m_state->nullOutputDevice.get();
 		}
 
-		m_state->outChannels = m_state->activeOutputDevice->GetChannelCount();
+		m_state->outChannels = m_state->activeOutputDevice->GetChannels();
 		m_state->speakerLayout = m_state->activeOutputDevice->GetSpeakerLayout();
 
 		if (m_state->outputDevice) {
@@ -489,7 +284,7 @@ namespace dalia {
 		mixerConfig.mixGraphCompiler		= m_state->mixGraphCompiler.get();
 		mixerConfig.mixOrder				= std::span(m_state->mixOrder.get(), m_state->buses.Capacity());
 		mixerConfig.dspScratchBuffer		= std::span(m_state->mixScratchBuffer.get(), m_state->maxSamplesPerPeriod);
-		m_state->mixerSystem = std::make_unique<MixerSystem>(mixerConfig);
+		m_state->asyncMixerSystem = std::make_unique<AsyncMixerSystem>(mixerConfig);
 
 		AsyncStreamSystemConfig asyncStreamConfig;
 		asyncStreamConfig.wakeupPeriodMicroseconds = STREAM_SYSTEM_WAKEUP_PERIOD_MICROSECONDS;
@@ -511,16 +306,16 @@ namespace dalia {
 		asyncControlSystemConfig.eventQueue = m_state->asyncControlEvents.get();
 		asyncControlSystemConfig.deviceManager = m_state->deviceManager.get();
 		asyncControlSystemConfig.nullOutputDevice = m_state->nullOutputDevice.get();
-		asyncControlSystemConfig.mixerSystem = m_state->mixerSystem.get();
+		asyncControlSystemConfig.mixerSystem = m_state->asyncMixerSystem.get();
 		m_state->asyncControlSystem = std::make_unique<AsyncControlSystem>(asyncControlSystemConfig);
 
 		// --- SYSTEMS START ---
-		m_state->mixerSystem->Start();
+		m_state->asyncMixerSystem->Start();
 		m_state->asyncStreamSystem->Start();
 		m_state->asyncLoadSystem->Start();
 		m_state->asyncControlSystem->Start();
 
-		res = m_state->activeOutputDevice->Start(m_state->mixerSystem.get());
+		res = m_state->activeOutputDevice->Start(m_state->asyncMixerSystem.get());
 		if (res != Result::Ok) {
 			DALIA_LOG_CRIT(LOG_CTX_API, "Failed to initialize engine. Failed to start audio thread.");
 			TeardownInternal(m_state);
@@ -550,7 +345,7 @@ namespace dalia {
 		ProcessOutputDeviceSwapping(m_state);
 
 		// --- Process Event Inbox ---
-		MixerEvent RtEv;
+		AsyncMixerEvent RtEv;
 		while (m_state->mixerEvents->Pop(RtEv)) ProcessMixerEvent(m_state, RtEv);
 
 		AsyncLoadEvent loadEv;

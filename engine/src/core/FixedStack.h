@@ -6,11 +6,7 @@ namespace dalia {
     template<typename T>
     class FixedStack {
     public:
-        FixedStack(size_t capacity) {
-            m_capacity = capacity;
-            m_buffer = std::make_unique<T[]>(m_capacity);
-        }
-
+        FixedStack(size_t capacity) : m_capacity(capacity), m_buffer(std::make_unique<T[]>(capacity)) {}
         ~FixedStack() = default;
 
         FixedStack(const FixedStack&) = delete;

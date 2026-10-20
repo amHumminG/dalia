@@ -51,7 +51,7 @@ namespace dalia {
 
 		DALIA_LOG_DEBUG(LOG_CTX_API, "Created bus with routing: %s (index: %d) -> %s (index: %d).",
 			identifier, bIndex, parentIdentifier, bIndexParent);
-		m_state->mixerCommands->Enqueue(MixerCommand::AllocateBus(bIndex, bIndexParent));
+		m_state->mixerCommands->Enqueue(AsyncMixerCommand::AllocateBus(bIndex, bIndexParent));
 
 		return Result::Ok;
 	}
@@ -85,7 +85,7 @@ namespace dalia {
 			BusMirror* bMirrorChild = &m_state->buses.GetMirror(i);
 			if (bMirrorChild->parentBusIndex == bIndex) {
 				bMirrorChild->parentBusIndex = NO_PARENT;
-				m_state->mixerCommands->Enqueue(MixerCommand::SetBusParent(i, NO_PARENT));
+				m_state->mixerCommands->Enqueue(AsyncMixerCommand::SetBusParent(i, NO_PARENT));
 				orphanedBuses++;
 				DALIA_LOG_DEBUG(LOG_CTX_API, "Orphaned bus (index: %d).", i);
 			}
@@ -98,7 +98,7 @@ namespace dalia {
 			VoiceMirror& vMirrorChild = m_state->voices.GetMirror(i);
 			if (vMirrorChild.parentBusIndex == bIndex) {
 				vMirrorChild.parentBusIndex = NO_PARENT;
-				m_state->mixerCommands->Enqueue(MixerCommand::SetVoiceParent(i, vMirrorChild.gen, NO_PARENT));
+				m_state->mixerCommands->Enqueue(AsyncMixerCommand::SetVoiceParent(i, vMirrorChild.gen, NO_PARENT));
 				orphanedPlaybacks++;
 				DALIA_LOG_DEBUG(LOG_CTX_API, "Orphaned voice (index: %d).", i);
 			}
@@ -111,7 +111,7 @@ namespace dalia {
 		m_state->buses.Free(bIndex);
 
 		DALIA_LOG_DEBUG(LOG_CTX_API, "Destroyed bus %s (index: %d).", identifier, bIndex);
-		m_state->mixerCommands->Enqueue(MixerCommand::FreeBus(bIndex));
+		m_state->mixerCommands->Enqueue(AsyncMixerCommand::FreeBus(bIndex));
 
 		return Result::Ok;
 	}
@@ -164,7 +164,7 @@ namespace dalia {
 
 		DALIA_LOG_DEBUG(LOG_CTX_API, "Routed bus %s (index: %d) -> %s (index: %d).",
 			identifier, bIndex, parentIdentifier, bIndexParent);
-		m_state->mixerCommands->Enqueue(MixerCommand::SetBusParent(bIndex, bIndexParent));
+		m_state->mixerCommands->Enqueue(AsyncMixerCommand::SetBusParent(bIndex, bIndexParent));
 
 		return Result::Ok;
 	}

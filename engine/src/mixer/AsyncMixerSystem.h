@@ -43,9 +43,9 @@ namespace dalia {
         uint32_t outChannels			= 0;
         uint32_t outSampleRate			= 0;
 
-        MixerCommandQueue* mixerCommands				= nullptr;
-        MixerEventQueue* mixerEvents					= nullptr;
-        AsyncStreamRequestQueue* asyncStreamRequests	= nullptr;
+        AsyncMixerCommandQueue* mixerCommands				= nullptr;
+        AsyncMixerEventQueue* mixerEvents					= nullptr;
+        AsyncStreamCommandQueue* asyncStreamRequests	= nullptr;
 
     	std::span<StreamContext> streamPool;
 
@@ -67,10 +67,10 @@ namespace dalia {
         std::span<float> dspScratchBuffer;
     };
 
-    class MixerSystem {
+    class AsyncMixerSystem {
     public:
-        explicit MixerSystem(const MixerSystemConfig& config);
-    	~MixerSystem();
+        explicit AsyncMixerSystem(const MixerSystemConfig& config);
+    	~AsyncMixerSystem();
 
     	void Start();
     	void Stop();
@@ -132,9 +132,9 @@ namespace dalia {
         uint32_t m_outSampleRate		= 0;
 
     	// Messaging
-        MixerCommandQueue* m_mixerCommands				= nullptr;
-        MixerEventQueue* m_mixerEvents					= nullptr;
-        AsyncStreamRequestQueue* m_asyncStreamRequests	= nullptr;
+        AsyncMixerCommandQueue* m_mixerCommands				= nullptr;
+        AsyncMixerEventQueue* m_mixerEvents					= nullptr;
+        AsyncStreamCommandQueue* m_asyncStreamRequests	= nullptr;
 
     	// Streams
     	std::span<StreamContext> m_streamPool;

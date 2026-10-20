@@ -17,8 +17,8 @@ namespace dalia {
 
 	/// @brief Configuration containing all user-exposed engine settings.
 	struct EngineConfig {
-		// Core Settings
 		uint32_t sampleRate = 48000; // Internal mixing sample rate
+		const char* startupOutputDeviceId = "default"; // Output device that should attempt to start on initialization.
 
 		// Logging
 		LogLevel logLevel = LogLevel::Warning; // The level at which the engine will log messages.
@@ -34,19 +34,21 @@ namespace dalia {
 
 		// Mixing Capacities
 		uint32_t voiceCapacity		= 128; // The maximum number of playback instances that can exist at once.
-		uint32_t streamCapacity		= 32; // The maximum number of playback instances playing stream sounds at once.
-		uint32_t busCapacity		= 64; // The maximum number of buses that can exist at once.
+		uint32_t streamCapacity		= 32;  // The maximum number of playback instances playing stream sounds at once.
+		uint32_t busCapacity		= 64;  // The maximum number of buses that can exist at once.
 
 		// Effect Capacities
 		uint32_t biquadCapacity	= 32; // The maximum number of biquad filters that can exist at once.
 
-		/// @brief Advanced settings. Only touch if you have very tight constraints or experience queue overflows.
+		/// @brief Advanced settings. Only touch if you have very tight constraints.
 		struct Advanced {
+			uint32_t periodSizeFrames = 512; // The number of frames per audio period.
+
 			// Internal Messaging Queue Capacities (must be power of 2)
-			size_t RealTimeQueueCapacity		= 1024;
-			size_t AsyncStreamQueueCapacity		= 256;
-			size_t AsyncLoadQueueCapacity		= 128;
-			size_t AsyncControlQueueCapacity	= 32;
+			size_t mixerQueueCapacity	= 1024;
+			size_t streamQueueCapacity	= 256;
+			size_t loadQueueCapacity	= 128;
+			size_t controlQueueCapacity	= 32;
 		} advanced;
 	};
 

@@ -73,7 +73,7 @@ namespace dalia {
 				BusMirror& oldBusMirror = m_state->buses.GetMirror(oldBusIndex);
 				oldBusMirror.effectSlots[oldSlot] = InvalidEffectHandle;
 
-				m_state->mixerCommands->Enqueue(MixerCommand::ForceDetachEffect(
+				m_state->mixerCommands->Enqueue(AsyncMixerCommand::ForceDetachEffect(
 					eIndex, eMirror.gen, effect.GetType(), oldBusIndex, oldSlot
 				));
 
@@ -97,7 +97,7 @@ namespace dalia {
 			eMirror.busIndex = bIndex;
 			eMirror.effectSlot = effectSlot;
 
-			m_state->mixerCommands->Enqueue(MixerCommand::AttachEffect(
+			m_state->mixerCommands->Enqueue(AsyncMixerCommand::AttachEffect(
 				eIndex, eMirror.gen, effect.GetType(), bIndex, effectSlot
 			));
 

@@ -3,7 +3,7 @@
 #include "backend/windows/WindowsDeviceManager.h"
 #include "backend/NullOutputDevice.h"
 #include "core/Logger.h"
-#include "mixer/MixerSystem.h"
+#include "mixer/AsyncMixerSystem.h"
 
 namespace dalia {
 
@@ -46,20 +46,20 @@ namespace dalia {
 			m_taskSemaphore.acquire(); // Sleep (wake on notification)
 			if (!m_isRunning.load(std::memory_order_relaxed)) break;
 
-			AsyncControlRequest req;
+			AsyncControlCommand req;
 			while (m_requestQueue->Pop(req)) ProcessRequest(req);
 		}
 
 		if (SUCCEEDED(hr)) CoUninitialize();
 	}
 
-	void AsyncControlSystem::ProcessRequest(const AsyncControlRequest& req) {
+	void AsyncControlSystem::ProcessRequest(const AsyncControlCommand& req) {
 		switch (req.type) {
-			case AsyncControlRequest::Type::SwapOutputDevice: {
+			case AsyncControlCommand::Type::SwapOutputDevice: {
 				// Teardown old device
 				if (req.data.swapOutputDevice.oldDevice) {
 					// Check the format before stopping the old device
-					uint32_t oldChannels = req.data.swapOutputDevice.oldDevice->GetChannelCount();
+					uint32_t oldChannels = req.data.swapOutputDevice.oldDevice->GetChannels();
 					SpeakerLayout oldLayout = req.data.swapOutputDevice.oldDevice->GetSpeakerLayout();
 					m_nullOutputDevice->SetOutputFormat(oldChannels, oldLayout);
 

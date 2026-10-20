@@ -44,16 +44,16 @@ namespace dalia {
     	HighResTimer wakeupTimer;
 
         while (m_isRunning.load(std::memory_order_relaxed)) {
-            AsyncStreamRequest req;
+            AsyncStreamCommand req;
             while (m_ioStreamRequests->Pop(req)) ProcessRequest(req);
 
         	wakeupTimer.SleepMicroseconds(m_wakeupPeriodMicroseconds);
         }
     }
 
-    void AsyncStreamSystem::ProcessRequest(const AsyncStreamRequest& req) {
+    void AsyncStreamSystem::ProcessRequest(const AsyncStreamCommand& req) {
         switch (req.type) {
-            case AsyncStreamRequest::Type::PrepareStream: {
+            case AsyncStreamCommand::Type::PrepareStream: {
                 uint32_t sIndex = req.index;
                 uint32_t sGen = req.gen;
                 const char* filepath = req.data.streamPrep.filepath;
@@ -102,7 +102,7 @@ namespace dalia {
 
                 break;
             }
-            case AsyncStreamRequest::Type::ReleaseStream: {
+            case AsyncStreamCommand::Type::ReleaseStream: {
                 uint32_t sIndex = req.index;
             	uint32_t sGen = req.gen;
 
@@ -119,7 +119,7 @@ namespace dalia {
                 DALIA_LOG_DEBUG(LOG_CTX_ASYNC, "Freed stream %d.", sIndex);
                 break;
             }
-            case AsyncStreamRequest::Type::RefillStreamBuffer: {
+            case AsyncStreamCommand::Type::RefillStreamBuffer: {
                 uint32_t sIndex = req.index;
                 uint32_t sGen = req.gen;
                 uint32_t bufferIndex = req.data.streamRefill.bufferIndex;
@@ -131,7 +131,7 @@ namespace dalia {
                 FillBuffer(stream, bufferIndex);
                 break;
             }
-            case AsyncStreamRequest::Type::SeekStream: {
+            case AsyncStreamCommand::Type::SeekStream: {
                 uint32_t sIndex = req.index;
                 uint32_t sGen = req.gen;
                 uint32_t seekFrame = req.data.streamSeek.seekFrame;

@@ -70,7 +70,7 @@ namespace dalia {
 			typeStr, filepath, requestId, callback ? "Yes" : "No");
 
 		bool wasEmpty = false;
-		if (m_state->asyncLoadRequests->Push(AsyncLoadRequest::LoadSound(requestId, sound, filepath), wasEmpty)) {
+		if (m_state->asyncLoadRequests->Push(AsyncLoadCommand::LoadSound(requestId, sound, filepath), wasEmpty)) {
 			if (wasEmpty) m_state->asyncLoadSystem->NotifyTaskAdded();
 		}
 		else {
@@ -134,7 +134,7 @@ namespace dalia {
 				if (vMirror.state != VoiceState::Free && vMirror.assetRawId == sound.GetRawId()) {
 					pendingUnload.voicesToStop.push_back(EngineInternalState::ForgePlaybackHandle(i, vMirror.gen));
 
-					m_state->mixerCommands->Enqueue(MixerCommand::StopVoice(i, vMirror.gen));
+					m_state->mixerCommands->Enqueue(AsyncMixerCommand::StopVoice(i, vMirror.gen));
 					DALIA_LOG_DEBUG(LOG_CTX_API, "Commanded to stop voice %d.", i);
 				}
 			}

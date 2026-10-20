@@ -51,14 +51,14 @@ namespace dalia {
         	m_taskSemaphore.acquire(); // Sleep (wake on notification)
         	if (!m_isRunning.load(std::memory_order_relaxed)) break;
 
-            AsyncLoadRequest req;
+            AsyncLoadCommand req;
             while (m_ioLoadRequests->Pop(req)) ProcessRequest(req);
         }
     }
 
-    void AsyncLoadSystem::ProcessRequest(const AsyncLoadRequest& req) {
+    void AsyncLoadSystem::ProcessRequest(const AsyncLoadCommand& req) {
         switch (req.type) {
-            case AsyncLoadRequest::Type::LoadSound: {
+            case AsyncLoadCommand::Type::LoadSound: {
                 SoundHandle soundHandle = SoundHandle::FromRawId(req.data.soundFromFile.resourceHandleRawId);
                 SoundType soundType = soundHandle.GetType();
 
