@@ -1,6 +1,6 @@
 #pragma once
 
-#include "backend/DeviceManager.h"
+#include "backend/AudioBackend.h"
 #include "core/SPSCRingBuffer.h"
 #include "core/Constants.h"
 
@@ -9,10 +9,10 @@
 
 namespace dalia {
 
-	class WindowsDeviceManager : public DeviceManager {
+	class WasapiAudioBackend : public AudioBackend {
 	public:
-		WindowsDeviceManager();
-		~WindowsDeviceManager() override;
+		WasapiAudioBackend();
+		~WasapiAudioBackend() override;
 
 		Result Initialize() override;
 
@@ -20,7 +20,7 @@ namespace dalia {
 
 		bool PopDeviceChangeNotification(std::string& newDeviceId) override;
 
-		std::unique_ptr<OutputDevice> CreateDevice(const char* identifier, uint32_t engineSampleRate) override;
+		std::unique_ptr<OutputDevice> CreateOutputDevice(const char* identifier, uint32_t engineSampleRate) override;
 
 	private:
 		class NotificationClient final : public IMMNotificationClient {

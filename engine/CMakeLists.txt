@@ -39,7 +39,7 @@ set(ENGINE_FILES
     src/engine/EnginePlayback.cpp
     src/engine/EngineListener.cpp
 
-    src/backend/DeviceManager.h
+    src/backend/AudioBackend.h
     src/backend/OutputDevice.h
     src/backend/NullOutputDevice.h
     src/backend/NullOutputDevice.cpp
@@ -72,8 +72,8 @@ set(ENGINE_FILES
     src/async/AsyncControlSystem.cpp
     src/async/AsyncControlSystem.h
 
-    src/messaging/MixerMessaging.h
-    src/messaging/MixerMessaging.cpp
+    src/messaging/AsyncMixerMessaging.h
+    src/messaging/AsyncMixerMessaging.cpp
     src/messaging/AsyncStreamMessaging.h
     src/messaging/AsyncLoadMessaging.h
     src/messaging/AsyncControlMessaging.h
@@ -105,15 +105,15 @@ set(ENGINE_FILES
     src/resource/StreamSound.h
     src/engine/DeviceCoordinator.h
     src/engine/DeviceCoordinator.cpp
-    src/async/AsyncDirector.cpp
-    src/async/AsyncDirector.h
+    src/messaging/MessageDirector.cpp
+    src/async/MessageDirector.h
     src/engine/EngineHelpers.h
 )
 
 if (WIN32)
     list(APPEND ENGINE_FILES
-        src/backend/windows/WindowsDeviceManager.cpp
-        src/backend/windows/WindowsDeviceManager.h
+        src/backend/windows/WasapiAudioBackend.cpp
+        src/backend/windows/WasapiAudioBackend.h
         src/backend/windows/WasapiOutputDevice.cpp
         src/backend/windows/WasapiOutputDevice.h
         src/backend/windows/HighResTimer.cpp

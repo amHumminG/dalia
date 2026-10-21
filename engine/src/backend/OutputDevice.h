@@ -17,12 +17,11 @@ namespace dalia {
 		virtual Result Start(AsyncMixerSystem* system) = 0;
 		virtual void Stop() = 0;
 
-		virtual bool HasFailed() const = 0;
+		[[nodiscard]] virtual bool HasFailed() const = 0;
 
-		virtual const std::string& GetIdentifier() const = 0;
-		virtual const std::string& GetName() const = 0;
-		virtual uint32_t GetChannels() const = 0;
-		virtual SpeakerLayout GetSpeakerLayout() const = 0;
-
+		[[nodiscard]] virtual const std::string& GetIdentifier() const = 0;
+		[[nodiscard]] virtual const std::string& GetName() const = 0;
+		[[nodiscard]] virtual uint32_t GetChannels() const = 0;
+		[[nodiscard]] virtual SpeakerLayout GetSpeakerLayout() const = 0;
 	};
 }

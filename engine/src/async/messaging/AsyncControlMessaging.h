@@ -15,6 +15,9 @@ namespace dalia {
 			None,
 
 			SwapOutputDevice,
+
+
+			Count // Determines the number of types
 		} type = Type::None;
 
 		union Data {
@@ -41,6 +44,9 @@ namespace dalia {
 			None,
 
 			OutputDeviceSwapped,
+
+
+			Count // Determines the number of types
 		} type = Type::None;
 
 		union Data {

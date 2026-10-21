@@ -13,6 +13,8 @@ namespace dalia {
 			LoadSound,
 			// LoadBank
 
+
+			Count // Determines the number of types
 		} type = Type::None;
 
 		uint32_t requestId;
@@ -43,6 +45,9 @@ namespace dalia {
 
             SoundLoaded,
             SoundLoadFailed,
+
+
+        	Count // Determines the number of types
         } type = Type::None;
 
         uint32_t requestId = 0;

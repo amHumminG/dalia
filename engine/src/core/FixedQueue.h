@@ -36,23 +36,25 @@ namespace dalia {
 		}
 
 		void Clear() {
-			// TODO: Implement
+			m_popCursor = 0;
+			m_pushCursor = 0;
 		}
 
 		bool IsEmpty() {
-			// TODO: Implement
+			return m_popCursor == m_pushCursor;
 		}
 
 		bool IsFull() {
-			// TODO: Implement
+			return (m_pushCursor + 1) == m_popCursor;
 		}
 
-		size_t Size() {
-			// TODO: Implement
-		}
+		// TODO: Implement
+		// size_t Size() {
+		//
+		// }
 
 		size_t Capacity() {
-			// TODO: Implement
+			return m_capacity;
 		}
 
 	private:

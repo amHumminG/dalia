@@ -9,11 +9,12 @@ namespace dalia {
 
 	struct StreamContext;
     template <typename T> class SPSCRingBuffer;
+	class MessageRouter;
 
     struct AsyncStreamSystemConfig {
     	uint32_t wakeupPeriodMicroseconds;
     	uint32_t outSampleRate;
-        AsyncStreamCommandQueue* ioStreamRequests = nullptr;
+        MessageRouter* asyncDirector = nullptr;
         std::span<StreamContext> streamPool;
         SPSCRingBuffer<uint32_t>* freeStreams = nullptr;
     };
@@ -31,8 +32,8 @@ namespace dalia {
         void ProcessRequest(const AsyncStreamCommand& req);
         void FillBuffer(StreamContext& stream, uint32_t bufferIndex);
 
+    	MessageRouter* m_asyncDirector = nullptr;
     	uint32_t m_outSampleRate = 0;
-        AsyncStreamCommandQueue* m_ioStreamRequests;
         std::span<StreamContext> m_streamPool;
         SPSCRingBuffer<uint32_t>* m_freeStreams;
 

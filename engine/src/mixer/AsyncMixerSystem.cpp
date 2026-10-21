@@ -2,6 +2,8 @@
 
 #include "dalia/EffectControl.h"
 
+#include "../messaging/MessageDirector.h"
+
 #include "core/Logger.h"
 #include "core/Constants.h"
 #include "core/Math.h"
@@ -13,7 +15,7 @@
 #include "mixer/Listener.h"
 #include "mixer/MixGraphCompiler.h"
 
-#include "messaging/MixerMessaging.h"
+#include "messaging/AsyncMixerMessaging.h"
 #include "messaging/AsyncStreamMessaging.h"
 
 #include "effects/Biquad.h"
@@ -500,6 +502,7 @@ namespace dalia {
 			}
 
 			while (m_pcmRingBuffer.GetAvailableFramesWrite() >= MIXER_PROCESSING_BLOCK_FRAMES) {
+				m_asyncDirector->UpdateAsyncMixer();
 				ProcessCommands();	// Process incoming commands from the API thread
 				ProcessParams();	// Process continuous parameter updates from the API thread
 

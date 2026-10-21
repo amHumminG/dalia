@@ -9,7 +9,7 @@
 
 #include "resource/AssetRegistry.h"
 
-#include "mixer/MixerSystem.h"
+#include "mixer/AsyncMixerSystem.h"
 #include "mixer/MixGraphCompiler.h"
 #include "mixer/StreamContext.h"
 

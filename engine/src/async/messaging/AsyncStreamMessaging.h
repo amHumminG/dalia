@@ -12,6 +12,9 @@ namespace dalia {
             ReleaseStream,
             RefillStreamBuffer,
             SeekStream,
+
+
+        	Count // Determines the number of types
         };
         Type type = Type::None;
 

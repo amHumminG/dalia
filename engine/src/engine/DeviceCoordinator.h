@@ -1,7 +1,7 @@
 #pragma once
 
-#include "backend/DeviceManager.h"
-#include "backend/Windows/WindowsDeviceManager.h"
+#include "backend/AudioBackend.h"
+#include "backend/Windows/WasapiAudioBackend.h"
 #include "backend/OutputDevice.h"
 #include "backend/NullOutputDevice.h"
 #include "core/Logger.h"
@@ -13,34 +13,51 @@
 
 namespace dalia {
 
-	static constexpr size_t DEVICE_COORDINATOR_CONTROL_EVENT_STACK_SIZE = 64;
-
+	struct AsyncControlCommand;
 	struct AsyncControlEvent;
+	class MessageRouter;
+	class AsyncMixerSystem;
 
 	class DeviceCoordinator {
 	public:
-		DeviceCoordinator();
+		DeviceCoordinator() = default;
 		~DeviceCoordinator();
 
 		// TODO: Write doxygen comments
 
-		Result Initialize(uint32_t outSampleRate, uint32_t periodSizeInFrames, const std::string& outDeviceId = "default");
+		Result Initialize(
+			MessageRouter* messageRouter,
+			AsyncMixerSystem* mixerSystem,
+			uint32_t outSampleRate,
+			uint32_t periodSizeInFrames,
+			const std::string& outDeviceId = "default"
+		);
 		void Shutdown();
 
 		void Update();
 
-		void SubmitControlEvent(const AsyncControlEvent& ev); // TODO: Should we really do this? ...
+		Result StartActiveOutputDevice(AsyncMixerSystem* mixerSystem);
+
+		[[nodiscard]] SpeakerLayout GetActiveOutputSpeakerLayout() const;
+		[[nodiscard]] uint32_t GetActiveOutputChannels() const;
+
+		[[nodiscard]] uint32_t GetOutputSampleRate() const;
+		[[nodiscard]] uint32_t GetPeriodSizeFrames() const;
+		[[nodiscard]] uint32_t GetMaxPeriodSizeSamples() const;
 
 	private:
 		void SetupOutputDeviceDefault();
 		void SetupOutputDeviceTargeted(const std::string& outputDeviceId);
 		void SetupNullOutputDevice();
 
-		void ProcessOutputDeviceSwappedEvent(const AsyncControlEvent& ev);
+		void CheckForOutputDeviceChanges();
+		void FinalizeOutputDeviceSwap(const AsyncControlEvent& ev);
+		void ExecuteOutputDeviceSwap(const AsyncControlCommand& cmd); // Runs on async control thread
 
-		FixedQueue<AsyncControlEvent> m_controlEvents;
+		MessageRouter* m_messageRouter = nullptr;
+		AsyncMixerSystem* m_mixerSystem = nullptr;
 
-		std::unique_ptr<DeviceManager> m_deviceManager;
+		std::unique_ptr<AudioBackend> m_audioBackend;
 		std::unique_ptr<OutputDevice> m_outputDevice;
 		std::unique_ptr<NullOutputDevice> m_nullOutputDevice;
 		OutputDevice* m_activeOutputDevice = nullptr; // Points to either outputDevice or nullDevice
@@ -55,11 +72,7 @@ namespace dalia {
 		// Output info
 		SpeakerLayout m_speakerLayout = SpeakerLayout::Mono;
 		uint32_t m_periodSizeFrames = 0;
-		uint32_t m_periodSizeSamplesMax = 0;
 		uint32_t m_outChannels = 0;
 		uint32_t m_outSampleRate = 0;
 	};
-
-
-
 }

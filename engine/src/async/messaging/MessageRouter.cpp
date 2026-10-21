@@ -1,4 +1,4 @@
-#include "async/AsyncDirector.h"
+#include "MessageRouter.h"
 
 #include "engine/EngineInternalState.h"
 #include "resource/AssetRegistry.h"
@@ -7,51 +7,208 @@
 #include "resource/ResidentSound.h"
 
 namespace dalia {
-	AsyncDirector::AsyncDirector(size_t mixerQueueCapacity, size_t streamQueueCapacity, size_t loadQueueCapacity,
+	MessageRouter::MessageRouter(size_t mixerQueueCapacity, size_t streamQueueCapacity, size_t loadQueueCapacity,
 		size_t controlQueueCapacity)
-			: m_mixerCommandQueue(mixerQueueCapacity), m_mixerEventQueue(mixerQueueCapacity),
+			: m_mixerCommandQueue(mixerQueueCapacity),
 			m_streamCommandQueue(streamQueueCapacity),
-			m_loadCommandQueue(loadQueueCapacity), m_loadEventQueue(loadQueueCapacity),
-			m_controlCommandQueue(controlQueueCapacity), m_controlEventQueue(controlQueueCapacity) {
+			m_loadCommandQueue(loadQueueCapacity),
+			m_controlCommandQueue(controlQueueCapacity),
+			m_mixerEventQueue(mixerQueueCapacity),
+			m_loadEventQueue(loadQueueCapacity),
+			m_controlEventQueue(controlQueueCapacity) {
 	}
 
-	void AsyncDirector::UpdateMain(EngineInternalState* state) {
-		CatchMixerEvents(state);
-		CatchLoadEvents(state);
-		CatchControlEvents(state);
-
+	void MessageRouter::DispatchStagedCommands() {
 		m_mixerCommandQueue.Dispatch();
 	}
 
-	void AsyncDirector::PushMixerCommand(const AsyncMixerCommand& command) {
+	void MessageRouter::ProcessMainEvents() {
+		CatchMixerEvents();
+		CatchLoadEvents();
+		CatchControlEvents();
+	}
+
+	void MessageRouter::ProcessMixerCommands() {
+		CatchMixerCommands();
+	}
+
+	void MessageRouter::ProcessStreamCommands() {
+		CatchStreamCommands();
+	}
+
+	void MessageRouter::ProcessLoadCommands() {
+		CatchLoadCommands();
+	}
+
+	void MessageRouter::ProcessControlCommands() {
+		CatchControlCommands();
+	}
+
+	// void MessageRouter::SetStreamWakeupCallback(WakeupCallback cb) {
+	// 	m_streamWakeup = std::move(cb);
+	// }
+
+	void MessageRouter::SetLoadWakeupCallback(WakeupCallback cb) {
+		m_loadWakeup = std::move(cb);
+	}
+
+	void MessageRouter::SetControlWakeupCallback(WakeupCallback cb) {
+		m_controlWakeup = std::move(cb);
+	}
+
+	void MessageRouter::PushMixerCommand(const AsyncMixerCommand& command) {
 		m_mixerCommandQueue.Enqueue(command);
 	}
 
-	void AsyncDirector::PushStreamCommand(const AsyncStreamCommand& command) {
-		m_streamCommandQueue.Push(command);
+	bool MessageRouter::PushStreamCommand(const AsyncStreamCommand& command) {
+		if (m_streamCommandQueue.Push(command)) {
+			return true;
+		}
+		DALIA_LOG_ERR(LOG_CTX_ASYNC, "Failed to push stream command. Queue is at capacity.");
+		return false;
 	}
 
-	void AsyncDirector::PushLoadCommand(const AsyncLoadCommand& command) {
-		m_loadCommandQueue.Push(command);
+	bool MessageRouter::PushLoadCommand(const AsyncLoadCommand& command) {
+		bool wasEmtpy = false;
+		if (m_loadCommandQueue.Push(command, wasEmtpy)) {
+			if (wasEmtpy && m_loadWakeup) m_loadWakeup();
+			return true;
+		}
+		DALIA_LOG_ERR(LOG_CTX_ASYNC, "Failed to push load command. Queue is at capacity.");
+		return false;
 	}
 
-	void AsyncDirector::PushControlCommand(const AsyncControlCommand& command) {
-		m_controlCommandQueue.Push(command);
+	bool MessageRouter::PushControlCommand(const AsyncControlCommand& command) {
+		bool wasEmpty = false;
+		if (m_controlCommandQueue.Push(command, wasEmpty)) {
+			if (wasEmpty && m_controlWakeup) m_controlWakeup();
+			return true;
+		}
+		DALIA_LOG_ERR(LOG_CTX_ASYNC, "Failed to push control command. Queue is at capacity.");
+		return false;
 	}
 
-	void AsyncDirector::PushMixerEvent(const AsyncMixerEvent& event) {
-		m_mixerEventQueue.Push(event);
+	void MessageRouter::SubscribeToMixerCommand(AsyncMixerCommand::Type type,
+		MessageCallback<AsyncMixerCommand> cb) {
+		m_mixerCommandTable.Subscribe(type, cb);
 	}
 
-	void AsyncDirector::PushLoadEvent(const AsyncLoadEvent& event) {
-		m_loadEventQueue.Push(event);
+	void MessageRouter::SubscribeToStreamCommand(AsyncStreamCommand::Type type,
+	MessageCallback<AsyncStreamCommand> cb) {
+		m_streamCommandTable.Subscribe(type, cb);
 	}
 
-	void AsyncDirector::PushControlEvent(const AsyncControlEvent& event) {
-		m_controlEventQueue.Push(event);
+	void MessageRouter::SubscribeToLoadCommand(AsyncLoadCommand::Type type,
+		MessageCallback<AsyncLoadCommand> cb) {
+		m_loadCommandTable.Subscribe(type, cb);
 	}
 
-	void AsyncDirector::CatchMixerEvents(EngineInternalState& state) {
+	void MessageRouter::SubscribeToControlCommand(AsyncControlCommand::Type type,
+		MessageCallback<AsyncControlCommand> cb) {
+		m_controlCommandTable.Subscribe(type, cb);
+	}
+
+	void MessageRouter::UnsubscribeFromMixerCommand(AsyncMixerCommand::Type type) {
+		m_mixerCommandTable.Unsubscribe(type);
+	}
+
+	void MessageRouter::UnsubscribeFromStreamCommand(AsyncStreamCommand::Type type) {
+		m_streamCommandTable.Unsubscribe(type);
+	}
+
+	void MessageRouter::UnsubscribeFromLoadCommand(AsyncLoadCommand::Type type) {
+		m_loadCommandTable.Unsubscribe(type);
+	}
+
+	void MessageRouter::UnsubscribeFromControlCommand(AsyncControlCommand::Type type) {
+		m_controlCommandTable.Unsubscribe(type);
+	}
+
+	bool MessageRouter::PushMixerEvent(const AsyncMixerEvent& event) {
+		if (!m_mixerEventQueue.Push(event)) {
+			DALIA_LOG_ERR(LOG_CTX_ASYNC, "Failed to push mixer event. Queue is at capacity.");
+			return false;
+		}
+		return true;
+	}
+
+	bool MessageRouter::PushLoadEvent(const AsyncLoadEvent& event) {
+		if (!m_loadEventQueue.Push(event)) {
+			DALIA_LOG_ERR(LOG_CTX_ASYNC, "Failed to push load event. Queue is at capacity.");
+			return false;
+		}
+		return true;
+	}
+
+	bool MessageRouter::PushControlEvent(const AsyncControlEvent& event) {
+		if (!m_controlEventQueue.Push(event)) {
+			DALIA_LOG_ERR(LOG_CTX_ASYNC, "Failed to push control event. Queue is at capacity.");
+			return false;
+		}
+		return true;
+	}
+
+	void MessageRouter::SubscribeToMixerEvent(AsyncMixerEvent::Type type, MessageCallback<AsyncMixerEvent> cb) {
+		m_mixerEventTable.Subscribe(type, cb);
+	}
+
+	void MessageRouter::SubscribeToLoadEvent(AsyncLoadEvent::Type type, MessageCallback<AsyncLoadEvent> cb) {
+		m_loadEventTable.Subscribe(type, cb);
+	}
+
+	void MessageRouter::SubscribeToControlEvent(AsyncControlEvent::Type type, MessageCallback<AsyncControlEvent> cb) {
+		m_controlEventTable.Subscribe(type, cb);
+	}
+
+	void MessageRouter::UnsubscribeFromMixerEvent(AsyncMixerEvent::Type type) {
+		m_mixerEventTable.Unsubscribe(type);
+	}
+
+	void MessageRouter::UnsubscribeFromLoadEvent(AsyncLoadEvent::Type type) {
+		m_loadEventTable.Unsubscribe(type);
+	}
+
+	void MessageRouter::UnsubscribeFromControlEvent(AsyncControlEvent::Type type) {
+		m_controlEventTable.Unsubscribe(type);
+	}
+
+	void MessageRouter::CatchMixerCommands() {
+		AsyncMixerCommand cmd;
+		while (m_mixerCommandQueue.Pop(cmd)) m_mixerCommandTable.Dispatch(cmd);
+	}
+
+	void MessageRouter::CatchStreamCommands() {
+		AsyncStreamCommand cmd;
+		while (m_streamCommandQueue.Pop(cmd)) m_streamCommandTable.Dispatch(cmd);
+	}
+
+	void MessageRouter::CatchLoadCommands() {
+		AsyncLoadCommand cmd;
+		while (m_loadCommandQueue.Pop(cmd)) m_loadCommandTable.Dispatch(cmd);
+	}
+
+	void MessageRouter::CatchControlCommands() {
+		AsyncControlCommand cmd;
+		while (m_controlCommandQueue.Pop(cmd)) m_controlCommandTable.Dispatch(cmd);
+	}
+
+	void MessageRouter::CatchMixerEvents() {
+		AsyncMixerEvent ev;
+		while (m_mixerEventQueue.Pop(ev)) m_mixerEventTable.Dispatch(ev);
+	}
+
+	void MessageRouter::CatchLoadEvents() {
+		AsyncLoadEvent ev;
+		while (m_loadEventQueue.Pop(ev)) m_loadEventTable.Dispatch(ev);
+	}
+
+	void MessageRouter::CatchControlEvents() {
+		AsyncControlEvent ev;
+		while (m_controlEventQueue.Pop(ev)) m_controlEventTable.Dispatch(ev);
+	}
+
+	// TODO: Move this logic
+	void MessageRouter::CatchMixerEvents(EngineInternalState& state) {
 		AsyncMixerEvent ev;
 		while (m_mixerEventQueue.Pop(ev)) {
 			switch (ev.type) {
@@ -104,7 +261,8 @@ namespace dalia {
 		}
 	}
 
-	void AsyncDirector::CatchLoadEvents(EngineInternalState* state) {
+	// TODO: Move this logic
+	void MessageRouter::CatchLoadEvents(EngineInternalState* state) {
 		AsyncLoadEvent ev;
 		while (m_loadEventQueue.Pop(ev)) {
 			// Execute user-registered callback
@@ -243,19 +401,6 @@ namespace dalia {
 			default:
 				break;
 		}
-		}
-	}
-
-	void AsyncDirector::CatchControlEvents(EngineInternalState* state) {
-		AsyncControlEvent ev;
-		while (m_controlEventQueue.Pop(ev)) {
-			switch (ev.type) {
-				case AsyncControlEvent::Type::OutputDeviceSwapped:
-					state->deviceCoordinator.ProcessOutputDeviceSwappedEvent(ev);
-					break;
-				default:
-					break;
-			}
 		}
 	}
 }

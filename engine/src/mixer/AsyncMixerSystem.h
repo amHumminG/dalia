@@ -2,7 +2,7 @@
 
 #include <semaphore>
 
-#include "messaging/MixerMessaging.h"
+#include "messaging/AsyncMixerMessaging.h"
 #include "messaging/AsyncStreamMessaging.h"
 #include "core/Constants.h"
 #include "core/ParameterBridge.h"
@@ -33,6 +33,7 @@ namespace dalia {
 	struct VirtualSpeaker;
 
 	class MixGraphCompiler;
+	class MessageRouter;
 
     struct MixerSystemConfig {
     	CoordinateSystem coordinateSystem;
@@ -43,9 +44,7 @@ namespace dalia {
         uint32_t outChannels			= 0;
         uint32_t outSampleRate			= 0;
 
-        AsyncMixerCommandQueue* mixerCommands				= nullptr;
-        AsyncMixerEventQueue* mixerEvents					= nullptr;
-        AsyncStreamCommandQueue* asyncStreamRequests	= nullptr;
+    	MessageRouter* asyncDirector = nullptr;
 
     	std::span<StreamContext> streamPool;
 
@@ -131,10 +130,7 @@ namespace dalia {
         uint32_t m_outChannels			= 0;
         uint32_t m_outSampleRate		= 0;
 
-    	// Messaging
-        AsyncMixerCommandQueue* m_mixerCommands				= nullptr;
-        AsyncMixerEventQueue* m_mixerEvents					= nullptr;
-        AsyncStreamCommandQueue* m_asyncStreamRequests	= nullptr;
+		MessageRouter* m_asyncDirector;
 
     	// Streams
     	std::span<StreamContext> m_streamPool;

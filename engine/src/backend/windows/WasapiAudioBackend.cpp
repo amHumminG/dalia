@@ -1,4 +1,4 @@
-#include "backend/windows/WindowsDeviceManager.h"
+#include "backend/windows/WasapiAudioBackend.h"
 
 #include "backend/windows/WasapiOutputDevice.h"
 #include "core/Logger.h"
@@ -14,21 +14,21 @@ namespace dalia {
 
 	// --- Notification Client Implementation ---
 
-	WindowsDeviceManager::NotificationClient::NotificationClient(SPSCRingBuffer<OSDeviceNotification>& queue)
+	WasapiAudioBackend::NotificationClient::NotificationClient(SPSCRingBuffer<OSDeviceNotification>& queue)
 		: m_notificationQueue(queue) {}
 
-	ULONG STDMETHODCALLTYPE WindowsDeviceManager::NotificationClient::AddRef() {
+	ULONG STDMETHODCALLTYPE WasapiAudioBackend::NotificationClient::AddRef() {
 		return InterlockedIncrement(&m_refCount);
 	}
 
-	ULONG STDMETHODCALLTYPE WindowsDeviceManager::NotificationClient::Release() {
+	ULONG STDMETHODCALLTYPE WasapiAudioBackend::NotificationClient::Release() {
 		ULONG count = InterlockedDecrement(&m_refCount);
 		if (count == 0) delete this;
 
 		return count;
 	}
 
-	HRESULT STDMETHODCALLTYPE WindowsDeviceManager::NotificationClient::QueryInterface(REFIID riid, void** ppv) {
+	HRESULT STDMETHODCALLTYPE WasapiAudioBackend::NotificationClient::QueryInterface(REFIID riid, void** ppv) {
 		if (riid == __uuidof(IUnknown) || riid == __uuidof(IMMNotificationClient)) {
 			*ppv = static_cast<IMMNotificationClient*>(this);
 			AddRef();
@@ -39,7 +39,7 @@ namespace dalia {
 		return E_NOINTERFACE;
 	}
 
-	HRESULT STDMETHODCALLTYPE WindowsDeviceManager::NotificationClient::OnDefaultDeviceChanged(EDataFlow flow, ERole role, LPCWSTR pwstrDeviceId) {
+	HRESULT STDMETHODCALLTYPE WasapiAudioBackend::NotificationClient::OnDefaultDeviceChanged(EDataFlow flow, ERole role, LPCWSTR pwstrDeviceId) {
 		// Only account for cases where the default rendering device changed
 		if (flow == eRender && role == eConsole) {
 			OSDeviceNotification notification = {};
@@ -64,27 +64,27 @@ namespace dalia {
 		return S_OK;
 	}
 
-	HRESULT STDMETHODCALLTYPE WindowsDeviceManager::NotificationClient::OnDeviceStateChanged(LPCWSTR /*pwstrDeviceId*/, DWORD /*dwNewState*/) {
+	HRESULT STDMETHODCALLTYPE WasapiAudioBackend::NotificationClient::OnDeviceStateChanged(LPCWSTR /*pwstrDeviceId*/, DWORD /*dwNewState*/) {
 		return S_OK;
 	}
 
-	HRESULT STDMETHODCALLTYPE WindowsDeviceManager::NotificationClient::OnDeviceAdded(LPCWSTR /*pwstrDeviceId*/) {
+	HRESULT STDMETHODCALLTYPE WasapiAudioBackend::NotificationClient::OnDeviceAdded(LPCWSTR /*pwstrDeviceId*/) {
 		return S_OK;
 	}
 
-	HRESULT STDMETHODCALLTYPE WindowsDeviceManager::NotificationClient::OnDeviceRemoved(LPCWSTR /*pwstrDeviceId*/) {
+	HRESULT STDMETHODCALLTYPE WasapiAudioBackend::NotificationClient::OnDeviceRemoved(LPCWSTR /*pwstrDeviceId*/) {
 		return S_OK;
 	}
 
-	HRESULT STDMETHODCALLTYPE WindowsDeviceManager::NotificationClient::OnPropertyValueChanged(LPCWSTR /*pwstrDeviceId*/, const PROPERTYKEY /*key*/) {
+	HRESULT STDMETHODCALLTYPE WasapiAudioBackend::NotificationClient::OnPropertyValueChanged(LPCWSTR /*pwstrDeviceId*/, const PROPERTYKEY /*key*/) {
 		return S_OK;
 	}
 
 	// -------
 
-	WindowsDeviceManager::WindowsDeviceManager() = default;
+	WasapiAudioBackend::WasapiAudioBackend() = default;
 
-	WindowsDeviceManager::~WindowsDeviceManager() {
+	WasapiAudioBackend::~WasapiAudioBackend() {
 		if (m_enumerator && m_notificationClient) {
 			m_enumerator->UnregisterEndpointNotificationCallback(m_notificationClient.Get());
 		}
@@ -95,7 +95,7 @@ namespace dalia {
 		CoUninitialize();
 	}
 
-	Result WindowsDeviceManager::Initialize() {
+	Result WasapiAudioBackend::Initialize() {
 		// Initialize COM for this thread
 		HRESULT hr = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
 		if (FAILED(hr)) return Result::SystemError;
@@ -117,7 +117,7 @@ namespace dalia {
 		return Result::Ok;
 	}
 
-	std::vector<OutputDeviceInfo> WindowsDeviceManager::Enumerate() {
+	std::vector<OutputDeviceInfo> WasapiAudioBackend::Enumerate() {
 		std::vector<OutputDeviceInfo> deviceList;
 		if (!m_enumerator) return deviceList;
 
@@ -173,7 +173,7 @@ namespace dalia {
 		return deviceList;
 	}
 
-	bool WindowsDeviceManager::PopDeviceChangeNotification(std::string& newDeviceId) {
+	bool WasapiAudioBackend::PopDeviceChangeNotification(std::string& newDeviceId) {
 		OSDeviceNotification notification = {};
 		bool changeDetected = false;
 
@@ -186,7 +186,7 @@ namespace dalia {
 		return changeDetected;
 	}
 
-	std::unique_ptr<OutputDevice> WindowsDeviceManager::CreateDevice(const char* identifier, uint32_t engineSampleRate) {
+	std::unique_ptr<OutputDevice> WasapiAudioBackend::CreateOutputDevice(const char* identifier, uint32_t engineSampleRate) {
 		Microsoft::WRL::ComPtr<IMMDevice> device;
 		HRESULT hr = S_OK;
 

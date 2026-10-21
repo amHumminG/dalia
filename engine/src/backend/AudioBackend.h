@@ -14,15 +14,15 @@ namespace dalia {
 		char deviceId[MAX_STR_LEN_DEVICE];
 	};
 
-	class DeviceManager {
+	class AudioBackend {
 	public:
-		virtual ~DeviceManager() = default;
+		virtual ~AudioBackend() = default;
 
 		virtual Result Initialize() = 0;
 
 		virtual std::vector<OutputDeviceInfo> Enumerate() = 0;
 		virtual bool PopDeviceChangeNotification(std::string& newDeviceId) = 0;
 
-		virtual std::unique_ptr<OutputDevice> CreateDevice(const char* identifier, uint32_t engineSampleRate) = 0;
+		virtual std::unique_ptr<OutputDevice> CreateOutputDevice(const char* identifier, uint32_t engineSampleRate) = 0;
 	};
 }

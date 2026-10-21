@@ -11,5 +11,13 @@ namespace dalia {
 	namespace PlatformThread {
 
 		void SetCurrentThreadPriority(ThreadPriority priority);
+
+		struct ScopedThreadRuntime {
+			ScopedThreadRuntime();
+			~ScopedThreadRuntime();
+
+			ScopedThreadRuntime(const ScopedThreadRuntime&) = delete;
+			ScopedThreadRuntime& operator=(const ScopedThreadRuntime&) = delete;
+		};
 	}
 }

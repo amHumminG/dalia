@@ -7,20 +7,27 @@
 
 #include "messaging/AsyncLoadMessaging.h"
 
-#include "resources/AssetRegistry.h"
-#include "resources/ResidentSound.h"
-#include "resources/StreamSound.h"
+#include "resource/AssetRegistry.h"
+#include "resource/ResidentSound.h"
+#include "resource/StreamSound.h"
 
 #define STB_VORBIS_HEADER_ONLY
 #include "stb_vorbis.c"
+#include "messaging/MessageRouter.h"
 
 namespace dalia {
 
     AsyncLoadSystem::AsyncLoadSystem(const AsyncLoadSystemConfig& config)
-        : m_outSampleRate(config.outSampleRate),
-		m_ioLoadRequests(config.ioLoadRequests),
-        m_ioLoadEvents(config.ioLoadEvents),
-        m_assetRegistry(config.assetRegistry) {
+        : m_messageRouter(config.messageRouter),
+        m_assetRegistry(config.assetRegistry),
+		m_outSampleRate(config.outSampleRate) {
+
+    	m_messageRouter->SetLoadWakeupCallback([this](){ NotifyTaskAdded(); });
+
+    	m_messageRouter->SubscribeToLoadCommand(
+    		AsyncLoadCommand::Type::LoadSound,
+    		[this](const AsyncLoadCommand& cmd) { LoadSound(cmd); }
+    	);
     }
 
     AsyncLoadSystem::~AsyncLoadSystem() {
@@ -51,15 +58,12 @@ namespace dalia {
         	m_taskSemaphore.acquire(); // Sleep (wake on notification)
         	if (!m_isRunning.load(std::memory_order_relaxed)) break;
 
-            AsyncLoadCommand req;
-            while (m_ioLoadRequests->Pop(req)) ProcessRequest(req);
+        	m_messageRouter->ProcessLoadCommands();
         }
     }
 
-    void AsyncLoadSystem::ProcessRequest(const AsyncLoadCommand& req) {
-        switch (req.type) {
-            case AsyncLoadCommand::Type::LoadSound: {
-                SoundHandle soundHandle = SoundHandle::FromRawId(req.data.soundFromFile.resourceHandleRawId);
+    void AsyncLoadSystem::LoadSound(const AsyncLoadCommand& cmd) {
+    	SoundHandle soundHandle = SoundHandle::FromRawId(cmd.data.soundFromFile.resourceHandleRawId);
                 SoundType soundType = soundHandle.GetType();
 
                 ResidentSound* residentSound = nullptr;
@@ -86,12 +90,12 @@ namespace dalia {
                 }
 
                 int error;
-                stb_vorbis* decoder = stb_vorbis_open_filename(req.data.soundFromFile.filepath, &error, nullptr);
+                stb_vorbis* decoder = stb_vorbis_open_filename(cmd.data.soundFromFile.filepath, &error, nullptr);
                 if (!decoder) {
                     soundLoadStatePtr->store(LoadState::Error, std::memory_order_release);
 
-                    m_ioLoadEvents->Push(AsyncLoadEvent::SoundLoadFailed(req.requestId, Result::FileReadError));
-                    DALIA_LOG_ERR(LOG_CTX_ASYNC, "Failed to load sound from %s. %s.", req.data.soundFromFile.filepath,
+                    m_messageRouter->PushLoadEvent(AsyncLoadEvent::SoundLoadFailed(cmd.requestId, Result::FileReadError));
+                    DALIA_LOG_ERR(LOG_CTX_ASYNC, "Failed to load sound from %s. %s.", cmd.data.soundFromFile.filepath,
                         GetStbVorbisErrorString(error));
 
                     return;
@@ -120,8 +124,8 @@ namespace dalia {
                     if (framesDecoded == 0) {
                         soundLoadStatePtr->store(LoadState::Error, std::memory_order_release);
 
-                        m_ioLoadEvents->Push(AsyncLoadEvent::SoundLoadFailed(req.requestId, Result::FileReadError));
-                        DALIA_LOG_ERR(LOG_CTX_ASYNC, "Failed to read samples from %s.", req.data.soundFromFile.filepath);
+                        m_messageRouter->PushLoadEvent(AsyncLoadEvent::SoundLoadFailed(cmd.requestId, Result::FileReadError));
+                        DALIA_LOG_ERR(LOG_CTX_ASYNC, "Failed to read samples from %s.", cmd.data.soundFromFile.filepath);
 
                         stb_vorbis_close(decoder);
                         return;
@@ -138,18 +142,13 @@ namespace dalia {
                     streamSound->sampleRate = info.sample_rate;
                     streamSound->frameCount = totalFrames;
                 	streamSound->lengthInSeconds = static_cast<double>(totalFrames) / info.sample_rate;
-                	snprintf(streamSound->filepath, MAX_STR_LEN_ASSET_PATH, "%s", req.data.soundFromFile.filepath);
+                	snprintf(streamSound->filepath, MAX_STR_LEN_ASSET_PATH, "%s", cmd.data.soundFromFile.filepath);
                 }
                 stb_vorbis_close(decoder);
                 soundLoadStatePtr->store(LoadState::Loaded, std::memory_order_release);
 
-                m_ioLoadEvents->Push(AsyncLoadEvent::SoundLoaded(req.requestId, soundHandle.GetRawId()));
+                m_messageRouter->PushLoadEvent(AsyncLoadEvent::SoundLoaded(cmd.requestId, soundHandle.GetRawId()));
 
-                DALIA_LOG_DEBUG(LOG_CTX_ASYNC, "Loaded sound from file (%s).", req.data.soundFromFile.filepath);
-                break;
-            }
-            default:
-                break;
-        }
+                DALIA_LOG_DEBUG(LOG_CTX_ASYNC, "Loaded sound from file (%s).", cmd.data.soundFromFile.filepath);
     }
 }

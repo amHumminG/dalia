@@ -36,7 +36,10 @@ namespace dalia {
 			ForceDetachEffect,
 
 			// Misc
-			SetGlobalDopplerFactor
+			SetGlobalDopplerFactor,
+
+
+			Count // Determines the number of types
 		};
 
 		Type type = Type::None;
@@ -265,7 +268,10 @@ namespace dalia {
 			None,
 
 			// Voice Lifecycle
-			VoiceStopped
+			VoiceStopped,
+
+
+			Count // Determines the number of types
 		};
 
 		Type type = Type::None;

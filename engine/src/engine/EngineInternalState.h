@@ -3,17 +3,12 @@
 #include "dalia/Engine.h"
 
 #include "engine/DeviceCoordinator.h"
-#include "async/AsyncDirector.h"
+#include "async/messaging/MessageRouter.h"
 
 #include "core/Types.h"
 #include "core/StateSyncPool.h"
 #include "core/AsyncPool.h"
 #include "core/Logger.h"
-
-#include "messaging/AsyncControlMessaging.h"
-#include "messaging/AsyncLoadMessaging.h"
-#include "messaging/AsyncStreamMessaging.h"
-#include "messaging/MixerMessaging.h"
 
 #include "mixer/Voice.h"
 #include "mixer/Listener.h"
@@ -27,7 +22,7 @@
 
 namespace dalia {
 
-	class DeviceManager;
+	class AudioBackend;
 	class OutputDevice;
 	class NullOutputDevice;
 	class AsyncMixerSystem;
@@ -57,19 +52,10 @@ namespace dalia {
 
 		DeviceCoordinator deviceCoordinator;
 
-		AsyncDirector asyncDirector;
+		MessageRouter messageRouter;
 
 		// Engine Settings
 		CoordinateSystem coordinateSystem = CoordinateSystem::LeftHanded;
-
-		// Messaging Queues
-		std::unique_ptr<AsyncMixerCommandQueue>		mixerCommands;
-		std::unique_ptr<AsyncMixerEventQueue>		mixerEvents;
-		std::unique_ptr<AsyncStreamCommandQueue>	asyncStreamRequests;
-		std::unique_ptr<AsyncLoadCommandQueue>		asyncLoadRequests;
-		std::unique_ptr<AsyncLoadEventQueue>		asyncLoadEvents;
-		std::unique_ptr<AsyncControlCommandQueue>	asyncControlRequests;
-		std::unique_ptr<AsyncControlEventQueue>		asyncControlEvents;
 
 		// Streams
 		AsyncPool<StreamContext> streams;
