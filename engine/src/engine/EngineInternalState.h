@@ -3,7 +3,7 @@
 #include "dalia/Engine.h"
 
 #include "engine/DeviceCoordinator.h"
-#include "async/messaging/MessageRouter.h"
+#include "async/messaging/AsyncMessageBus.h"
 
 #include "core/Types.h"
 #include "core/StateSyncPool.h"
@@ -17,6 +17,11 @@
 #include "mixer/effects/EffectTraits.h"
 
 #include "mixer/Speakers.h"
+#include "io/codec/VorbisCodec.h"
+#include "asset/AssetCoordinator.h"
+
+#include "async/WakeableThread.h"
+#include "async/IntervalThread.h"
 
 #include <memory>
 
@@ -34,12 +39,6 @@ namespace dalia {
 
 	struct StreamContext;
 
-	/// @brief Represents a sound waiting on voices that use it to stop before it can be unloaded.
-	struct PendingSoundUnload {
-		SoundHandle handle;
-		std::vector<PlaybackHandle> voicesToStop;
-	};
-
 	/// @brief Represents a playback instance waiting for an asset to be loaded before it can start playing.
 	struct PendingPlayback {
 		PlaybackHandle playback;
@@ -50,49 +49,41 @@ namespace dalia {
 	struct EngineInternalState {
 		bool initialized = false;
 
-		DeviceCoordinator deviceCoordinator;
-
-		MessageRouter messageRouter;
-
 		// Engine Settings
 		CoordinateSystem coordinateSystem = CoordinateSystem::LeftHanded;
 
-		// Streams
-		AsyncPool<StreamContext> streams;
+		AsyncMessageBus asyncMessageBus;
 
-		// Voices
-		StateSyncPool<Voice, VoiceMirror, VoiceParams> voices;
+		std::unique_ptr<DeviceCoordinator> deviceCoordinator;
+		std::unique_ptr<AssetCoordinator> assetCoordinator;
+		// std::unique_ptr<Mixer> mixer;
 
-		// Listeners
-		StateSyncPool<Listener, ListenerMirror, ListenerParams> listeners;
+		// Threads
+		std::unique_ptr<IntervalThread> streamThread;
+		std::unique_ptr<WakeableThread> loadThread;
+		std::unique_ptr<WakeableThread> controlThread;
 
-		// Buses
-		StateSyncPool<Bus, BusMirror, BusParams> buses;
-		std::unordered_map<BusID, uint32_t>		busMap;
-		std::unique_ptr<float[]>				busBufferPool;
+		// Mixer Nodes
+		StateSyncPool<Voice, VoiceMirror, VoiceParams> voices;				// TODO: Move somewhere
+		StateSyncPool<Listener, ListenerMirror, ListenerParams> listeners;	// TODO: Move somewhere
+		StateSyncPool<Biquad, BiquadMirror, BiquadParams> biquads;			// TODO: Move somewhere
+		StateSyncPool<Bus, BusMirror, BusParams> buses;						// TODO: Move somewhere
+		std::unordered_map<BusID, uint32_t>		 busMap;					// TODO: Move somewhere
+		std::unique_ptr<float[]>				 busBufferPool;				// TODO: Move somewhere
 
-		// Effects
-		StateSyncPool<Biquad, BiquadMirror, BiquadParams> biquads;
-
-		// Mixing & DSP
-		std::unique_ptr<MixGraphCompiler> mixGraphCompiler;
-		std::unique_ptr<uint32_t[]> mixOrder;
-		std::unique_ptr<float[]> mixScratchBuffer;
-
-		// Assets
-		std::unique_ptr<AssetRegistry> assetRegistry;
-		uint32_t nextIoLoadRequestId = 1;
-		std::unordered_map<uint32_t, AssetLoadCallback> loadCallbacks;
+		// DSP Utility
+		std::unique_ptr<MixGraphCompiler> mixGraphCompiler;	// TODO: Move to mixer
+		std::unique_ptr<uint32_t[]> mixOrder;				// TODO: Move to mixer
+		std::unique_ptr<float[]> mixScratchBuffer;			// TODO: Move to mixer
 
 		// Deferred Unloads & Playbacks
-		std::vector<PendingSoundUnload> pendingSoundUnloads;
 		std::vector<PendingPlayback>	pendingPlaybacks;
 
 		// Systems
-		std::unique_ptr<AsyncMixerSystem>		asyncMixerSystem;
-		std::unique_ptr<AsyncStreamSystem>	asyncStreamSystem;
-		std::unique_ptr<AsyncLoadSystem>	asyncLoadSystem;
-		std::unique_ptr<AsyncControlSystem> asyncControlSystem;
+		std::unique_ptr<AsyncMixerSystem>	asyncMixerSystem;	// TODO: Rework
+		std::unique_ptr<AsyncStreamSystem>	asyncStreamSystem;	// TODO: Remove
+		std::unique_ptr<AsyncLoadSystem>	asyncLoadSystem;	// TODO: Remove
+		std::unique_ptr<AsyncControlSystem> asyncControlSystem; // TODO: Remove
 
 		EngineInternalState(const EngineConfig& config);
 

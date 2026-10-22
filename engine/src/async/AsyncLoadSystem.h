@@ -9,12 +9,12 @@
 namespace dalia {
 
     class AssetRegistry;
-	class MessageRouter;
+	class AsyncMessageBus;
 
     struct AsyncLoadSystemConfig {
     	uint32_t outSampleRate = 0;
 
-        MessageRouter* messageRouter = nullptr;
+        AsyncMessageBus* messageRouter = nullptr;
         AssetRegistry*  assetRegistry = nullptr;
     };
 
@@ -36,7 +36,7 @@ namespace dalia {
     	std::atomic<bool> m_isRunning;
     	std::counting_semaphore<COUNTING_SEMAPHORE_SIZE> m_taskSemaphore{0};
 
-    	MessageRouter* m_messageRouter = nullptr;
+    	AsyncMessageBus* m_messageRouter = nullptr;
 
     	// TODO: See if we can send these via a command maybe?
     	AssetRegistry* m_assetRegistry = nullptr;

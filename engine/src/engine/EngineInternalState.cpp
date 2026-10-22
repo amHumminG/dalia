@@ -1,8 +1,5 @@
 #include "engine/EngineInternalState.h"
 
-#include "backend/DeviceManager.h"
-#include "backend/NullOutputDevice.h"
-
 #include "async/AsyncControlSystem.h"
 #include "async/AsyncLoadSystem.h"
 #include "async/AsyncStreamSystem.h"
@@ -18,18 +15,37 @@
 namespace dalia {
 
 	EngineInternalState::EngineInternalState(const EngineConfig& config)
-		: asyncDirector(config.advanced.mixerQueueCapacity, config.advanced.streamQueueCapacity,
+		: asyncMessageBus(config.advanced.mixerQueueCapacity, config.advanced.streamQueueCapacity,
 			config.advanced.loadQueueCapacity, config.advanced.controlQueueCapacity),
-		coordinateSystem(config.coordinateSystem), streams(config.streamCapacity), voices(config.voiceCapacity),
+
+
+		coordinateSystem(config.coordinateSystem), voices(config.voiceCapacity),
 		listeners(std::clamp(config.listenerCapacity, LISTENERS_MIN, LISTENERS_MAX)),
 		buses(config.busCapacity), biquads(config.biquadCapacity) {
+
+		// Allocate subsystems
+		deviceCoordinator = std::make_unique<DeviceCoordinator>();
+		assetCoordinator = std::make_unique<AssetCoordinator>();
+		// mixer = std::make_unique<Mixer>();
+
+		// Allocate threads
+		streamThread = std::make_unique<IntervalThread>(
+			[this]() { asyncMessageBus.ProcessStreamCommands(); },
+			5000, ThreadPriority::High);
+		loadThread = std::make_unique<WakeableThread>(
+			[this]() { asyncMessageBus.ProcessLoadCommands(); },
+			ThreadPriority::Normal
+		);
+		controlThread = std::make_unique<WakeableThread>(
+			[this]() { asyncMessageBus.ProcessControlCommands(); },
+			ThreadPriority::Normal
+		);
+		asyncMessageBus.SetLoadWakeupCallback([this]() { loadThread->Wake(); });
+		asyncMessageBus.SetControlWakeupCallback([this]() { controlThread->Wake(); });
 
 		// Mixing
 		mixGraphCompiler	= std::make_unique<MixGraphCompiler>(config.busCapacity);
 		mixOrder			= std::make_unique<uint32_t[]>(config.busCapacity);
-
-		// Resources
-		assetRegistry	= std::make_unique<AssetRegistry>(config.residentSoundCapacity, config.streamSoundCapacity);
 	}
 
 	bool EngineInternalState::IsInitialized(const EngineInternalState* state) {

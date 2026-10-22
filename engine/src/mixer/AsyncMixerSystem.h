@@ -33,7 +33,7 @@ namespace dalia {
 	struct VirtualSpeaker;
 
 	class MixGraphCompiler;
-	class MessageRouter;
+	class AsyncMessageBus;
 
     struct MixerSystemConfig {
     	CoordinateSystem coordinateSystem;
@@ -44,7 +44,7 @@ namespace dalia {
         uint32_t outChannels			= 0;
         uint32_t outSampleRate			= 0;
 
-    	MessageRouter* asyncDirector = nullptr;
+    	AsyncMessageBus* asyncDirector = nullptr;
 
     	std::span<StreamContext> streamPool;
 
@@ -130,7 +130,7 @@ namespace dalia {
         uint32_t m_outChannels			= 0;
         uint32_t m_outSampleRate		= 0;
 
-		MessageRouter* m_asyncDirector;
+		AsyncMessageBus* m_asyncDirector;
 
     	// Streams
     	std::span<StreamContext> m_streamPool;

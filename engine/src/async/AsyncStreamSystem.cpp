@@ -16,7 +16,7 @@
 namespace dalia {
 
     AsyncStreamSystem::AsyncStreamSystem(const AsyncStreamSystemConfig& config)
-        : m_outSampleRate(config.outSampleRate),
+        :
 		m_ioStreamRequests(config.ioStreamRequests),
         m_streamPool(config.streamPool),
         m_freeStreams(config.freeStreams) {
@@ -63,16 +63,16 @@ namespace dalia {
             	if (stream.gen.load(std::memory_order_relaxed) != sGen) break;
                 if (stream.state.load(std::memory_order_acquire) != StreamState::Preparing) break;
 
-                if (stream.decoder) {
-                    stb_vorbis_close(stream.decoder);
-                    stream.decoder = nullptr;
+                if (stream.decoderHandle) {
+                    stb_vorbis_close(stream.decoderHandle);
+                    stream.decoderHandle = nullptr;
                 }
 
                 int error;
-                stream.decoder = stb_vorbis_open_filename(filepath, &error, nullptr);
+                stream.decoderHandle = stb_vorbis_open_filename(filepath, &error, nullptr);
 
-                if (stream.decoder) {
-                    stb_vorbis_info info = stb_vorbis_get_info(stream.decoder);
+                if (stream.decoderHandle) {
+                    stb_vorbis_info info = stb_vorbis_get_info(stream.decoderHandle);
 
                     // --- Check for unsupported formats ---
 
@@ -80,9 +80,10 @@ namespace dalia {
                     if (info.channels <= 0 || static_cast<uint32_t>(info.channels) > CHANNELS_STEREO) {
                         DALIA_LOG_ERR(LOG_CTX_ASYNC, "Failed to load file (%s). Unsupported channel count (%d)",
                             filepath, info.channels);
-                    	stb_vorbis_close(stream.decoder);
-                    	stream.decoder = nullptr;
+                    	stb_vorbis_close(stream.decoderHandle);
+                    	stream.decoderHandle = nullptr;
                     	stream.state.store(StreamState::Error, std::memory_order_release);
+                    	break;
                     }
 
                     stream.channels = info.channels;
@@ -109,9 +110,9 @@ namespace dalia {
                 StreamContext& stream = m_streamPool[sIndex];
             	if (stream.gen.load(std::memory_order_relaxed) != sGen) break;
 
-                if (stream.decoder) {
-                    stb_vorbis_close(stream.decoder);
-                    stream.decoder = nullptr;
+                if (stream.decoderHandle) {
+                    stb_vorbis_close(stream.decoderHandle);
+                    stream.decoderHandle = nullptr;
                 }
 
                 stream.Reset();
@@ -140,7 +141,7 @@ namespace dalia {
                 if (stream.gen.load(std::memory_order_relaxed) != sGen) break;
                 if (stream.state.load(std::memory_order_acquire) != StreamState::Seeking) break;
 
-                stb_vorbis_seek_frame(stream.decoder, seekFrame);
+                stb_vorbis_seek_frame(stream.decoderHandle, seekFrame);
 
                 FillBuffer(stream, 0);
                 FillBuffer(stream, 1);
@@ -156,7 +157,7 @@ namespace dalia {
     }
 
     void AsyncStreamSystem::FillBuffer(StreamContext& stream, uint32_t bufferIndex) {
-        if (!stream.decoder) {
+        if (!stream.decoderHandle) {
             DALIA_LOG_ERR(LOG_CTX_ASYNC, "Invalid stream decoder.");
             stream.state.store(StreamState::Error, std::memory_order_release);
             return;
@@ -169,13 +170,12 @@ namespace dalia {
         bool justLooped = false;
         bool foundEOF = false;
 
-
         while (framesWritten < framesNeeded) {
             int samplesRemaining = static_cast<int>((framesNeeded - framesWritten) * stream.channels);
             float* writePtr = bufferPtr + (framesWritten * stream.channels);
 
             int framesRead = stb_vorbis_get_samples_float_interleaved(
-                stream.decoder,
+                stream.decoderHandle,
                 static_cast<int>(stream.channels),
                 writePtr,
                 samplesRemaining
@@ -191,7 +191,7 @@ namespace dalia {
 
                 stream.eofIndex[bufferIndex] = framesWritten;
                 DALIA_LOG_DEBUG(LOG_CTX_ASYNC, "Stream buffer found EOF at index %d.", framesWritten);
-                stb_vorbis_seek_start(stream.decoder);
+                stb_vorbis_seek_start(stream.decoderHandle);
                 justLooped = true;
                 foundEOF = true;
                 // We continue to fill buffer from the start of the file

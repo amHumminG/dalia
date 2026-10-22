@@ -15,7 +15,7 @@ namespace dalia {
 
 	struct AsyncControlCommand;
 	struct AsyncControlEvent;
-	class MessageRouter;
+	class AsyncMessageBus;
 	class AsyncMixerSystem;
 
 	class DeviceCoordinator {
@@ -26,7 +26,7 @@ namespace dalia {
 		// TODO: Write doxygen comments
 
 		Result Initialize(
-			MessageRouter* messageRouter,
+			AsyncMessageBus* asyncMessageBus,
 			AsyncMixerSystem* mixerSystem,
 			uint32_t outSampleRate,
 			uint32_t periodSizeInFrames,
@@ -54,7 +54,7 @@ namespace dalia {
 		void FinalizeOutputDeviceSwap(const AsyncControlEvent& ev);
 		void ExecuteOutputDeviceSwap(const AsyncControlCommand& cmd); // Runs on async control thread
 
-		MessageRouter* m_messageRouter = nullptr;
+		AsyncMessageBus* m_asyncMessageBus = nullptr;
 		AsyncMixerSystem* m_mixerSystem = nullptr;
 
 		std::unique_ptr<AudioBackend> m_audioBackend;

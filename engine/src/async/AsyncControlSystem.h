@@ -12,10 +12,10 @@ namespace dalia {
 	class AudioBackend;
 	class AsyncMixerSystem;
 	class NullOutputDevice;
-	class MessageRouter;
+	class AsyncMessageBus;
 
 	struct AsyncControlSystemConfig {
-		MessageRouter* messageRouter = nullptr;
+		AsyncMessageBus* messageRouter = nullptr;
 
 		AudioBackend* deviceManager = nullptr;
 		NullOutputDevice* nullOutputDevice = nullptr;
@@ -39,6 +39,6 @@ namespace dalia {
 		std::atomic<bool> m_isRunning{false};
 		std::counting_semaphore<COUNTING_SEMAPHORE_SIZE> m_taskSemaphore{0};
 
-		MessageRouter* m_messageRouter = nullptr;
+		AsyncMessageBus* m_messageRouter = nullptr;
 	};
 }

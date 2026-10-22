@@ -39,8 +39,8 @@ namespace dalia {
 
     private:
         friend struct EngineInternalState;
+    	friend class AssetCoordinator;
         friend class AssetRegistry;
-        friend class AsyncLoadSystem;
 
         static SoundHandle Create(uint32_t index, uint32_t generation, SoundType type) {
             SoundHandle handle;

@@ -3,14 +3,14 @@
 #include <future>
 
 #include "async/messaging/AsyncControlMessaging.h"
-#include "async/messaging/MessageRouter.h"
+#include "async/messaging/AsyncMessageBus.h"
 
 namespace dalia {
 	DeviceCoordinator::~DeviceCoordinator() {
 		Shutdown();
 	}
 
-	Result DeviceCoordinator::Initialize(MessageRouter* messageRouter, AsyncMixerSystem* mixerSystem,
+	Result DeviceCoordinator::Initialize(AsyncMessageBus* asyncMessageBus, AsyncMixerSystem* mixerSystem,
 		uint32_t outSampleRate, uint32_t periodSizeInFrames, const std::string& outDeviceId) {
 
 		// Setup OS specific device manager
@@ -50,14 +50,14 @@ namespace dalia {
 			m_activeOutputDevice = m_nullOutputDevice.get();
 		}
 
-		m_messageRouter = messageRouter;
+		m_asyncMessageBus = asyncMessageBus;
 
-		m_messageRouter->SubscribeToControlEvent(
+		m_asyncMessageBus->SubscribeToControlEvent(
 			AsyncControlEvent::Type::OutputDeviceSwapped,
 			[this](const AsyncControlEvent& ev){ FinalizeOutputDeviceSwap(ev); }
 		);
 
-		m_messageRouter->SubscribeToControlCommand(
+		m_asyncMessageBus->SubscribeToControlCommand(
 			AsyncControlCommand::Type::SwapOutputDevice,
 			[this](const AsyncControlCommand& cmd) { ExecuteOutputDeviceSwap(cmd); }
 		);
@@ -151,7 +151,7 @@ namespace dalia {
 				m_targetOutputDeviceId.c_str(),
 				m_outSampleRate
 			);
-			if (!m_messageRouter->PushControlCommand(cmd)) {
+			if (!m_asyncMessageBus->PushControlCommand(cmd)) {
 				// TODO: Rollback ?
 			}
 		}
@@ -235,6 +235,6 @@ namespace dalia {
 		// If new device failed, we leave null device running
 
 		// Push new device back to main thread
-		m_messageRouter->PushControlEvent(AsyncControlEvent::OutputDeviceSwapped(newDevice.release(), fellBack));
+		m_asyncMessageBus->PushControlEvent(AsyncControlEvent::OutputDeviceSwapped(newDevice.release(), fellBack));
 	}
 }

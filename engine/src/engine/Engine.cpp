@@ -64,9 +64,9 @@ namespace dalia {
 	static void TeardownInternal(EngineInternalState* state) {
 		if (!state) return;
 
-		state->deviceCoordinator.Shutdown();
+		state->deviceCoordinator->Shutdown();
 
-		if (state->asyncMixerSystem)			state->asyncMixerSystem->Stop();
+		if (state->asyncMixerSystem)	state->asyncMixerSystem->Stop();
 		if (state->asyncLoadSystem)		state->asyncLoadSystem->Stop();
 		if (state->asyncStreamSystem)	state->asyncStreamSystem->Stop();
 		if (state->asyncControlSystem)	state->asyncControlSystem->Stop();
@@ -107,7 +107,7 @@ namespace dalia {
 		m_state->listeners.GetMirror(0).params.isActive = true;
 
 		m_state->deviceCoordinator.Initialize(
-			&m_state->messageRouter,
+			&m_state->asyncMessageBus,
 			&m_state->asyncMixerSystem,
 			config.sampleRate,
 			config.advanced.periodSizeFrames,
@@ -127,7 +127,7 @@ namespace dalia {
 		mixerConfig.maxSamplesPerPeriod		= maxPeriodSizeSamples;
 		mixerConfig.outChannels				= m_state->deviceCoordinator.GetActiveOutputChannels();
 		mixerConfig.outSampleRate			= m_state->deviceCoordinator.GetOutputSampleRate();
-		mixerConfig.asyncDirector			= &m_state->messageRouter;
+		mixerConfig.asyncDirector			= &m_state->asyncMessageBus;
 		mixerConfig.streamPool				= m_state->streams.GetSpan();
 		mixerConfig.listenerPool			= m_state->listeners.GetSpan();
 		mixerConfig.listenerParamBridges	= m_state->listeners.GetParamBridgeSpan();
@@ -146,19 +146,19 @@ namespace dalia {
 		AsyncStreamSystemConfig asyncStreamConfig;
 		asyncStreamConfig.wakeupPeriodMicroseconds  = STREAM_SYSTEM_WAKEUP_PERIOD_MICROSECONDS;
 		asyncStreamConfig.outSampleRate				= m_state->deviceCoordinator.GetOutputSampleRate();
-		asyncStreamConfig.asyncDirector				= &m_state->messageRouter;
+		asyncStreamConfig.asyncDirector				= &m_state->asyncMessageBus;
 		asyncStreamConfig.streamPool				= m_state->streams.GetSpan();
 		asyncStreamConfig.freeStreams				= m_state->streams.GetFreeList();
 		m_state->asyncStreamSystem	= std::make_unique<AsyncStreamSystem>(asyncStreamConfig);
 
 		AsyncLoadSystemConfig asyncLoadConfig;
 		asyncLoadConfig.outSampleRate	= m_state->deviceCoordinator.GetOutputSampleRate();
-		asyncLoadConfig.messageRouter	= &m_state->messageRouter;
+		asyncLoadConfig.messageRouter	= &m_state->asyncMessageBus;
 		asyncLoadConfig.assetRegistry	= m_state->assetRegistry.get();
 		m_state->asyncLoadSystem = std::make_unique<AsyncLoadSystem>(asyncLoadConfig);
 
 		AsyncControlSystemConfig asyncControlSystemConfig;
-		asyncControlSystemConfig.messageRouter	= &m_state->messageRouter;
+		asyncControlSystemConfig.messageRouter	= &m_state->asyncMessageBus;
 		asyncControlSystemConfig.mixerSystem	= m_state->asyncMixerSystem.get();
 		m_state->asyncControlSystem = std::make_unique<AsyncControlSystem>(asyncControlSystemConfig);
 
@@ -196,7 +196,7 @@ namespace dalia {
 		if (!EngineInternalState::IsInitialized(m_state)) return;
 
 		// --- Process Event Inbox ---
-		m_state->messageRouter.ProcessMainEvents();
+		m_state->asyncMessageBus.ProcessMainEvents();
 
 		// --- Sync Pools ---
 		m_state->voices.Sync();
@@ -204,7 +204,7 @@ namespace dalia {
 		m_state->buses.Sync();
 		m_state->biquads.Sync();
 
-		m_state->messageRouter.DispatchStagedCommands(); // Send all commands accumulated from this frame to the audio thread
+		m_state->asyncMessageBus.DispatchStagedCommands(); // Send all commands accumulated from this frame to the audio thread
 		Logger::ProcessLogs(); // Print all logs accumulated from this frame
 	}
 }

@@ -71,12 +71,13 @@ set(ENGINE_FILES
     src/async/AsyncLoadSystem.h
     src/async/AsyncControlSystem.cpp
     src/async/AsyncControlSystem.h
-
-    src/messaging/AsyncMixerMessaging.h
-    src/messaging/AsyncMixerMessaging.cpp
-    src/messaging/AsyncStreamMessaging.h
-    src/messaging/AsyncLoadMessaging.h
-    src/messaging/AsyncControlMessaging.h
+    src/async/messaging/AsyncMessageBus.h
+    src/async/messaging/AsyncMessageBus.cpp
+    src/async/messaging/AsyncMixerMessaging.h
+    src/async/messaging/AsyncMixerMessaging.cpp
+    src/async/messaging/AsyncStreamMessaging.h
+    src/async/messaging/AsyncLoadMessaging.h
+    src/async/messaging/AsyncControlMessaging.h
 
     src/mixer/Voice.h
     src/mixer/StreamContext.h
@@ -99,15 +100,24 @@ set(ENGINE_FILES
     src/dsp/Slew.h
     src/dsp/Slew.cpp
 
-    src/resource/ResidentSound.h
-    src/resource/AssetRegistry.cpp
-    src/resource/AssetRegistry.h
-    src/resource/StreamSound.h
+    src/asset/types/ResidentSound.h
+    src/asset/types/StreamSound.h
+    src/asset/AssetRegistry.cpp
+    src/asset/AssetRegistry.h
+
     src/engine/DeviceCoordinator.h
     src/engine/DeviceCoordinator.cpp
-    src/messaging/MessageDirector.cpp
-    src/async/MessageDirector.h
     src/engine/EngineHelpers.h
+    src/async/WakeableThread.cpp
+    src/async/WakeableThread.h
+    src/async/IntervalThread.cpp
+    src/async/IntervalThread.h
+    src/io/codec/Codec.h
+    src/io/codec/VorbisCodec.h
+    src/io/codec/VorbisCodec.cpp
+    src/asset/AssetCoordinator.cpp
+    src/asset/AssetCoordinator.h
+    src/io/codec/Codec.cpp
 )
 
 if (WIN32)

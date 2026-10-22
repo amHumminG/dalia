@@ -1,6 +1,6 @@
 #include "async/AsyncControlSystem.h"
 
-#include "messaging/MessageRouter.h"
+#include "messaging/AsyncMessageBus.h"
 #include "backend/PlatformThread.h"
 
 namespace dalia {

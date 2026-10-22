@@ -13,7 +13,7 @@
 
 #define STB_VORBIS_HEADER_ONLY
 #include "stb_vorbis.c"
-#include "messaging/MessageRouter.h"
+#include "messaging/AsyncMessageBus.h"
 
 namespace dalia {
 
