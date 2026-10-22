@@ -38,15 +38,15 @@ namespace dalia {
 		std::array<MessageCallback<TMessage>, MAX_TYPES> m_callbacks{};
 	};
 
-	class MessageRouter {
+	class AsyncMessageBus {
 	public:
-		MessageRouter(
+		AsyncMessageBus(
 			size_t mixerQueueCapacity,
 			size_t streamQueueCapacity,
 			size_t loadQueueCapacity,
 			size_t controlQueueCapacity
 		);
-		~MessageRouter() = default;
+		~AsyncMessageBus() = default;
 
 		void DispatchStagedCommands();
 
