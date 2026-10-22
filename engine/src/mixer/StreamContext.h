@@ -1,6 +1,7 @@
 #pragma once
 
 #include "core/Constants.h"
+#include "io/codec/Codec.h"
 
 #include <cstdint>
 #include <array>
@@ -29,7 +30,8 @@ namespace dalia {
         std::array<std::atomic<bool>, 2> bufferReady{false, false};
         std::array<uint32_t, 2> eofIndex = {NO_EOF, NO_EOF};
 
-        stb_vorbis* decoder = nullptr;
+        const Codec* codec = nullptr;
+    	void* decoderHandle = nullptr;
         uint32_t channels = 0;
         uint32_t sampleRate = 0;
 
@@ -47,7 +49,7 @@ namespace dalia {
             bufferReady[1].store(false);
             eofIndex = {NO_EOF, NO_EOF};
 
-            decoder = nullptr;
+            decoderHandle = nullptr;
             channels = 0;
             sampleRate = 0;
         }
