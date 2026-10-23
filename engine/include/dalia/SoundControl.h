@@ -39,7 +39,7 @@ namespace dalia {
 
     private:
         friend struct EngineInternalState;
-    	friend class AssetCoordinator;
+    	friend class AssetController;
         friend class AssetRegistry;
 
         static SoundHandle Create(uint32_t index, uint32_t generation, SoundType type) {
@@ -63,6 +63,9 @@ namespace dalia {
 
         uint64_t m_rawId = 0;
     };
+
+	/// @brief Sentinel value representing an invalid sound instance.
+	constexpr PlaybackHandle INVALID_SOUND_HANDLE{};
 
 	/// @brief Sentinel value indicating a failed async request.
     constexpr uint32_t INVALID_REQUEST_ID = 0;

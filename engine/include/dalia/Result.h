@@ -33,13 +33,13 @@ namespace dalia {
 		EffectCapacityReached		= -106,
 
 		// Messaging Errors
-		MixerCommandQueueFull		= -200,
-		MixerEventQueueFull			= -201,
-		IoStreamRequestQueueFull	= -202,
-		IoLoadRequestQueueFull		= -203,
+		MixerQueueCapacityReached	= -200,
+		StreamQueueCapacityReached	= -201,
+		LoadQueueCapacityReached	= -202,
+		ControlQueueCapacityReached = -203,
 
 		// Playback Errors
-		PlaybackCorrupted			= -303,
+		PlaybackCorrupted			= -300,
 
 		// I/O Errors
 		SoundLoadError				= -400,

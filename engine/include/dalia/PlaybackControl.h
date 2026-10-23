@@ -41,7 +41,7 @@ namespace dalia {
 	};
 
 	/// @brief Sentinel value representing an invalid playback instance.
-	constexpr PlaybackHandle InvalidPlaybackHandle{};
+	constexpr PlaybackHandle INVALID_PLAYBACK_HANDLE{};
 
 	/// @brief The condition under which a playback instance was stopped.
 	enum class PlaybackExitCondition : uint8_t {
