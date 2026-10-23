@@ -2,6 +2,8 @@
 #include "dalia/Result.h"
 #include "core/SPSCRingBuffer.h"
 #include "mixer/Voice.h"
+#include "io/codec/Codec.h"
+
 #include <cstdint>
 
 namespace dalia {
@@ -11,31 +13,26 @@ namespace dalia {
 			None,
 
 			LoadSound,
-			// LoadBank
+			// LoadBank,
 
 
 			Count // Determines the number of types
-		} type = Type::None;
+		};
 
-		uint32_t requestId;
+		Type type = Type::None;
+		uint32_t requestId = INVALID_REQUEST_ID;
+		uint64_t assetRawId = INVALID_RAW_ID;
+		std::vector<float>* targetPcmBuffer = nullptr;
+		char filepath[MAX_STR_LEN_ASSET_PATH]{};
 
-		union {
-			struct {
-				uint64_t resourceHandleRawId;
-				char filepath[MAX_STR_LEN_ASSET_PATH];
-			} soundFromFile;
-
-		} data = {};
-
-		static AsyncLoadCommand LoadSound(uint32_t reqId, SoundHandle handle, const char* filepath) {
-			AsyncLoadCommand req;
-			req.type = Type::LoadSound;
-			req.requestId = reqId;
-
-			req.data.soundFromFile.resourceHandleRawId = handle.GetRawId();
-			snprintf(req.data.soundFromFile.filepath, MAX_STR_LEN_ASSET_PATH, "%s", filepath);
-
-			return req;
+		static AsyncLoadCommand LoadSound(uint32_t reqId,  uint64_t rawId, const char* filepath, std::vector<float>* pcmBuffer = nullptr) {
+			AsyncLoadCommand cmd{};
+			cmd.type = Type::LoadSound;
+			cmd.requestId = reqId;
+			cmd.assetRawId = rawId;
+			cmd.targetPcmBuffer = pcmBuffer;
+			snprintf(cmd.filepath, MAX_STR_LEN_ASSET_PATH, "%s", filepath);
+			return cmd;
 		}
 	};
 
@@ -48,26 +45,30 @@ namespace dalia {
 
 
         	Count // Determines the number of types
-        } type = Type::None;
+        };
 
-        uint32_t requestId = 0;
+    	Type type = Type::None;
+        uint32_t requestId = INVALID_REQUEST_ID;
+    	uint64_t assetRawId = INVALID_RAW_ID;
         Result result = Result::Ok;
+    	AudioFormatInfo formatInfo{};
 
-        uint64_t assetRawId = 0;
-
-        static AsyncLoadEvent SoundLoaded(uint32_t reqId, uint64_t assetRawId) {
-            AsyncLoadEvent ev;
+        static AsyncLoadEvent SoundLoaded(uint32_t reqId, uint64_t rawId, const AudioFormatInfo& info) {
+            AsyncLoadEvent ev{};
             ev.type = Type::SoundLoaded;
             ev.requestId = reqId;
-            ev.assetRawId = assetRawId;
+            ev.assetRawId = rawId;
+        	ev.result = Result::Ok;
+        	ev.formatInfo = info;
             return ev;
         }
 
-        static AsyncLoadEvent SoundLoadFailed(uint32_t reqId, Result error) {
+        static AsyncLoadEvent SoundLoadFailed(uint32_t reqId, uint64_t rawId, Result errorResult) {
             AsyncLoadEvent ev;
             ev.type = Type::SoundLoadFailed;
             ev.requestId = reqId;
-            ev.result = error;
+        	ev.assetRawId = rawId;
+            ev.result = errorResult;
             return ev;
         }
     };
