@@ -9,7 +9,7 @@
 namespace dalia {
 
     struct ResidentSound {
-        std::atomic<LoadState> state{LoadState::Unloaded};
+        LoadState state = LoadState::Unloaded;
         uint32_t refCount = 0;
 
         uint32_t pathHash = 0;
@@ -17,7 +17,7 @@ namespace dalia {
         std::vector<float> pcmData;
 
         // Format
-        uint32_t frameCount = 0;
+        uint32_t totalFrames = 0;
         uint32_t channels = 0;
         uint32_t sampleRate = 0;
 
@@ -26,13 +26,13 @@ namespace dalia {
         std::span<float> GetBuffer() { return std::span(pcmData.data(), pcmData.size()); }
 
         void Reset() {
-            state.store(LoadState::Unloaded, std::memory_order_relaxed);
+            state = LoadState::Unloaded;
             refCount = 0;
 
             pathHash = 0;
 
             pcmData.clear();
-            frameCount = 0;
+            totalFrames = 0;
             channels = 0;
             sampleRate = 0;
         }

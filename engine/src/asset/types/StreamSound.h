@@ -9,7 +9,7 @@
 namespace dalia {
 
     struct StreamSound {
-        std::atomic<LoadState> state{LoadState::Unloaded};
+        LoadState state = LoadState::Unloaded;
         uint32_t refCount = 0;
 
         uint32_t pathHash = 0;
@@ -21,14 +21,14 @@ namespace dalia {
         size_t byteLenght = 0;
 
         // Format
-        uint32_t frameCount = 0;
+        uint32_t totalFrames = 0;
         uint32_t channels = 0;
         uint32_t sampleRate = 0;
 
     	double lengthInSeconds = 0.0;
 
         void Reset() {
-            state.store(LoadState::Unloaded, std::memory_order_relaxed);
+            state = LoadState::Unloaded;
             refCount = 0;
 
             pathHash = 0;
@@ -37,7 +37,7 @@ namespace dalia {
             byteOffset = 0;
             byteLenght = 0;
 
-            frameCount = 0;
+            totalFrames = 0;
             channels = 0;
             sampleRate = 0;
         }
