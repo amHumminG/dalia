@@ -18,10 +18,10 @@ namespace dalia {
 	class AsyncMessageBus;
 	class AsyncMixerSystem;
 
-	class DeviceCoordinator {
+	class DeviceController {
 	public:
-		DeviceCoordinator() = default;
-		~DeviceCoordinator();
+		DeviceController() = default;
+		~DeviceController();
 
 		// TODO: Write doxygen comments
 

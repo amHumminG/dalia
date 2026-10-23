@@ -1,4 +1,4 @@
-#include "engine/DeviceCoordinator.h"
+#include "DeviceController.h"
 
 #include <future>
 
@@ -6,11 +6,11 @@
 #include "async/messaging/AsyncMessageBus.h"
 
 namespace dalia {
-	DeviceCoordinator::~DeviceCoordinator() {
+	DeviceController::~DeviceController() {
 		Shutdown();
 	}
 
-	Result DeviceCoordinator::Initialize(AsyncMessageBus* asyncMessageBus, AsyncMixerSystem* mixerSystem,
+	Result DeviceController::Initialize(AsyncMessageBus* asyncMessageBus, AsyncMixerSystem* mixerSystem,
 		uint32_t outSampleRate, uint32_t periodSizeInFrames, const std::string& outDeviceId) {
 
 		// Setup OS specific device manager
@@ -67,53 +67,53 @@ namespace dalia {
 		return Result::Ok;
 	}
 
-	void DeviceCoordinator::Shutdown() {
+	void DeviceController::Shutdown() {
 		if (m_outputDevice)		m_outputDevice->Stop();
 		if (m_nullOutputDevice)	m_nullOutputDevice->Stop();
 	}
 
-	void DeviceCoordinator::Update() {
+	void DeviceController::Update() {
 		CheckForOutputDeviceChanges();
 	}
 
-	Result DeviceCoordinator::StartActiveOutputDevice(AsyncMixerSystem* mixerSystem) {
+	Result DeviceController::StartActiveOutputDevice(AsyncMixerSystem* mixerSystem) {
 		return m_activeOutputDevice->Start(mixerSystem);
 	}
 
-	SpeakerLayout DeviceCoordinator::GetActiveOutputSpeakerLayout() const {
+	SpeakerLayout DeviceController::GetActiveOutputSpeakerLayout() const {
 		return m_speakerLayout;
 	}
 
-	uint32_t DeviceCoordinator::GetActiveOutputChannels() const {
+	uint32_t DeviceController::GetActiveOutputChannels() const {
 		return m_outChannels;
 	}
 
-	uint32_t DeviceCoordinator::GetOutputSampleRate() const {
+	uint32_t DeviceController::GetOutputSampleRate() const {
 		return m_outSampleRate;
 	}
 
-	uint32_t DeviceCoordinator::GetPeriodSizeFrames() const {
+	uint32_t DeviceController::GetPeriodSizeFrames() const {
 		return m_periodSizeFrames;
 	}
 
-	uint32_t DeviceCoordinator::GetMaxPeriodSizeSamples() const {
+	uint32_t DeviceController::GetMaxPeriodSizeSamples() const {
 		return m_periodSizeFrames * CHANNELS_MAX;
 	}
 
-	void DeviceCoordinator::SetupOutputDeviceDefault() {
+	void DeviceController::SetupOutputDeviceDefault() {
 		m_outputDevice = m_audioBackend->CreateOutputDevice("default", m_outSampleRate);
 	}
 
-	void DeviceCoordinator::SetupOutputDeviceTargeted(const std::string& outputDeviceId) {
+	void DeviceController::SetupOutputDeviceTargeted(const std::string& outputDeviceId) {
 		m_outputDevice = m_audioBackend->CreateOutputDevice(outputDeviceId.c_str(), m_outSampleRate);
 		if (!m_outputDevice) SetupOutputDeviceDefault();
 	}
 
-	void DeviceCoordinator::SetupNullOutputDevice() {
+	void DeviceController::SetupNullOutputDevice() {
 		m_nullOutputDevice = std::make_unique<NullOutputDevice>(m_outSampleRate, (m_outSampleRate * 10) / 1000); // TODO: Try this with m_periodSizeFrames
 	}
 
-	void DeviceCoordinator::CheckForOutputDeviceChanges() {
+	void DeviceController::CheckForOutputDeviceChanges() {
 		// --- Wait For Ongoing Swap ---
 		if (m_isSwappingOutputDevice) return;
 
@@ -157,7 +157,7 @@ namespace dalia {
 		}
 	}
 
-	void DeviceCoordinator::FinalizeOutputDeviceSwap(const AsyncControlEvent& ev) {
+	void DeviceController::FinalizeOutputDeviceSwap(const AsyncControlEvent& ev) {
 		m_outputDevice.reset(ev.data.swapOutputDevice.newDevice);
 
 		if (ev.data.swapOutputDevice.fellBackToDefault) {
@@ -195,7 +195,7 @@ namespace dalia {
 		m_isSwappingOutputDevice = false;
 	}
 
-	void DeviceCoordinator::ExecuteOutputDeviceSwap(const AsyncControlCommand& cmd) {
+	void DeviceController::ExecuteOutputDeviceSwap(const AsyncControlCommand& cmd) {
 		// Teardown old device
 		if (cmd.data.swapOutputDevice.oldDevice) {
 			// Check the format before stopping the old device
