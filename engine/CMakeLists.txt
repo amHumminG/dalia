@@ -105,8 +105,8 @@ set(ENGINE_FILES
     src/asset/AssetRegistry.cpp
     src/asset/AssetRegistry.h
 
-    src/engine/DeviceCoordinator.h
-    src/engine/DeviceCoordinator.cpp
+    src/backend/DeviceController.h
+    src/backend/DeviceController.cpp
     src/engine/EngineHelpers.h
     src/async/WakeableThread.cpp
     src/async/WakeableThread.h
@@ -115,9 +115,11 @@ set(ENGINE_FILES
     src/io/codec/Codec.h
     src/io/codec/VorbisCodec.h
     src/io/codec/VorbisCodec.cpp
-    src/asset/AssetCoordinator.cpp
-    src/asset/AssetCoordinator.h
+    src/asset/AssetController.cpp
+    src/asset/AssetController.h
     src/io/codec/Codec.cpp
+    src/io/IoController.cpp
+    src/io/IoController.h
 )
 
 if (WIN32)
