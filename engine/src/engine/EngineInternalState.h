@@ -2,26 +2,28 @@
 
 #include "dalia/Engine.h"
 
-#include "engine/DeviceCoordinator.h"
+// --- NEW ---
 #include "async/messaging/AsyncMessageBus.h"
+
+#include "backend/DeviceController.h"
+#include "asset/AssetController.h"
+#include "io/IoController.h"
+#include "mixer/MixController.h"
+
+#include "async/WakeableThread.h"
+#include "async/IntervalThread.h"
+// ------
+
 
 #include "core/Types.h"
 #include "core/StateSyncPool.h"
 #include "core/AsyncPool.h"
-#include "core/Logger.h"
 
 #include "mixer/Voice.h"
 #include "mixer/Listener.h"
 #include "mixer/Bus.h"
 #include "mixer/effects/Biquad.h"
 #include "mixer/effects/EffectTraits.h"
-
-#include "mixer/Speakers.h"
-#include "io/codec/VorbisCodec.h"
-#include "asset/AssetCoordinator.h"
-
-#include "async/WakeableThread.h"
-#include "async/IntervalThread.h"
 
 #include <memory>
 
@@ -54,8 +56,8 @@ namespace dalia {
 
 		AsyncMessageBus asyncMessageBus;
 
-		std::unique_ptr<DeviceCoordinator> deviceCoordinator;
-		std::unique_ptr<AssetCoordinator> assetCoordinator;
+		std::unique_ptr<DeviceController> deviceCoordinator;
+		std::unique_ptr<AssetController> assetCoordinator;
 		// std::unique_ptr<Mixer> mixer;
 
 		// Threads

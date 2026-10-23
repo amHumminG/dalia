@@ -118,6 +118,8 @@ set(ENGINE_FILES
     src/asset/AssetController.cpp
     src/asset/AssetController.h
     src/io/codec/Codec.cpp
+    src/mixer/MixController.cpp
+    src/mixer/MixController.h
     src/io/IoController.cpp
     src/io/IoController.h
 )

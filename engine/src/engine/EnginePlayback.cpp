@@ -22,7 +22,7 @@ namespace dalia {
 			residentSound = m_state->assetRegistry->GetResidentSound(soundHandle);
 			if (!residentSound) return Result::InvalidHandle;
 			soundLoadState = residentSound->state.load(std::memory_order_acquire);
-			frameCount = residentSound->frameCount;
+			frameCount = residentSound->totalFrames;
 			channels = residentSound->channels;
 			sampleRate = residentSound->sampleRate;
 		}
@@ -30,7 +30,7 @@ namespace dalia {
 			streamSound = m_state->assetRegistry->GetStreamSound(soundHandle);
 			if (!streamSound) return Result::InvalidHandle;
 			soundLoadState = streamSound->state.load(std::memory_order_acquire);
-			frameCount = streamSound->frameCount;
+			frameCount = streamSound->totalFrames;
 			channels = streamSound->channels;
 			sampleRate = streamSound->sampleRate;
 		}
@@ -76,7 +76,7 @@ namespace dalia {
 				vIndex,
 				vMirror.gen,
 				residentSound->pcmData.data(),
-				residentSound->frameCount,
+				residentSound->totalFrames,
 				residentSound->channels,
 				residentSound->sampleRate
 			);

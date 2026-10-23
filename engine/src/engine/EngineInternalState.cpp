@@ -24,8 +24,8 @@ namespace dalia {
 		buses(config.busCapacity), biquads(config.biquadCapacity) {
 
 		// Allocate subsystems
-		deviceCoordinator = std::make_unique<DeviceCoordinator>();
-		assetCoordinator = std::make_unique<AssetCoordinator>();
+		deviceCoordinator = std::make_unique<DeviceController>();
+		assetCoordinator = std::make_unique<AssetController>();
 		// mixer = std::make_unique<Mixer>();
 
 		// Allocate threads
