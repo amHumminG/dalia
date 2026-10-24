@@ -50,7 +50,7 @@ namespace dalia {
 		VoiceMirror& vMirror = m_state->voices.GetMirror(vIndex);
 		vMirror.state = VoiceState::Inactive;
 		vMirror.assetRawId = soundHandle.GetRawId();
-		vMirror.frameCount = frameCount;
+		vMirror.totalFrames = frameCount;
 		vMirror.channels = channels;
 		vMirror.sampleRate = sampleRate;
 		vMirror.soundType = soundType;
@@ -233,9 +233,9 @@ namespace dalia {
 			uint64_t seekFrame64 = static_cast<uint64_t>(timeInSeconds * vMirror.sampleRate);
 
 			// Safety clamps
-			if (seekFrame64 >= vMirror.frameCount) {
+			if (seekFrame64 >= vMirror.totalFrames) {
 				DALIA_LOG_WARN(LOG_CTX_API, "Seeking beyond final sound frame. Clamping to final frame.");
-				if (vMirror.frameCount > 0) seekFrame64 = vMirror.frameCount - 1;
+				if (vMirror.totalFrames > 0) seekFrame64 = vMirror.totalFrames - 1;
 				else seekFrame64 = 0;
 			}
 

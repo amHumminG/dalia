@@ -32,7 +32,7 @@ namespace dalia {
 	class AudioBackend;
 	class OutputDevice;
 	class NullOutputDevice;
-	class AsyncMixerSystem;
+	class MixerController;
 	class AsyncStreamSystem;
 	class AsyncLoadSystem;
 	class AsyncControlSystem;
@@ -41,12 +41,6 @@ namespace dalia {
 
 	struct StreamContext;
 
-	/// @brief Represents a playback instance waiting for an asset to be loaded before it can start playing.
-	struct PendingPlayback {
-		PlaybackHandle playback;
-		uint64_t assetRawId = INVALID_RAW_ID;
-	};
-
 	/// @brief The internal implementation state of the DALIA engine.
 	struct EngineInternalState {
 		bool initialized = false;
@@ -54,11 +48,13 @@ namespace dalia {
 		// Engine Settings
 		CoordinateSystem coordinateSystem = CoordinateSystem::LeftHanded;
 
-		AsyncMessageBus asyncMessageBus;
+		std::unique_ptr<AsyncMessageBus>	asyncMessageBus;
 
-		std::unique_ptr<DeviceController> deviceCoordinator;
-		std::unique_ptr<AssetController> assetCoordinator;
-		// std::unique_ptr<Mixer> mixer;
+		std::unique_ptr<DeviceController>	deviceController;
+		std::unique_ptr<AssetController>	assetController;
+		std::unique_ptr<IoController>		ioController;
+		// std::unique_ptr<MixController>	mixController;
+		// std::unique_ptr<Mixer>			mixer;
 
 		// Threads
 		std::unique_ptr<IntervalThread> streamThread;
@@ -66,26 +62,20 @@ namespace dalia {
 		std::unique_ptr<WakeableThread> controlThread;
 
 		// Mixer Nodes
-		StateSyncPool<Voice, VoiceMirror, VoiceParams> voices;				// TODO: Move somewhere
-		StateSyncPool<Listener, ListenerMirror, ListenerParams> listeners;	// TODO: Move somewhere
-		StateSyncPool<Biquad, BiquadMirror, BiquadParams> biquads;			// TODO: Move somewhere
-		StateSyncPool<Bus, BusMirror, BusParams> buses;						// TODO: Move somewhere
-		std::unordered_map<BusID, uint32_t>		 busMap;					// TODO: Move somewhere
-		std::unique_ptr<float[]>				 busBufferPool;				// TODO: Move somewhere
+		StateSyncPool<Voice, VoiceMirror, VoiceParams> voices;				// TODO: Move to mixController
+		StateSyncPool<Listener, ListenerMirror, ListenerParams> listeners;	// TODO: Move to mixController
+		StateSyncPool<Biquad, BiquadMirror, BiquadParams> biquads;			// TODO: Move to mixController
+		StateSyncPool<Bus, BusMirror, BusParams> buses;						// TODO: Move to mixController
+		std::unordered_map<BusID, uint32_t>		 busMap;					// TODO: Move to mixController
+		std::unique_ptr<float[]>				 busBufferPool;				// TODO: Move to mixController
 
 		// DSP Utility
 		std::unique_ptr<MixGraphCompiler> mixGraphCompiler;	// TODO: Move to mixer
 		std::unique_ptr<uint32_t[]> mixOrder;				// TODO: Move to mixer
 		std::unique_ptr<float[]> mixScratchBuffer;			// TODO: Move to mixer
 
-		// Deferred Unloads & Playbacks
-		std::vector<PendingPlayback>	pendingPlaybacks;
-
 		// Systems
-		std::unique_ptr<AsyncMixerSystem>	asyncMixerSystem;	// TODO: Rework
-		std::unique_ptr<AsyncStreamSystem>	asyncStreamSystem;	// TODO: Remove
-		std::unique_ptr<AsyncLoadSystem>	asyncLoadSystem;	// TODO: Remove
-		std::unique_ptr<AsyncControlSystem> asyncControlSystem; // TODO: Remove
+		std::unique_ptr<MixerController>	asyncMixerSystem;	// TODO: Rework
 
 		EngineInternalState(const EngineConfig& config);
 
@@ -120,163 +110,7 @@ namespace dalia {
 		static uint32_t GetEffectIndex(EffectHandle effect);
 		static uint32_t GetEffectGen(EffectHandle effect);
 
-		/// @brief Primitive for modifying the state of a voice. Handles all validation checks.
-		/// @tparam TFunc The type of the callable task.
-		/// @param playback The handle to the playback instance representing the voice.
-		/// @param fn Modification task taking (VoiceMirror& vMirror, uint32_t vIndex). Should return a dalia::Result.
-		/// @return Dalia result code.
-		template<typename TFunc>
-		Result ModifyVoice(PlaybackHandle playback, TFunc&& fn) {
-			if (!playback.IsValid()) return Result::InvalidHandle;
 
-			uint32_t vIndex = playback.GetIndex();
-			if (vIndex >= voices.Capacity()) return Result::InvalidHandle;
-
-			VoiceMirror& vMirror = voices.GetMirror(vIndex);
-			if (vMirror.gen != playback.GetGeneration()) return Result::ExpiredHandle;
-
-			return fn(vMirror, vIndex);
-		}
-
-		/// @brief Convenience wrapper for modifying the DSP parameters of a voice. Automatically flags the parameters
-		/// as dirty.
-		/// @tparam TFunc The type of the callable task.
-		/// @param playback The handle to the playback instance representing the voice.
-		/// @param fn Modification task taking (VoiceParams& params).
-		/// @return Dalia result code.
-		template<typename TFunc>
-		Result ModifyVoiceParams(PlaybackHandle playback, TFunc&& fn) {
-			return ModifyVoice(playback, [&](VoiceMirror& vMirror, uint32_t vIndex) -> Result {
-				fn(vMirror.params);
-				voices.MarkDirty(vIndex);
-				return Result::Ok;
-			});
-		}
-
-		/// @brief Primitive for modifying the state of a listener. Handles all validation checks.
-		/// @tparam TFunc The type of the callable task.
-		/// @param listenerIndex The index of the listener instance.
-		/// @param fn Modification task taking (ListenerMirror& lMirror, uint32_t lIndex). Should return a dalia::Result.
-		/// @return Dalia result code.
-		template<typename TFunc>
-		Result ModifyListener(uint32_t listenerIndex, TFunc&& fn) {
-			if (listenerIndex >= listeners.Capacity()) return Result::InvalidListener;
-
-			return fn(listeners.GetMirror(listenerIndex), listenerIndex);
-		}
-
-		/// @brief Convenience wrapper for modifying the DSP parameters of a listener. Automatically flags the parameters
-		/// as dirty.
-		/// @tparam TFunc The type of the callable task.
-		/// @param listenerIndex The index of the listener instance.
-		/// @param fn Modification task taking (ListenerParams& params).
-		/// @return Dalia result code.
-		template<typename TFunc>
-		Result ModifyListenerParams(uint32_t listenerIndex, TFunc&& fn) {
-			return ModifyListener(listenerIndex, [&](ListenerMirror& lMirror, uint32_t lIndex) -> Result {
-				fn(lMirror.params);
-				listeners.MarkDirty(lIndex);
-				return Result::Ok;
-			});
-		}
-
-		/// @brief Primitive for modifying the state of a bus. Handles all validation checks.
-		/// @tparam TFunc The type of the callable task.
-		/// @param identifier The identifier of the bus instance.
-		/// @param fn Modification task taking (BusMirror& bMirror, uint32_t bIndex). Should return a dalia::Result.
-		/// @return Dalia result code.
-		template<typename TFunc>
-		Result ModifyBus(const char* identifier, TFunc&& fn) {
-			if (!identifier) return Result::InvalidBus;
-
-			const BusID bId{identifier};
-			auto it = busMap.find(bId);
-			if (it == busMap.end()) return Result::InvalidBus;
-
-			return fn(buses.GetMirror(it->second), it->second);
-		}
-
-		/// @brief Convenience wrapper for modifying the DSP parameters of a bus. Automatically flags the parameters
-		/// as dirty.
-		/// @tparam TFunc The type of the callable task.
-		/// @param identifier The identifier of the bus instance.
-		/// @param fn Modification task taking (BusParams& params).
-		/// @return Dalia result code.
-		template<typename TFunc>
-		Result ModifyBusParams(const char* identifier, TFunc&& fn) {
-			return ModifyBus(identifier, [&](BusMirror& bMirror, uint32_t bIndex) -> Result {
-				fn(bMirror.params);
-				buses.MarkDirty(bIndex);
-				return Result::Ok;
-			});
-		}
-
-		/// @brief Retrieves the index of a bus instance based on its identifier.
-		/// @param busIdentifier The identifier of the bus instance.
-		/// @param index The index to be populated.
-		/// @return Dalia result code. Result::InvalidBus if the identifier does not match a valid bus instance.
-		Result GetBusIndex(const char* busIdentifier, uint32_t& index) {
-			if (!busIdentifier) return Result::InvalidBus;
-
-			const BusID bId(busIdentifier);
-			auto it = busMap.find(bId);
-			if (it == busMap.end()) return Result::InvalidBus;
-
-			index = it->second;
-			return Result::Ok;
-		}
-
-		/// @brief Primitive for modifying the state of an effect. Handles all validation checks.
-		/// @tparam TParams The parameter struct defining the effect type.
-		/// @tparam TFunc The type of the callable task.
-		/// @param effect The handle to the effect instance.
-		/// @param fn Modification task taking (EffectMirror& eMirror, uint32_t eIndex). Should return a dalia::Result.
-		/// @return Dalia result code.
-		template<typename TParams, typename TFunc>
-		Result ModifyEffect(EffectHandle effect, TFunc&& fn) {
-			using Traits = EffectTraits<TParams>;
-			if (!effect.IsValid() || effect.GetType() != Traits::TYPE) return Result::InvalidHandle;
-
-			auto& ePool = Traits::GetPool(*this);
-			uint32_t eIndex = effect.GetIndex();
-			if (eIndex >= ePool.Capacity()) return Result::InvalidHandle;
-
-			auto& eMirror = ePool.GetMirror(eIndex);
-			if (eMirror.gen != effect.GetGeneration()) return Result::ExpiredHandle;
-
-			return fn(eMirror, eIndex);
-		}
-
-		/// @brief Runtime dispatcher for effect modification.
-		/// @tparam TFunc The parameter struct defining the effect type.
-		/// @param effect The handle to the effect instance.
-		/// @param fn Modification task taking (auto& eMirror, uint32_t eIndex). Should return a dalia::Result.
-		/// @return Dalia result code.
-		template<typename TFunc>
-		Result ModifyEffect(EffectHandle effect, TFunc&& fn) {
-			switch (effect.GetType()) {
-				case EffectType::Biquad:
-					return ModifyEffect<BiquadParams>(effect, std::forward<TFunc>(fn));
-				default:
-					return Result::InvalidHandle;
-			}
-		}
-
-		/// @brief Convenience wrapper for modifying the DSP parameters of an effect. Automatically flags the parameters
-		/// as dirty.
-		/// @tparam TParams The parameter struct defining the effect type.
-		/// @tparam TFunc The type of the callable task.
-		/// @param effect The handle to the effect instance.
-		/// @param fn Modification task taking (TParams& params).
-		/// @return Dalia result code.
-		template<typename TParams, typename TFunc>
-		Result ModifyEffectParams(EffectHandle effect, TFunc&& fn) {
-			return ModifyEffect<TParams>(effect, [&](auto& eMirror, uint32_t eIndex) -> Result {
-				fn(eMirror.params);
-				EffectTraits<TParams>::GetPool(*this).MarkDirty(eIndex);
-				return Result::Ok;
-			});
-		}
 
 		/// @brief Validates a playback handle.
 		/// @param playback The handle to the playback instance.

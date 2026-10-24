@@ -26,7 +26,7 @@ namespace dalia {
 
 	private:
 		friend class Engine;
-		friend struct EngineInternalState;
+		friend class MixController;
 
 		static PlaybackHandle Create(uint32_t index, uint32_t generation) {
 			PlaybackHandle handle;

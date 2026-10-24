@@ -6,6 +6,7 @@
 #include "mixer/effects/Biquad.h"
 
 namespace dalia {
+	class MixController;
 
 	template<typename TParams>
 	struct EffectTraits;
@@ -16,6 +17,6 @@ namespace dalia {
 		using DSPType = Biquad;
 		using MirrorType = BiquadMirror;
 
-		static auto& GetPool(EngineInternalState* state) { return state->biquads; } // TODO: Fix
+		static auto& GetPool(MixController& controller); // TODO: Fix
 	};
 }

@@ -60,7 +60,7 @@ namespace dalia {
 
 			struct {
 				const float* pcmData;
-				uint32_t frameCount;
+				uint32_t totalFrames;
 				uint32_t channels;
 				uint32_t sampleRate;
 			} prepResident;
@@ -109,14 +109,14 @@ namespace dalia {
 		}
 
 		static AsyncMixerCommand PrepareVoiceResident(uint32_t index, uint32_t gen, const float* dataPtr,
-			uint32_t frameCount, uint32_t channels, uint32_t sampleRate) {
+			uint32_t totalFrames, uint32_t channels, uint32_t sampleRate) {
 			AsyncMixerCommand cmd{};
 			cmd.type = Type::PrepareVoiceResident;
 			cmd.targetIndex = index;
 			cmd.targetGen = gen;
 
 			cmd.data.prepResident.pcmData = dataPtr;
-			cmd.data.prepResident.frameCount = frameCount;
+			cmd.data.prepResident.totalFrames = totalFrames;
 			cmd.data.prepResident.channels = channels;
 			cmd.data.prepResident.sampleRate = sampleRate;
 			return cmd;
@@ -280,7 +280,7 @@ namespace dalia {
 		union Data {
 			struct {
 				uint32_t index;
-				uint32_t generation;
+				uint32_t gen;
 				PlaybackExitCondition exitCondition;
 			} voice;
 
@@ -294,7 +294,7 @@ namespace dalia {
 			AsyncMixerEvent ev;
 			ev.type = Type::VoiceStopped;
 			ev.data.voice.index = index;
-			ev.data.voice.generation = generation;
+			ev.data.voice.gen = generation;
 			ev.data.voice.exitCondition = exitCondition;
 			return ev;
 		}

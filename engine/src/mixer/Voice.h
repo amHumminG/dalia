@@ -144,7 +144,7 @@ namespace dalia {
     	VoiceParams params;
 
         // Asset
-        uint32_t frameCount = 0;
+        uint32_t totalFrames = 0;
         uint32_t channels = 0;
         uint32_t sampleRate = 0;
         SoundType soundType;
@@ -162,7 +162,7 @@ namespace dalia {
 
         	params = VoiceParams{};
 
-        	frameCount = 0;
+        	totalFrames = 0;
         	channels = 0;
         	sampleRate = 0;
             soundType = SoundType::None;

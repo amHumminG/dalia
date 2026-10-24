@@ -210,7 +210,7 @@ namespace dalia {
 			switch (ev.type) {
 				case AsyncMixerEvent::Type::VoiceStopped: {
 					uint32_t vIndex = ev.data.voice.index;
-					uint32_t vGen = ev.data.voice.generation;
+					uint32_t vGen = ev.data.voice.gen;
 					PlaybackHandle forgedHandle = state->ForgePlaybackHandle(vIndex, vGen);
 
 					Result res = state->ModifyVoice(forgedHandle, [&](VoiceMirror& vMirror, uint32_t) -> Result {
@@ -344,7 +344,7 @@ namespace dalia {
 							}
 
 							vMirror.pendingLoad = false;
-							vMirror.frameCount = frameCount;
+							vMirror.totalFrames = frameCount;
 							vMirror.channels = channels;
 							vMirror.sampleRate = sampleRate;
 

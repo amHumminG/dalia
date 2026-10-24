@@ -64,7 +64,7 @@ namespace dalia {
 	static void TeardownInternal(EngineInternalState* state) {
 		if (!state) return;
 
-		state->deviceCoordinator->Shutdown();
+		state->deviceController->Shutdown();
 
 		if (state->asyncMixerSystem)	state->asyncMixerSystem->Stop();
 		if (state->asyncLoadSystem)		state->asyncLoadSystem->Stop();
@@ -95,18 +95,13 @@ namespace dalia {
 		m_state = new EngineInternalState(config);
 
 		// --- Master Bus Setup ---
-		uint32_t masterIndex;
-		m_state->buses.Allocate(masterIndex);
-		m_state->buses.GetMirror(MASTER_BUS_INDEX).refCount = 1;
-		m_state->buses.Get(MASTER_BUS_INDEX).isActive = true;
-		constexpr BusID masterId("Master");
-		m_state->busMap[masterId] = MASTER_BUS_INDEX;
+
 
 		// --- Listener 0 Setup ---
 		m_state->listeners.Get(0).params.isActive = true;
 		m_state->listeners.GetMirror(0).params.isActive = true;
 
-		m_state->deviceCoordinator.Initialize(
+		m_state->deviceController.Initialize(
 			&m_state->asyncMessageBus,
 			&m_state->asyncMixerSystem,
 			config.sampleRate,
@@ -115,18 +110,18 @@ namespace dalia {
 		);
 
 		// -- Periodicity Dependent Buffer Allocations ---
-		uint32_t maxPeriodSizeSamples = m_state->deviceCoordinator.GetMaxPeriodSizeSamples();
-		uint32_t busBufferPoolSize = m_state->buses.Capacity() * m_state->deviceCoordinator.GetMaxPeriodSizeSamples();
+		uint32_t maxPeriodSizeSamples = m_state->deviceController.GetMaxPeriodSizeSamples();
+		uint32_t busBufferPoolSize = m_state->buses.Capacity() * m_state->deviceController.GetMaxPeriodSizeSamples();
 		m_state->busBufferPool = std::make_unique<float[]>(busBufferPoolSize);
 		m_state->mixScratchBuffer = std::make_unique<float[]>(maxPeriodSizeSamples);
 
 		// --- SYSTEMS SETUP ---
 		MixerSystemConfig mixerConfig;
 		mixerConfig.coordinateSystem		= m_state->coordinateSystem;
-		mixerConfig.speakerLayout			= m_state->deviceCoordinator.GetActiveOutputSpeakerLayout();
+		mixerConfig.speakerLayout			= m_state->deviceController.GetActiveOutputSpeakerLayout();
 		mixerConfig.maxSamplesPerPeriod		= maxPeriodSizeSamples;
-		mixerConfig.outChannels				= m_state->deviceCoordinator.GetActiveOutputChannels();
-		mixerConfig.outSampleRate			= m_state->deviceCoordinator.GetOutputSampleRate();
+		mixerConfig.outChannels				= m_state->deviceController.GetActiveOutputChannels();
+		mixerConfig.outSampleRate			= m_state->deviceController.GetOutputSampleRate();
 		mixerConfig.asyncDirector			= &m_state->asyncMessageBus;
 		mixerConfig.streamPool				= m_state->streams.GetSpan();
 		mixerConfig.listenerPool			= m_state->listeners.GetSpan();
@@ -145,14 +140,14 @@ namespace dalia {
 
 		AsyncStreamSystemConfig asyncStreamConfig;
 		asyncStreamConfig.wakeupPeriodMicroseconds  = STREAM_SYSTEM_WAKEUP_PERIOD_MICROSECONDS;
-		asyncStreamConfig.outSampleRate				= m_state->deviceCoordinator.GetOutputSampleRate();
+		asyncStreamConfig.outSampleRate				= m_state->deviceController.GetOutputSampleRate();
 		asyncStreamConfig.asyncDirector				= &m_state->asyncMessageBus;
 		asyncStreamConfig.streamPool				= m_state->streams.GetSpan();
 		asyncStreamConfig.freeStreams				= m_state->streams.GetFreeList();
 		m_state->asyncStreamSystem	= std::make_unique<AsyncStreamSystem>(asyncStreamConfig);
 
 		AsyncLoadSystemConfig asyncLoadConfig;
-		asyncLoadConfig.outSampleRate	= m_state->deviceCoordinator.GetOutputSampleRate();
+		asyncLoadConfig.outSampleRate	= m_state->deviceController.GetOutputSampleRate();
 		asyncLoadConfig.messageRouter	= &m_state->asyncMessageBus;
 		asyncLoadConfig.assetRegistry	= m_state->assetRegistry.get();
 		m_state->asyncLoadSystem = std::make_unique<AsyncLoadSystem>(asyncLoadConfig);
@@ -168,7 +163,7 @@ namespace dalia {
 		m_state->asyncLoadSystem->Start();
 		m_state->asyncControlSystem->Start();
 
-		Result res = m_state->deviceCoordinator.StartActiveOutputDevice(m_state->asyncMixerSystem.get());
+		Result res = m_state->deviceController.StartActiveOutputDevice(m_state->asyncMixerSystem.get());
 		if (res != Result::Ok) {
 			DALIA_LOG_CRIT(LOG_CTX_API, "Failed to initialize engine. Failed to start audio thread.");
 			TeardownInternal(m_state);

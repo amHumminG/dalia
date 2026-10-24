@@ -65,12 +65,6 @@ set(ENGINE_FILES
     src/core/AsyncPool.h
     src/core/ParameterBridge.h
 
-    src/async/AsyncStreamSystem.cpp
-    src/async/AsyncStreamSystem.h
-    src/async/AsyncLoadSystem.cpp
-    src/async/AsyncLoadSystem.h
-    src/async/AsyncControlSystem.cpp
-    src/async/AsyncControlSystem.h
     src/async/messaging/AsyncMessageBus.h
     src/async/messaging/AsyncMessageBus.cpp
     src/async/messaging/AsyncMixerMessaging.h
