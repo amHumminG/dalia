@@ -63,7 +63,7 @@ namespace dalia {
     };
 
 	/// @brief Sentinel value representing an invalid sound instance.
-	constexpr PlaybackHandle INVALID_SOUND_HANDLE{};
+	constexpr SoundHandle INVALID_SOUND_HANDLE{};
 
 	/// @brief Sentinel value indicating a failed async request.
     constexpr uint32_t INVALID_REQUEST_ID = 0;

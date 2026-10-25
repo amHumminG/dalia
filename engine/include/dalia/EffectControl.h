@@ -58,7 +58,8 @@ namespace dalia {
         uint64_t m_rawId = 0;
     };
 
-    constexpr EffectHandle InvalidEffectHandle{}; // Sentinel value representing an invalid effect instance.
+	/// @brief Sentinel value representing an invalid effect instance.
+    constexpr EffectHandle INVALID_EFFECT_HANDLE{};
 
     /// @brief Configuration parameters for a biquadratic IIR filter.
     struct BiquadParams {

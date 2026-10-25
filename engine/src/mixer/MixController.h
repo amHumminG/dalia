@@ -1,6 +1,5 @@
 #pragma once
 
-#include "dalia/Engine.h"
 #include "dalia/Result.h"
 #include "dalia/PlaybackControl.h"
 #include "dalia/SoundControl.h"
@@ -14,6 +13,7 @@
 #include "mixer/Bus.h"
 #include "mixer/effects/EffectTraits.h"
 #include "mixer/effects/Biquad.h"
+#include "asset/SoundDescriptor.h"
 
 #include <unordered_map>
 #include <vector>
@@ -42,7 +42,10 @@ namespace dalia {
 
 	class MixController {
 	public:
-		explicit MixController(const EngineConfig& config); // TODO: Change params
+		using StreamPrepareCallback = std::function<Result(const char* filepath, uint32_t& sIndex, uint32_t& sGen)>;
+		using PlaybackReleasedAssetCallback = std::function<void(uint64_t assetRawId)>;
+
+		explicit MixController(const MixControllerConfig& config); // TODO: Change params
 		~MixController();
 
 		Result Initialize(
@@ -56,7 +59,7 @@ namespace dalia {
 		/// @brief Syncs dirty mirror parameters with their mixer counterparts.
 		void SyncPools();
 
-		void OnSoundLoadComplete(SoundHandle sound, Result loadResult);
+		void OnSoundLoadComplete(const SoundDescriptor& soundDesc, Result loadResult);
 		uint32_t AbortAndStopVoicesForSound(SoundHandle sound);
 
 		// === Playback API ===
@@ -67,9 +70,9 @@ namespace dalia {
 			PlaybackExitCallback exitCallback
 		);
 
-		Result PlayPlayback(PlaybackHandle playback, uint32_t fadeInMs);
-		Result PausePlayback(PlaybackHandle playback, uint32_t fadeOutMs);
-		Result StopPlayback(PlaybackHandle playback, uint32_t fadeOutMs);
+		Result PlayPlayback(PlaybackHandle playback);
+		Result PausePlayback(PlaybackHandle playback);
+		Result StopPlayback(PlaybackHandle playback);
 		Result SeekPlayback(PlaybackHandle playback, double timeInSeconds);
 
 		Result SetPlaybackVolumeDb(PlaybackHandle playback, float volumeDb);
@@ -83,20 +86,39 @@ namespace dalia {
 		Result SetPlaybackDistanceMode(PlaybackHandle playback, DistanceMode distanceMode);
 		Result SetPlaybackAttenuationCurve(PlaybackHandle playback, AttenuationCurve curve);
 		Result SetPlaybackMinMaxDistance(PlaybackHandle playback, float minDistance, float maxDistance);
-		Result SetPlaybackPosition(PlaybackHandle playback, Vec3 position);
-		Result SetPlaybackVelocity(PlaybackHandle playback, Vec3 velocity);
+		Result SetPlaybackPosition(PlaybackHandle playback, math::Vector3 position);
+		Result SetPlaybackVelocity(PlaybackHandle playback, math::Vector3 velocity);
 		Result SetPlaybackUseDoppler(PlaybackHandle playback, bool useDoppler);
 		Result SetPlaybackDopplerFactor(PlaybackHandle playback, float dopplerFactor);
 		Result SetPlaybackListenerMask(PlaybackHandle playback, ListenerMask listenerMask);
 
-		// === Bus API ===
-
-
 		// === Listener API ===
+		Result SetListenerActive(uint32_t listenerIndex, bool active);
+		Result SetListenerPosition(uint32_t listenerIndex, math::Vector3 position);
+		Result SetListenerDistanceProbePosition(uint32_t listenerIndex, math::Vector3 position);
+		Result SetListenerOrientation(uint32_t listenerIndex, math::Vector3 forward, math::Vector3 up);
+		Result SetListenerVelocity(uint32_t listenerIndex, math::Vector3 velocity);
+		Result SetListener3DAttributes(uint32_t listenerIndex, Listener3DAttributes attributes);
 
+		// === Bus API ===
+		Result CreateBus(const char* bus, const char* parentBus = "Master");
+		Result DestroyBus(const char* bus);
+		Result RouteBus(const char* bus, const char* parentBus);
+
+		Result SetBusVolumeDb(const char* bus, float volumeDb);
 
 		// === Effect API ===
+		template <typename TParams>
+		requires requires(TParams p) { p.Sanitize(); }
+		Result CreateEffect(EffectHandle& effect, const TParams& params);
+		Result DestroyEffect(EffectHandle effect);
 
+		Result AttachEffect(EffectHandle effect, const char* bus, uint32_t effectSlot);
+		Result DetachEffect(EffectHandle effect);
+
+		template <typename TParams>
+		requires requires(TParams p) { p.Sanitize(); }
+		Result SetEffectParams(EffectHandle effect, const TParams& params);
 
 		// === DSP Pool Accessors ===
 		[[nodiscard]] auto& GetVoicePool() { return m_voices; }
@@ -153,6 +175,10 @@ namespace dalia {
 		/// @return Dalia result code. Result::Ok if the effect was successfully detached or if it was already detached.
 		Result DetachEffectFromBus(EffectHandle effect, bool fadeOut);
 
+		/// @brief
+		/// @param busIndex
+		/// @param candidateParentBusIndex
+		/// @return
 		bool WouldCreateBusCycle(uint32_t busIndex, uint32_t candidateParentBusIndex) const;
 
 		/// @brief Primitive for modifying the state of a voice. Handles all validation checks.
@@ -161,17 +187,7 @@ namespace dalia {
 		/// @param fn Modification task taking (VoiceMirror& vMirror, uint32_t vIndex). Should return a dalia::Result.
 		/// @return Dalia result code.
 		template<typename TFunc>
-		Result ModifyVoice(PlaybackHandle playback, TFunc&& fn) {
-			if (!playback.IsValid()) return Result::InvalidHandle;
-
-			uint32_t vIndex = playback.GetIndex();
-			if (vIndex >= m_voices.Capacity()) return Result::InvalidHandle;
-
-			VoiceMirror& vMirror = m_voices.GetMirror(vIndex);
-			if (vMirror.gen != playback.GetGeneration()) return Result::ExpiredHandle;
-
-			return fn(vMirror, vIndex);
-		}
+		Result ModifyVoice(PlaybackHandle playback, TFunc&& fn);
 
 		/// @brief Convenience wrapper for modifying the DSP parameters of a voice. Automatically flags the parameters
 		/// as dirty.
@@ -180,13 +196,7 @@ namespace dalia {
 		/// @param fn Modification task taking (VoiceParams& params).
 		/// @return Dalia result code.
 		template<typename TFunc>
-		Result ModifyVoiceParams(PlaybackHandle playback, TFunc&& fn) {
-			return ModifyVoice(playback, [&](VoiceMirror& vMirror, uint32_t vIndex) -> Result {
-				fn(vMirror.params);
-				m_voices.MarkDirty(vIndex);
-				return Result::Ok;
-			});
-		}
+		Result ModifyVoiceParams(PlaybackHandle playback, TFunc&& fn);
 
 		/// @brief Primitive for modifying the state of a listener. Handles all validation checks.
 		/// @tparam TFunc The type of the callable task.
@@ -194,11 +204,7 @@ namespace dalia {
 		/// @param fn Modification task taking (ListenerMirror& lMirror, uint32_t lIndex). Should return a dalia::Result.
 		/// @return Dalia result code.
 		template<typename TFunc>
-		Result ModifyListener(uint32_t listenerIndex, TFunc&& fn) {
-			if (listenerIndex >= m_listeners.Capacity()) return Result::InvalidListener;
-
-			return fn(m_listeners.GetMirror(listenerIndex), listenerIndex);
-		}
+		Result ModifyListener(uint32_t listenerIndex, TFunc&& fn);
 
 		/// @brief Convenience wrapper for modifying the DSP parameters of a listener. Automatically flags the parameters
 		/// as dirty.
@@ -207,13 +213,7 @@ namespace dalia {
 		/// @param fn Modification task taking (ListenerParams& params).
 		/// @return Dalia result code.
 		template<typename TFunc>
-		Result ModifyListenerParams(uint32_t listenerIndex, TFunc&& fn) {
-			return ModifyListener(listenerIndex, [&](ListenerMirror& lMirror, uint32_t lIndex) -> Result {
-				fn(lMirror.params);
-				m_listeners.MarkDirty(lIndex);
-				return Result::Ok;
-			});
-		}
+		Result ModifyListenerParams(uint32_t listenerIndex, TFunc&& fn);
 
 		/// @brief Primitive for modifying the state of a bus. Handles all validation checks.
 		/// @tparam TFunc The type of the callable task.
@@ -221,15 +221,7 @@ namespace dalia {
 		/// @param fn Modification task taking (BusMirror& bMirror, uint32_t bIndex). Should return a dalia::Result.
 		/// @return Dalia result code.
 		template<typename TFunc>
-		Result ModifyBus(const char* identifier, TFunc&& fn) {
-			if (!identifier) return Result::InvalidBus;
-
-			const BusID bId{identifier};
-			auto it = m_busMap.find(bId);
-			if (it == m_busMap.end()) return Result::InvalidBus;
-
-			return fn(m_buses.GetMirror(it->second), it->second);
-		}
+		Result ModifyBus(const char* identifier, TFunc&& fn);
 
 		/// @brief Convenience wrapper for modifying the DSP parameters of a bus. Automatically flags the parameters
 		/// as dirty.
@@ -238,13 +230,7 @@ namespace dalia {
 		/// @param fn Modification task taking (BusParams& params).
 		/// @return Dalia result code.
 		template<typename TFunc>
-		Result ModifyBusParams(const char* identifier, TFunc&& fn) {
-			return ModifyBus(identifier, [&](BusMirror& bMirror, uint32_t bIndex) -> Result {
-				fn(bMirror.params);
-				m_buses.MarkDirty(bIndex);
-				return Result::Ok;
-			});
-		}
+		Result ModifyBusParams(const char* identifier, TFunc&& fn);
 
 		/// @brief Primitive for modifying the state of an effect. Handles all validation checks.
 		/// @tparam TParams The parameter struct defining the effect type.
@@ -253,19 +239,7 @@ namespace dalia {
 		/// @param fn Modification task taking (EffectMirror& eMirror, uint32_t eIndex). Should return a dalia::Result.
 		/// @return Dalia result code.
 		template<typename TParams, typename TFunc>
-		Result ModifyEffect(EffectHandle effect, TFunc&& fn) {
-			using Traits = EffectTraits<TParams>;
-			if (!effect.IsValid() || effect.GetType() != Traits::TYPE) return Result::InvalidHandle;
-
-			auto& ePool = Traits::GetPool(*this);
-			uint32_t eIndex = effect.GetIndex();
-			if (eIndex >= ePool.Capacity()) return Result::InvalidHandle;
-
-			auto& eMirror = ePool.GetMirror(eIndex);
-			if (eMirror.gen != effect.GetGeneration()) return Result::ExpiredHandle;
-
-			return fn(eMirror, eIndex);
-		}
+		Result ModifyEffect(EffectHandle effect, TFunc&& fn);
 
 		/// @brief Runtime dispatcher for effect modification. Handles all validation checks.
 		/// @tparam TFunc The parameter struct defining the effect type.
@@ -273,14 +247,7 @@ namespace dalia {
 		/// @param fn Modification task taking (auto& eMirror, uint32_t eIndex). Should return a dalia::Result.
 		/// @return Dalia result code.
 		template<typename TFunc>
-		Result ModifyEffect(EffectHandle effect, TFunc&& fn) {
-			switch (effect.GetType()) {
-				case EffectType::Biquad:
-					return ModifyEffect<BiquadParams>(effect, std::forward<TFunc>(fn));
-				default:
-					return Result::InvalidHandle;
-			}
-		}
+		Result ModifyEffect(EffectHandle effect, TFunc&& fn);
 
 		/// @brief Convenience wrapper for modifying the DSP parameters of an effect. Automatically flags the parameters
 		/// as dirty.
@@ -290,13 +257,7 @@ namespace dalia {
 		/// @param fn Modification task taking (TParams& params).
 		/// @return Dalia result code.
 		template<typename TParams, typename TFunc>
-		Result ModifyEffectParams(EffectHandle effect, TFunc&& fn) {
-			return ModifyEffect<TParams>(effect, [&](auto& eMirror, uint32_t eIndex) -> Result {
-				fn(eMirror.params);
-				EffectTraits<TParams>::GetPool(*this).MarkDirty(eIndex);
-				return Result::Ok;
-			});
-		}
+		Result ModifyEffectParams(EffectHandle effect, TFunc&& fn);
 
 		CoordinateSystem m_coordinateSystem = CoordinateSystem::LeftHanded;
 
@@ -312,8 +273,10 @@ namespace dalia {
 		AssetController* m_assetController = nullptr; // Should this really be a member variable?
 		IoController*	 m_ioController	   = nullptr; // Should this really be a member variable?
 	};
-
-	inline auto& EffectTraits<BiquadParams>::GetPool(MixController& controller) {
-		return controller.GetBiquadPool();
-	}
 }
+
+#include "MixController.inl"
+
+
+
+
