@@ -32,6 +32,14 @@ namespace dalia {
 		uint64_t assetRawId = INVALID_RAW_ID;
 	};
 
+	struct MixControllerConfig {
+		CoordinateSystem coordinateSystem = CoordinateSystem::LeftHanded;
+		uint32_t voiceCapacity = 64;
+		uint32_t listenerCapacity = 1;
+		uint32_t busCapacity = 32;
+		uint32_t biquadCapacity = 16;
+	};
+
 	class MixController {
 	public:
 		explicit MixController(const EngineConfig& config); // TODO: Change params
@@ -45,23 +53,67 @@ namespace dalia {
 		);
 		void Shutdown();
 
+		/// @brief Syncs dirty mirror parameters with their mixer counterparts.
 		void SyncPools();
 
-		void SetCoordinateSystem(CoordinateSystem system); // TODO: Do we need this?
-		[[nodiscard]] CoordinateSystem GetCoordinateSystem() const; // TODO: Do we need this?
-
 		void OnSoundLoadComplete(SoundHandle sound, Result loadResult);
-
 		uint32_t AbortAndStopVoicesForSound(SoundHandle sound);
 
-		[[nodiscard]] auto& GetVoicePool();
-		[[nodiscard]] auto& GetListenerPool();
-		[[nodiscard]] auto& GetBusPool();
-		[[nodiscard]] auto& GetBiquadPool();
+		// === Playback API ===
+		Result CreatePlayback(
+			PlaybackHandle& playback,
+			SoundHandle sound,
+			const char* bus,
+			PlaybackExitCallback exitCallback
+		);
 
-		[[nodiscard]] auto& GetBusMap();
+		Result PlayPlayback(PlaybackHandle playback, uint32_t fadeInMs);
+		Result PausePlayback(PlaybackHandle playback, uint32_t fadeOutMs);
+		Result StopPlayback(PlaybackHandle playback, uint32_t fadeOutMs);
+		Result SeekPlayback(PlaybackHandle playback, double timeInSeconds);
 
-		[[nodiscard]] auto& GetPendingPlaybacks();
+		Result SetPlaybackVolumeDb(PlaybackHandle playback, float volumeDb);
+		Result SetPlaybackRate(PlaybackHandle playback, float rate);
+		Result SetPlaybackStereoPan(PlaybackHandle playback, float stereoPan);
+		Result SetPlaybackLooping(PlaybackHandle playback, bool looping);
+
+		Result RoutePlayback(PlaybackHandle playback, const char* bus);
+
+		Result SetPlaybackSpatial(PlaybackHandle playback, bool spatial);
+		Result SetPlaybackDistanceMode(PlaybackHandle playback, DistanceMode distanceMode);
+		Result SetPlaybackAttenuationCurve(PlaybackHandle playback, AttenuationCurve curve);
+		Result SetPlaybackMinMaxDistance(PlaybackHandle playback, float minDistance, float maxDistance);
+		Result SetPlaybackPosition(PlaybackHandle playback, Vec3 position);
+		Result SetPlaybackVelocity(PlaybackHandle playback, Vec3 velocity);
+		Result SetPlaybackUseDoppler(PlaybackHandle playback, bool useDoppler);
+		Result SetPlaybackDopplerFactor(PlaybackHandle playback, float dopplerFactor);
+		Result SetPlaybackListenerMask(PlaybackHandle playback, ListenerMask listenerMask);
+
+		// === Bus API ===
+
+
+		// === Listener API ===
+
+
+		// === Effect API ===
+
+
+		// === DSP Pool Accessors ===
+		[[nodiscard]] auto& GetVoicePool() { return m_voices; }
+		[[nodiscard]] auto& GetListenerPool() { return m_listeners; }
+		[[nodiscard]] auto& GetBusPool() { return m_buses; }
+		[[nodiscard]] auto& GetBiquadPool() { return m_biquads; }
+
+	private:
+		template<typename TParams>
+		friend struct EffectTraits;
+
+		// --- Lifecycle Helpers ---
+		void HandleVoiceStoppedEvent(const AsyncMixerEvent& ev);
+		Result PrepareDeferredVoice(PlaybackHandle playback, SoundHandle sound);
+		void ResetAndFreeVoice(uint32_t vIndex);
+
+		// --- Internal Validation & Lookup ---
 
 		/// @brief Validates a playback handle.
 		/// @param playback The handle to the playback instance.
@@ -100,6 +152,8 @@ namespace dalia {
 		/// @param fadeOut Determines whether or not the effect should fade out before getting detached by the mixer.
 		/// @return Dalia result code. Result::Ok if the effect was successfully detached or if it was already detached.
 		Result DetachEffectFromBus(EffectHandle effect, bool fadeOut);
+
+		bool WouldCreateBusCycle(uint32_t busIndex, uint32_t candidateParentBusIndex) const;
 
 		/// @brief Primitive for modifying the state of a voice. Handles all validation checks.
 		/// @tparam TFunc The type of the callable task.
@@ -244,19 +298,13 @@ namespace dalia {
 			});
 		}
 
-	private:
-		void HandleVoiceStoppedEvent(const AsyncMixerEvent& ev);
-
-		Result PrepareDeferredVoice(PlaybackHandle playback, SoundHandle sound);
-		void ResetAndFreeVoice(uint32_t vIndex);
-
 		CoordinateSystem m_coordinateSystem = CoordinateSystem::LeftHanded;
 
-		StateSyncPool<Voice, VoiceMirror, VoiceParams> m_voices;
+		StateSyncPool<Voice, VoiceMirror, VoiceParams>			m_voices;
 		StateSyncPool<Listener, ListenerMirror, ListenerParams> m_listeners;
-		StateSyncPool<Bus, BusMirror, BusParams> m_buses;
-		std::unordered_map<BusID, uint32_t> m_busMap;
-		StateSyncPool<Biquad, BiquadMirror, BiquadParams> m_biquads;
+		StateSyncPool<Bus, BusMirror, BusParams>				m_buses;
+		std::unordered_map<BusID, uint32_t>						m_busMap;
+		StateSyncPool<Biquad, BiquadMirror, BiquadParams>		m_biquads;
 
 		std::vector<PendingPlayback> m_pendingPlaybacks;
 

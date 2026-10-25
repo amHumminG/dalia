@@ -52,18 +52,10 @@ namespace dalia {
 		m_biquads.Sync();
 	}
 
-	void MixController::SetCoordinateSystem(CoordinateSystem system) {
-		m_coordinateSystem = system;
-	}
-
-	CoordinateSystem MixController::GetCoordinateSystem() const {
-		return m_coordinateSystem;
-	}
-
 	void MixController::OnSoundLoadComplete(SoundHandle sound, Result loadResult) {
 		uint64_t targetRawId = sound.GetRawId();
 
-		for (auto it = m_pendingPlaybacks.begin(); it != m_pendingPlaybacks.end()) {
+		for (auto it = m_pendingPlaybacks.begin(); it != m_pendingPlaybacks.end();) {
 			if (it->assetRawId != targetRawId) {
 				++it;
 				continue;
@@ -94,8 +86,8 @@ namespace dalia {
 		uint64_t soundRawId = sound.GetRawId();
 
 		// Free pending playbacks
-		for (auto it = m_pendingPlaybacks.begin(); it != m_pendingPlaybacks.end()) {
-			if (it->assetRawId == soundRawId()) {
+		for (auto it = m_pendingPlaybacks.begin(); it != m_pendingPlaybacks.end();) {
+			if (it->assetRawId == soundRawId) {
 				uint32_t vIndex = it->playback.GetIndex();
 				VoiceMirror& vMirror = m_voices.GetMirror(vIndex);
 				if (vMirror.gen == it->playback.GetGeneration()) ResetAndFreeVoice(vIndex);
@@ -122,6 +114,22 @@ namespace dalia {
 		return activeVoicesStopped;
 	}
 
+	Result MixController::Validate(PlaybackHandle playback) {
+		return ModifyVoice(playback, [](const VoiceMirror&, uint32_t) { return Result::Ok; });
+	}
+
+	Result MixController::Validate(uint32_t listenerIndex) {
+		return ModifyListener(listenerIndex, [](const ListenerMirror&, uint32_t) { return Result::Ok; });
+	}
+
+	Result MixController::Validate(const char* busIdentifier) {
+		return ModifyBus(busIdentifier, [](const BusMirror&, uint32_t) { return Result::Ok; });
+	}
+
+	Result MixController::Validate(EffectHandle effect) {
+		return ModifyEffect(effect, [](const EffectMirror&, uint32_t) { return Result::Ok; });
+	}
+
 	Result MixController::GetBusIndex(const char* busIdentifier, uint32_t& index) {
 		if (!busIdentifier) return Result::InvalidBus;
 
@@ -131,6 +139,46 @@ namespace dalia {
 
 		index = it->second;
 		return Result::Ok;
+	}
+
+	Result MixController::FreeEffectFromPool(EffectHandle effect) {
+		uint32_t eIndex = effect.GetIndex();
+		switch (effect.GetType()) {
+			case EffectType::Biquad:
+				if (eIndex >= m_biquads.Capacity()) return Result::InvalidHandle;
+				m_biquads.Free(eIndex);
+				return Result::Ok;
+			default:
+				return Result::InvalidHandle;
+		}
+	}
+
+	Result MixController::DetachEffectFromBus(EffectHandle effect, bool fadeOut) {
+		return ModifyEffect(effect, [&](EffectMirror& eMirror, uint32_t) -> Result {
+			if (!eMirror.IsAttached()) return Result::Ok;
+
+			uint32_t bIndex = eMirror.busIndex;
+			uint32_t slot = eMirror.effectSlot;
+
+			BusMirror& bMirror = m_buses.GetMirror(bIndex);
+			if (bMirror.effectSlots[slot] == effect) bMirror.effectSlots[slot] = InvalidEffectHandle;
+
+			eMirror.busIndex = NO_INDEX;
+			eMirror.effectSlot = NO_INDEX;
+
+			if (fadeOut) {
+				m_asyncMessageBus->PushMixerCommand(AsyncMixerCommand::FadeDetachEffect(
+					effect.GetIndex(), eMirror.gen, effect.GetType(), bIndex, slot
+				));
+			}
+			else {
+				m_asyncMessageBus->PushMixerCommand(AsyncMixerCommand::ForceDetachEffect(
+					effect.GetIndex(), eMirror.gen, effect.GetType(), bIndex, slot
+				));
+			}
+
+			return Result::Ok;
+		});
 	}
 
 	void MixController::HandleVoiceStoppedEvent(const AsyncMixerEvent& ev) {
