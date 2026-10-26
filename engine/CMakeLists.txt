@@ -116,8 +116,11 @@ set(ENGINE_FILES
     src/mixer/MixController.h
     src/io/IoController.cpp
     src/io/IoController.h
-    src/mixer/MixController.inl
     src/asset/SoundDescriptor.h
+    src/mixer/MixControllerPlayback.cpp
+    src/mixer/MixControllerListener.cpp
+    src/mixer/MixControllerBus.cpp
+    src/mixer/MixControllerEffect.cpp
 )
 
 if (WIN32)

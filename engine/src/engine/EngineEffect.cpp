@@ -4,46 +4,14 @@
 namespace dalia {
 
 	template <typename TParams>
-	requires requires(TParams p) { p.Sanitize(); }
 	Result Engine::CreateEffect(EffectHandle& effect, const TParams& params) {
 		if (!EngineInternalState::IsInitialized(m_state)) return Result::NotInitialized;
-
-		using Traits = EffectTraits<TParams>;
-		auto& ePool = Traits::GetPool(*m_state);
-
-		uint32_t eIndex = NO_INDEX;
-		if (!ePool.Allocate(eIndex)) {
-			DALIA_LOG_ERR(LOG_CTX_API, "Failed to create effect. Capacity reached.");
-			return Result::EffectCapacityReached;
-		}
-
-		auto& eMirror = ePool.GetMirror(eIndex);
-		uint32_t eGen = eMirror.gen;
-
-		eMirror.params = params;
-		eMirror.params.Sanitize();
-		ePool.MarkDirty(eIndex);
-
-		effect = EffectHandle::Create(eIndex, eGen, Traits::TYPE);
-		m_state->mixerCommands->Enqueue(MixerCommand::AllocateEffect(Traits::TYPE, eIndex, eGen));
-
-		DALIA_LOG_DEBUG(LOG_CTX_API, "Created effect (index: %u, gen: %u).", eIndex, eGen);
-		return Result::Ok;
+		return m_state->mixController->CreateEffect<TParams>(effect, params);
 	}
 
-	template <typename TParams>
-	requires requires(TParams p) { p.Sanitize(); }
-	Result Engine::SetEffectParams(EffectHandle effect, const TParams& params) {
+	Result Engine::DestroyEffect(EffectHandle effect) {
 		if (!EngineInternalState::IsInitialized(m_state)) return Result::NotInitialized;
-
-		return m_state->ModifyEffectParams<TParams>(effect, [&](TParams& eParams) -> Result {
-			TParams sanitizedParams = params;
-			sanitizedParams.Sanitize();
-
-			eParams = sanitizedParams;
-
-			return Result::Ok;
-		});
+		return m_state->mixController->DestroyEffect(effect);
 	}
 
 	Result Engine::AttachEffect(EffectHandle effect, const char* busIdentifier, uint32_t effectSlot) {
@@ -129,23 +97,10 @@ namespace dalia {
 		return m_state->FreeEffectFromPool(effect);
 	}
 
-	Result Engine::DestroyEffect(EffectHandle effect) {
+	template <typename TParams>
+	Result Engine::SetEffectParams(EffectHandle effect, const TParams& params) {
 		if (!EngineInternalState::IsInitialized(m_state)) return Result::NotInitialized;
-
-		Result res = m_state->DetachEffectFromBus(effect, false);
-		if (res != Result::Ok) {
-			DALIA_LOG_ERR(LOG_CTX_API, "Failed to destroy effect. Invalid or expired handle.");
-			return res;
-		}
-
-		m_state->ModifyEffect(effect, [&](auto& eMirror, uint32_t eIndex) -> Result {
-			m_state->mixerCommands->Enqueue(MixerCommand::FreeEffect(eIndex, eMirror.gen, effect.GetType()));
-			eMirror.Reset();
-			return Result::Ok;
-		});
-
-		if (res != Result::Ok) return res;
-		return m_state->FreeEffectFromPool(effect);
+		return m_state->mixController->SetEffectParams<TParams>(effect, params);
 	}
 
 	// --- Template Instantiations ---

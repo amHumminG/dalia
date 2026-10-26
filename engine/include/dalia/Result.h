@@ -23,14 +23,15 @@ namespace dalia {
 		InvalidRouting				= -9,
 		InvalidEffectSlot			= -10,
 		InvalidListener				= -11,
+		SoundNotLoaded				= -12,
 
 		// Pool Capacity Errors
 		CapacityReached				= -100,
 		SoundCapacityReached		= -101,
-		VoiceCapacityReached		= -103,
-		StreamCapacityReached		= -104,
-		BusCapacityReached			= -105,
-		EffectCapacityReached		= -106,
+		VoiceCapacityReached		= -102,
+		StreamCapacityReached		= -103,
+		BusCapacityReached			= -104,
+		EffectCapacityReached		= -105,
 
 		// Messaging Errors
 		MixerQueueCapacityReached	= -200,

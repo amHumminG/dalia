@@ -38,7 +38,9 @@ namespace dalia {
         uint64_t GetRawId() const { return m_rawId; }
 
     private:
+    	friend class MixController;
     	friend class AssetController;
+    	friend class AssetRegistry;
 
         static SoundHandle Create(uint32_t index, uint32_t generation, SoundType type) {
             SoundHandle handle;
