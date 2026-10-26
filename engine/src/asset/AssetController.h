@@ -5,6 +5,7 @@
 #include "asset/types/ResidentSound.h"
 #include "asset/types/StreamSound.h"
 #include "asset/AssetRegistry.h"
+#include "io/codec/Codec.h"
 
 #include <cstdint>
 #include <memory>
@@ -12,59 +13,41 @@
 namespace dalia {
 
 	class AsyncMessageBus;
-	class AssetRegistry;
-	template<typename T> class AsyncPool;
-	struct StreamContext;
 
 	struct AsyncLoadCommand;
 	struct AsyncLoadEvent;
-	struct AsyncStreamCommand;
-
-	/// @brief Represents a sound waiting on voices that use it to stop before it can be unloaded.
-	struct PendingSoundUnload {
-		SoundHandle handle;
-		uint32_t remainingVoices = 0;
-	};
 
 	class AssetController {
 	public:
-		using SoundLoadCompletionCallback = std::function<void(SoundHandle handle, Result result)>;
-
 		AssetController(uint32_t residentSoundCapacity, uint32_t streamSoundCapacity);
 		~AssetController();
 
-		Result Initialize(
-			AsyncMessageBus* asyncMessageBus,
-			SoundLoadCompletionCallback onSoundLoad
-		);
+		Result Initialize(AsyncMessageBus* asyncMessageBus);
 		void Shutdown();
 
-		Result LoadSoundAsync(SoundHandle& handle, SoundType type, const char* filepath, AssetLoadCallback callback,
+		// === Asset API ===
+		Result LoadSoundAsync(SoundHandle& sound, SoundType type, const char* filepath, AssetLoadCallback callback,
 			uint32_t* requestId);
+		Result UnloadSound(SoundHandle sound);
 
-		Result GetSoundLength(SoundHandle handle, double& lengthInSeconds);
+		Result GetSoundDescriptor(SoundHandle sound, SoundDescriptor& soundDesc);
 
-		Result ReleaseSoundRef(SoundHandle handle, bool& readyToUnload);
+		bool AcquireSound(SoundHandle sound);
+		void ReleaseSound(SoundHandle sound);
 
-		void FinalizeOrDeferUnload(SoundHandle handle, uint32_t activeVoiceCount);
+		void FinalizeAsyncSoundLoad(SoundHandle sound, const AudioFormatInfo& info, const char* filepath = nullptr);
+		void FailSoundLoad(SoundHandle sound);
+		void InvokeLoadCallback(uint32_t requestId, Result result);
 
-		void OnVoiceStopped(uint64_t assetRawId);
-
-		[[nodiscard]] ResidentSound* GetResidentSound(SoundHandle handle);
-
-		[[nodiscard]] StreamSound* GetStreamSound(SoundHandle handle);
 	private:
-		// --- Main Thread ---
-		void HandleSoundLoadedEvent(const AsyncLoadEvent& ev);
-		void HandleSoundLoadFailedEvent(const AsyncLoadEvent& ev);
+		[[nodiscard]] ResidentSound* GetResidentSound(SoundHandle sound);
+		[[nodiscard]] StreamSound* GetStreamSound(SoundHandle sound);
 
-		AssetRegistry m_assetRegistry;
 		AsyncMessageBus* m_asyncMessageBus = nullptr;
-		SoundLoadCompletionCallback m_onSoundLoadCallback;
+		AssetRegistry m_assetRegistry;
 
 		uint32_t nextIoLoadRequestId = 1;
 		std::unordered_map<uint32_t, AssetLoadCallback> m_loadCallbacks;
-		std::vector<PendingSoundUnload> m_pendingSoundUnloads;
 	};
 }
 

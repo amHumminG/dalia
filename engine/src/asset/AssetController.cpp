@@ -1,5 +1,7 @@
 #include "asset/AssetController.h"
 
+#include <future>
+
 #include "asset/AssetRegistry.h"
 #include "asset/types/ResidentSound.h"
 #include "asset/types/StreamSound.h"
@@ -19,15 +21,8 @@ namespace dalia {
 		Shutdown();
 	}
 
-	Result AssetController::Initialize(AsyncMessageBus* asyncMessageBus, SoundLoadCompletionCallback onSoundLoad) {
+	Result AssetController::Initialize(AsyncMessageBus* asyncMessageBus) {
 		m_asyncMessageBus = asyncMessageBus;
-		m_onSoundLoadCallback = std::move(onSoundLoad);
-
-		// Subscribe to load events (Main Thread)
-		m_asyncMessageBus->SubscribeToLoadEvent(AsyncLoadEvent::Type::SoundLoaded,
-			[this](const AsyncLoadEvent& ev) { HandleSoundLoadedEvent(ev); });
-		m_asyncMessageBus->SubscribeToLoadEvent(AsyncLoadEvent::Type::SoundLoadFailed,
-			[this](const AsyncLoadEvent& ev) { HandleSoundLoadFailedEvent(ev); });
 
 		return Result::Ok;
 	}
@@ -35,14 +30,10 @@ namespace dalia {
 	void AssetController::Shutdown() {
 		if (!m_asyncMessageBus) return;
 
-		// Unsubscribe from load events (Main Thread)
-		m_asyncMessageBus->UnsubscribeFromLoadEvent(AsyncLoadEvent::Type::SoundLoaded);
-		m_asyncMessageBus->UnsubscribeFromLoadEvent(AsyncLoadEvent::Type::SoundLoadFailed);
-
 		m_asyncMessageBus = nullptr;
 	}
 
-	Result AssetController::LoadSoundAsync(SoundHandle& handle, SoundType type, const char* filepath,
+	Result AssetController::LoadSoundAsync(SoundHandle& sound, SoundType type, const char* filepath,
 		AssetLoadCallback callback, uint32_t* requestId) {
 
 		if (!filepath || filepath[0] == '\0') return Result::InvalidArgs;
@@ -50,18 +41,8 @@ namespace dalia {
 		const SoundID pathId(filepath);
 
 		// Check if sound is already loaded
-		if (m_assetRegistry.GetLoadedSoundHandle(pathId, handle)) {
-			if (handle.GetType() == type) {
-				// Increment ref count
-				DALIA_LOG_DEBUG(LOG_CTX_API, "Sound from filepath: %s is already loaded. Incrementing reference count.",
-					filepath);
-				if (type == SoundType::Resident) {
-					if (ResidentSound* sound = m_assetRegistry.GetResidentSound(handle)) sound->refCount++;
-				}
-				else if (type == SoundType::Stream) {
-					if (StreamSound* sound = m_assetRegistry.GetStreamSound(handle)) sound->refCount++;
-				}
-
+		if (m_assetRegistry.GetLoadedSoundHandle(pathId, sound)) {
+			if (sound.GetType() == type && AcquireSound(sound)) {
 				if (callback) callback(INVALID_REQUEST_ID, Result::Ok);
 				if (requestId) *requestId = INVALID_REQUEST_ID;
 				return Result::Ok;
@@ -69,29 +50,30 @@ namespace dalia {
 		}
 
 		// Allocate new sound slot
-		handle = m_assetRegistry.AllocateSound(type);
-		if (!handle.IsValid()) {
+		sound = m_assetRegistry.AllocateSound(type);
+		if (!sound.IsValid()) {
 			DALIA_LOG_ERR(LOG_CTX_API, "Failed to load sound from file: %s. Sound capacity reached.", filepath);
 			return Result::SoundCapacityReached;
 		}
 
 		std::vector<float>* targetPcmBuffer = nullptr;
+
 		if (type == SoundType::Resident) {
-			ResidentSound* sound = m_assetRegistry.GetResidentSound(handle);
-			sound->refCount = 1;
-			sound->pathHash = pathId.GetHash();
-			sound->state = LoadState::Loading;
-			targetPcmBuffer = &sound->pcmData;
+			ResidentSound* rs = m_assetRegistry.GetResidentSound(sound);
+			rs->refCount = 2;
+			rs->pathHash = pathId.GetHash();
+			rs->state = LoadState::Loading;
+			targetPcmBuffer = &rs->pcmData;
 		}
 		else {
-			StreamSound* sound = m_assetRegistry.GetStreamSound(handle);
-			sound->refCount = 1;
-			sound->pathHash = pathId.GetHash();
-			sound->state = LoadState::Loading;
-			snprintf(sound->filepath, MAX_STR_LEN_ASSET_PATH, "%s", filepath);
+			StreamSound* ss = m_assetRegistry.GetStreamSound(sound);
+			ss->refCount = 2;
+			ss->pathHash = pathId.GetHash();
+			ss->state = LoadState::Loading;
+			snprintf(ss->filepath, MAX_STR_LEN_ASSET_PATH, "%s", filepath);
 		}
 
-		m_assetRegistry.RegisterLoadedSound(pathId, handle);
+		m_assetRegistry.RegisterLoadedSound(pathId, sound);
 
 		uint32_t reqId = nextIoLoadRequestId++;
 		if (requestId) *requestId = reqId;
@@ -102,13 +84,13 @@ namespace dalia {
 			typeStr, filepath, requestId, callback ? "Yes" : "No");
 
 		// Publish load command
-		AsyncLoadCommand cmd = AsyncLoadCommand::LoadSound(reqId, handle.GetRawId(), filepath, targetPcmBuffer);
+		AsyncLoadCommand cmd = AsyncLoadCommand::LoadSound(reqId, sound.GetRawId(), filepath, targetPcmBuffer);
 		if (m_asyncMessageBus->PushLoadCommand(cmd)) {
 			// Publish failed -> Rollback
 			if (callback) m_loadCallbacks.erase(reqId);
 			m_assetRegistry.UnregisterLoadedSound(pathId);
-			m_assetRegistry.FreeSound(handle);
-			handle = INVALID_SOUND_HANDLE;
+			m_assetRegistry.FreeSound(sound);
+			sound = INVALID_SOUND_HANDLE;
 
 			DALIA_LOG_ERR(LOG_CTX_API, "Failed to queue sound load from file: %s. Load queue capacity reached.",
 				filepath);
@@ -118,73 +100,109 @@ namespace dalia {
 		return Result::Ok;
 	}
 
-	Result AssetController::GetSoundLength(SoundHandle handle, double& lengthInSeconds) {
-		if (handle.GetType() == SoundType::Resident) {
-			ResidentSound* sound = m_assetRegistry.GetResidentSound(handle);
-			if (!sound || sound->state != LoadState::Loaded) return Result::InvalidHandle;
-			lengthInSeconds = sound->lengthInSeconds;
-		}
-		else if (handle.GetType() == SoundType::Stream) {
-			StreamSound* sound = m_assetRegistry.GetStreamSound(handle);
-			if (!sound || sound->state != LoadState::Loaded) return Result::InvalidHandle;
-			lengthInSeconds = sound->lengthInSeconds;
-		}
-		return Result::Ok;
-	}
+	Result AssetController::UnloadSound(SoundHandle sound) {
+		if (!sound.IsValid()) return Result::InvalidHandle;
 
-	Result AssetController::ReleaseSoundRef(SoundHandle handle, bool& readyToUnload) {
-		readyToUnload = false;
-		uint32_t refCount = 0;
 		uint32_t pathHash = 0;
-
-		if (handle.GetType() == SoundType::Resident) {
-			ResidentSound* sound = m_assetRegistry.GetResidentSound(handle);
-			if (!sound) return Result::InvalidHandle;
-			if (sound->refCount > 0) sound->refCount--;
-			refCount = sound->refCount;
-			pathHash = sound->pathHash;
-		}
-		else if (handle.GetType() == SoundType::Stream) {
-			StreamSound* sound = m_assetRegistry.GetStreamSound(handle);
-			if (!sound) return Result::InvalidHandle;
-			if (sound->refCount > 0) sound->refCount--;
-			refCount = sound->refCount;
-			pathHash = sound->pathHash;
-		}
-
-		if (refCount == 0) {
-			m_assetRegistry.UnregisterLoadedSound(SoundID::FromHash(pathHash));
-			readyToUnload = true;
-		}
-
-		return Result::Ok;
-	}
-
-	void AssetController::FinalizeOrDeferUnload(SoundHandle handle, uint32_t activeVoiceCount) {
-		if (activeVoiceCount == 0) {
-			m_assetRegistry.FreeSound(handle);
-			DALIA_LOG_DEBUG(LOG_CTX_API, "Unloaded sound (immediately). Handle: 0x%016llx.", handle.GetRawId());
+		if (sound.GetType() == SoundType::Resident) {
+			ResidentSound* rs = m_assetRegistry.GetResidentSound(sound);
+			if (!rs) return Result::InvalidHandle;
+			pathHash = rs->pathHash;
 		}
 		else {
-			m_pendingSoundUnloads.push_back({ handle, activeVoiceCount });
-			DALIA_LOG_DEBUG(LOG_CTX_API, "Deferring sound unload, waiting on %u voice(s). Handle: 0x%016llx.",
-				activeVoiceCount, handle.GetRawId());
+			StreamSound* ss = m_assetRegistry.GetStreamSound(sound);
+			if (!ss) return Result::InvalidHandle;
+			pathHash = ss->pathHash;
+		}
+
+		if (pathHash != 0) m_assetRegistry.UnregisterLoadedSound(SoundID::FromHash(pathHash));
+
+		ReleaseSound(sound);
+		return Result::Ok;
+	}
+
+	Result AssetController::GetSoundDescriptor(SoundHandle sound, SoundDescriptor& soundDesc) {
+		return m_assetRegistry.GetSoundDescriptor(sound, soundDesc);
+	}
+
+	bool AssetController::AcquireSound(SoundHandle sound) {
+		if (sound.GetType() == SoundType::Resident) {
+			ResidentSound* rs = m_assetRegistry.GetResidentSound(sound);
+			if (!rs || rs->refCount == 0) return false;
+			rs->refCount++;
+			return true;
+		}
+		else {
+			StreamSound* ss = m_assetRegistry.GetStreamSound(sound);
+			if (!ss || ss->refCount == 0) return false;
+			ss->refCount++;
+			return true;
 		}
 	}
 
-	void AssetController::OnVoiceStopped(uint64_t assetRawId) {
-		for (auto it = m_pendingSoundUnloads.begin(); it != m_pendingSoundUnloads.end(); ) {
-			if (it->handle.GetRawId() == assetRawId) {
-				if (it->remainingVoices > 0) it->remainingVoices--;
+	void AssetController::ReleaseSound(SoundHandle sound) {
+		if (!sound.IsValid()) return;
 
-				if (it->remainingVoices == 0) {
-					m_assetRegistry.FreeSound(it->handle);
-					DALIA_LOG_DEBUG(LOG_CTX_CORE, "Unloaded sound (deferred). Handle: 0x%016llx.", assetRawId);
-					it = m_pendingSoundUnloads.erase(it);
-					return;
-				}
+		if (sound.GetType() == SoundType::Resident) {
+			ResidentSound* rs = m_assetRegistry.GetResidentSound(sound);
+			if (!rs || rs->refCount == 0) return;
+			rs->refCount--;
+			if (rs->refCount == 0) {
+				m_assetRegistry.FreeSound(sound);
+				DALIA_LOG_DEBUG(LOG_CTX_CORE, "Freed resident sound. Handle: 0x%016llx.", sound.GetRawId());
 			}
-			++it;
+		}
+		else {
+			StreamSound* ss = m_assetRegistry.GetStreamSound(sound);
+			if (!ss || ss->refCount == 0) return;
+			ss->refCount--;
+			if (ss->refCount == 0) {
+				m_assetRegistry.FreeSound(sound);
+				DALIA_LOG_DEBUG(LOG_CTX_CORE, "Freed stream sound. Handle: 0x%016llx.", sound.GetRawId());
+			}
+		}
+	}
+
+	void AssetController::FinalizeAsyncSoundLoad(SoundHandle sound, const AudioFormatInfo& info, const char* filepath) {
+		if (sound.GetType() == SoundType::Resident) {
+			if (ResidentSound* rs = m_assetRegistry.GetResidentSound(sound)) {
+				rs->channels = info.channels;
+				rs->sampleRate = info.sampleRate;
+				rs->totalFrames = info.totalFrames;
+				rs->lengthInSeconds = info.lengthInSeconds;
+				rs->state = LoadState::Loaded;
+			}
+		}
+		else if (sound.GetType() == SoundType::Stream) {
+			if (StreamSound* ss = m_assetRegistry.GetStreamSound(sound)) {
+				snprintf(ss->filepath, MAX_STR_LEN_ASSET_PATH, "%s", filepath);
+				ss->channels = info.channels;
+				ss->sampleRate = info.sampleRate;
+				ss->totalFrames = info.totalFrames;
+				ss->lengthInSeconds = info.lengthInSeconds;
+				ss->state = LoadState::Loaded;
+			}
+		}
+
+		ReleaseSound(sound); // Release async load reference
+	}
+
+	void AssetController::FailSoundLoad(SoundHandle sound) {
+		if (sound.GetType() == SoundType::Resident) {
+			if (ResidentSound* rs = m_assetRegistry.GetResidentSound(sound)) rs->state = LoadState::Error;
+		}
+		else if (sound.GetType() == SoundType::Stream) {
+			if (StreamSound* ss = m_assetRegistry.GetStreamSound(sound)) ss->state = LoadState::Error;
+		}
+
+		ReleaseSound(sound); // Release async load reference
+	}
+
+	void AssetController::InvokeLoadCallback(uint32_t requestId, Result result) {
+		if (auto it = m_loadCallbacks.find(requestId); it != m_loadCallbacks.end()) {
+			AssetLoadCallback cb = std::move(it->second);
+			m_loadCallbacks.erase(it);
+			if (cb) cb(requestId, result);
 		}
 	}
 
@@ -194,61 +212,5 @@ namespace dalia {
 
 	StreamSound* AssetController::GetStreamSound(SoundHandle handle) {
 		return m_assetRegistry.GetStreamSound(handle);
-	}
-
-	void AssetController::HandleSoundLoadedEvent(const AsyncLoadEvent& ev) {
-		SoundHandle handle = SoundHandle::FromRawId(ev.assetRawId);
-
-		if (handle.GetType() == SoundType::Resident) {
-			if (ResidentSound* sound = m_assetRegistry.GetResidentSound(handle)) {
-				sound->channels = ev.formatInfo.channels;
-				sound->sampleRate = ev.formatInfo.sampleRate;
-				sound->totalFrames = ev.formatInfo.totalFrames;
-				sound->lengthInSeconds = ev.formatInfo.lengthInSeconds;
-				sound->state = LoadState::Loaded;
-			}
-			// TODO: Log error here
-		}
-		else if (handle.GetType() == SoundType::Stream) {
-			if (StreamSound* sound = m_assetRegistry.GetStreamSound(handle)) {
-				sound->channels = ev.formatInfo.channels;
-				sound->sampleRate = ev.formatInfo.sampleRate;
-				sound->totalFrames = ev.formatInfo.totalFrames;
-				sound->lengthInSeconds = ev.formatInfo.lengthInSeconds;
-				sound->state = LoadState::Loaded;
-			}
-			// TODO: Log error here
-		}
-
-		// Notify MixController
-		if (m_onSoundLoadCallback) m_onSoundLoadCallback(handle, Result::Ok);
-
-		// Fire user load callback
-		if (auto it = m_loadCallbacks.find(ev.requestId); it != m_loadCallbacks.end()) {
-			if (it->second) it->second(ev.requestId, Result::Ok);
-			m_loadCallbacks.erase(it);
-		}
-	}
-
-	void AssetController::HandleSoundLoadFailedEvent(const AsyncLoadEvent& ev) {
-		SoundHandle handle = SoundHandle::FromRawId(ev.assetRawId);
-
-		if (handle.GetType() == SoundType::Resident) {
-			if (ResidentSound* sound = m_assetRegistry.GetResidentSound(handle)) sound->state = LoadState::Error;
-			// TODO: Log error here
-		}
-		else if (handle.GetType() == SoundType::Stream) {
-			if (StreamSound* sound = m_assetRegistry.GetStreamSound(handle)) sound->state = LoadState::Error;
-			// TODO: Log error here
-		}
-
-		// Notify MixController
-		if (m_onSoundLoadCallback) m_onSoundLoadCallback(handle, ev.result);
-
-		// Fire user load callback
-		if (auto it = m_loadCallbacks.find(ev.requestId); it != m_loadCallbacks.end()) {
-			if (it->second) it->second(ev.requestId, ev.result);
-			m_loadCallbacks.erase(it);
-		}
 	}
 }
