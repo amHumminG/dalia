@@ -1,13 +1,18 @@
 #include "mixer/MixController.h"
 
-#include "../../../sandbox/src/PlaybackInstance.h"
+#include "asset/AssetController.h"
+#include "backend/DeviceController.h"
+#include "io/IoController.h"
 
 namespace dalia {
-	MixController::MixController(const EngineConfig& config)
-		: m_voices(config.voiceCapacity),
+
+	MixController::MixController(const MixControllerConfig& config)
+		: m_coordinateSystem(config.coordinateSystem),
+		m_voices(config.voiceCapacity),
 		m_listeners(config.listenerCapacity),
 		m_buses(config.busCapacity),
 		m_biquads(config.biquadCapacity) {
+
 		m_busMap.reserve(config.busCapacity);
 	}
 
@@ -16,12 +21,11 @@ namespace dalia {
 	}
 
 	Result MixController::Initialize(AsyncMessageBus* asyncMessageBus, AssetController* assetController,
-		IoController* ioController, CoordinateSystem coordinateSystem) {
+		IoController* ioController) {
 
 		m_asyncMessageBus = asyncMessageBus;
 		m_assetController = assetController;
-		m_ioController = ioController;
-		m_coordinateSystem = coordinateSystem;
+		m_ioController	  = ioController;
 
 		// Initialize master bus at index 0
 		uint32_t masterIndex; // Temporary
@@ -32,8 +36,15 @@ namespace dalia {
 		constexpr BusID masterId("Master");
 		m_busMap[masterId] = MASTER_BUS_INDEX;
 
+		// Subscribe to mixer events
 		m_asyncMessageBus->SubscribeToMixerEvent(AsyncMixerEvent::Type::VoiceStopped,
 			[this](const AsyncMixerEvent& ev) { HandleVoiceStoppedEvent(ev); });
+
+		// Subscribe to load events
+		m_asyncMessageBus->SubscribeToLoadEvent(AsyncLoadEvent::Type::SoundLoaded,
+			[this](const AsyncLoadEvent& ev) { HandleSoundLoadedEvent(ev); });
+		m_asyncMessageBus->SubscribeToLoadEvent(AsyncLoadEvent::Type::SoundLoadFailed,
+			[this](const AsyncLoadEvent& ev) { HandleSoundLoadFailedEvent(ev); });
 
 		return Result::Ok;
 	}
@@ -41,8 +52,16 @@ namespace dalia {
 	void MixController::Shutdown() {
 		if (!m_asyncMessageBus) return;
 
+		// Unsubscribe from mixer events
 		m_asyncMessageBus->UnsubscribeFromMixerEvent(AsyncMixerEvent::Type::VoiceStopped);
+
+		// Unsubscribe from load events
+		m_asyncMessageBus->UnsubscribeFromLoadEvent(AsyncLoadEvent::Type::SoundLoaded);
+		m_asyncMessageBus->UnsubscribeFromLoadEvent(AsyncLoadEvent::Type::SoundLoadFailed);
+
 		m_asyncMessageBus = nullptr;
+		m_assetController = nullptr;
+		m_ioController	  = nullptr;
 	}
 
 	void MixController::SyncPools() {
@@ -50,68 +69,6 @@ namespace dalia {
 		m_listeners.Sync();
 		m_buses.Sync();
 		m_biquads.Sync();
-	}
-
-	void MixController::OnSoundLoadComplete(SoundHandle sound, Result loadResult) {
-		uint64_t targetRawId = sound.GetRawId();
-
-		for (auto it = m_pendingPlaybacks.begin(); it != m_pendingPlaybacks.end();) {
-			if (it->assetRawId != targetRawId) {
-				++it;
-				continue;
-			}
-
-			// Found pending playback
-			PlaybackHandle playback = it->playback;
-			it = m_pendingPlaybacks.erase(it);
-
-			uint32_t vIndex = playback.GetIndex();
-			VoiceMirror& vMirror = m_voices.GetMirror(vIndex);
-
-			// Check if user already destroyed or stopped this playback
-			if (vMirror.gen != playback.GetGeneration()) continue;
-
-			if (loadResult == Result::Ok) {
-				if (PrepareDeferredVoice(playback, sound) != Result::Ok) {
-					ResetAndFreeVoice(vIndex);
-				}
-			}
-			else {
-				ResetAndFreeVoice(vIndex);
-			}
-		}
-	}
-
-	uint32_t MixController::AbortAndStopVoicesForSound(SoundHandle sound) {
-		uint64_t soundRawId = sound.GetRawId();
-
-		// Free pending playbacks
-		for (auto it = m_pendingPlaybacks.begin(); it != m_pendingPlaybacks.end();) {
-			if (it->assetRawId == soundRawId) {
-				uint32_t vIndex = it->playback.GetIndex();
-				VoiceMirror& vMirror = m_voices.GetMirror(vIndex);
-				if (vMirror.gen == it->playback.GetGeneration()) ResetAndFreeVoice(vIndex);
-				it = m_pendingPlaybacks.erase(it);
-			}
-			else {
-				++it;
-			}
-		}
-
-		// Command active voices using this sound to stop
-		uint32_t activeVoicesStopped = 0;
-		for (uint32_t i = 0; i < m_voices.Capacity(); ++i) {
-			VoiceMirror& vMirror = m_voices.GetMirror(i);
-			if (vMirror.gen != NO_GENERATION && vMirror.assetRawId == soundRawId) {
-				vMirror.state = VoiceState::Stopped;
-				m_asyncMessageBus->PushMixerCommand(AsyncMixerCommand::StopVoice(
-					i, vMirror.gen
-				));
-				activeVoicesStopped++;
-			}
-		}
-
-		return activeVoicesStopped;
 	}
 
 	Result MixController::Validate(PlaybackHandle playback) {
@@ -161,7 +118,7 @@ namespace dalia {
 			uint32_t slot = eMirror.effectSlot;
 
 			BusMirror& bMirror = m_buses.GetMirror(bIndex);
-			if (bMirror.effectSlots[slot] == effect) bMirror.effectSlots[slot] = InvalidEffectHandle;
+			if (bMirror.effectSlots[slot] == effect) bMirror.effectSlots[slot] = INVALID_EFFECT_HANDLE;
 
 			eMirror.busIndex = NO_INDEX;
 			eMirror.effectSlot = NO_INDEX;
@@ -181,6 +138,15 @@ namespace dalia {
 		});
 	}
 
+	bool MixController::WouldCreateBusCycle(uint32_t busIndex, uint32_t candidateParentBusIndex) const {
+		uint32_t currentAncestor = candidateParentBusIndex;
+		while (currentAncestor != NO_PARENT) {
+			if (currentAncestor == busIndex) return true;
+			currentAncestor = m_buses.GetMirror(currentAncestor).parentBusIndex;
+		}
+		return false;
+	}
+
 	void MixController::HandleVoiceStoppedEvent(const AsyncMixerEvent& ev) {
 		uint32_t vIndex = ev.data.voice.index;
 		uint32_t vGen = ev.data.voice.gen;
@@ -189,18 +155,62 @@ namespace dalia {
 		VoiceMirror& vMirror = m_voices.GetMirror(vIndex);
 		if (vMirror.gen != vGen) return;
 
-		uint64_t releasedAssetRawId = vMirror.assetRawId;
-		PlaybackExitCallback userCallback = std::move(vMirror.onStopCallback);
+		PlaybackExitCallback exitCallback = std::move(vMirror.onStopCallback);
 
-		vMirror.Reset();
-		m_voices.Free(vIndex);
-
-		if (m_assetController && releasedAssetRawId != INVALID_RAW_ID) {
-			m_assetController->OnVoiceStopped(releasedAssetRawId);
-		}
+		ResetAndFreeVoice(vIndex);
 
 		// Invoke registered callback
-		userCallback(PlaybackHandle::Create(vIndex, vGen), ev.data.voice.exitCondition);
+		exitCallback(PlaybackHandle::Create(vIndex, vGen), ev.data.voice.exitCondition);
+	}
+
+	void MixController::HandleSoundLoadedEvent(const AsyncLoadEvent& ev) {
+		SoundHandle sound = SoundHandle::FromRawId(ev.assetRawId);
+
+		// Notify asset controller
+		m_assetController->FinalizeAsyncSoundLoad(sound, ev.formatInfo);
+
+		// Wake up deferred playbacks waiting on the sound
+		for (auto it = m_pendingPlaybacks.begin(); it != m_pendingPlaybacks.end();) {
+			if (it->assetRawId != ev.assetRawId) {
+				++it;
+				continue;
+			}
+
+			PlaybackHandle pb = it->playback;
+			it = m_pendingPlaybacks.erase(it);
+
+			uint32_t vIndex = pb.GetIndex();
+			if (m_voices.GetMirror(vIndex).gen != pb.GetGeneration()) continue;
+
+			if (PrepareDeferredVoice(pb, sound) != Result::Ok) ResetAndFreeVoice(vIndex);
+		}
+
+		// Invoke registered load callback
+		m_assetController->InvokeLoadCallback(ev.requestId, ev.result);
+	}
+
+	void MixController::HandleSoundLoadFailedEvent(const AsyncLoadEvent& ev) {
+		SoundHandle sound = SoundHandle::FromRawId(ev.assetRawId);
+
+		// Notify asset controller
+		m_assetController->FailSoundLoad(sound);
+
+		// Abort deferred playbacks waiting on the sound
+		for (auto it = m_pendingPlaybacks.begin(); it != m_pendingPlaybacks.end();) {
+			if (it->assetRawId != ev.assetRawId) {
+				++it;
+				continue;
+			}
+
+			PlaybackHandle pb = it->playback;
+			it = m_pendingPlaybacks.erase(it);
+
+			uint32_t vIndex = pb.GetIndex();
+			if (m_voices.GetMirror(vIndex).gen != pb.GetGeneration()) ResetAndFreeVoice(vIndex);
+		}
+
+		// Invoke registered load callback
+		m_assetController->InvokeLoadCallback(ev.requestId, ev.result);
 	}
 
 	Result MixController::PrepareDeferredVoice(PlaybackHandle playback, SoundHandle sound) {
@@ -237,6 +247,15 @@ namespace dalia {
 			));
 		}
 
+		if (vMirror.initialSeekTarget > 0.0) {
+			auto targetFrame = static_cast<uint32_t>(vMirror.initialSeekTarget * vMirror.sampleRate);
+			if (targetFrame < vMirror.totalFrames) {
+				m_asyncMessageBus->PushMixerCommand(AsyncMixerCommand::SeekVoice(
+					vIndex, vMirror.gen, targetFrame
+				));
+			}
+		}
+
 		if (vMirror.state == VoiceState::Playing) {
 			m_asyncMessageBus->PushMixerCommand(AsyncMixerCommand::PlayVoice(
 				vIndex, vMirror.gen
@@ -247,7 +266,14 @@ namespace dalia {
 	}
 
 	void MixController::ResetAndFreeVoice(uint32_t vIndex) {
-		m_voices.GetMirror(vIndex).Reset();
+		VoiceMirror& vMirror = m_voices.GetMirror(vIndex);
+		uint64_t assetRawId = vMirror.assetRawId;
+
+		vMirror.Reset();
 		m_voices.Free(vIndex);
+
+		if (m_assetController && assetRawId != INVALID_RAW_ID) {
+			m_assetController->ReleaseSound(SoundHandle::FromRawId(assetRawId));
+		}
 	}
 }

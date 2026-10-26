@@ -50,16 +50,17 @@ namespace dalia {
     	Type type = Type::None;
         uint32_t requestId = INVALID_REQUEST_ID;
     	uint64_t assetRawId = INVALID_RAW_ID;
-        Result result = Result::Ok;
     	AudioFormatInfo formatInfo{};
+        Result result = Result::Ok;
 
-        static AsyncLoadEvent SoundLoaded(uint32_t reqId, uint64_t rawId, const AudioFormatInfo& info) {
+        static AsyncLoadEvent SoundLoaded(uint32_t reqId, uint64_t rawId, const char* filepath,
+        	const AudioFormatInfo& info) {
             AsyncLoadEvent ev{};
             ev.type = Type::SoundLoaded;
             ev.requestId = reqId;
             ev.assetRawId = rawId;
-        	ev.result = Result::Ok;
         	ev.formatInfo = info;
+        	ev.result = Result::Ok;
             return ev;
         }
 
@@ -74,8 +75,6 @@ namespace dalia {
     };
 
 	// --- Queues ---
-
 	using AsyncLoadCommandQueue = SPSCRingBuffer<AsyncLoadCommand>;
-	using AsyncLoadEventQueue = SPSCRingBuffer<AsyncLoadEvent>;
-
+	using AsyncLoadEventQueue   = SPSCRingBuffer<AsyncLoadEvent>;
 }

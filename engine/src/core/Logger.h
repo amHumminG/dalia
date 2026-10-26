@@ -7,9 +7,7 @@ namespace dalia {
 	static constexpr const char* LOG_CTX_BACKEND   = "Backend";
 	static constexpr const char* LOG_CTX_CORE      = "Core";
 	static constexpr const char* LOG_CTX_ASYNC     = "Async";
-	static constexpr const char* LOG_CTX_MESSAGING = "Messaging";
 	static constexpr const char* LOG_CTX_MIXER     = "Mixer";
-	static constexpr const char* LOG_CTX_RESOURCES = "Resources";
 
 	enum class LogLevel : int;
 

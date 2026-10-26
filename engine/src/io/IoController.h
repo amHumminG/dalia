@@ -43,7 +43,7 @@ namespace dalia {
 
 		static void FillStreamBuffer(StreamContext& stream, uint32_t bufferIndex);
 
-		AsyncPool<StreamContext> m_streams;
 		AsyncMessageBus* m_asyncMessageBus = nullptr;
+		AsyncPool<StreamContext> m_streams;
 	};
 }

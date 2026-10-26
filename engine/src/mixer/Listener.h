@@ -1,7 +1,5 @@
 #pragma once
 
-#include <atomic>
-
 #include "core/Math.h"
 
 namespace dalia {

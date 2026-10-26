@@ -11,12 +11,14 @@ namespace dalia {
 		uint32_t channels = 0;
 		uint32_t sampleRate = 0;
 		uint32_t totalFrames = 0;
-		double lengthInSeconds = 0.0f;
+		double lengthInSeconds = 0.0;
 	};
 
 	class Codec {
 	public:
 		virtual ~Codec() = default;
+
+		static const Codec* GetCodecForFile(const char* filepath);
 
 		// --- Non-Stateful ---
 		virtual Result ProbeFile(const char* filepath, AudioFormatInfo& info) const = 0;
@@ -27,7 +29,5 @@ namespace dalia {
 		virtual uint32_t DecodeStreamFrames(void* decoderHandle, uint32_t channels, float* buffer, uint32_t framesToRead) const = 0;
 		virtual Result SeekStreamFrame(void* decoderHandle, uint32_t targetFrame) const = 0;
 		virtual void CloseStream(void*& decoderHandle) const = 0;
-
-		static const Codec* GetCodecForFile(const char* filepath);
 	};
 }

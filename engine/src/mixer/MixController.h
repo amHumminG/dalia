@@ -11,13 +11,10 @@
 #include "mixer/Voice.h"
 #include "mixer/Listener.h"
 #include "mixer/Bus.h"
-#include "mixer/effects/EffectTraits.h"
 #include "mixer/effects/Biquad.h"
-#include "asset/SoundDescriptor.h"
 
 #include <unordered_map>
 #include <vector>
-#include <utility>
 
 namespace dalia {
 
@@ -25,12 +22,7 @@ namespace dalia {
 	class AssetController;
 	class IoController;
 	struct AsyncMixerEvent;
-
-	/// @brief Represents a playback instance waiting for an asset to be loaded before it can start playing.
-	struct PendingPlayback {
-		PlaybackHandle playback;
-		uint64_t assetRawId = INVALID_RAW_ID;
-	};
+	struct AsyncLoadEvent;
 
 	struct MixControllerConfig {
 		CoordinateSystem coordinateSystem = CoordinateSystem::LeftHanded;
@@ -40,54 +32,48 @@ namespace dalia {
 		uint32_t biquadCapacity = 16;
 	};
 
+	/// @brief Represents a playback instance waiting for an asset to be loaded before it can start playing.
+	struct PendingPlayback {
+		PlaybackHandle playback;
+		uint64_t assetRawId = INVALID_RAW_ID;
+	};
+
 	class MixController {
 	public:
-		using StreamPrepareCallback = std::function<Result(const char* filepath, uint32_t& sIndex, uint32_t& sGen)>;
-		using PlaybackReleasedAssetCallback = std::function<void(uint64_t assetRawId)>;
-
 		explicit MixController(const MixControllerConfig& config); // TODO: Change params
 		~MixController();
 
 		Result Initialize(
 			AsyncMessageBus* asyncMessageBus,
 			AssetController* assetController,
-			IoController* ioController,
-			CoordinateSystem coordinateSystem
+			IoController* ioController
 		);
 		void Shutdown();
 
 		/// @brief Syncs dirty mirror parameters with their mixer counterparts.
 		void SyncPools();
 
-		void OnSoundLoadComplete(const SoundDescriptor& soundDesc, Result loadResult);
-		uint32_t AbortAndStopVoicesForSound(SoundHandle sound);
-
 		// === Playback API ===
-		Result CreatePlayback(
-			PlaybackHandle& playback,
-			SoundHandle sound,
-			const char* bus,
-			PlaybackExitCallback exitCallback
-		);
+		Result CreatePlayback(PlaybackHandle& playback, SoundHandle sound, PlaybackExitCallback exitCallback);
 
+		Result RoutePlayback(PlaybackHandle playback, const char* bus);
 		Result PlayPlayback(PlaybackHandle playback);
 		Result PausePlayback(PlaybackHandle playback);
 		Result StopPlayback(PlaybackHandle playback);
+		void StopPlaybacksForSound(SoundHandle sound);
 		Result SeekPlayback(PlaybackHandle playback, double timeInSeconds);
 
 		Result SetPlaybackVolumeDb(PlaybackHandle playback, float volumeDb);
 		Result SetPlaybackRate(PlaybackHandle playback, float rate);
 		Result SetPlaybackStereoPan(PlaybackHandle playback, float stereoPan);
 		Result SetPlaybackLooping(PlaybackHandle playback, bool looping);
-
-		Result RoutePlayback(PlaybackHandle playback, const char* bus);
-
 		Result SetPlaybackSpatial(PlaybackHandle playback, bool spatial);
+
+		Result SetPlaybackPosition(PlaybackHandle playback, math::Vector3 position);
+		Result SetPlaybackVelocity(PlaybackHandle playback, math::Vector3 velocity);
 		Result SetPlaybackDistanceMode(PlaybackHandle playback, DistanceMode distanceMode);
 		Result SetPlaybackAttenuationCurve(PlaybackHandle playback, AttenuationCurve curve);
 		Result SetPlaybackMinMaxDistance(PlaybackHandle playback, float minDistance, float maxDistance);
-		Result SetPlaybackPosition(PlaybackHandle playback, math::Vector3 position);
-		Result SetPlaybackVelocity(PlaybackHandle playback, math::Vector3 velocity);
 		Result SetPlaybackUseDoppler(PlaybackHandle playback, bool useDoppler);
 		Result SetPlaybackDopplerFactor(PlaybackHandle playback, float dopplerFactor);
 		Result SetPlaybackListenerMask(PlaybackHandle playback, ListenerMask listenerMask);
@@ -95,10 +81,13 @@ namespace dalia {
 		// === Listener API ===
 		Result SetListenerActive(uint32_t listenerIndex, bool active);
 		Result SetListenerPosition(uint32_t listenerIndex, math::Vector3 position);
+		Result SetListenerVelocity(uint32_t listenerIndex, math::Vector3 velocity);
 		Result SetListenerDistanceProbePosition(uint32_t listenerIndex, math::Vector3 position);
 		Result SetListenerOrientation(uint32_t listenerIndex, math::Vector3 forward, math::Vector3 up);
-		Result SetListenerVelocity(uint32_t listenerIndex, math::Vector3 velocity);
-		Result SetListener3DAttributes(uint32_t listenerIndex, Listener3DAttributes attributes);
+		Result SetListener3DAttributes(uint32_t listenerIndex,
+			math::Vector3 position, math::Vector3 distanceProbePosition,
+			math::Vector3 forward, math::Vector3 up, math::Vector3 velocity
+		);
 
 		// === Bus API ===
 		Result CreateBus(const char* bus, const char* parentBus = "Master");
@@ -132,6 +121,8 @@ namespace dalia {
 
 		// --- Lifecycle Helpers ---
 		void HandleVoiceStoppedEvent(const AsyncMixerEvent& ev);
+		void HandleSoundLoadedEvent(const AsyncLoadEvent& ev);
+		void HandleSoundLoadFailedEvent(const AsyncLoadEvent& ev);
 		Result PrepareDeferredVoice(PlaybackHandle playback, SoundHandle sound);
 		void ResetAndFreeVoice(uint32_t vIndex);
 
@@ -270,8 +261,8 @@ namespace dalia {
 		std::vector<PendingPlayback> m_pendingPlaybacks;
 
 		AsyncMessageBus* m_asyncMessageBus = nullptr;
-		AssetController* m_assetController = nullptr; // Should this really be a member variable?
-		IoController*	 m_ioController	   = nullptr; // Should this really be a member variable?
+		AssetController* m_assetController = nullptr;
+		IoController*	 m_ioController	   = nullptr;
 	};
 }
 

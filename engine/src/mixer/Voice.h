@@ -144,6 +144,8 @@ namespace dalia {
     	VoiceParams params;
 
         // Asset
+    	double initialSeekTarget = 0.0;
+
         uint32_t totalFrames = 0;
         uint32_t channels = 0;
         uint32_t sampleRate = 0;

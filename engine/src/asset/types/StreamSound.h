@@ -18,7 +18,7 @@ namespace dalia {
 
         // Will be used if inside a soundbank
         size_t byteOffset = 0;
-        size_t byteLenght = 0;
+        size_t byteLength = 0;
 
         // Format
         uint32_t totalFrames = 0;
@@ -35,7 +35,7 @@ namespace dalia {
 
             filepath[0] = '\0';
             byteOffset = 0;
-            byteLenght = 0;
+            byteLength = 0;
 
             totalFrames = 0;
             channels = 0;

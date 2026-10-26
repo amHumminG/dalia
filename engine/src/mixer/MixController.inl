@@ -1,9 +1,13 @@
 #pragma once
-#include "mixer/MixController.h"
 
+#include "mixer/MixController.h"
+#include "core/Logger.h"
 #include "async/messaging/AsyncMixerMessaging.h"
+#include "mixer/effects/EffectTraits.h"
+#include "async/messaging/AsyncMessageBus.h"
 
 namespace dalia {
+
 	template <typename TParams> requires requires (TParams p) { p.Sanitize(); }
 	Result MixController::CreateEffect(EffectHandle& effect, const TParams& params) {
 		effect = INVALID_EFFECT_HANDLE;
