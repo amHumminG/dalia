@@ -53,6 +53,9 @@ namespace dalia {
 		/// @brief Syncs dirty mirror parameters with their mixer counterparts.
 		void SyncPools();
 
+		// === Mix Settings API ===
+		void SetGlobalDopplerFactor(float globalDopplerFactor);
+
 		// === Playback API ===
 		Result CreatePlayback(PlaybackHandle& playback, SoundHandle sound, PlaybackExitCallback exitCallback);
 

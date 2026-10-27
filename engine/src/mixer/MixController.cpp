@@ -4,6 +4,8 @@
 #include "backend/DeviceController.h"
 #include "io/IoController.h"
 
+#include <algorithm>
+
 namespace dalia {
 
 	MixController::MixController(const MixControllerConfig& config)
@@ -69,6 +71,11 @@ namespace dalia {
 		m_listeners.Sync();
 		m_buses.Sync();
 		m_biquads.Sync();
+	}
+
+	void MixController::SetGlobalDopplerFactor(float globalDopplerFactor) {
+		float clampedGlobalDopplerFactor = std::clamp(globalDopplerFactor, DOPPLER_FACTOR_MIN, DOPPLER_FACTOR_MAX);
+		m_asyncMessageBus->PushMixerCommand(AsyncMixerCommand::SetGlobalDopplerFactor(clampedGlobalDopplerFactor));
 	}
 
 	Result MixController::Validate(PlaybackHandle playback) {
@@ -217,35 +224,33 @@ namespace dalia {
 		uint32_t vIndex = playback.GetIndex();
 		VoiceMirror& vMirror = m_voices.GetMirror(vIndex);
 
-		if (sound.GetType() == SoundType::Resident) {
-			ResidentSound* rs = m_assetController->GetResidentSound(sound);
-			if (!rs || rs->state != LoadState::Loaded) return Result::Error; // TODO: Better error
+		SoundDescriptor soundDesc{};
+		Result res = m_assetController->GetSoundDescriptor(sound, soundDesc);
+		if (res != Result::Ok || soundDesc.loadState != LoadState::Loaded) {
+			DALIA_LOG_ERR(LOG_CTX_CORE, "Failed to prepare deferred playback instance.");
+			return Result::StateCorrupted;
+		}
 
-			vMirror.totalFrames = rs->totalFrames;
-			vMirror.sampleRate  = rs->sampleRate;
-
+		if (soundDesc.soundType == SoundType::Resident) {
 			m_asyncMessageBus->PushMixerCommand(AsyncMixerCommand::PrepareVoiceResident(
-				vIndex, vMirror.gen, rs->pcmData.data(),
-				rs->totalFrames, rs->channels, rs->sampleRate
+				vIndex, vMirror.gen, soundDesc.pcmData,
+				soundDesc.totalFrames, soundDesc.channels, soundDesc.sampleRate
 			));
 		}
 		else if (sound.GetType() == SoundType::Stream) {
-			StreamSound* ss = m_assetController->GetStreamSound(sound);
-			if (!ss || ss->state != LoadState::Loaded) return Result::Error; // TODO: Better error
-
 			uint32_t sIndex = NO_INDEX;
 			uint32_t sGen = NO_GENERATION;
-			Result streamRes = m_ioController->AllocateAndPrepareStream(ss->filepath, sIndex, sGen);
+			Result streamRes = m_ioController->AllocateAndPrepareStream(soundDesc.filepath, sIndex, sGen);
 			if (streamRes != Result::Ok) return streamRes;
-
-			vMirror.totalFrames = ss->totalFrames;
-			vMirror.sampleRate  = ss->sampleRate;
 
 			m_asyncMessageBus->PushMixerCommand(AsyncMixerCommand::PrepareVoiceStreaming(
 				vIndex, vMirror.gen, sIndex, sGen,
-				ss->channels, ss->sampleRate
+				soundDesc.channels, soundDesc.sampleRate
 			));
 		}
+
+		vMirror.totalFrames = soundDesc.totalFrames;
+		vMirror.sampleRate = soundDesc.sampleRate;
 
 		if (vMirror.initialSeekTarget > 0.0) {
 			auto targetFrame = static_cast<uint32_t>(vMirror.initialSeekTarget * vMirror.sampleRate);
