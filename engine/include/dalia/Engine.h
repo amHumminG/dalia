@@ -367,9 +367,9 @@ namespace dalia {
 		/// existing effect will be forcefully detached and replaced by the new effect. Doing so is generally not
 		/// recommended for the same reasons mentioned above.
 		///
-		/// @param[in] effect			The handle to the effect instance.
-		/// @param[in] busIdentifier	The unique string identifier of the target bus.
-		/// @param[in] effectSlot		The index in the effect rack of the bus (0 to 3).
+		/// @param[in] effect		The handle to the effect instance.
+		/// @param[in] bus			The unique string identifier of the target bus.
+		/// @param[in] effectSlot	The index in the effect rack of the bus (0 to 3).
 		///
 		/// @retval Result::Ok						The effect was successfully attached to the bus.
 		/// @retval Result::NotInitialized			The engine is not initialized.
@@ -377,7 +377,7 @@ namespace dalia {
 		/// @retval Result::ExpiredHandle			The effect handle points to an already destroyed effect.
 		/// @retval Result::BusNotFound				The target bus does not exist.
 		/// @retval Result::InvalidEffectSlot		The requested slot exceeds the rack index limit.
-		Result AttachEffect(EffectHandle effect, const char* busIdentifier, uint32_t effectSlot);
+		Result AttachEffect(EffectHandle effect, const char* bus, uint32_t effectSlot);
 
 		/// @brief Removes an effect from the mix graph, regardless of which bus it is routed to.
 		///
