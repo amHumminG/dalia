@@ -76,6 +76,46 @@ namespace dalia {
 		CheckForOutputDeviceChanges();
 	}
 
+	uint32_t DeviceController::GetOutputDeviceCount() {
+		if (m_audioBackend) m_cachedOutputDeviceList = m_audioBackend->Enumerate(); // Refresh cache
+		return static_cast<uint32_t>(m_cachedOutputDeviceList.size());
+	}
+
+	Result DeviceController::GetOutputDeviceInfo(uint32_t index, OutputDeviceInfo& info) {
+		if (index >= m_cachedOutputDeviceList.size()) return Result::InvalidArgs;
+
+		info = m_cachedOutputDeviceList[index];
+		return Result::Ok;
+	}
+
+	Result DeviceController::GetActiveOutputDeviceInfo(OutputDeviceInfo& info) {
+		if (!m_activeOutputDevice) return Result::StateCorrupted;
+
+		snprintf(info.name, MAX_STR_LEN_DEVICE, "%s", m_activeOutputDevice->GetName().c_str());
+		snprintf(info.identifier, MAX_STR_LEN_DEVICE, "%s", m_activeOutputDevice->GetIdentifier().c_str());
+		info.isDefault = m_activeOutputDeviceIsDefault;
+		return Result::Ok;
+	}
+
+	Result DeviceController::GetTargetOutputDeviceInfo(char* identifier, size_t maxLength) {
+		if (!identifier || maxLength == 0) return Result::InvalidArgs;
+
+		snprintf(identifier, maxLength, "%s", m_targetOutputDeviceId.c_str());
+		return Result::Ok;
+	}
+
+	Result DeviceController::SetOutputDevice(const char* identifier) {
+		const char* target = (identifier && identifier[0]) != '\0' ? identifier : "default"; // emtpy/nullptr is default
+		if (m_targetOutputDeviceId == target) return Result::Ok;
+
+		m_targetOutputDeviceId = target;
+		m_pendingOutputDeviceSwap = true;
+
+		DALIA_LOG_DEBUG(LOG_CTX_API, "Set output device (id: %s).", identifier);
+
+		return Result::Ok;
+	}
+
 	Result DeviceController::StartActiveOutputDevice(AsyncMixerSystem* mixerSystem) {
 		return m_activeOutputDevice->Start(mixerSystem);
 	}

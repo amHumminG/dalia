@@ -23,8 +23,6 @@ namespace dalia {
 		DeviceController() = default;
 		~DeviceController();
 
-		// TODO: Write doxygen comments
-
 		Result Initialize(
 			AsyncMessageBus* asyncMessageBus,
 			AsyncMixerSystem* mixerSystem,
@@ -35,6 +33,12 @@ namespace dalia {
 		void Shutdown();
 
 		void Update();
+
+		uint32_t GetOutputDeviceCount();
+		Result GetOutputDeviceInfo(uint32_t index, OutputDeviceInfo& info);
+		Result GetActiveOutputDeviceInfo(OutputDeviceInfo& info);
+		Result GetTargetOutputDeviceInfo(char* identifier, size_t maxLength);
+		Result SetOutputDevice(const char* identifier);
 
 		Result StartActiveOutputDevice(AsyncMixerSystem* mixerSystem);
 
