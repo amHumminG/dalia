@@ -121,6 +121,8 @@ set(ENGINE_FILES
     src/mixer/MixControllerListener.cpp
     src/mixer/MixControllerBus.cpp
     src/mixer/MixControllerEffect.cpp
+    src/mixer/Mixer.cpp
+    src/mixer/Mixer.h
 )
 
 if (WIN32)

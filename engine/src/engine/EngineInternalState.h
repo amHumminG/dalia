@@ -9,7 +9,7 @@
 #include "asset/AssetController.h"
 #include "io/IoController.h"
 #include "mixer/MixController.h"
-// #include "mixer/Mixer.h"
+#include "mixer/Mixer.h"
 
 #include "async/WakeableThread.h"
 #include "async/IntervalThread.h"
@@ -18,18 +18,6 @@
 #include <memory>
 
 namespace dalia {
-
-	class AudioBackend;
-	class OutputDevice;
-	class NullOutputDevice;
-	class MixerController;
-	class AsyncStreamSystem;
-	class AsyncLoadSystem;
-	class AsyncControlSystem;
-	class AssetRegistry;
-	class MixGraphCompiler;
-
-	struct StreamContext;
 
 	/// @brief The internal implementation state of the DALIA engine.
 	struct EngineInternalState {
@@ -41,7 +29,7 @@ namespace dalia {
 		std::unique_ptr<AssetController>	assetController;
 		std::unique_ptr<IoController>		ioController;
 		std::unique_ptr<MixController>		mixController;
-		// std::unique_ptr<Mixer>			mixer;
+		std::unique_ptr<Mixer>				mixer;
 
 		// Threads
 		std::unique_ptr<IntervalThread> streamThread;
@@ -54,7 +42,7 @@ namespace dalia {
 		std::unique_ptr<float[]> mixScratchBuffer;			// TODO: Move to mixer
 
 		// Systems
-		std::unique_ptr<MixerController>	asyncMixerSystem;	// TODO: Rework
+		std::unique_ptr<AsyncMixerSystem>	asyncMixerSystem;	// TODO: Rework
 
 		EngineInternalState(const EngineConfig& config);
 
