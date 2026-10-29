@@ -37,15 +37,14 @@ namespace dalia {
 		m_biquadPool = config.biquadPool;
 
 		// Allocate DSP Working Memory
+		m_periodSizeFrames = config.periodSizeFrames;
 		m_pcmRingBuffer = std::make_unique<SPSCRingBufferPCM<float>>(
 			m_periodSizeFrames * PCM_RING_BUFFER_FRAMES * CHANNELS_MAX);
 		auto busCount = static_cast<uint32_t>(m_busPool.capacity);
 		m_mixGraphCompiler = std::make_unique<MixGraphCompiler>(busCount);
 		m_mixOrder = std::make_unique<uint32_t[]>(busCount);
 		m_busBufferPool = std::make_unique<float[]>(busCount * m_maxSamplesPeriod);
-		std::memset(m_busBufferPool.get(), 0.0f, busCount * m_maxSamplesPeriod);
 		m_mixScratchBuffer = std::make_unique<float[]>(m_maxSamplesPeriod);
-		std::memset(m_mixScratchBuffer.get(), 0.0f, m_maxSamplesPeriod);
 
 		m_smoothingCoefficient = 1.0f - std::exp(-2.0f * PI * SMOOTHING_CUTOFF_HZ /
 			static_cast<float>(m_outSampleRate));

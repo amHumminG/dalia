@@ -51,7 +51,7 @@ namespace dalia {
 			uint32_t framesInSource = STREAM_BUFFER_FRAMES;
 			const uint32_t eofIndex = stream.eofIndex[voice.data.stream.frontBufferIndex];
 
-			if (!voice.params.isLooping && eofIndex != NO_EOF) framesInSource = eofIndex / stream.channels;
+			if (!voice.params.isLooping && eofIndex != NO_EOF) framesInSource = eofIndex;
 
 			if (cursorInt < framesInSource) {
 				block.framesAvailable = std::min(maxFramesNeeded, framesInSource - cursorInt);
