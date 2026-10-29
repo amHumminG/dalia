@@ -95,11 +95,12 @@ namespace dalia {
     constexpr float FILTER_RESONANCE_MAX = 10.0f;
 
 	// Static engine configs
-	static constexpr size_t MIXER_PROCESSING_BLOCK_FRAMES = 512; // TODO: Remove
-	static constexpr size_t PCM_RING_BUFFER_CAPACITY = 2 * MIXER_PROCESSING_BLOCK_FRAMES * CHANNELS_MAX; // TODO: Remove
+	static constexpr size_t PCM_RING_BUFFER_FRAMES = 2; // The number of audio periods the ring buffer can hold at once
 
 	static constexpr size_t STREAM_BUFFER_FRAMES = 16384;
 	static constexpr size_t STREAM_BUFFER_CAPACITY = STREAM_BUFFER_FRAMES * CHANNELS_MAX;
+
+	constexpr uint32_t MAX_EFFECTS_PER_BUS = 4;
 
     // --- Handles, Indices & Generations ---
     static constexpr uint64_t INVALID_RAW_ID = 0;
@@ -116,6 +117,7 @@ namespace dalia {
 	// Physics
 	static constexpr float SPEED_OF_SOUND = 343.3f;
 
+	static constexpr float DOPPLER_FACTOR_DEFAULT = 1.0f;
 	static constexpr float DOPPLER_FACTOR_MIN = 0.0f;
 	static constexpr float DOPPLER_FACTOR_MAX = 10.0f;
 

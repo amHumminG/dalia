@@ -18,6 +18,8 @@ namespace dalia {
 
 	struct Listener {
 		ListenerParams params;
+
+		void SetParams(const ListenerParams& lParams) { this->params = lParams; }
 	};
 
 	struct ListenerMirror {

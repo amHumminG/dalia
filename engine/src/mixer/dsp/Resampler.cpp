@@ -1,4 +1,4 @@
-#include "mixer/Resampler.h"
+#include "Resampler.h"
 
 namespace dalia {
 

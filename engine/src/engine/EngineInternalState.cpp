@@ -2,7 +2,7 @@
 
 #include "mixer/AsyncMixerSystem.h"
 #include "mixer/MixGraphCompiler.h"
-#include "mixer/StreamContext.h"
+#include "../mixer/nodes/StreamContext.h"
 
 #include <algorithm>
 

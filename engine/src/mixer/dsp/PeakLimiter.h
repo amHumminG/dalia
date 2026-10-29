@@ -13,7 +13,7 @@ struct PeakLimiter {
 	float m_releaseCoeff = 0.0f;
 	float m_threshold = 0.9f;
 
-	void Init(float sampleRate, float attackMs = 2.0f, float releaseMs = 50.0f);
+	void Initialize(float sampleRate, float attackMs = 2.0f, float releaseMs = 50.0f);
 
 	void ProcessBuffer(float* DALIA_RESTRICT buffer, uint32_t frameCount, uint32_t channels);
 };

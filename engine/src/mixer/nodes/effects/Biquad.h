@@ -1,9 +1,9 @@
 #pragma once
 
 #include "dalia/EffectControl.h"
-#include "mixer/effects/EffectMirror.h"
+#include "mixer/nodes/effects/EffectMirror.h"
 #include "core/Constants.h"
-#include "dsp/Slew.h"
+#include "mixer/dsp/Slew.h"
 
 #include <cstdint>
 

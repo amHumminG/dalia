@@ -8,9 +8,9 @@
 #include "core/Types.h"
 #include "core/StateSyncPool.h"
 
-#include "mixer/Voice.h"
-#include "mixer/Listener.h"
-#include "mixer/Bus.h"
+#include "nodes/Voice.h"
+#include "nodes/Listener.h"
+#include "nodes/Bus.h"
 #include "mixer/effects/Biquad.h"
 
 #include <unordered_map>

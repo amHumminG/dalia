@@ -10,6 +10,22 @@
 
 namespace dalia {
 
+	template<typename T, typename TParams>
+	struct MixerPoolView {
+		size_t capacity = 0;
+		std::span<T> nodes;
+		std::span<ParameterBridge<TParams>> bridges;
+
+		void SyncNodes() {
+			TParams params;
+			for (size_t i = 0; i < bridges.size(); i++) {
+				if (bridges[i].ConsumeUpdate(params)) {
+					nodes[i].SetParams(params);
+				}
+			}
+		}
+	};
+
 	template<typename TMirror, typename TParams>
 	concept StateSyncedMirror = requires(TMirror m) {
 		{ m.params } -> std::same_as<TParams&>;
@@ -98,6 +114,14 @@ namespace dalia {
 			return std::span<ParameterBridge<TParams>>(m_paramBridgePool.get(), m_capacity);
 		}
 
+		MixerPoolView<T, TParams> GetMixerView() {
+			return {
+				m_capacity,
+				std::span<T>(m_pool.get(), m_capacity),
+				std::span<ParameterBridge<TParams>>(m_paramBridgePool.get(), m_capacity)
+			};
+		}
+
 		/// @brief Syncs all dirty pool items across the main thread and the audio thread.
 		void Sync() {
 			for (uint32_t index = 0; index < m_capacity; index++) {
@@ -115,6 +139,7 @@ namespace dalia {
 		std::unique_ptr<ParameterBridge<TParams>[]> m_paramBridgePool; // The bridges that links the main thread and the audio thread.
 		std::unique_ptr<bool[]> m_dirtyFlags; // Flags that keeps track of which mirrors need to be re-synced.
 		FixedStack<uint32_t> m_freeList; // Keeps track of all free slots in the pool.
-
 	};
+
+
 }

@@ -3,7 +3,7 @@
 #include <cmath>
 #include <algorithm>
 
-void PeakLimiter::Init(float sampleRate, float attackMs, float releaseMs) {
+void PeakLimiter::Initialize(float sampleRate, float attackMs, float releaseMs) {
 	m_attackCoeff = std::exp(-1.0f / ((attackMs * 0.001f) * sampleRate));
 	m_releaseCoeff = std::exp(-1.0f / ((releaseMs * 0.001f) * sampleRate));
 }

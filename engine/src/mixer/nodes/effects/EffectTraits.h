@@ -1,6 +1,6 @@
 #pragma once
 #include "dalia/EffectControl.h"
-#include "mixer/effects/Biquad.h"
+#include "mixer/nodes/effects/Biquad.h"
 
 namespace dalia {
 	class MixController;
@@ -14,6 +14,6 @@ namespace dalia {
 		using DSPType = Biquad;
 		using MirrorType = BiquadMirror;
 
-		static auto& GetPool(MixController& controller); // TODO: Fix
+		static auto& GetPool(MixController& controller);
 	};
 }

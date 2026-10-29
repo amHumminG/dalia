@@ -23,8 +23,10 @@ namespace dalia {
 	struct EngineInternalState {
 		bool initialized = false;
 
+		// Cross-Thread Messaging
 		std::unique_ptr<AsyncMessageBus>	asyncMessageBus;
 
+		// Controllers
 		std::unique_ptr<DeviceController>	deviceController;
 		std::unique_ptr<AssetController>	assetController;
 		std::unique_ptr<IoController>		ioController;
@@ -32,17 +34,12 @@ namespace dalia {
 		std::unique_ptr<Mixer>				mixer;
 
 		// Threads
+		std::unique_ptr<WakeableThread> mixerThread;
 		std::unique_ptr<IntervalThread> streamThread;
 		std::unique_ptr<WakeableThread> loadThread;
 		std::unique_ptr<WakeableThread> controlThread;
 
-		// DSP Utility
-		std::unique_ptr<MixGraphCompiler> mixGraphCompiler;	// TODO: Move to mixer
-		std::unique_ptr<uint32_t[]> mixOrder;				// TODO: Move to mixer
-		std::unique_ptr<float[]> mixScratchBuffer;			// TODO: Move to mixer
 
-		// Systems
-		std::unique_ptr<AsyncMixerSystem>	asyncMixerSystem;	// TODO: Rework
 
 		EngineInternalState(const EngineConfig& config);
 

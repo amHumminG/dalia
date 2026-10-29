@@ -52,15 +52,11 @@ namespace dalia {
 
 		m_asyncMessageBus = asyncMessageBus;
 
-		m_asyncMessageBus->SubscribeToControlEvent(
-			AsyncControlEvent::Type::OutputDeviceSwapped,
-			[this](const AsyncControlEvent& ev){ FinalizeOutputDeviceSwap(ev); }
-		);
+		m_asyncMessageBus->SubscribeToControlEvent(AsyncControlEvent::Type::OutputDeviceSwapped,
+			[this](const AsyncControlEvent& ev){ FinalizeOutputDeviceSwap(ev); });
 
-		m_asyncMessageBus->SubscribeToControlCommand(
-			AsyncControlCommand::Type::SwapOutputDevice,
-			[this](const AsyncControlCommand& cmd) { ExecuteOutputDeviceSwap(cmd); }
-		);
+		m_asyncMessageBus->SubscribeToControlCommand(AsyncControlCommand::Type::SwapOutputDevice,
+			[this](const AsyncControlCommand& cmd) { ExecuteOutputDeviceSwap(cmd); });
 
 		m_mixerSystem = mixerSystem;
 

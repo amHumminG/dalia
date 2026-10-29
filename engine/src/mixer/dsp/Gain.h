@@ -1,0 +1,41 @@
+#pragma once
+
+#include "core/Constants.h"
+
+namespace dalia::dsp {
+
+	static void StepMatrixGains(
+	float (* DALIA_RESTRICT current)[CHANNELS_MAX],
+	const float (* DALIA_RESTRICT target)[CHANNELS_MAX],
+	uint32_t inChannels,
+	uint32_t outChannels,
+	float smoothingCoefficient) {
+		for (uint32_t inC = 0; inC < inChannels; inC++) {
+			for (uint32_t outC = 0; outC < outChannels; outC++) {
+				float diff = target[inC][outC] - current[inC][outC];
+
+				if (std::abs(diff) < EPSILON_GAIN) current[inC][outC] = target[inC][outC];
+				else current[inC][outC] += diff * smoothingCoefficient;
+			}
+		}
+	}
+
+	static float CalculateLinearFadeStep(float fadeTimeSeconds, uint32_t sampleRate) {
+		return 1.0f / (fadeTimeSeconds * static_cast<float>(sampleRate));
+	}
+
+	static void StepFadeGain(float& currentGain, float targetGain, float stepSize) {
+		if (currentGain == targetGain) return;
+
+		if (currentGain > targetGain) {
+			// Fading down
+			currentGain -= stepSize;
+			if (currentGain < targetGain) currentGain = targetGain;
+		}
+		else {
+			// Fading up
+			currentGain += stepSize;
+			if (currentGain > targetGain) currentGain = targetGain;
+		}
+	}
+}

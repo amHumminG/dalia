@@ -2,7 +2,7 @@
 
 #include "dalia/Result.h"
 #include "core/AsyncPool.h"
-#include "mixer/StreamContext.h"
+#include "../mixer/nodes/StreamContext.h"
 
 #include <cstdint>
 #include <span>

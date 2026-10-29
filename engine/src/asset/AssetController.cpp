@@ -7,7 +7,7 @@
 #include "asset/types/StreamSound.h"
 #include "async/messaging/AsyncMessageBus.h"
 #include "core/AsyncPool.h"
-#include "mixer/StreamContext.h"
+#include "../mixer/nodes/StreamContext.h"
 #include "io/codec/Codec.h"
 #include "core/Logger.h"
 

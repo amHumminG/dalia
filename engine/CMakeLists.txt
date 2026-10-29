@@ -73,26 +73,34 @@ set(ENGINE_FILES
     src/async/messaging/AsyncLoadMessaging.h
     src/async/messaging/AsyncControlMessaging.h
 
-    src/mixer/Voice.h
-    src/mixer/StreamContext.h
-    src/mixer/Bus.h
+
     src/mixer/AsyncMixerSystem.cpp
     src/mixer/AsyncMixerSystem.h
+    src/mixer/MixController.cpp
+    src/mixer/MixController.h
+    src/mixer/MixControllerPlayback.cpp
+    src/mixer/MixControllerListener.cpp
+    src/mixer/MixControllerBus.cpp
+    src/mixer/MixControllerEffect.cpp
+    src/mixer/Mixer.cpp
+    src/mixer/Mixer.h
     src/mixer/MixGraphCompiler.cpp
     src/mixer/MixGraphCompiler.h
-    src/mixer/effects/Biquad.h
-    src/mixer/effects/Biquad.cpp
-    src/mixer/Listener.h
     src/mixer/Speakers.h
-    src/mixer/Resampler.h
-    src/mixer/Resampler.cpp
-    src/mixer/PeakLimiter.h
-    src/mixer/PeakLimiter.cpp
-    src/mixer/effects/EffectMirror.h
-    src/mixer/effects/EffectTraits.h
-
-    src/dsp/Slew.h
-    src/dsp/Slew.cpp
+    src/mixer/nodes/Voice.h
+    src/mixer/nodes/Listener.h
+    src/mixer/nodes/StreamContext.h
+    src/mixer/nodes/Bus.h
+    src/mixer/nodes/effects/EffectMirror.h
+    src/mixer/nodes/effects/EffectTraits.h
+    src/mixer/nodes/effects/Biquad.h
+    src/mixer/nodes/effects/Biquad.cpp
+    src/mixer/dsp/Resampler.h
+    src/mixer/dsp/Resampler.cpp
+    src/mixer/dsp/PeakLimiter.h
+    src/mixer/dsp/PeakLimiter.cpp
+    src/mixer/dsp/Slew.h
+    src/mixer/dsp/Slew.cpp
 
     src/asset/types/ResidentSound.h
     src/asset/types/StreamSound.h
@@ -101,7 +109,6 @@ set(ENGINE_FILES
 
     src/backend/DeviceController.h
     src/backend/DeviceController.cpp
-    src/engine/EngineHelpers.h
     src/async/WakeableThread.cpp
     src/async/WakeableThread.h
     src/async/IntervalThread.cpp
@@ -112,17 +119,15 @@ set(ENGINE_FILES
     src/asset/AssetController.cpp
     src/asset/AssetController.h
     src/io/codec/Codec.cpp
-    src/mixer/MixController.cpp
-    src/mixer/MixController.h
     src/io/IoController.cpp
     src/io/IoController.h
     src/asset/SoundDescriptor.h
-    src/mixer/MixControllerPlayback.cpp
-    src/mixer/MixControllerListener.cpp
-    src/mixer/MixControllerBus.cpp
-    src/mixer/MixControllerEffect.cpp
-    src/mixer/Mixer.cpp
-    src/mixer/Mixer.h
+    src/mixer/dsp/Buffer.h
+    src/mixer/dsp/Gain.h
+    src/mixer/dsp/Spatial.h
+    src/mixer/MixerVoice.cpp
+    src/mixer/MixerBus.cpp
+    src/mixer/MixerEffect.cpp
 )
 
 if (WIN32)

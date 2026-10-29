@@ -2,11 +2,9 @@
 
 #include "core/Constants.h"
 #include "dalia/EffectControl.h"
-#include "dsp/Slew.h"
+#include "mixer/dsp/Slew.h"
 
 namespace dalia {
-
-    constexpr uint32_t MAX_EFFECTS_PER_BUS = 4;
 
     enum class EffectSlotState {
         None, // The slot is not used
@@ -49,6 +47,8 @@ namespace dalia {
 
         EffectSlot effectSlots[MAX_EFFECTS_PER_BUS];
 
+    	void SetParams(const BusParams& bParams) { this->params = bParams; }
+
         void Reset() {
         	isActive = false;
 
@@ -71,10 +71,10 @@ namespace dalia {
         BusParams params;
 
         EffectHandle effectSlots[MAX_EFFECTS_PER_BUS] = {
-            InvalidEffectHandle,
-            InvalidEffectHandle,
-            InvalidEffectHandle,
-            InvalidEffectHandle,
+            INVALID_EFFECT_HANDLE,
+            INVALID_EFFECT_HANDLE,
+            INVALID_EFFECT_HANDLE,
+            INVALID_EFFECT_HANDLE,
         };
 
         void Reset() {
@@ -84,7 +84,7 @@ namespace dalia {
             params = BusParams{};
 
             for (uint32_t i = 0; i < MAX_EFFECTS_PER_BUS; i++) {
-                effectSlots[i] = InvalidEffectHandle;
+                effectSlots[i] = INVALID_EFFECT_HANDLE;
             }
         }
     };

@@ -7,7 +7,7 @@
 #include "core/Constants.h"
 #include "core/ParameterBridge.h"
 #include "mixer/Speakers.h"
-#include "mixer/PeakLimiter.h"
+#include "dsp/PeakLimiter.h"
 #include "core/SPSCRingBufferPCM.h"
 
 #include <span>

@@ -35,6 +35,7 @@ namespace dalia {
     private:
         friend class Engine;
         friend class MixController;
+		friend class Mixer;
 
         static EffectHandle Create(uint32_t index, uint32_t generation, EffectType type) {
             EffectHandle handle;

@@ -4,7 +4,7 @@
 #include "dalia/SoundControl.h"
 #include "core/Constants.h"
 #include "core/Math.h"
-#include "mixer/Resampler.h"
+#include "../dsp/Resampler.h"
 
 #include <cstdint>
 
@@ -87,6 +87,8 @@ namespace dalia {
                 uint32_t frontBufferIndex;
             } stream;
         } data = {};
+
+    	void SetParams(const VoiceParams& vParams) { this->params = vParams; }
 
         // Use this when releasing a voice
         void Reset() {

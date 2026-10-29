@@ -1,7 +1,7 @@
 #pragma once
 #include "dalia/Result.h"
 #include "core/SPSCRingBuffer.h"
-#include "mixer/Voice.h"
+#include "../../mixer/nodes/Voice.h"
 #include "io/codec/Codec.h"
 
 #include <cstdint>
