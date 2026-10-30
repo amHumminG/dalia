@@ -1,4 +1,4 @@
-#include "mixer/PeakLimiter.h"
+#include "mixer/dsp/PeakLimiter.h"
 
 #include <cmath>
 #include <algorithm>

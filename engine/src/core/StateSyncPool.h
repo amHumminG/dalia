@@ -16,7 +16,7 @@ namespace dalia {
 		std::span<T> nodes;
 		std::span<ParameterBridge<TParams>> bridges;
 
-		void SyncNodes() {
+		void SyncParams() {
 			TParams params;
 			for (size_t i = 0; i < bridges.size(); i++) {
 				if (bridges[i].ConsumeUpdate(params)) {

@@ -257,14 +257,14 @@ namespace dalia {
 		/// called for an identifier that already exists, the engine will increment its reference count. If the bus
 		/// already exists, any new parentIdentifier provided in subsequent calls is ignored and a warning is logged.
 		///
-		/// @param[in] identifier		The unique string identifier of the bus.
-		/// @param[in] parentIdentifier	Optional. The unique string identifier of the parent bus (defaults to Master).
+		/// @param[in] bus			The unique string identifier of the bus.
+		/// @param[in] parentBus	Optional. The unique string identifier of the parent bus (defaults to Master).
 		///
 		/// @retval Result::Ok					The bus was successfully created or its reference count was incremented.
 		/// @retval Result::NotInitialized		The engine is not initialized.
 		/// @retval Result::BusNotFound			The parent bus does not exist.
 		/// @retval Result::BusPoolExhausted	The allocated bus capacity has been reached.
-		Result CreateBus(const char* identifier, const char* parentIdentifier = "Master");
+		Result CreateBus(const char* bus, const char* parentBus = "Master");
 
 		/// @brief Decrements the reference count of a bus and destroys it if the count reaches zero.
 		///
@@ -274,13 +274,13 @@ namespace dalia {
 		///
 		/// @note [Master Immunity] The Master bus is permanently allocated by the engine and cannot be destroyed.
 		///
-		/// @param[in] identifier The unique string identifier of the bus.
+		/// @param[in] bus The unique string identifier of the bus.
 		///
 		/// @retval Result::Ok				The bus was successfully destroyed or its reference count was decremented.
 		/// @retval Result::NotInitialized	The engine is not initialized.
 		/// @retval Result::BusNotFound		The bus does not exist or has already been destroyed.
 		/// @retval Result::Error			Attempted to destroy Master bus.
-		Result DestroyBus(const char* identifier);
+		Result DestroyBus(const char* bus);
 
 		/// @brief Modifies the routing topology by changing the output destination of an existing bus.
 		///
@@ -291,19 +291,19 @@ namespace dalia {
 		/// If an attempt is made to route a bus into itself or into one of its own descendants, this function
 		/// will return an error. Additionally, the Master bus cannot be re-routed.
 		///
-		/// @param[in] identifier		The unique string identifier of the bus.
-		/// @param[in] parentIdentifier	The unique string identifier of the new parent bus (must be an existing bus).
+		/// @param[in] bus			The unique string identifier of the bus.
+		/// @param[in] parentBus	The unique string identifier of the new parent bus (must be an existing bus).
 		///
 		/// @retval Result::Ok				The bus was successfully re-routed.
 		/// @retval Result::NotInitialized	The engine is not initialized.
 		/// @retval Result::InvalidRouting	Attempted a route that would result in a cyclic bus hierarchy, or
 		///									attempted to route Master.
 		/// @retval Result::BusNotFound		Either the bus or the parent bus does not exist.
-		Result RouteBus(const char* identifier, const char* parentIdentifier);
+		Result RouteBus(const char* bus, const char* parentBus);
 
 		/// @brief Sets the mixing volume of a bus in decibels (dB).
 		///
-		/// @param[in] identifier	The unique string identifier of the bus.
+		/// @param[in] bus			The unique string identifier of the bus.
 		/// @param[in] volumeDb		The new volume in decibels (dB). A value of 0.0 represents unity gain. The volume
 		///							is automatically clamped to the engine's safe operating range
 		///							(between -60.0dB and +12.0dB).
@@ -311,7 +311,7 @@ namespace dalia {
 		/// @retval Result::Ok				The mixing volume of the bus was successfully updated.
 		/// @retval Result::NotInitialized	The engine is not initialized.
 		/// @retval Result::BusNotFound		The bus does not exist.
-		Result SetBusVolumeDb(const char* identifier, float volumeDb);
+		Result SetBusVolumeDb(const char* bus, float volumeDb);
 
 #pragma endregion BUS_MANAGEMENT
 

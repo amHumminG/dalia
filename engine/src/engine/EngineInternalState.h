@@ -34,14 +34,16 @@ namespace dalia {
 		std::unique_ptr<Mixer>				mixer;
 
 		// Threads
-		std::unique_ptr<WakeableThread> mixerThread;
 		std::unique_ptr<IntervalThread> streamThread;
 		std::unique_ptr<WakeableThread> loadThread;
 		std::unique_ptr<WakeableThread> controlThread;
-
-
+		std::unique_ptr<WakeableThread> mixerThread;
 
 		EngineInternalState(const EngineConfig& config);
+		~EngineInternalState();
+
+		Result Initialize(const EngineConfig& config);
+		void Shutdown();
 
 		/// @brief Engine helper to check if internal state is initialized.
 		/// @param state The engine internal state.

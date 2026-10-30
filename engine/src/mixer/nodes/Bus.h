@@ -3,31 +3,12 @@
 #include "core/Constants.h"
 #include "dalia/EffectControl.h"
 #include "mixer/dsp/Slew.h"
+#include "mixer/nodes/EffectChain.h"
 
 namespace dalia {
 
-    enum class EffectSlotState {
-        None, // The slot is not used
-        FadingIn,
-        Active,
-        FadingOut
-    };
-
-    struct EffectSlot {
-        EffectHandle handle = INVALID_EFFECT_HANDLE;
-        EffectSlotState state = EffectSlotState::None;
-        float currentMix = 0.0f;
-
-        void Reset() {
-            handle = INVALID_EFFECT_HANDLE;
-            state = EffectSlotState::None;
-            currentMix = 0.0f;
-        }
-    };
-
 	struct BusParams {
 		float gain = GAIN_DEFAULT;
-
 	};
 
     struct Bus {
@@ -43,9 +24,8 @@ namespace dalia {
         float targetGain = GAIN_DEFAULT;
         float currentGain = GAIN_DEFAULT;
 
+    	EffectChain effectChain;
     	BusParams params;
-
-        EffectSlot effectSlots[MAX_EFFECTS_PER_BUS];
 
     	void SetParams(const BusParams& bParams) { this->params = bParams; }
 
@@ -58,9 +38,8 @@ namespace dalia {
         	currentFadeGain = GAIN_DEFAULT;
         	targetFadeGain = GAIN_DEFAULT;
 
-            for (uint32_t i = 0; i < MAX_EFFECTS_PER_BUS; i++) {
-                effectSlots[i].Reset();
-            }
+    		effectChain.Reset();
+    		params = BusParams{};
         }
     };
 

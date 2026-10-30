@@ -22,7 +22,7 @@ namespace dalia {
 		m_buffer = std::make_unique<MPSCRingBuffer<LogEntry>>(capacity);
 	}
 
-	void Logger::Deinit() {
+	void Logger::Shutdown() {
 		ProcessLogs();
 		m_buffer.reset();
 	}

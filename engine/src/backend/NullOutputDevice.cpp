@@ -2,7 +2,7 @@
 
 #include "backend/PlatformThread.h"
 #include "backend/HighResTimer.h"
-#include "mixer/AsyncMixerSystem.h"
+#include "mixer/Mixer.h"
 
 namespace dalia {
 
@@ -13,12 +13,12 @@ namespace dalia {
 		Stop();
 	}
 
-	Result NullOutputDevice::Start(AsyncMixerSystem* mixerSystem) {
+	Result NullOutputDevice::Start(Mixer* mixer) {
 		if (m_isRunning.load(std::memory_order_relaxed)) return Result::Ok;
 
-		m_mixerSystem = mixerSystem;
-		m_mixerSystem->SetOutputFormat(m_channels, m_speakerLayout);
-		m_mixerSystem->Wake();
+		m_mixer = mixer;
+		m_mixer->SetOutputFormat(m_channels, m_speakerLayout);
+		m_mixer->Wake();
 
 		m_isRunning.store(true, std::memory_order_release);
 		m_thread = std::thread(&NullOutputDevice::ThreadMain, this);
@@ -30,7 +30,7 @@ namespace dalia {
 		if (!m_isRunning.exchange(false, std::memory_order_release)) return;
 
 		if (m_thread.joinable()) m_thread.join();
-		m_mixerSystem = nullptr;
+		m_mixer = nullptr;
 	}
 
 	bool NullOutputDevice::HasFailed() const {
@@ -77,9 +77,9 @@ namespace dalia {
 
 			if (!m_isRunning.load(std::memory_order_relaxed)) break;
 
-			if (m_mixerSystem) {
-				m_mixerSystem->DiscardAudio(m_periodSizeFrames);
-				m_mixerSystem->Wake();
+			if (m_mixer) {
+				m_mixer->DiscardAudio(m_periodSizeFrames);
+				m_mixer->Wake();
 			}
 		}
 	}

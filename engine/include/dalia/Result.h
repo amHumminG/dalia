@@ -82,10 +82,10 @@ namespace dalia {
 			case Result::BusCapacityReached: return "Bus pool capacity reached";
 			case Result::EffectCapacityReached: return "Effect pool capacity reached";
 
-			case Result::MixerCommandQueueFull: return "Mixer command queue full";
-			case Result::MixerEventQueueFull: return "Mixer event queue full";
-			case Result::IoStreamRequestQueueFull: return "I/O stream request queue full";
-			case Result::IoLoadRequestQueueFull: return "I/O load request queue full";
+			case Result::MixerQueueCapacityReached: return "Mixer queue capacity reached";
+			case Result::StreamQueueCapacityReached: return "Stream queue capacity reached";
+			case Result::LoadQueueCapacityReached: return "Stream queue capacity reached";
+			case Result::ControlQueueCapacityReached: return "Load queue capacity reached";
 
 			case Result::PlaybackCorrupted: return "Playback corrupted";
 

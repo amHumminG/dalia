@@ -14,7 +14,7 @@ namespace dalia {
 	class Logger {
 	public:
 		static void Init(LogLevel level, size_t capacity = 256);
-		static void Deinit();
+		static void Shutdown();
 		static void SetSink(LogCallback sink);
 		static void Log(LogLevel level, const char* context, const char* format, ...);
 		static void ProcessLogs();

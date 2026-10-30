@@ -91,7 +91,6 @@ namespace dalia {
 		void SubscribeToLoadEvent(AsyncLoadEvent::Type type, MessageCallback<AsyncLoadEvent> cb);
 		void SubscribeToControlEvent(AsyncControlEvent::Type type, MessageCallback<AsyncControlEvent> cb);
 
-		// TODO: Add unsubscribe methods
 		void UnsubscribeFromMixerEvent(AsyncMixerEvent::Type type);
 		void UnsubscribeFromLoadEvent(AsyncLoadEvent::Type type);
 		void UnsubscribeFromControlEvent(AsyncControlEvent::Type type);

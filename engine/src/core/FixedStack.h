@@ -33,8 +33,8 @@ namespace dalia {
         size_t Capacity() const { return m_capacity; }
 
     private:
+    	size_t m_capacity = 0;
+    	size_t m_size = 0;
         std::unique_ptr<T[]> m_buffer;
-        size_t m_capacity = 0;
-        size_t m_size = 0;
     };
 }

@@ -53,8 +53,7 @@ namespace dalia {
     	AudioFormatInfo formatInfo{};
         Result result = Result::Ok;
 
-        static AsyncLoadEvent SoundLoaded(uint32_t reqId, uint64_t rawId, const char* filepath,
-        	const AudioFormatInfo& info) {
+        static AsyncLoadEvent SoundLoaded(uint32_t reqId, uint64_t rawId, const AudioFormatInfo& info) {
             AsyncLoadEvent ev{};
             ev.type = Type::SoundLoaded;
             ev.requestId = reqId;

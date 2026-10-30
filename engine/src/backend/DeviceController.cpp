@@ -10,7 +10,7 @@ namespace dalia {
 		Shutdown();
 	}
 
-	Result DeviceController::Initialize(AsyncMessageBus* asyncMessageBus, AsyncMixerSystem* mixerSystem,
+	Result DeviceController::Initialize(AsyncMessageBus* asyncMessageBus, Mixer* mixer,
 		uint32_t outSampleRate, uint32_t periodSizeInFrames, const std::string& outDeviceId) {
 
 		// Setup OS specific device manager
@@ -58,7 +58,7 @@ namespace dalia {
 		m_asyncMessageBus->SubscribeToControlCommand(AsyncControlCommand::Type::SwapOutputDevice,
 			[this](const AsyncControlCommand& cmd) { ExecuteOutputDeviceSwap(cmd); });
 
-		m_mixerSystem = mixerSystem;
+		m_mixer = mixer;
 
 		return Result::Ok;
 	}
@@ -112,8 +112,12 @@ namespace dalia {
 		return Result::Ok;
 	}
 
-	Result DeviceController::StartActiveOutputDevice(AsyncMixerSystem* mixerSystem) {
-		return m_activeOutputDevice->Start(mixerSystem);
+	Result DeviceController::StartActiveOutputDevice(Mixer* mixer) {
+		return m_activeOutputDevice->Start(mixer);
+	}
+
+	void DeviceController::StopActiveOutputDevice() {
+		m_activeOutputDevice->Stop();
 	}
 
 	SpeakerLayout DeviceController::GetActiveOutputSpeakerLayout() const {
@@ -245,7 +249,7 @@ namespace dalia {
 			// Delay deletion until null device has been started
 		}
 
-		m_nullOutputDevice->Start(m_mixerSystem); // Start the null output device while new device is setting up
+		m_nullOutputDevice->Start(m_mixer); // Start the null output device while new device is setting up
 		if (cmd.data.swapOutputDevice.oldDevice) delete cmd.data.swapOutputDevice.oldDevice; // Delete old device
 
 		// Attempt to create requested output device

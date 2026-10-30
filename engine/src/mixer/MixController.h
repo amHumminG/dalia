@@ -11,7 +11,7 @@
 #include "nodes/Voice.h"
 #include "nodes/Listener.h"
 #include "nodes/Bus.h"
-#include "mixer/effects/Biquad.h"
+#include "mixer/nodes/effects/Biquad.h"
 
 #include <unordered_map>
 #include <vector>

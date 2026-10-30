@@ -73,9 +73,6 @@ set(ENGINE_FILES
     src/async/messaging/AsyncLoadMessaging.h
     src/async/messaging/AsyncControlMessaging.h
 
-
-    src/mixer/AsyncMixerSystem.cpp
-    src/mixer/AsyncMixerSystem.h
     src/mixer/MixController.cpp
     src/mixer/MixController.h
     src/mixer/MixControllerPlayback.cpp
@@ -91,7 +88,7 @@ set(ENGINE_FILES
     src/mixer/nodes/Listener.h
     src/mixer/nodes/StreamContext.h
     src/mixer/nodes/Bus.h
-    src/mixer/nodes/effects/EffectMirror.h
+    src/mixer/nodes/Effect.h
     src/mixer/nodes/effects/EffectTraits.h
     src/mixer/nodes/effects/Biquad.h
     src/mixer/nodes/effects/Biquad.cpp
@@ -124,10 +121,20 @@ set(ENGINE_FILES
     src/asset/SoundDescriptor.h
     src/mixer/dsp/Buffer.h
     src/mixer/dsp/Gain.h
+    src/mixer/dsp/Gain.cpp
     src/mixer/dsp/Spatial.h
-    src/mixer/MixerVoice.cpp
-    src/mixer/MixerBus.cpp
-    src/mixer/MixerEffect.cpp
+    src/mixer/dsp/Spatial.cpp
+    src/mixer/EffectProcessor.cpp
+    src/mixer/EffectProcessor.h
+    src/mixer/AcousticProcessor.cpp
+    src/mixer/AcousticProcessor.h
+    src/mixer/nodes/EffectChain.h
+    src/mixer/BusProcessor.cpp
+    src/mixer/BusProcessor.h
+    src/mixer/VoiceProcessor.cpp
+    src/mixer/VoiceProcessor.h
+    src/mixer/dsp/Buffer.cpp
+
 )
 
 if (WIN32)

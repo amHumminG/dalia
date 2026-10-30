@@ -6,7 +6,7 @@ namespace dalia {
 
 	Result Engine::SetListenerActive(uint32_t listenerIndex, bool active) {
 		if (!EngineInternalState::IsInitialized(m_state)) return Result::NotInitialized;
-		m_state->mixController->SetListenerActive(listenerIndex, active);
+		return m_state->mixController->SetListenerActive(listenerIndex, active);
 	}
 
 	Result Engine::SetListenerPosition(uint32_t listenerIndex, const Vec3& position) {

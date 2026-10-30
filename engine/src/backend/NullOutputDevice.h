@@ -11,29 +11,29 @@
 
 namespace dalia {
 
-	class AsyncMixerSystem;
+	class Mixer;
 
 	class NullOutputDevice : public OutputDevice {
 	public:
 		NullOutputDevice(uint32_t sampleRate, uint32_t periodSizeFrames);
 		~NullOutputDevice() override;
 
-		Result Start(AsyncMixerSystem* mixerSystem) override;
+		Result Start(Mixer* mixer) override;
 		void Stop() override;
 
 		bool HasFailed() const override;
 
 		void SetOutputFormat(uint32_t channels, SpeakerLayout layout);
 
-		const std::string& GetIdentifier() const override;
-		const std::string& GetName() const override;
-		uint32_t GetChannels() const override;
-		SpeakerLayout GetSpeakerLayout() const override;
+		[[nodiscard]] const std::string& GetIdentifier() const override;
+		[[nodiscard]] const std::string& GetName() const override;
+		[[nodiscard]] uint32_t GetChannels() const override;
+		[[nodiscard]] SpeakerLayout GetSpeakerLayout() const override;
 
 	private:
 		void ThreadMain();
 
-		AsyncMixerSystem* m_mixerSystem = nullptr;
+		Mixer* m_mixer = nullptr;
 
 		std::thread m_thread;
 		std::atomic<bool> m_isRunning{false};

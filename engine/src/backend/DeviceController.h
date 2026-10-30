@@ -5,7 +5,6 @@
 #include "backend/OutputDevice.h"
 #include "backend/NullOutputDevice.h"
 #include "core/Logger.h"
-#include "core/FixedQueue.h"
 
 #include <memory>
 
@@ -16,7 +15,7 @@ namespace dalia {
 	struct AsyncControlCommand;
 	struct AsyncControlEvent;
 	class AsyncMessageBus;
-	class AsyncMixerSystem;
+	class Mixer;
 
 	class DeviceController {
 	public:
@@ -25,7 +24,7 @@ namespace dalia {
 
 		Result Initialize(
 			AsyncMessageBus* asyncMessageBus,
-			AsyncMixerSystem* mixerSystem,
+			Mixer* mixer,
 			uint32_t outSampleRate,
 			uint32_t periodSizeInFrames,
 			const std::string& outDeviceId = "default"
@@ -40,7 +39,8 @@ namespace dalia {
 		Result GetTargetOutputDeviceInfo(char* identifier, size_t maxLength);
 		Result SetOutputDevice(const char* identifier);
 
-		Result StartActiveOutputDevice(AsyncMixerSystem* mixerSystem);
+		Result StartActiveOutputDevice(Mixer* mixer);
+		void StopActiveOutputDevice();
 
 		[[nodiscard]] SpeakerLayout GetActiveOutputSpeakerLayout() const;
 		[[nodiscard]] uint32_t GetActiveOutputChannels() const;
@@ -59,7 +59,7 @@ namespace dalia {
 		void ExecuteOutputDeviceSwap(const AsyncControlCommand& cmd); // Runs on async control thread
 
 		AsyncMessageBus* m_asyncMessageBus = nullptr;
-		AsyncMixerSystem* m_mixerSystem = nullptr;
+		Mixer* m_mixer = nullptr;
 
 		std::unique_ptr<AudioBackend> m_audioBackend;
 		std::unique_ptr<OutputDevice> m_outputDevice;

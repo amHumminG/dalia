@@ -1,6 +1,6 @@
 #include "backend/windows/WasapiOutputDevice.h"
 
-#include "mixer/AsyncMixerSystem.h"
+#include "mixer/Mixer.h"
 #include "core/Logger.h"
 
 #include <cstring>
@@ -183,20 +183,12 @@ namespace dalia {
 		return Result::Ok;
 	}
 
-	Result WasapiOutputDevice::Start(AsyncMixerSystem* system) {
+	Result WasapiOutputDevice::Start(Mixer* mixer) {
 		if (m_isRunning.load(std::memory_order_relaxed)) return Result::Ok;
 
-		m_mixerSystem = system;
-		m_mixerSystem->SetOutputFormat(m_channels, m_speakerLayout);
-		m_mixerSystem->Wake();
-
-		// Pre-fill buffer with silence before starting the device thread. This should ensure that the first wakeup
-		// only asks for 1 period instead of the entire buffer capacity.
-		// BYTE* pData = nullptr;
-		// HRESULT hr = m_renderClient->GetBuffer(m_bufferCapacityInFrames, &pData);
-		// if (SUCCEEDED(hr)) {
-		// 	m_renderClient->ReleaseBuffer(m_bufferCapacityInFrames, AUDCLNT_BUFFERFLAGS_SILENT);
-		// }
+		m_mixer = mixer;
+		m_mixer->SetOutputFormat(m_channels, m_speakerLayout);
+		m_mixer->Wake();
 
 		HRESULT hr = m_audioClient->Start();
 		if (FAILED(hr)) return Result::ClientFailed;
@@ -214,7 +206,7 @@ namespace dalia {
 		if (m_thread.joinable()) m_thread.join();
 
 		if (m_audioClient) m_audioClient->Stop();
-		m_mixerSystem = nullptr;
+		m_mixer = nullptr;
 	}
 
 	bool WasapiOutputDevice::HasFailed() const {
@@ -288,10 +280,10 @@ namespace dalia {
 				}
 				if (FAILED(hr)) continue;
 
-				if (m_mixerSystem) {
+				if (m_mixer) {
 					// Pull frames from mixer system ring buffer
 					auto* outBuffer = reinterpret_cast<float*>(pData);
-					size_t framesRead = m_mixerSystem->ReadDiscardAudio(outBuffer, framesToWrite);
+					size_t framesRead = m_mixer->ReadDiscardAudio(outBuffer, framesToWrite);
 
 					// Underrun protection
 					if (framesRead < framesToWrite) {
@@ -315,7 +307,7 @@ namespace dalia {
 						m_mixerIsPriming = false;
 					}
 
-					m_mixerSystem->Wake();
+					m_mixer->Wake();
 				}
 				else {
 					std::memset(pData, 0, framesToWrite * m_channels * sizeof(float));

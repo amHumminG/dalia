@@ -3,7 +3,7 @@
 #include "mixer/MixController.h"
 #include "core/Logger.h"
 #include "async/messaging/AsyncMixerMessaging.h"
-#include "mixer/effects/EffectTraits.h"
+#include "mixer/nodes/effects/EffectTraits.h"
 #include "async/messaging/AsyncMessageBus.h"
 
 namespace dalia {

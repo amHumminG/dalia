@@ -8,13 +8,13 @@
 
 namespace dalia {
 
-	class AsyncMixerSystem;
+	class Mixer;
 
 	class OutputDevice {
 	public:
 		virtual ~OutputDevice() = default;
 
-		virtual Result Start(AsyncMixerSystem* system) = 0;
+		virtual Result Start(Mixer* mixer) = 0;
 		virtual void Stop() = 0;
 
 		[[nodiscard]] virtual bool HasFailed() const = 0;

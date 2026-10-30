@@ -105,7 +105,7 @@ namespace dalia {
 			return;
 		}
 
-		m_asyncMessageBus->PushLoadEvent(AsyncLoadEvent::SoundLoaded(cmd.requestId, cmd.assetRawId, cmd.filepath, info));
+		m_asyncMessageBus->PushLoadEvent(AsyncLoadEvent::SoundLoaded(cmd.requestId, cmd.assetRawId, info));
 		DALIA_LOG_DEBUG(LOG_CTX_ASYNC, "Loaded sound from file: %s.", cmd.filepath);
 	}
 

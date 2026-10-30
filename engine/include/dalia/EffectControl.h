@@ -36,6 +36,8 @@ namespace dalia {
         friend class Engine;
         friend class MixController;
 		friend class Mixer;
+		friend class BusProcessor;
+		friend class EffectProcessor;
 
         static EffectHandle Create(uint32_t index, uint32_t generation, EffectType type) {
             EffectHandle handle;
@@ -77,5 +79,4 @@ namespace dalia {
 	    /// @brief Clamps internal parameters to safe ranges.
 	    void Sanitize();
     };
-
 }

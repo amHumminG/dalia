@@ -1,4 +1,4 @@
-#include "mixer/effects/Biquad.h"
+#include "mixer/nodes/effects/Biquad.h"
 
 #include "core/Constants.h"
 
