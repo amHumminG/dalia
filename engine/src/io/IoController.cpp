@@ -36,6 +36,8 @@ namespace dalia {
 	}
 
 	void IoController::Shutdown() {
+		if (!m_asyncMessageBus) return;
+
 		// Unsubscribe from load commands (Load Thread)
 		m_asyncMessageBus->UnsubscribeFromLoadCommand(AsyncLoadCommand::Type::LoadSound);
 

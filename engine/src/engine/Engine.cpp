@@ -13,7 +13,7 @@ namespace dalia {
 			return Result::AlreadyInitialized;
 		}
 
-		Logger::Init(config.logLevel, 256);
+		Logger::Initialize(config.logLevel, 256);
 		if (config.logCallback != nullptr) Logger::SetSink(config.logCallback);
 
 		// --- INTERNAL STATE SETUP ---

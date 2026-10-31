@@ -663,7 +663,8 @@ void Sandbox::DrawAssetBrowser() {
 			}
 			else {
 				auto sound = std::make_unique<SoundAsset>(&m_engine, type, path);
-				if (sound->GetResult() == dalia::Result::Ok) {
+				dalia::Result res = sound->GetResult();
+				if (res == dalia::Result::Ok) {
 					m_selectedObject = sound.get();
 					m_selectionType = SelectionType::Sound;
 					m_sounds.push_back(std::move(sound));

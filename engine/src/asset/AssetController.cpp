@@ -85,7 +85,7 @@ namespace dalia {
 
 		// Publish load command
 		AsyncLoadCommand cmd = AsyncLoadCommand::LoadSound(reqId, sound.GetRawId(), filepath, targetPcmBuffer);
-		if (m_asyncMessageBus->PushLoadCommand(cmd)) {
+		if (!m_asyncMessageBus->PushLoadCommand(cmd)) {
 			// Publish failed -> Rollback
 			if (callback) m_loadCallbacks.erase(reqId);
 			m_assetRegistry.UnregisterLoadedSound(pathId);

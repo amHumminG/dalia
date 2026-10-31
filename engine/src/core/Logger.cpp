@@ -17,8 +17,8 @@ namespace dalia {
 	static std::unique_ptr<MPSCRingBuffer<LogEntry>> m_buffer = nullptr;
 	static LogCallback m_sink = nullptr;
 
-	void Logger::Init(LogLevel level, size_t capacity) {
-		m_logLevel = static_cast<LogLevel>(level);
+	void Logger::Initialize(LogLevel level, size_t capacity) {
+		m_logLevel = level;
 		m_buffer = std::make_unique<MPSCRingBuffer<LogEntry>>(capacity);
 	}
 

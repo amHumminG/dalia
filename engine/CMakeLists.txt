@@ -121,9 +121,7 @@ set(ENGINE_FILES
     src/asset/SoundDescriptor.h
     src/mixer/dsp/Buffer.h
     src/mixer/dsp/Gain.h
-    src/mixer/dsp/Gain.cpp
     src/mixer/dsp/Spatial.h
-    src/mixer/dsp/Spatial.cpp
     src/mixer/EffectProcessor.cpp
     src/mixer/EffectProcessor.h
     src/mixer/AcousticProcessor.cpp
@@ -133,8 +131,6 @@ set(ENGINE_FILES
     src/mixer/BusProcessor.h
     src/mixer/VoiceProcessor.cpp
     src/mixer/VoiceProcessor.h
-    src/mixer/dsp/Buffer.cpp
-
 )
 
 if (WIN32)

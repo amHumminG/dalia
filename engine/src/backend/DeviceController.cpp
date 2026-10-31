@@ -270,7 +270,7 @@ namespace dalia {
 
 		if (newDevice) {
 			m_nullOutputDevice->Stop();
-			newDevice->Start(m_mixerSystem); // Start new output device (reconfigures the mixer internally)
+			newDevice->Start(m_mixer); // Start new output device (reconfigures the mixer internally)
 		}
 		// If new device failed, we leave null device running
 

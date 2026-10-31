@@ -1,8 +1,5 @@
 #include "dalia/Engine.h"
 #include "engine/EngineInternalState.h"
-#include "core/Logger.h"
-
-#include <algorithm>
 
 namespace dalia {
 

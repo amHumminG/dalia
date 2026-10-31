@@ -39,7 +39,7 @@ protected:
 	dalia::Engine* m_engine = nullptr;
 	dalia::Result m_result = dalia::Result::Ok;
 
-	dalia::EffectHandle m_handle = dalia::InvalidEffectHandle;
+	dalia::EffectHandle m_handle = dalia::INVALID_EFFECT_HANDLE;
 
 	std::string m_name = "New Effect";
 	bool m_isAttached = false;
