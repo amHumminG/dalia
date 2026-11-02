@@ -1,29 +1,31 @@
 # Architecture
 
-**Attention:** This document is slightly outdated but should be revised shortly.
-
 ## Threading Model
-DALIA splits its processing across four threads in total (one of them being the thread that the API is 
+DALIA splits its processing across five threads in total (one of them being the thread that the API is 
 being called from). The engine delegates its workload to three internal subsystems. To do this efficiently without 
-locking any of the priority threads (the API thread and the audio thread), DALIA makes use of lock-free queues 
+locking any of the priority threads (the main thread and the mixer thread), DALIA makes use of lock-free queues 
 for most of its inter-thread communication.
 
 ### Thread Boundary Diagram
-![DALIA Thread Boundary Diagram](assets/diagrams/dalia_thread_bondary_diagram.svg)
+![DALIA Thread Communication Diagram](assets/diagrams/dalia_thread_communication_diagram.svg)
 
-The main **API Thread** is where `Engine::Update()` is called. It acts purely as a command dispatcher. When a
+The **Main Thread** is where `Engine::Update()` is called. It acts purely as a command dispatcher. When a
 call to the engine is made, it is packaged into a command struct and pushed into a lock-free queue. When 
 `Engine::Update()` is called, all commands accumulated since the last update call are dispatched to the other
 threads for processing.
 
-The **Audio Thread** (`RtSystem`) is a real-time, high-priority thread driven by the OS. This thread pops and processes 
-commands from the command queue and renders the audio frame.
+The **Mixer Thread** is a real-time, high-priority thread driven by the OS. This thread pops and processes 
+commands from the command queue and renders audio frames. It uses a semaphore to wake the thread when an audio frame 
+has been consumed by the output device.
 
-The **IO Streaming Thread** (`IoStreamSystem`) is a background worker thread that upon request, fills stream buffers 
-with PCM data.
+The **Stream Thread** is a high-priority background worker thread that upon request, fills stream buffers 
+with PCM data. This thread wakes up in short intervals.
 
-The **IO Loading Thread** (`IoLoadSystem`) is a background worker thread that upon request, opens and reads file 
-handles and file data into memory.
+The **Load Thread** is a normal-priority background worker thread that upon request, opens and reads file 
+handles and file data into memory. It uses a semaphore to wake the thread upon receiving a task.
+
+The **Control Thread** is normal-priority a background worker thread that upon request, handles all other tasks that can't run on the
+main thread (e.g. device initialization). It uses a semaphore to wake the thread upon receiving a task.
 
 ## Engine Structure
 
