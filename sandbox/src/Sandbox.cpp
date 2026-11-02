@@ -447,7 +447,10 @@ void Sandbox::DrawInspector() {
 
 		ImGui::Separator();
 		ImGui::PushStyleColor(ImGuiCol_Button, {0.8f, 0.2f, 0.2f, 1.0f});
-		if (ImGui::Button("Delete Playback Instance", ImVec2(-1, 30))) requestDelete = true;
+		if (ImGui::Button("Delete Playback Instance", ImVec2(-1, 30))) {
+			m_engine.StopPlayback(playback->GetHandle());
+			requestDelete = true;
+		}
 		ImGui::PopStyleColor();
 	}
 	else if (m_selectionType == SelectionType::Sound) {
@@ -599,7 +602,7 @@ void Sandbox::DrawInspector() {
 	if (requestDelete) {
 		if (m_selectionType == SelectionType::Playback) {
 			std::erase_if(m_playbackInstances, [this](const std::unique_ptr<PlaybackInstance>& p) {
-				return p.get() == m_selectedObject;
+				return p.get() == m_selectedObject && p->GetState() == PlaybackState::Stopped;
 			});
 		}
 		else if (m_selectionType == SelectionType::Sound) {
