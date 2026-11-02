@@ -64,7 +64,7 @@ namespace dalia {
 		stream.state.store(StreamState::Preparing, std::memory_order_release);
 
 		AsyncStreamCommand cmd = AsyncStreamCommand::PrepareStream(streamIndex, streamGen, filepath);
-		if (m_asyncMessageBus->PushStreamCommand(cmd)) {
+		if (!m_asyncMessageBus->PushStreamCommand(cmd)) {
 			// Push failed -> Rollback
 			stream.state.store(StreamState::Free, std::memory_order_release);
 			m_streams.Free(streamIndex);

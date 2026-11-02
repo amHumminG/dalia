@@ -118,6 +118,7 @@ void Sandbox::ApplyTheme() {
     colors[ImGuiCol_SliderGrabActive]     = ImVec4(0.95f, 0.95f, 0.95f, 1.00f);
 
     // Headers & Tabs
+
     colors[ImGuiCol_Header]               = ImVec4(0.20f, 0.20f, 0.20f, 1.00f);
     colors[ImGuiCol_HeaderHovered]        = ImVec4(0.30f, 0.30f, 0.30f, 1.00f);
     colors[ImGuiCol_HeaderActive]         = ImVec4(0.45f, 0.45f, 0.45f, 1.00f);

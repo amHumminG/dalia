@@ -44,24 +44,25 @@ namespace dalia {
 
     	if (sound.GetType() == SoundType::Resident) {
 			ResidentSound* rs = m_residentSoundPool.Get(sound.GetIndex(), sound.GetGeneration());
-    		soundDesc.soundType = SoundType::Resident;
-    		soundDesc.loadState = rs->state;
-    		soundDesc.channels = rs->channels;
-    		soundDesc.sampleRate = rs->sampleRate;
-    		soundDesc.totalFrames = rs->totalFrames;
-    		soundDesc.lengthInSeconds = rs->lengthInSeconds;
+    		soundDesc.soundType			= SoundType::Resident;
+    		soundDesc.loadState			= rs->state;
+    		soundDesc.channels			= rs->channels;
+    		soundDesc.sampleRate		= rs->sampleRate;
+    		soundDesc.totalFrames		= rs->totalFrames;
+    		soundDesc.lengthInSeconds	= rs->lengthInSeconds;
 
-    		soundDesc.pcmData = rs->pcmData.data();
+    		soundDesc.pcmData			= rs->pcmData.data();
     	}
     	else {
     		StreamSound* ss = m_streamSoundPool.Get(sound.GetIndex(), sound.GetGeneration());
-    		soundDesc.soundType = SoundType::Resident;
-    		soundDesc.loadState = ss->state;
-    		soundDesc.channels = ss->channels;
-    		soundDesc.sampleRate = ss->sampleRate;
-    		soundDesc.totalFrames = ss->totalFrames;
-    		soundDesc.lengthInSeconds = ss->lengthInSeconds;
-    		soundDesc.filepath = ss->filepath;
+    		soundDesc.soundType			= SoundType::Stream;
+    		soundDesc.loadState			= ss->state;
+    		soundDesc.channels			= ss->channels;
+    		soundDesc.sampleRate		= ss->sampleRate;
+    		soundDesc.totalFrames		= ss->totalFrames;
+    		soundDesc.lengthInSeconds	= ss->lengthInSeconds;
+
+    		soundDesc.filepath			= ss->filepath;
     	}
 
     	return Result::Ok;

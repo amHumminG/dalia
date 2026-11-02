@@ -17,10 +17,10 @@ public:
 	SoundAsset(dalia::Engine* engine, dalia::SoundType type, const std::string& filepath);
 	~SoundAsset();
 
-	SoundAsset(const SoundAsset&) = delete;
-	SoundAsset& operator=(const SoundAsset&) = delete;
-	SoundAsset(SoundAsset&&) = delete;
-	SoundAsset& operator=(SoundAsset&&) = delete;
+	// SoundAsset(const SoundAsset&) = delete;
+	// SoundAsset& operator=(const SoundAsset&) = delete;
+	// SoundAsset(SoundAsset&&) = delete;
+	// SoundAsset& operator=(SoundAsset&&) = delete;
 
 	void DrawInspectorUI(const UIContext& ui);
 

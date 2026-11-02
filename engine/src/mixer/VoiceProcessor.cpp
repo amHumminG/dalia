@@ -63,14 +63,14 @@ namespace dalia {
 
 			if (isSilent) ApplyTransitions(voice);
 
-			if (requiresSilence && voice.currentState == VoiceState::Playing) voice.targetFadeGain = GAIN_DEFAULT;
+			if (!requiresSilence && voice.currentState == VoiceState::Playing) voice.targetFadeGain = GAIN_DEFAULT;
 		}
 	}
 
 	uint32_t VoiceProcessor::RenderVoices(uint32_t frameCount) {
 		uint32_t voicesRendered = 0;
 
-		for (uint32_t vIndex = 0; vIndex <= m_voicePool.capacity; vIndex++) {
+		for (uint32_t vIndex = 0; vIndex < m_voicePool.capacity; vIndex++) {
 			Voice& voice = m_voicePool.nodes[vIndex];
 			if (voice.currentState != VoiceState::Playing) continue;
 
@@ -218,14 +218,14 @@ namespace dalia {
 
 		// State
 		// Waiting for I/O before state transition
-		if (voice.soundType == SoundType::Stream) {
+		if (voice.soundType == SoundType::Stream && voice.targetState != VoiceState::Stopped) {
 			StreamContext& stream = m_streamPool[voice.data.stream.streamContextIndex];
 			if (stream.state.load(std::memory_order_acquire) != StreamState::Streaming) return;
 		}
 
 		// Commit to target state
 		if (voice.currentState != voice.targetState) {
-			if (voice.targetState != VoiceState::Stopped) voice.exitCondition = PlaybackExitCondition::ExplicitStop;
+			if (voice.targetState == VoiceState::Stopped) voice.exitCondition = PlaybackExitCondition::ExplicitStop;
 			voice.currentState = voice.targetState;
 		}
 	}

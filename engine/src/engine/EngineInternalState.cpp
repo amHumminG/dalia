@@ -41,7 +41,7 @@ namespace dalia {
 			ThreadPriority::Normal
 		);
 		mixerThread = std::make_unique<WakeableThread>(
-			[this]() { asyncMessageBus->ProcessMixerCommands(); },
+			[this]() { mixer->ProcessAudioPeriod(); },
 			ThreadPriority::TimeCritical
 		);
 
