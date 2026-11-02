@@ -38,6 +38,10 @@ namespace dalia {
 		constexpr BusID masterId("Master");
 		m_busMap[masterId] = MASTER_BUS_INDEX;
 
+		// Initialize listener 0 to be active
+		m_listeners.Get(0).params.isActive = true;
+		m_listeners.GetMirror(0).params.isActive = true;
+
 		// Subscribe to mixer events
 		m_asyncMessageBus->SubscribeToMixerEvent(AsyncMixerEvent::Type::VoiceStopped,
 			[this](const AsyncMixerEvent& ev) { HandleVoiceStoppedEvent(ev); });

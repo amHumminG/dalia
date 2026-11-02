@@ -39,13 +39,12 @@ namespace dalia {
 		for (Voice& voice : voices) {
 			if (voice.currentState != VoiceState::Playing) continue;
 
+			// Zero gain matrix
 			for (uint32_t inC = 0; inC < CHANNELS_MAX; inC++) {
 				for (uint32_t outC = 0; outC < CHANNELS_MAX; outC++) {
 					voice.targetGainMatrix[inC][outC] = GAIN_SILENCE;
 				}
 			}
-
-			voice.finalPlaybackRate = voice.params.playbackRate;
 
 			if (!voice.params.isSpatial) EvaluateNonSpatialVoice(voice);
 			else EvaluateSpatialVoice(voice);
@@ -95,6 +94,7 @@ namespace dalia {
 	}
 
 	void AcousticProcessor::EvaluateNonSpatialVoice(Voice& voice) const {
+		voice.finalPlaybackRate = voice.params.playbackRate;
 		float baseGain = voice.params.gain;
 
 		if (voice.channels == CHANNELS_MONO) {
@@ -153,6 +153,7 @@ namespace dalia {
 		}
 
 		// Final Playback Rate Evaluation
+		voice.finalPlaybackRate = voice.params.playbackRate;
 		if (voice.params.useDoppler) {
 			float dopplerMult = ComputeDopplerMultiplier(voice, bestListenerParams);
 			voice.finalPlaybackRate = std::clamp(
@@ -218,7 +219,7 @@ namespace dalia {
 
 		math::Vector3 listenerToEmitter = voice.params.position - listenerParams.position;
 		float distance = math::Vector3::Length(listenerToEmitter);
-		if (distance >= EPSILON) return 1.0f;
+		if (math::NearlyEqual(distance, 0.0f, EPSILON)) return 1.0f;
 
 		math::Vector3 direction = listenerToEmitter * (1.0f / distance);
 
