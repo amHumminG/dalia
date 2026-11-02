@@ -10,7 +10,7 @@ namespace dalia {
 		}
 
 		ModifyEffect(effect, [&](auto& eMirror, uint32_t eIndex) -> Result {
-			m_asyncMessageBus->PushMixerCommand(AsyncMixerCommand::FreeEffect(
+			m_asyncMessageBus->PublishMixerCommand(AsyncMixerCommand::FreeEffect(
 				eIndex, eMirror.gen, effect.GetType()
 			));
 			eMirror.Reset();
@@ -46,7 +46,7 @@ namespace dalia {
 				BusMirror& oldBusMirror = m_buses.GetMirror(oldBusIndex);
 				oldBusMirror.effectSlots[oldSlot] = INVALID_EFFECT_HANDLE;
 
-				m_asyncMessageBus->PushMixerCommand(AsyncMixerCommand::ForceDetachEffect(
+				m_asyncMessageBus->PublishMixerCommand(AsyncMixerCommand::ForceDetachEffect(
 					eIndex, eMirror.gen, effect.GetType(), oldBusIndex, oldSlot
 				));
 
@@ -70,7 +70,7 @@ namespace dalia {
 			eMirror.busIndex = bIndex;
 			eMirror.effectSlot = effectSlot;
 
-			m_asyncMessageBus->PushMixerCommand(AsyncMixerCommand::AttachEffect(
+			m_asyncMessageBus->PublishMixerCommand(AsyncMixerCommand::AttachEffect(
 				eIndex, eMirror.gen, effect.GetType(), bIndex, effectSlot
 			));
 

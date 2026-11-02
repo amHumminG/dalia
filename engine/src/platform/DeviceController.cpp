@@ -3,7 +3,7 @@
 #include <future>
 
 #include "async/messaging/AsyncControlMessaging.h"
-#include "async/messaging/AsyncMessageBus.h"
+#include "async/AsyncMessageBus.h"
 
 namespace dalia {
 	DeviceController::~DeviceController() {
@@ -191,7 +191,7 @@ namespace dalia {
 				m_targetOutputDeviceId.c_str(),
 				m_outSampleRate
 			);
-			if (!m_asyncMessageBus->PushControlCommand(cmd)) {
+			if (!m_asyncMessageBus->PublishControlCommand(cmd)) {
 				// TODO: Rollback ?
 			}
 		}
@@ -275,6 +275,6 @@ namespace dalia {
 		// If new device failed, we leave null device running
 
 		// Push new device back to main thread
-		m_asyncMessageBus->PushControlEvent(AsyncControlEvent::OutputDeviceSwapped(newDevice.release(), fellBack));
+		m_asyncMessageBus->PublishControlEvent(AsyncControlEvent::OutputDeviceSwapped(newDevice.release(), fellBack));
 	}
 }

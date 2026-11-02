@@ -1,7 +1,7 @@
 #pragma once
 
-#include "backend/OutputDevice.h"
-#include "mixer/Speakers.h"
+#include "platform/OutputDevice.h"
+#include "core/Speakers.h"
 #include "core/Constants.h"
 
 #include <cstdint>

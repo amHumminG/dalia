@@ -1,11 +1,11 @@
-#include "backend/PlatformThread.h"
+#include "platform/PlatformThread.h"
+#include "platform/DeviceController.h"
 
 #include "core/Logger.h"
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
-
-#include "../DeviceController.h"
+// #undef WIN32_LEAN_AND_MEAN
 
 namespace dalia {
 

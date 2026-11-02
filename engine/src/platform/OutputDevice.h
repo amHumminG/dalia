@@ -1,7 +1,7 @@
 #pragma once
 
 #include "dalia/Result.h"
-#include "mixer/Speakers.h"
+#include "core/Speakers.h"
 
 #include <string>
 #include <cstdint>

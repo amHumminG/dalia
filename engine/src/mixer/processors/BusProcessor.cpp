@@ -1,14 +1,13 @@
-#include "mixer/BusProcessor.h"
+#include "mixer/processors/BusProcessor.h"
+#include "mixer/processors/EffectProcessor.h"
 #include "mixer/dsp/Gain.h"
 #include "mixer/dsp/Buffer.h"
-#include "async/messaging/AsyncMessageBus.h"
+#include "async/AsyncMessageBus.h"
 #include "async/messaging/AsyncMixerMessaging.h"
 #include "core/Logger.h"
 #include "core/Math.h"
 
 #include <cstring>
-
-#include "EffectProcessor.h"
 
 namespace dalia {
 

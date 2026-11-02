@@ -66,10 +66,10 @@ namespace dalia {
 
 		// --- Commands ---
 
-		void PushMixerCommand(const AsyncMixerCommand& command);
-		bool PushStreamCommand(const AsyncStreamCommand& command);
-		bool PushLoadCommand(const AsyncLoadCommand& command);
-		bool PushControlCommand(const AsyncControlCommand& command);
+		void PublishMixerCommand(const AsyncMixerCommand& command);
+		bool PublishStreamCommand(const AsyncStreamCommand& command);
+		bool PublishLoadCommand(const AsyncLoadCommand& command);
+		bool PublishControlCommand(const AsyncControlCommand& command);
 
 		void SubscribeToMixerCommand(AsyncMixerCommand::Type type, MessageCallback<AsyncMixerCommand> cb);
 		void SubscribeToStreamCommand(AsyncStreamCommand::Type type, MessageCallback<AsyncStreamCommand> cb);
@@ -83,9 +83,9 @@ namespace dalia {
 
 		// --- Events ---
 
-		bool PushMixerEvent(const AsyncMixerEvent& event);
-		bool PushLoadEvent(const AsyncLoadEvent& event);
-		bool PushControlEvent(const AsyncControlEvent& event);
+		bool PublishMixerEvent(const AsyncMixerEvent& event);
+		bool PublishLoadEvent(const AsyncLoadEvent& event);
+		bool PublishControlEvent(const AsyncControlEvent& event);
 
 		void SubscribeToMixerEvent(AsyncMixerEvent::Type type, MessageCallback<AsyncMixerEvent> cb);
 		void SubscribeToLoadEvent(AsyncLoadEvent::Type type, MessageCallback<AsyncLoadEvent> cb);

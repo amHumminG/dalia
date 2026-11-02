@@ -47,7 +47,7 @@ namespace dalia {
 
 		DALIA_LOG_DEBUG(LOG_CTX_CORE, "Created bus with routing: %s (index: %d) -> %s (index: %d).",
 			bus, bIndex, parentBus, bIndexParent);
-		m_asyncMessageBus->PushMixerCommand(AsyncMixerCommand::AllocateBus(bIndex, bIndexParent));
+		m_asyncMessageBus->PublishMixerCommand(AsyncMixerCommand::AllocateBus(bIndex, bIndexParent));
 
 		return Result::Ok;
 	}
@@ -79,7 +79,7 @@ namespace dalia {
 			BusMirror* bMirrorChild = &m_buses.GetMirror(i);
 			if (bMirrorChild->parentBusIndex == bIndex) {
 				bMirrorChild->parentBusIndex = NO_PARENT;
-				m_asyncMessageBus->PushMixerCommand(AsyncMixerCommand::SetBusParent(i, NO_PARENT));
+				m_asyncMessageBus->PublishMixerCommand(AsyncMixerCommand::SetBusParent(i, NO_PARENT));
 				orphanedBuses++;
 				DALIA_LOG_DEBUG(LOG_CTX_CORE, "Orphaned bus (index: %d).", i);
 			}
@@ -92,7 +92,7 @@ namespace dalia {
 			VoiceMirror& vMirrorChild = m_voices.GetMirror(i);
 			if (vMirrorChild.parentBusIndex == bIndex) {
 				vMirrorChild.parentBusIndex = NO_PARENT;
-				m_asyncMessageBus->PushMixerCommand(AsyncMixerCommand::SetVoiceParent(
+				m_asyncMessageBus->PublishMixerCommand(AsyncMixerCommand::SetVoiceParent(
 					i, vMirrorChild.gen, NO_PARENT
 				));
 				orphanedPlaybacks++;
@@ -107,7 +107,7 @@ namespace dalia {
 		m_buses.Free(bIndex);
 
 		DALIA_LOG_DEBUG(LOG_CTX_CORE, "Destroyed bus %s (index: %d).", bus, bIndex);
-		m_asyncMessageBus->PushMixerCommand(AsyncMixerCommand::FreeBus(bIndex));
+		m_asyncMessageBus->PublishMixerCommand(AsyncMixerCommand::FreeBus(bIndex));
 
 		return Result::Ok;
 	}
@@ -149,7 +149,7 @@ namespace dalia {
 
 		DALIA_LOG_DEBUG(LOG_CTX_CORE, "Routed bus %s (index: %d) -> %s (index: %d).",
 			bus, bIndex, parentBus, bIndexParent);
-		m_asyncMessageBus->PushMixerCommand(AsyncMixerCommand::SetBusParent(bIndex, bIndexParent));
+		m_asyncMessageBus->PublishMixerCommand(AsyncMixerCommand::SetBusParent(bIndex, bIndexParent));
 
 		return Result::Ok;
 	}

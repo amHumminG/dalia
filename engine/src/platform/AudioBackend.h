@@ -2,7 +2,7 @@
 
 #include "dalia/DeviceControl.h"
 #include "dalia/Result.h"
-#include "backend/OutputDevice.h"
+#include "platform/OutputDevice.h"
 
 #include <string>
 #include <vector>

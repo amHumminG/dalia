@@ -1,6 +1,6 @@
 #include "io/IoController.h"
 
-#include "async/messaging/AsyncMEssageBus.h"
+#include "async/AsyncMessageBus.h"
 #include "async/messaging/AsyncLoadMessaging.h"
 #include "async/messaging/AsyncStreamMessaging.h"
 #include "core/Logger.h"
@@ -64,7 +64,7 @@ namespace dalia {
 		stream.state.store(StreamState::Preparing, std::memory_order_release);
 
 		AsyncStreamCommand cmd = AsyncStreamCommand::PrepareStream(streamIndex, streamGen, filepath);
-		if (!m_asyncMessageBus->PushStreamCommand(cmd)) {
+		if (!m_asyncMessageBus->PublishStreamCommand(cmd)) {
 			// Push failed -> Rollback
 			stream.state.store(StreamState::Free, std::memory_order_release);
 			m_streams.Free(streamIndex);
@@ -82,7 +82,7 @@ namespace dalia {
 		const Codec* codec = Codec::GetCodecForFile(cmd.filepath);
 		if (!codec) {
 			DALIA_LOG_ERR(LOG_CTX_ASYNC, "Failed to load sound from file: %s. Unsupported file format.", cmd.filepath);
-			m_asyncMessageBus->PushLoadEvent(
+			m_asyncMessageBus->PublishLoadEvent(
 				AsyncLoadEvent::SoundLoadFailed(cmd.requestId, cmd.assetRawId, Result::UnsupportedFormat)
 			);
 			return;
@@ -101,13 +101,13 @@ namespace dalia {
 		}
 
 		if (res != Result::Ok) {
-			m_asyncMessageBus->PushLoadEvent(
+			m_asyncMessageBus->PublishLoadEvent(
 				AsyncLoadEvent(AsyncLoadEvent::SoundLoadFailed(cmd.requestId, cmd.assetRawId, res))
 			);
 			return;
 		}
 
-		m_asyncMessageBus->PushLoadEvent(AsyncLoadEvent::SoundLoaded(cmd.requestId, cmd.assetRawId, info));
+		m_asyncMessageBus->PublishLoadEvent(AsyncLoadEvent::SoundLoaded(cmd.requestId, cmd.assetRawId, info));
 		DALIA_LOG_DEBUG(LOG_CTX_ASYNC, "Loaded sound from file: %s.", cmd.filepath);
 	}
 

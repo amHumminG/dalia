@@ -2,14 +2,7 @@
 #include "mixer/dsp/Buffer.h"
 #include "mixer/dsp/Gain.h"
 #include "core/Logger.h"
-
-#include "mixer/nodes/Voice.h"
-#include "mixer/nodes/Listener.h"
-#include "mixer/nodes/Bus.h"
-#include "dalia/EffectControl.h"
-#include "mixer/nodes/effects/Biquad.h"
-
-#include "async/messaging/AsyncMessageBus.h"
+#include "async/AsyncMessageBus.h"
 
 namespace dalia {
 

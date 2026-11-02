@@ -1,9 +1,9 @@
 #pragma once
 
-#include "backend/AudioBackend.h"
-#include "backend/Windows/WasapiAudioBackend.h"
-#include "backend/OutputDevice.h"
-#include "backend/NullOutputDevice.h"
+#include "platform/AudioBackend.h"
+#include "platform/Windows/WasapiAudioBackend.h"
+#include "platform/OutputDevice.h"
+#include "platform/NullOutputDevice.h"
 #include "core/Logger.h"
 
 #include <memory>

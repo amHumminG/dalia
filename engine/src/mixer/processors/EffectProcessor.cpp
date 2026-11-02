@@ -1,6 +1,6 @@
-#include "mixer/EffectProcessor.h"
+#include "mixer/processors/EffectProcessor.h"
 #include "mixer/dsp/Buffer.h"
-#include "async/messaging/AsyncMessageBus.h"
+#include "async/AsyncMessageBus.h"
 #include "async/messaging/AsyncMixerMessaging.h"
 #include "core/Constants.h"
 

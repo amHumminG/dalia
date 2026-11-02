@@ -5,7 +5,7 @@
 #include "core/StateSyncPool.h"
 #include "mixer/nodes/Listener.h"
 #include "mixer/nodes/Voice.h"
-#include "mixer/Speakers.h"
+#include "core/Speakers.h"
 
 #include <cstdint>
 #include <span>

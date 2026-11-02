@@ -1,7 +1,7 @@
-#include "backend/NullOutputDevice.h"
+#include "platform/NullOutputDevice.h"
 
-#include "backend/PlatformThread.h"
-#include "backend/HighResTimer.h"
+#include "platform/PlatformThread.h"
+#include "platform/HighResTimer.h"
 #include "mixer/Mixer.h"
 
 namespace dalia {

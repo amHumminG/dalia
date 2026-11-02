@@ -3,9 +3,9 @@
 #include "dalia/Engine.h"
 
 // --- NEW ---
-#include "async/messaging/AsyncMessageBus.h"
+#include "async/AsyncMessageBus.h"
 
-#include "backend/DeviceController.h"
+#include "platform/DeviceController.h"
 #include "asset/AssetController.h"
 #include "io/IoController.h"
 #include "mixer/MixController.h"

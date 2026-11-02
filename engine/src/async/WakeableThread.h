@@ -1,10 +1,10 @@
 #pragma once
 
+#include "platform/PlatformThread.h"
+
 #include <thread>
 #include <atomic>
 #include <functional>
-
-#include "backend/PlatformThread.h"
 
 namespace dalia {
 

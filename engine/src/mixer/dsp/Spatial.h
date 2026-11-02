@@ -4,7 +4,7 @@
 #include "dalia/PlaybackControl.h"
 #include "core/Constants.h"
 #include "core/Math.h"
-#include "mixer/Speakers.h"
+#include "core/Speakers.h"
 
 namespace dalia::dsp {
 

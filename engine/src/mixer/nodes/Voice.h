@@ -4,7 +4,7 @@
 #include "dalia/SoundControl.h"
 #include "core/Constants.h"
 #include "core/Math.h"
-#include "../dsp/Resampler.h"
+#include "mixer/dsp/Resampler.h"
 
 #include <cstdint>
 

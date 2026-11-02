@@ -1,6 +1,6 @@
-#include "mixer/AcousticProcessor.h"
+#include "mixer/processors/AcousticProcessor.h"
 #include "mixer/dsp/Spatial.h"
-#include "async/messaging/AsyncMessageBus.h"
+#include "async/AsyncMessageBus.h"
 #include "async/messaging/AsyncMixerMessaging.h"
 #include "core/Math.h"
 

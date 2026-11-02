@@ -39,13 +39,6 @@ set(ENGINE_FILES
     src/engine/EnginePlayback.cpp
     src/engine/EngineListener.cpp
 
-    src/backend/AudioBackend.h
-    src/backend/OutputDevice.h
-    src/backend/NullOutputDevice.h
-    src/backend/NullOutputDevice.cpp
-    src/backend/HighResTimer.h
-    src/backend/PlatformThread.h
-
     src/core/Constants.h
     src/core/Logger.h
     src/core/Logger.cpp
@@ -64,9 +57,14 @@ set(ENGINE_FILES
     src/core/StateSyncPool.h
     src/core/AsyncPool.h
     src/core/ParameterBridge.h
+    src/core/Speakers.h
 
-    src/async/messaging/AsyncMessageBus.h
-    src/async/messaging/AsyncMessageBus.cpp
+    src/async/AsyncMessageBus.h
+    src/async/AsyncMessageBus.cpp
+    src/async/WakeableThread.cpp
+    src/async/WakeableThread.h
+    src/async/IntervalThread.cpp
+    src/async/IntervalThread.h
     src/async/messaging/AsyncMixerMessaging.h
     src/async/messaging/AsyncMixerMessaging.cpp
     src/async/messaging/AsyncStreamMessaging.h
@@ -83,12 +81,20 @@ set(ENGINE_FILES
     src/mixer/Mixer.h
     src/mixer/MixGraphCompiler.cpp
     src/mixer/MixGraphCompiler.h
-    src/mixer/Speakers.h
+    src/mixer/processors/EffectProcessor.cpp
+    src/mixer/processors/EffectProcessor.h
+    src/mixer/processors/AcousticProcessor.cpp
+    src/mixer/processors/AcousticProcessor.h
+    src/mixer/processors/BusProcessor.cpp
+    src/mixer/processors/BusProcessor.h
+    src/mixer/processors/VoiceProcessor.cpp
+    src/mixer/processors/VoiceProcessor.h
     src/mixer/nodes/Voice.h
     src/mixer/nodes/Listener.h
     src/mixer/nodes/StreamContext.h
     src/mixer/nodes/Bus.h
     src/mixer/nodes/Effect.h
+    src/mixer/nodes/EffectChain.h
     src/mixer/nodes/effects/EffectTraits.h
     src/mixer/nodes/effects/Biquad.h
     src/mixer/nodes/effects/Biquad.cpp
@@ -98,49 +104,43 @@ set(ENGINE_FILES
     src/mixer/dsp/PeakLimiter.cpp
     src/mixer/dsp/Slew.h
     src/mixer/dsp/Slew.cpp
-
-    src/asset/types/ResidentSound.h
-    src/asset/types/StreamSound.h
-    src/asset/AssetRegistry.cpp
-    src/asset/AssetRegistry.h
-
-    src/backend/DeviceController.h
-    src/backend/DeviceController.cpp
-    src/async/WakeableThread.cpp
-    src/async/WakeableThread.h
-    src/async/IntervalThread.cpp
-    src/async/IntervalThread.h
-    src/io/codec/Codec.h
-    src/io/codec/VorbisCodec.h
-    src/io/codec/VorbisCodec.cpp
-    src/asset/AssetController.cpp
-    src/asset/AssetController.h
-    src/io/codec/Codec.cpp
-    src/io/IoController.cpp
-    src/io/IoController.h
-    src/asset/SoundDescriptor.h
     src/mixer/dsp/Buffer.h
     src/mixer/dsp/Gain.h
     src/mixer/dsp/Spatial.h
-    src/mixer/EffectProcessor.cpp
-    src/mixer/EffectProcessor.h
-    src/mixer/AcousticProcessor.cpp
-    src/mixer/AcousticProcessor.h
-    src/mixer/nodes/EffectChain.h
-    src/mixer/BusProcessor.cpp
-    src/mixer/BusProcessor.h
-    src/mixer/VoiceProcessor.cpp
-    src/mixer/VoiceProcessor.h
+
+    src/asset/AssetRegistry.cpp
+    src/asset/AssetRegistry.h
+    src/asset/AssetController.cpp
+    src/asset/AssetController.h
+    src/asset/SoundDescriptor.h
+    src/asset/types/ResidentSound.h
+    src/asset/types/StreamSound.h
+
+    src/io/codec/Codec.h
+    src/io/codec/VorbisCodec.h
+    src/io/codec/VorbisCodec.cpp
+    src/io/codec/Codec.cpp
+    src/io/IoController.cpp
+    src/io/IoController.h
+
+    src/platform/DeviceController.h
+    src/platform/DeviceController.cpp
+    src/platform/AudioBackend.h
+    src/platform/NullOutputDevice.h
+    src/platform/NullOutputDevice.cpp
+    src/platform/OutputDevice.h
+    src/platform/HighResTimer.h
+    src/platform/PlatformThread.h
 )
 
 if (WIN32)
     list(APPEND ENGINE_FILES
-        src/backend/windows/WasapiAudioBackend.cpp
-        src/backend/windows/WasapiAudioBackend.h
-        src/backend/windows/WasapiOutputDevice.cpp
-        src/backend/windows/WasapiOutputDevice.h
-        src/backend/windows/HighResTimer.cpp
-        src/backend/windows/PlatformThread.cpp
+        src/platform/windows/WasapiAudioBackend.cpp
+        src/platform/windows/WasapiAudioBackend.h
+        src/platform/windows/WasapiOutputDevice.cpp
+        src/platform/windows/WasapiOutputDevice.h
+        src/platform/windows/HighResTimer.cpp
+        src/platform/windows/PlatformThread.cpp
     )
 elseif (APPLE)
     list(APPEND ENGINE_FILES

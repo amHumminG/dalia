@@ -1,7 +1,7 @@
 #include "mixer/MixController.h"
 
 #include "asset/AssetController.h"
-#include "backend/DeviceController.h"
+#include "platform/DeviceController.h"
 #include "io/IoController.h"
 
 #include <algorithm>
@@ -79,7 +79,7 @@ namespace dalia {
 
 	void MixController::SetGlobalDopplerFactor(float globalDopplerFactor) {
 		float clampedGlobalDopplerFactor = std::clamp(globalDopplerFactor, DOPPLER_FACTOR_MIN, DOPPLER_FACTOR_MAX);
-		m_asyncMessageBus->PushMixerCommand(AsyncMixerCommand::SetGlobalDopplerFactor(clampedGlobalDopplerFactor));
+		m_asyncMessageBus->PublishMixerCommand(AsyncMixerCommand::SetGlobalDopplerFactor(clampedGlobalDopplerFactor));
 	}
 
 	Result MixController::Validate(PlaybackHandle playback) {
@@ -135,12 +135,12 @@ namespace dalia {
 			eMirror.effectSlot = NO_INDEX;
 
 			if (fadeOut) {
-				m_asyncMessageBus->PushMixerCommand(AsyncMixerCommand::FadeDetachEffect(
+				m_asyncMessageBus->PublishMixerCommand(AsyncMixerCommand::FadeDetachEffect(
 					effect.GetIndex(), eMirror.gen, effect.GetType(), bIndex, slot
 				));
 			}
 			else {
-				m_asyncMessageBus->PushMixerCommand(AsyncMixerCommand::ForceDetachEffect(
+				m_asyncMessageBus->PublishMixerCommand(AsyncMixerCommand::ForceDetachEffect(
 					effect.GetIndex(), eMirror.gen, effect.GetType(), bIndex, slot
 				));
 			}
@@ -236,7 +236,7 @@ namespace dalia {
 		}
 
 		if (soundDesc.soundType == SoundType::Resident) {
-			m_asyncMessageBus->PushMixerCommand(AsyncMixerCommand::PrepareVoiceResident(
+			m_asyncMessageBus->PublishMixerCommand(AsyncMixerCommand::PrepareVoiceResident(
 				vIndex, vMirror.gen, soundDesc.pcmData,
 				soundDesc.totalFrames, soundDesc.channels, soundDesc.sampleRate
 			));
@@ -247,7 +247,7 @@ namespace dalia {
 			Result streamRes = m_ioController->AllocateAndPrepareStream(soundDesc.filepath, sIndex, sGen);
 			if (streamRes != Result::Ok) return streamRes;
 
-			m_asyncMessageBus->PushMixerCommand(AsyncMixerCommand::PrepareVoiceStreaming(
+			m_asyncMessageBus->PublishMixerCommand(AsyncMixerCommand::PrepareVoiceStreaming(
 				vIndex, vMirror.gen, sIndex, sGen,
 				soundDesc.channels, soundDesc.sampleRate
 			));
@@ -261,14 +261,14 @@ namespace dalia {
 		if (vMirror.initialSeekTarget > 0.0) {
 			auto targetFrame = static_cast<uint32_t>(vMirror.initialSeekTarget * vMirror.sampleRate);
 			if (targetFrame < vMirror.totalFrames) {
-				m_asyncMessageBus->PushMixerCommand(AsyncMixerCommand::SeekVoice(
+				m_asyncMessageBus->PublishMixerCommand(AsyncMixerCommand::SeekVoice(
 					vIndex, vMirror.gen, targetFrame
 				));
 			}
 		}
 
 		if (vMirror.state == VoiceState::Playing) {
-			m_asyncMessageBus->PushMixerCommand(AsyncMixerCommand::PlayVoice(
+			m_asyncMessageBus->PublishMixerCommand(AsyncMixerCommand::PlayVoice(
 				vIndex, vMirror.gen
 			));
 		}

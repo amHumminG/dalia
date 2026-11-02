@@ -1,15 +1,14 @@
 #include "asset/AssetController.h"
 
-#include <future>
-
 #include "asset/AssetRegistry.h"
 #include "asset/types/ResidentSound.h"
 #include "asset/types/StreamSound.h"
-#include "async/messaging/AsyncMessageBus.h"
-#include "core/AsyncPool.h"
-#include "../mixer/nodes/StreamContext.h"
+#include "async/AsyncMessageBus.h"
+#include "mixer/nodes/StreamContext.h"
 #include "io/codec/Codec.h"
 #include "core/Logger.h"
+
+#include <future>
 
 namespace dalia {
 
@@ -85,7 +84,7 @@ namespace dalia {
 
 		// Publish load command
 		AsyncLoadCommand cmd = AsyncLoadCommand::LoadSound(reqId, sound.GetRawId(), filepath, targetPcmBuffer);
-		if (!m_asyncMessageBus->PushLoadCommand(cmd)) {
+		if (!m_asyncMessageBus->PublishLoadCommand(cmd)) {
 			// Publish failed -> Rollback
 			if (callback) m_loadCallbacks.erase(reqId);
 			m_assetRegistry.UnregisterLoadedSound(pathId);

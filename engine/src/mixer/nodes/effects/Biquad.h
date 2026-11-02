@@ -1,7 +1,7 @@
 #pragma once
 
 #include "dalia/EffectControl.h"
-#include "../Effect.h"
+#include "mixer/nodes/Effect.h"
 #include "core/Constants.h"
 #include "mixer/dsp/Slew.h"
 

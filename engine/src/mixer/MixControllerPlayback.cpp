@@ -42,13 +42,13 @@ namespace dalia {
 			m_pendingPlaybacks.push_back({.playback = playback, .assetRawId = sound.GetRawId()});
 			vMirror.pendingLoad = true;
 			DALIA_LOG_DEBUG(LOG_CTX_MIXER, "Deferring playback for voice %u. Sound is still loading.", vIndex);
-			m_asyncMessageBus->PushMixerCommand(AsyncMixerCommand::AllocateVoice(vIndex, vMirror.gen));
+			m_asyncMessageBus->PublishMixerCommand(AsyncMixerCommand::AllocateVoice(vIndex, vMirror.gen));
 			return Result::Ok;
 		}
 
 		if (soundDesc.soundType == SoundType::Resident) {
-			m_asyncMessageBus->PushMixerCommand(AsyncMixerCommand::AllocateVoice(vIndex, vMirror.gen));
-			m_asyncMessageBus->PushMixerCommand(AsyncMixerCommand::PrepareVoiceResident(
+			m_asyncMessageBus->PublishMixerCommand(AsyncMixerCommand::AllocateVoice(vIndex, vMirror.gen));
+			m_asyncMessageBus->PublishMixerCommand(AsyncMixerCommand::PrepareVoiceResident(
 				vIndex, vMirror.gen, soundDesc.pcmData, soundDesc.totalFrames, soundDesc.channels, soundDesc.sampleRate
 			));
 		}
@@ -68,8 +68,8 @@ namespace dalia {
 				return res;
 			}
 
-			m_asyncMessageBus->PushMixerCommand(AsyncMixerCommand::AllocateVoice(vIndex, vMirror.gen));
-			m_asyncMessageBus->PushMixerCommand(AsyncMixerCommand::PrepareVoiceStreaming(
+			m_asyncMessageBus->PublishMixerCommand(AsyncMixerCommand::AllocateVoice(vIndex, vMirror.gen));
+			m_asyncMessageBus->PublishMixerCommand(AsyncMixerCommand::PrepareVoiceStreaming(
 				vIndex, vMirror.gen, sIndex, sGen, soundDesc.channels, soundDesc.sampleRate
 			));
 		}
@@ -94,7 +94,7 @@ namespace dalia {
 			}
 
 			vMirror.parentBusIndex = bIndex;
-			m_asyncMessageBus->PushMixerCommand(AsyncMixerCommand::SetVoiceParent(
+			m_asyncMessageBus->PublishMixerCommand(AsyncMixerCommand::SetVoiceParent(
 				vIndex, playback.GetGeneration(), bIndex
 			));
 			DALIA_LOG_DEBUG(LOG_CTX_API, "Routed voice %d to bus %s (index: %d).", vIndex, bus, bIndex);
@@ -125,7 +125,7 @@ namespace dalia {
 			}
 
 			vMirror.state = VoiceState::Playing;
-			m_asyncMessageBus->PushMixerCommand(AsyncMixerCommand::PlayVoice(vIndex, playback.GetGeneration()));
+			m_asyncMessageBus->PublishMixerCommand(AsyncMixerCommand::PlayVoice(vIndex, playback.GetGeneration()));
 			DALIA_LOG_DEBUG(LOG_CTX_API, "Setting voice %d state: Playing.", vIndex);
 
 			return Result::Ok;
@@ -142,7 +142,7 @@ namespace dalia {
 			vMirror.state = VoiceState::Paused;
 			if (vMirror.pendingLoad) return Result::Ok; // Do not send command if voice is pending load
 
-			m_asyncMessageBus->PushMixerCommand(AsyncMixerCommand::PauseVoice(vIndex, playback.GetGeneration()));
+			m_asyncMessageBus->PublishMixerCommand(AsyncMixerCommand::PauseVoice(vIndex, playback.GetGeneration()));
 			DALIA_LOG_DEBUG(LOG_CTX_API, "Setting voice %d state: Paused.", vIndex);
 
 			return Result::Ok;
@@ -171,7 +171,7 @@ namespace dalia {
 
 			vMirror.state = VoiceState::Stopped;
 
-			m_asyncMessageBus->PushMixerCommand(AsyncMixerCommand::StopVoice(vIndex, playback.GetGeneration()));
+			m_asyncMessageBus->PublishMixerCommand(AsyncMixerCommand::StopVoice(vIndex, playback.GetGeneration()));
 			DALIA_LOG_DEBUG(LOG_CTX_API, "Setting voice %d to stop.", vIndex);
 
 			return Result::Ok;
@@ -199,7 +199,7 @@ namespace dalia {
 			VoiceMirror& vMirror = m_voices.GetMirror(i);
 			if (vMirror.gen != NO_GENERATION && vMirror.assetRawId == soundRawId) {
 				vMirror.state = VoiceState::Stopped;
-				m_asyncMessageBus->PushMixerCommand(AsyncMixerCommand::StopVoice(i, vMirror.gen));
+				m_asyncMessageBus->PublishMixerCommand(AsyncMixerCommand::StopVoice(i, vMirror.gen));
 			}
 		}
 	}
@@ -227,7 +227,7 @@ namespace dalia {
 			}
 
 			auto seekFrame = static_cast<uint32_t>(seekFrame64);
-			m_asyncMessageBus->PushMixerCommand(AsyncMixerCommand::SeekVoice(
+			m_asyncMessageBus->PublishMixerCommand(AsyncMixerCommand::SeekVoice(
 				vIndex, playback.GetGeneration(), seekFrame
 			));
 			DALIA_LOG_DEBUG(LOG_CTX_API, "Seeking voice %d to frame %d.", vIndex, seekFrame);

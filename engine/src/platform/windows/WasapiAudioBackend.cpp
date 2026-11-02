@@ -1,6 +1,6 @@
-#include "backend/windows/WasapiAudioBackend.h"
+#include "platform/windows/WasapiAudioBackend.h"
 
-#include "backend/windows/WasapiOutputDevice.h"
+#include "platform/windows/WasapiOutputDevice.h"
 #include "core/Logger.h"
 
 #include <functiondiscoverykeys_devpkey.h> // For PKEY_Device_FriendlyName

@@ -1,7 +1,7 @@
 #pragma once
 
-#include "backend/OutputDevice.h"
-#include "mixer/Speakers.h"
+#include "platform/OutputDevice.h"
+#include "core/Speakers.h"
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>

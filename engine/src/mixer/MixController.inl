@@ -4,7 +4,7 @@
 #include "core/Logger.h"
 #include "async/messaging/AsyncMixerMessaging.h"
 #include "mixer/nodes/effects/EffectTraits.h"
-#include "async/messaging/AsyncMessageBus.h"
+#include "async/AsyncMessageBus.h"
 
 namespace dalia {
 
@@ -29,7 +29,7 @@ namespace dalia {
 		ePool.MarkDirty(eIndex);
 
 		effect = EffectHandle::Create(eIndex, eGen, Traits::TYPE);
-		m_asyncMessageBus->PushMixerCommand(AsyncMixerCommand::AllocateEffect(Traits::TYPE, eIndex, eGen));
+		m_asyncMessageBus->PublishMixerCommand(AsyncMixerCommand::AllocateEffect(Traits::TYPE, eIndex, eGen));
 
 		DALIA_LOG_DEBUG(LOG_CTX_API, "Created effect (index: %u, gen: %u).", eIndex, eGen);
 		return Result::Ok;

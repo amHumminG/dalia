@@ -1,6 +1,6 @@
 #include "async/IntervalThread.h"
 
-#include "backend/HighResTimer.h"
+#include "platform/HighResTimer.h"
 
 namespace dalia {
 

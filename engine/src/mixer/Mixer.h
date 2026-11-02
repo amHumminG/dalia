@@ -8,10 +8,10 @@
 #include "core/StateSyncPool.h"
 #include "async/WakeableThread.h"
 
-#include "mixer/EffectProcessor.h"
-#include "mixer/AcousticProcessor.h"
-#include "mixer/VoiceProcessor.h"
-#include "mixer/BusProcessor.h"
+#include "mixer/processors/EffectProcessor.h"
+#include "mixer/processors/AcousticProcessor.h"
+#include "mixer/processors/VoiceProcessor.h"
+#include "mixer/processors/BusProcessor.h"
 #include "mixer/dsp/PeakLimiter.h"
 
 #include <atomic>
