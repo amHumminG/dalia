@@ -213,7 +213,7 @@ namespace dalia {
 			it = m_pendingPlaybacks.erase(it);
 
 			uint32_t vIndex = pb.GetIndex();
-			if (m_voices.GetMirror(vIndex).gen != pb.GetGeneration()) ResetAndFreeVoice(vIndex);
+			if (m_voices.GetMirror(vIndex).gen == pb.GetGeneration()) ResetAndFreeVoice(vIndex);
 		}
 
 		// Invoke registered load callback
@@ -250,7 +250,9 @@ namespace dalia {
 		}
 
 		vMirror.totalFrames = soundDesc.totalFrames;
-		vMirror.sampleRate = soundDesc.sampleRate;
+		vMirror.channels	= soundDesc.channels;
+		vMirror.sampleRate	= soundDesc.sampleRate;
+		vMirror.pendingLoad = false;
 
 		if (vMirror.initialSeekTarget > 0.0) {
 			auto targetFrame = static_cast<uint32_t>(vMirror.initialSeekTarget * vMirror.sampleRate);
