@@ -70,7 +70,7 @@ namespace dalia {
 
 		// --- State Resolution Helpers ---
 		static bool ShouldFreeVoice(Voice& voice);
-		static bool RequiresSilentTransition(const Voice& voice);
+		static bool RequiresDucking(const Voice& voice);
 		void ApplyTransitions(Voice& voice);
 		void ExecutePendingSeek(Voice& voice);
 		void FreeVoice(uint32_t voiceIndex);

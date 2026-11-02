@@ -55,7 +55,7 @@ namespace dalia {
 				continue;
 			}
 
-			bool requiresSilence = RequiresSilentTransition(voice);
+			bool requiresSilence = RequiresDucking(voice);
 			if (requiresSilence) voice.targetFadeGain = 0.0f;
 
 			bool isSilent = math::NearlyEqual(voice.currentFadeGain, 0.0f, EPSILON_GAIN) ||
@@ -201,7 +201,7 @@ namespace dalia {
 		return false;
 	}
 
-	bool VoiceProcessor::RequiresSilentTransition(const Voice& voice) {
+	bool VoiceProcessor::RequiresDucking(const Voice& voice) {
 		if (voice.currentState != voice.targetState && voice.targetState != VoiceState::Playing) return true;
 		if (voice.currentBusIndex != voice.targetBusIndex) return true;
 		if (voice.hasPendingSeek) return true;
@@ -216,14 +216,16 @@ namespace dalia {
 		// Seek
 		if (voice.hasPendingSeek) ExecutePendingSeek(voice);
 
-		// State
-		// Waiting for I/O before state transition
+		// Stream state
 		if (voice.soundType == SoundType::Stream && voice.targetState != VoiceState::Stopped) {
 			StreamContext& stream = m_streamPool[voice.data.stream.streamContextIndex];
-			if (stream.state.load(std::memory_order_acquire) != StreamState::Streaming) return;
+			auto sState = stream.state.load(std::memory_order_acquire);
+
+			// Block if stream is waiting on I/O
+			if (sState == StreamState::Preparing || sState == StreamState::Seeking) return;
 		}
 
-		// Commit to target state
+		// Voice state
 		if (voice.currentState != voice.targetState) {
 			if (voice.targetState == VoiceState::Stopped) voice.exitCondition = PlaybackExitCondition::ExplicitStop;
 			voice.currentState = voice.targetState;
