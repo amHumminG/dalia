@@ -48,12 +48,8 @@ set(ENGINE_FILES
     src/core/SPSCRingBufferPCM.h
     src/core/MPSCRingBuffer.h
     src/core/ResourcePool.h
-    src/core/Utility.cpp
-    src/core/Utility.h
     src/core/Types.h
     src/core/Math.h
-    src/core/HandleManager.h
-    src/core/HandleManager.cpp
     src/core/StateSyncPool.h
     src/core/AsyncPool.h
     src/core/ParameterBridge.h
