@@ -163,7 +163,7 @@ namespace dalia {
 		}
 	}
 
-	void AssetController::FinalizeAsyncSoundLoad(SoundHandle sound, const AudioFormatInfo& info, const char* filepath) {
+	void AssetController::FinalizeAsyncSoundLoad(SoundHandle sound, const AudioFormatInfo& info) {
 		if (sound.GetType() == SoundType::Resident) {
 			if (ResidentSound* rs = m_assetRegistry.GetResidentSound(sound)) {
 				rs->channels = info.channels;
@@ -175,7 +175,6 @@ namespace dalia {
 		}
 		else if (sound.GetType() == SoundType::Stream) {
 			if (StreamSound* ss = m_assetRegistry.GetStreamSound(sound)) {
-				snprintf(ss->filepath, MAX_STR_LEN_ASSET_PATH, "%s", filepath);
 				ss->channels = info.channels;
 				ss->sampleRate = info.sampleRate;
 				ss->totalFrames = info.totalFrames;

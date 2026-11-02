@@ -35,7 +35,7 @@ namespace dalia {
 		bool AcquireSound(SoundHandle sound);
 		void ReleaseSound(SoundHandle sound);
 
-		void FinalizeAsyncSoundLoad(SoundHandle sound, const AudioFormatInfo& info, const char* filepath = nullptr);
+		void FinalizeAsyncSoundLoad(SoundHandle sound, const AudioFormatInfo& info);
 		void FailSoundLoad(SoundHandle sound);
 		void InvokeLoadCallback(uint32_t requestId, Result result);
 

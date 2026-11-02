@@ -15,6 +15,6 @@ namespace dalia {
 		double lengthInSeconds = 0;
 
 		const float* pcmData = nullptr; // For resident
-		const char* filepath = nullptr; // For streaming
+        char filepath[MAX_STR_LEN_ASSET_PATH]; // For streaming
 	};
 }

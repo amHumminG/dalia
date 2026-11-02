@@ -62,7 +62,7 @@ namespace dalia {
     		soundDesc.totalFrames		= ss->totalFrames;
     		soundDesc.lengthInSeconds	= ss->lengthInSeconds;
 
-    		soundDesc.filepath			= ss->filepath;
+    		snprintf(soundDesc.filepath, MAX_STR_LEN_ASSET_PATH, "%s", ss->filepath);
     	}
 
     	return Result::Ok;
