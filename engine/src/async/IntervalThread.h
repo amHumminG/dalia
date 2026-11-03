@@ -6,6 +6,7 @@
 #include <atomic>
 #include <functional>
 #include <cstdint>
+#include <string>
 
 namespace dalia {
 
@@ -13,7 +14,8 @@ namespace dalia {
 	public:
 		using ProcessFunc = std::function<void()>;
 
-		IntervalThread(ProcessFunc processFunc, uint32_t intervalMicroseconds, ThreadPriority priority = ThreadPriority::Normal);
+		IntervalThread(const std::string& name, ProcessFunc processFunc, uint32_t intervalMicroseconds,
+			ThreadPriority priority = ThreadPriority::Normal);
 		~IntervalThread();
 
 		/// @brief Starts the thread.
@@ -30,6 +32,7 @@ namespace dalia {
 		std::atomic<bool> m_isRunning{false};
 		std::binary_semaphore m_wakeSemaphore{0};
 
+		std::string m_name;
 		ProcessFunc m_processFunc = nullptr;
 		uint32_t m_intervalMicroseconds = 0;
 		ThreadPriority m_priority = ThreadPriority::Normal;

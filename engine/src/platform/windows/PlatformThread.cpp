@@ -2,6 +2,7 @@
 #include "platform/DeviceController.h"
 
 #include "core/Logger.h"
+#include <iostream>
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
@@ -21,6 +22,12 @@ namespace dalia {
 		if (!SetThreadPriority(GetCurrentThread(), winPriority)) {
 			DALIA_LOG_WARN(LOG_CTX_PLATFORM, "Failed to set thread priority.");
 		}
+	}
+
+	void PlatformThread::SetCurrentThreadName(const std::string& name) {
+		std::wstring wideString = std::wstring(name.begin(), name.end());
+		LPCWSTR lpcwstr = wideString.c_str();
+		SetThreadDescription(GetCurrentThread(), lpcwstr);
 	}
 
 	PlatformThread::ScopedThreadRuntime::ScopedThreadRuntime() {

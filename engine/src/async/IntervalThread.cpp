@@ -1,11 +1,14 @@
 #include "async/IntervalThread.h"
 
 #include "platform/HighResTimer.h"
+#include "core/Profiler.h"
 
 namespace dalia {
 
-	IntervalThread::IntervalThread(ProcessFunc processFunc, uint32_t intervalMicroseconds, ThreadPriority priority)
-		: m_processFunc(std::move(processFunc)), m_intervalMicroseconds(intervalMicroseconds), m_priority(priority) {
+	IntervalThread::IntervalThread(const std::string& name, ProcessFunc processFunc, uint32_t intervalMicroseconds,
+		ThreadPriority priority)
+		: m_name(name), m_processFunc(std::move(processFunc)), m_intervalMicroseconds(intervalMicroseconds),
+		m_priority(priority) {
 	}
 
 	IntervalThread::~IntervalThread() {
@@ -29,8 +32,10 @@ namespace dalia {
 	void IntervalThread::ThreadMain() {
 		PlatformThread::ScopedThreadRuntime runtime;
 		PlatformThread::SetCurrentThreadPriority(m_priority);
-		HighResTimer wakeTimer;
+		PlatformThread::SetCurrentThreadName(m_name);
+		DALIA_PROFILE_THREAD(m_name.c_str());
 
+		HighResTimer wakeTimer;
 		while (m_isRunning.load(std::memory_order_relaxed)) {
 			if (m_processFunc) m_processFunc();
 			wakeTimer.SleepMicroseconds(m_intervalMicroseconds);

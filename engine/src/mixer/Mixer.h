@@ -6,6 +6,7 @@
 #include "core/Constants.h"
 #include "core/SPSCRingBufferPCM.h"
 #include "core/StateSyncPool.h"
+#include "core/Profiler.h"
 #include "async/WakeableThread.h"
 
 #include "mixer/processors/EffectProcessor.h"

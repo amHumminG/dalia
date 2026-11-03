@@ -30,17 +30,21 @@ namespace dalia {
 
 		// Construct threads
 		streamThread = std::make_unique<IntervalThread>(
+			"DALIA Stream Thread",
 			[this]() { asyncMessageBus->ProcessStreamCommands(); },
 			5000, ThreadPriority::High);
 		loadThread = std::make_unique<WakeableThread>(
+		"DALIA Load Thread",
 			[this]() { asyncMessageBus->ProcessLoadCommands(); },
 			ThreadPriority::Normal
 		);
 		controlThread = std::make_unique<WakeableThread>(
+		"DALIA Control Thread",
 			[this]() { asyncMessageBus->ProcessControlCommands(); },
 			ThreadPriority::Normal
 		);
 		mixerThread = std::make_unique<WakeableThread>(
+		"DALIA Mixer Thread",
 			[this]() { mixer->ProcessAudioPeriod(); },
 			ThreadPriority::TimeCritical
 		);

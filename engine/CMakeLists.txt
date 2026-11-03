@@ -14,6 +14,7 @@ function (dalia_treat_warnings_as_errors target_name)
 endfunction()
 
 add_subdirectory(vendor/stb_vorbis)
+add_subdirectory(vendor/tracy)
 
 # Source files
 set(ENGINE_FILES
@@ -54,6 +55,7 @@ set(ENGINE_FILES
     src/core/AsyncPool.h
     src/core/ParameterBridge.h
     src/core/Speakers.h
+    src/core/Profiler.h
 
     src/async/AsyncMessageBus.h
     src/async/AsyncMessageBus.cpp
@@ -172,6 +174,11 @@ if (WIN32)
     )
 endif()
 
+if (DALIA_ENABLE_PROFILING)
+    target_compile_definitions(dalia_engine PRIVATE DALIA_PROFILE_ENABLE)
+    target_link_libraries(dalia_engine PRIVATE Tracy::TracyClient)
+endif()
+
 add_library(dalia::engine ALIAS dalia_engine)
 
 include(GNUInstallDirs)
@@ -180,5 +187,4 @@ install(TARGETS dalia_engine
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     RUNTIME DESTINATION ${CMAKE_INSTALL_LIBDIR}
 )
-install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
-)
+install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})

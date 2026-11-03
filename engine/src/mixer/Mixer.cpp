@@ -79,6 +79,8 @@ namespace dalia {
 	}
 
 	void Mixer::ProcessAudioPeriod() {
+		DALIA_PROFILE_AUDIO_FRAME();
+
 		m_isProcessing.store(true, std::memory_order_seq_cst);
 
 		if (m_suspendRequest.load(std::memory_order_seq_cst)) {
@@ -87,6 +89,7 @@ namespace dalia {
 		}
 
 		while (m_pcmRingBuffer->GetAvailableFramesWrite() >= m_periodSizeFrames) {
+			DALIA_PROFILE_SCOPE_N("Mixer::ProcessAudioPeriod");
 			m_asyncMessageBus->ProcessMixerCommands();
 			SyncParams();
 
@@ -150,6 +153,7 @@ namespace dalia {
 	}
 
 	void Mixer::Render(float* output, uint32_t frameCount) {
+		DALIA_PROFILE_SCOPE_N("Mixer::RenderFrame");
 		const uint32_t sampleCount = frameCount * m_outChannels;
 
 		// Zero bus buffers

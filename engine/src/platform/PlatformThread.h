@@ -1,5 +1,7 @@
 #pragma once
 
+#include <string>
+
 namespace dalia {
 
 	enum class ThreadPriority {
@@ -11,6 +13,8 @@ namespace dalia {
 	namespace PlatformThread {
 
 		void SetCurrentThreadPriority(ThreadPriority priority);
+
+		void SetCurrentThreadName(const std::string& name);
 
 		struct ScopedThreadRuntime {
 			ScopedThreadRuntime();

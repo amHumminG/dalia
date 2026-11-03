@@ -12,7 +12,8 @@ namespace dalia {
 	public:
 		using ProcessFunc = std::function<void()>;
 
-		WakeableThread(ProcessFunc processFunc, ThreadPriority priority = ThreadPriority::Normal);
+		WakeableThread(const std::string& name, ProcessFunc processFunc,
+			ThreadPriority priority = ThreadPriority::Normal);
 		~WakeableThread();
 
 		/// @brief Starts the thread.
@@ -32,6 +33,7 @@ namespace dalia {
 		std::atomic<bool> m_isRunning{false};
 		std::binary_semaphore m_wakeSemaphore{0};
 
+		std::string m_name;
 		ProcessFunc m_processFunc = nullptr;
 		ThreadPriority m_priority = ThreadPriority::Normal;
 	};

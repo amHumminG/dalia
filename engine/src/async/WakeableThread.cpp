@@ -1,9 +1,10 @@
 #include "async/WakeableThread.h"
+#include "core/Profiler.h"
 
 namespace dalia {
 
-	WakeableThread::WakeableThread(std::function<void()> processFunc, ThreadPriority priority)
-		: m_processFunc(std::move(processFunc)), m_priority(priority) {
+	WakeableThread::WakeableThread(const std::string& name, std::function<void()> processFunc, ThreadPriority priority)
+		: m_name(name), m_processFunc(std::move(processFunc)), m_priority(priority) {
 	}
 
 	WakeableThread::~WakeableThread() {
@@ -32,6 +33,9 @@ namespace dalia {
 	void WakeableThread::ThreadMain() {
 		PlatformThread::ScopedThreadRuntime runtime;
 		PlatformThread::SetCurrentThreadPriority(m_priority);
+		PlatformThread::SetCurrentThreadName(m_name);
+
+		DALIA_PROFILE_THREAD(m_name.c_str());
 
 		while (m_isRunning.load(std::memory_order_relaxed)) {
 			m_wakeSemaphore.acquire();
