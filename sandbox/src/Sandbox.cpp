@@ -1412,14 +1412,14 @@ void Sandbox::DrawHotkeysWindow() {
 void Sandbox::RefreshAvailableAssets() {
 	m_availableAssets.clear();
 
-	std::string targetDir = "assets";
+	std::string targetDir = "assets/audio";
 
 	if (std::filesystem::exists(targetDir) && std::filesystem::is_directory(targetDir)) {
 		for (const auto& entry : std::filesystem::recursive_directory_iterator(targetDir)) {
 			if (entry.is_regular_file()) {
-				// Filter audio files only (extend this when we add banks)
+				// Filter audio files only (extend this when we support more formats and banks)
 				std::string ext = entry.path().extension().string();
-				if (ext == ".wav" || ext == ".mp3" || ext == ".ogg") {
+				if (ext == ".ogg") {
 					m_availableAssets.push_back(entry.path().generic_string());
 				}
 			}
