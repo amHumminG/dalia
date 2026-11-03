@@ -1,6 +1,6 @@
 #pragma once
 
-#include "dalia/EffectControl.h"
+#include "dalia/Effect.h"
 #include "core/StateSyncPool.h"
 #include "mixer/nodes/Bus.h"
 #include "mixer/nodes/effects/Biquad.h"

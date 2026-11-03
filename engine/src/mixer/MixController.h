@@ -1,9 +1,9 @@
 #pragma once
 
 #include "dalia/Result.h"
-#include "dalia/PlaybackControl.h"
-#include "dalia/SoundControl.h"
-#include "dalia/EffectControl.h"
+#include "dalia/Playback.h"
+#include "dalia/Sound.h"
+#include "dalia/Effect.h"
 
 #include "core/Types.h"
 #include "core/StateSyncPool.h"

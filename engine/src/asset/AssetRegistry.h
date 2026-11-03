@@ -1,5 +1,5 @@
 #pragma once
-#include "dalia/SoundControl.h"
+#include "dalia/Sound.h"
 #include "core/ResourcePool.h"
 
 // Asset types

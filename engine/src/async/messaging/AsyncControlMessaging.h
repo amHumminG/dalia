@@ -1,7 +1,7 @@
 #pragma once
 
 #include "core/SPSCRingBuffer.h"
-#include "dalia/DeviceControl.h"
+#include "dalia/Device.h"
 
 #include <cstdint>
 #include <cstdio>

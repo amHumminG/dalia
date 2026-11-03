@@ -1,6 +1,6 @@
 #pragma once
 #include "core/Constants.h"
-#include "dalia/PlaybackControl.h"
+#include "dalia/Playback.h"
 
 #include <cmath>
 #include <xmmintrin.h>

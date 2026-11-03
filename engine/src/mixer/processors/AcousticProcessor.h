@@ -1,6 +1,6 @@
 #pragma once
 
-#include "dalia/PlaybackControl.h"
+#include "dalia/Playback.h"
 #include "core/Constants.h"
 #include "core/StateSyncPool.h"
 #include "mixer/nodes/Listener.h"

@@ -1,7 +1,7 @@
 #pragma once
 
-#include "dalia/PlaybackControl.h"
-#include "dalia/SoundControl.h"
+#include "dalia/Playback.h"
+#include "dalia/Sound.h"
 #include "core/Constants.h"
 #include "core/Math.h"
 #include "mixer/dsp/Resampler.h"

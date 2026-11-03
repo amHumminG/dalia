@@ -4,12 +4,11 @@
 /// @brief Core DALIA engine lifecycle, configuration, and API entry points.
 
 #include "dalia/Result.h"
-#include "LogLevel.h"
-
-#include "DeviceControl.h"
-#include "PlaybackControl.h"
-#include "dalia/SoundControl.h"
-#include "EffectControl.h"
+#include "dalia/Log.h"
+#include "dalia/Device.h"
+#include "dalia/Playback.h"
+#include "dalia/Sound.h"
+#include "dalia/Effect.h"
 
 namespace dalia {
 

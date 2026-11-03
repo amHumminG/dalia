@@ -1,7 +1,7 @@
 #pragma once
 
 #include "dalia/Result.h"
-#include "dalia/SoundControl.h"
+#include "dalia/Sound.h"
 #include "asset/types/ResidentSound.h"
 #include "asset/types/StreamSound.h"
 #include "asset/AssetRegistry.h"

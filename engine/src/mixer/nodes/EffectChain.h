@@ -1,6 +1,6 @@
 #pragma once
 
-#include "dalia/EffectControl.h"
+#include "dalia/Effect.h"
 #include "core/Constants.h"
 
 #include <array>

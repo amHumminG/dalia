@@ -1,5 +1,5 @@
 #pragma once
-#include "dalia/EffectControl.h"
+#include "dalia/Effect.h"
 #include "mixer/nodes/effects/Biquad.h"
 
 namespace dalia {

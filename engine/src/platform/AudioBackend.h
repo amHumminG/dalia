@@ -1,6 +1,6 @@
 #pragma once
 
-#include "dalia/DeviceControl.h"
+#include "dalia/Device.h"
 #include "dalia/Result.h"
 #include "platform/OutputDevice.h"
 

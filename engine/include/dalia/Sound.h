@@ -1,6 +1,6 @@
 #pragma once
 
-/// @file SoundControl.h
+/// @file Sound.h
 /// @brief Asset management and async load callbacks.
 
 #include "Result.h"

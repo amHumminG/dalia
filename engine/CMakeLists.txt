@@ -20,11 +20,11 @@ set(ENGINE_FILES
     # Public headers
     include/dalia/dalia.h
     include/dalia/Engine.h
-    include/dalia/PlaybackControl.h
-    include/dalia/SoundControl.h
-    include/dalia/EffectControl.h
-    include/dalia/DeviceControl.h
-    include/dalia/LogLevel.h
+    include/dalia/Playback.h
+    include/dalia/Sound.h
+    include/dalia/Effect.h
+    include/dalia/Device.h
+    include/dalia/Log.h
     include/dalia/Result.h
 
     # Internal headers and cpp-files

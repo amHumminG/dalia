@@ -1,6 +1,6 @@
 #pragma once
 
-/// @file PlaybackControl.h
+/// @file Playback.h
 /// @brief Playback handles, 3D spatialization types, and listener configurations.
 
 #include <cstdint>

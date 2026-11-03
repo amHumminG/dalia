@@ -1,7 +1,7 @@
 #pragma once
 
 #include "core/Logger.h"
-#include "dalia/PlaybackControl.h"
+#include "dalia/Playback.h"
 #include "core/Constants.h"
 #include "core/Math.h"
 #include "core/Speakers.h"

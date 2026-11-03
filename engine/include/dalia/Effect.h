@@ -1,6 +1,6 @@
 #pragma once
 
-/// @file EffectControl.h
+/// @file Effect.h
 /// @brief DSP effect definitions, handles, and parameter structures.
 
 #include <cstdint>

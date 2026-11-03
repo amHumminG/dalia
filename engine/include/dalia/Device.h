@@ -1,6 +1,6 @@
 #pragma once
 
-/// @file DeviceControl.h
+/// @file Device.h
 /// @brief Audio output device metadata structures.
 
 #include <cstdint>
