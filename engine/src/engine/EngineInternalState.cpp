@@ -103,7 +103,7 @@ namespace dalia {
 		mixerThread->Wake(); // Pre-warm mixer ring buffer
 
 		res = deviceController->StartActiveOutputDevice(mixer.get());
-		if (res != Result::Ok) return res;
+		if (res != Result::Ok) return Result::DeviceFailed;
 
 		initialized = true;
 		return Result::Ok;
