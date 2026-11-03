@@ -52,7 +52,7 @@ The DSP pipeline is a Directed Acyclic Graph (DAG). In order to route audio dyna
 (voice or bus) holds a reference (more specifically an index) to its parent node. 
 
 ### Mix Graph Diagram
-![Mixing Graph](assets/diagrams/dalia_mixing_hierarchy_diagram.svg)
+![Mixing Graph](assets/diagrams/dalia_mix_graph_diagram.svg)
 
 This system is designed for CPU cache efficiency. The engine maintains a flat, topologically sorted array of active nodes.
 During an audio frame, the audio thread simply runs through this contiguous array, accumulating audio data into the
