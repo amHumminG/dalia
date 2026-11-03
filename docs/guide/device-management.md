@@ -1,10 +1,11 @@
 # Device Management
 
 !!! info "Platform Support"
-Device management is currently only implemented for Windows (WASAPI).
+Backend is currently only implemented for Windows (WASAPI).
 
 ## Initial State
-On engine initialization, DALIA automatically binds to the operating system's default audio endpoint (output device).
+On engine initialization, DALIA automatically binds to the operating system's default audio endpoint (output device),
+unless a specific target output device identifier has been set in the `EngineConfig`.
 If you have no need for specific device selection in your application. No device management code will be needed.
 
 ## Manual Device Selection
@@ -37,7 +38,7 @@ of the desired output device, you can request a swap.
 engine->SetOutputDevice(info.identifier); // Target a specific output device
 engine->SetOutputDevice("default");       // Revert back to tracking the OS default output device
 ```
-**Note:** *Passing a `nullptr` or an empty string also works to revert back to OS default output.*
+**Note:** *Passing `nullptr` or an empty string also works to revert back to OS default output.*
 
 ## Querying the State
 Because device swaps take time, there is likely a multi-frame window where the requested device is being initialized.

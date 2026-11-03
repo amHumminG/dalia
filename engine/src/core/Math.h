@@ -1,5 +1,6 @@
 #pragma once
 #include "core/Constants.h"
+#include "dalia/Playback.h"
 
 #include <cmath>
 #include <xmmintrin.h>
@@ -40,6 +41,10 @@ namespace dalia::math {
 		Vector3 operator+(const Vector3& other) const { return Vector3(x + other.x, y + other.y, z + other.z); }
 		Vector3 operator-(const Vector3& other) const { return Vector3(x - other.x, y - other.y, z - other.z); }
 		Vector3 operator*(float scalar) const { return Vector3(x * scalar, y * scalar, z * scalar); }
+
+    	static Vector3 FromPublic(const Vec3& v) { return { v.x, v.y, v.z }; }
+
+    	static Vec3 ToPublic(const Vector3& v) { return { v.x, v.y, v.z }; }
 
 		static float DotProduct(const Vector3& first, const Vector3& second) {
 			return (first.x * second.x) + (first.y * second.y) + (first.z * second.z);

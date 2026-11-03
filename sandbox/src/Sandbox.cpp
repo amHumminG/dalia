@@ -118,6 +118,7 @@ void Sandbox::ApplyTheme() {
     colors[ImGuiCol_SliderGrabActive]     = ImVec4(0.95f, 0.95f, 0.95f, 1.00f);
 
     // Headers & Tabs
+
     colors[ImGuiCol_Header]               = ImVec4(0.20f, 0.20f, 0.20f, 1.00f);
     colors[ImGuiCol_HeaderHovered]        = ImVec4(0.30f, 0.30f, 0.30f, 1.00f);
     colors[ImGuiCol_HeaderActive]         = ImVec4(0.45f, 0.45f, 0.45f, 1.00f);
@@ -446,7 +447,10 @@ void Sandbox::DrawInspector() {
 
 		ImGui::Separator();
 		ImGui::PushStyleColor(ImGuiCol_Button, {0.8f, 0.2f, 0.2f, 1.0f});
-		if (ImGui::Button("Delete Playback Instance", ImVec2(-1, 30))) requestDelete = true;
+		if (ImGui::Button("Delete Playback Instance", ImVec2(-1, 30))) {
+			m_engine.StopPlayback(playback->GetHandle());
+			requestDelete = true;
+		}
 		ImGui::PopStyleColor();
 	}
 	else if (m_selectionType == SelectionType::Sound) {
@@ -598,7 +602,7 @@ void Sandbox::DrawInspector() {
 	if (requestDelete) {
 		if (m_selectionType == SelectionType::Playback) {
 			std::erase_if(m_playbackInstances, [this](const std::unique_ptr<PlaybackInstance>& p) {
-				return p.get() == m_selectedObject;
+				return p.get() == m_selectedObject && p->GetState() == PlaybackState::Stopped;
 			});
 		}
 		else if (m_selectionType == SelectionType::Sound) {
@@ -663,7 +667,8 @@ void Sandbox::DrawAssetBrowser() {
 			}
 			else {
 				auto sound = std::make_unique<SoundAsset>(&m_engine, type, path);
-				if (sound->GetResult() == dalia::Result::Ok) {
+				dalia::Result res = sound->GetResult();
+				if (res == dalia::Result::Ok) {
 					m_selectedObject = sound.get();
 					m_selectionType = SelectionType::Sound;
 					m_sounds.push_back(std::move(sound));
@@ -1407,14 +1412,14 @@ void Sandbox::DrawHotkeysWindow() {
 void Sandbox::RefreshAvailableAssets() {
 	m_availableAssets.clear();
 
-	std::string targetDir = "assets";
+	std::string targetDir = "assets/audio";
 
 	if (std::filesystem::exists(targetDir) && std::filesystem::is_directory(targetDir)) {
 		for (const auto& entry : std::filesystem::recursive_directory_iterator(targetDir)) {
 			if (entry.is_regular_file()) {
-				// Filter audio files only (extend this when we add banks)
+				// Filter audio files only (extend this when we support more formats and banks)
 				std::string ext = entry.path().extension().string();
-				if (ext == ".wav" || ext == ".mp3" || ext == ".ogg") {
+				if (ext == ".ogg") {
 					m_availableAssets.push_back(entry.path().generic_string());
 				}
 			}

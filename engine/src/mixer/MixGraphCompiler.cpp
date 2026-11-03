@@ -1,6 +1,6 @@
 #include "mixer/MixGraphCompiler.h"
 #include "core/FixedStack.h"
-#include "mixer/Bus.h"
+#include "nodes/Bus.h"
 
 #include <cassert>
 

@@ -19,28 +19,28 @@ namespace dalia {
 		InvalidArgs					= -5,
 		InvalidHandle				= -6,
 		ExpiredHandle				= -7,
-		BusNotFound					= -8,
+		InvalidBus					= -8,
 		InvalidRouting				= -9,
 		InvalidEffectSlot			= -10,
-		ListenerNotFound			= -11,
+		InvalidListener				= -11,
+		SoundNotLoaded				= -12,
 
 		// Pool Capacity Errors
-		PoolExhausted				= -100,
-		ResidentSoundPoolExhausted	= -101,
-		StreamSoundPoolExhausted	= -102,
-		VoicePoolExhausted			= -103,
-		StreamPoolExhausted			= -104,
-		BusPoolExhausted			= -105,
-		EffectPoolExhausted			= -106,
+		CapacityReached				= -100,
+		SoundCapacityReached		= -101,
+		VoiceCapacityReached		= -102,
+		StreamCapacityReached		= -103,
+		BusCapacityReached			= -104,
+		EffectCapacityReached		= -105,
 
 		// Messaging Errors
-		MixerCommandQueueFull		= -200,
-		MixerEventQueueFull			= -201,
-		IoStreamRequestQueueFull	= -202,
-		IoLoadRequestQueueFull		= -203,
+		MixerQueueCapacityReached	= -200,
+		StreamQueueCapacityReached	= -201,
+		LoadQueueCapacityReached	= -202,
+		ControlQueueCapacityReached = -203,
 
 		// Playback Errors
-		PlaybackCorrupted			= -303,
+		PlaybackCorrupted			= -300,
 
 		// I/O Errors
 		SoundLoadError				= -400,
@@ -70,23 +70,22 @@ namespace dalia {
 			case Result::InvalidArgs: return "Invalid arguments.";
 			case Result::InvalidHandle: return "Invalid handle";
 			case Result::ExpiredHandle: return "Expired handle";
-			case Result::BusNotFound: return "Bus not found";
+			case Result::InvalidBus: return "Bus not found";
 			case Result::InvalidRouting: return "Invalid routing";
 			case Result::InvalidEffectSlot: return "Invalid effect slot";
-			case Result::ListenerNotFound: return "Listener not found";
+			case Result::InvalidListener: return "Listener not found";
 
-			case Result::PoolExhausted: return "Pool exhausted (generic)";
-			case Result::ResidentSoundPoolExhausted: return "Resident sound pool exhausted";
-			case Result::StreamSoundPoolExhausted: return "Stream sound pool exhausted";
-			case Result::VoicePoolExhausted: return "Voice pool exhausted";
-			case Result::StreamPoolExhausted: return "Stream pool exhausted";
-			case Result::BusPoolExhausted: return "Bus pool exhausted";
-			case Result::EffectPoolExhausted: return "Effect pool exhausted";
+			case Result::CapacityReached: return "Pool capacity reached (generic)";
+			case Result::SoundCapacityReached: return "Resident/Stream sound pool capacity reached";
+			case Result::VoiceCapacityReached: return "Voice pool capacity reached";
+			case Result::StreamCapacityReached: return "Stream pool capacity reached";
+			case Result::BusCapacityReached: return "Bus pool capacity reached";
+			case Result::EffectCapacityReached: return "Effect pool capacity reached";
 
-			case Result::MixerCommandQueueFull: return "Mixer command queue full";
-			case Result::MixerEventQueueFull: return "Mixer event queue full";
-			case Result::IoStreamRequestQueueFull: return "I/O stream request queue full";
-			case Result::IoLoadRequestQueueFull: return "I/O load request queue full";
+			case Result::MixerQueueCapacityReached: return "Mixer queue capacity reached";
+			case Result::StreamQueueCapacityReached: return "Stream queue capacity reached";
+			case Result::LoadQueueCapacityReached: return "Load queue capacity reached";
+			case Result::ControlQueueCapacityReached: return "Control queue capacity reached";
 
 			case Result::PlaybackCorrupted: return "Playback corrupted";
 

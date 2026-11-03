@@ -10,11 +10,11 @@ SoundAsset::SoundAsset(dalia::Engine* engine, dalia::SoundType type, const std::
 	auto loadCallback = [this](uint32_t requestId, dalia::Result loadResult) {
 		if (loadResult == dalia::Result::Ok) {
 			this->m_loadState = SoundLoadState::Loaded;
-			m_engine->GetSoundLength(m_handle, m_lengthInSeconds);
+			this->m_engine->GetSoundLength(m_handle, m_lengthInSeconds);
 		}
 		else {
 			this->m_loadState = SoundLoadState::Failed;
-			m_result = loadResult;
+			this->m_result = loadResult;
 		}
 	};
 

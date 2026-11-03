@@ -7,9 +7,9 @@
 /// headers.
 
 #include "Engine.h"
-#include "PlaybackControl.h"
-#include "SoundControl.h"
-#include "EffectControl.h"
-#include "DeviceControl.h"
-#include "LogLevel.h"
+#include "Playback.h"
+#include "Sound.h"
+#include "Effect.h"
+#include "Device.h"
+#include "Log.h"
 #include "Result.h"
