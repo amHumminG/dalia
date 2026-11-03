@@ -21,7 +21,7 @@ namespace dalia {
 		);
 
 		if (!timer) {
-			DALIA_LOG_WARN(LOG_CTX_BACKEND, "Failed to create high-resolution timer. Falling back to legacy timer.");
+			DALIA_LOG_WARN(LOG_CTX_PLATFORM, "Failed to create high-resolution timer. Falling back to legacy timer.");
 			timer = CreateWaitableTimerW(nullptr, FALSE, nullptr);
 		}
 

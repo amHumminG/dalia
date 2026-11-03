@@ -42,11 +42,11 @@ namespace dalia {
 				case SpeakerLayout::Surround51: layout = "5.1"; break;
 				case SpeakerLayout::Surround71: layout = "7.1"; break;
 			}
-			DALIA_LOG_INFO(LOG_CTX_API, "Initialized audio device \"%s\". %s layout with %u channel(s).",
+			DALIA_LOG_INFO(LOG_CTX_CORE, "Initialized audio device \"%s\". %s layout with %u channel(s).",
 				m_outputDevice->GetName().c_str(), layout.c_str(), m_outputDevice->GetChannels());
 		}
 		else {
-			DALIA_LOG_WARN(LOG_CTX_API, "No output audio device found. Audio will render to void for now.");
+			DALIA_LOG_WARN(LOG_CTX_CORE, "No output audio device found. Audio will render to void for now.");
 			m_activeOutputDevice = m_nullOutputDevice.get();
 		}
 
@@ -107,7 +107,7 @@ namespace dalia {
 		m_targetOutputDeviceId = target;
 		m_pendingOutputDeviceSwap = true;
 
-		DALIA_LOG_DEBUG(LOG_CTX_API, "Set output device (id: %s).", identifier);
+		DALIA_LOG_DEBUG(LOG_CTX_CORE, "Set output device (id: %s).", identifier);
 
 		return Result::Ok;
 	}
@@ -243,7 +243,7 @@ namespace dalia {
 			SpeakerLayout oldLayout = cmd.data.swapOutputDevice.oldDevice->GetSpeakerLayout();
 			m_nullOutputDevice->SetOutputFormat(oldChannels, oldLayout);
 
-			DALIA_LOG_DEBUG(LOG_CTX_BACKEND, "Stopping output device \"%s\".",
+			DALIA_LOG_DEBUG(LOG_CTX_PLATFORM, "Stopping output device \"%s\".",
 				cmd.data.swapOutputDevice.oldDevice->GetName().c_str());
 			cmd.data.swapOutputDevice.oldDevice->Stop();
 			// Delay deletion until null device has been started
@@ -264,7 +264,7 @@ namespace dalia {
 			newDevice = m_audioBackend->CreateOutputDevice("default", cmd.data.swapOutputDevice.sampleRate);
 			fellBack = true;
 			if (newDevice) {
-				DALIA_LOG_DEBUG(LOG_CTX_BACKEND, "Fell back to OS default output device \"%s\".", newDevice->GetName().c_str());
+				DALIA_LOG_DEBUG(LOG_CTX_PLATFORM, "Fell back to OS default output device \"%s\".", newDevice->GetName().c_str());
 			}
 		}
 

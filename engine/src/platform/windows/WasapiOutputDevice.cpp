@@ -99,24 +99,24 @@ namespace dalia {
 			switch (mask) {
 				case KSAUDIO_SPEAKER_MONO:
 					m_speakerLayout = SpeakerLayout::Mono;
-					DALIA_LOG_DEBUG(LOG_CTX_BACKEND, "Detected speaker layout (Mono) with %u channel(s).", m_channels);
+					DALIA_LOG_DEBUG(LOG_CTX_PLATFORM, "Detected speaker layout (Mono) with %u channel(s).", m_channels);
 					break;
 				case KSAUDIO_SPEAKER_STEREO:
 					m_speakerLayout = SpeakerLayout::Stereo;
-					DALIA_LOG_DEBUG(LOG_CTX_BACKEND, "Detected speaker layout (Stereo) with %u channel(s).", m_channels);
+					DALIA_LOG_DEBUG(LOG_CTX_PLATFORM, "Detected speaker layout (Stereo) with %u channel(s).", m_channels);
 					break;
 				case KSAUDIO_SPEAKER_5POINT1:
 				case KSAUDIO_SPEAKER_5POINT1_SURROUND:
 					m_speakerLayout = SpeakerLayout::Surround51;
-					DALIA_LOG_DEBUG(LOG_CTX_BACKEND, "Detected speaker layout (5.1 Surround) with %u channel(s).", m_channels);
+					DALIA_LOG_DEBUG(LOG_CTX_PLATFORM, "Detected speaker layout (5.1 Surround) with %u channel(s).", m_channels);
 					break;
 				case KSAUDIO_SPEAKER_7POINT1:
 				case KSAUDIO_SPEAKER_7POINT1_SURROUND:
 					m_speakerLayout = SpeakerLayout::Surround71;
-					DALIA_LOG_DEBUG(LOG_CTX_BACKEND, "Detected speaker layout (7.1 Surround) with %u channel(s).", m_channels);
+					DALIA_LOG_DEBUG(LOG_CTX_PLATFORM, "Detected speaker layout (7.1 Surround) with %u channel(s).", m_channels);
 					break;
 				default:
-					DALIA_LOG_WARN(LOG_CTX_BACKEND,
+					DALIA_LOG_WARN(LOG_CTX_PLATFORM,
 						"Non-standard speaker layout detected (mask: 0x%X). Falling back to estimation based on %u channel(s).",
 						mask, m_channels);
 					if (m_channels >= 8) m_speakerLayout = SpeakerLayout::Surround71;
@@ -126,12 +126,17 @@ namespace dalia {
 			}
 		}
 		else {
-			DALIA_LOG_WARN(LOG_CTX_BACKEND,
+			DALIA_LOG_WARN(LOG_CTX_PLATFORM,
 				"Missing speaker layout. Falling back to estimation based on %u channel(s).", m_channels);
 			if (m_channels >= 8) m_speakerLayout = SpeakerLayout::Surround71;
 			else if (m_channels >= 6) m_speakerLayout = SpeakerLayout::Surround51;
 			else if (m_channels >= 2) m_speakerLayout = SpeakerLayout::Stereo;
 			else m_speakerLayout = SpeakerLayout::Mono;
+		}
+
+		if (m_channels > CHANNELS_SUPPORTED_MAX) {
+			DALIA_LOG_ERR(LOG_CTX_PLATFORM, "Failed to initialize output device. Speaker layout not supported.");
+			return Result::DeviceFailed;
 		}
 
 		// --- Audio Client Initialization ---
@@ -149,19 +154,19 @@ namespace dalia {
 		);
 
 		if (FAILED(hr)) {
-			DALIA_LOG_ERR(LOG_CTX_BACKEND, "Failed to initialize audio client.");
+			DALIA_LOG_ERR(LOG_CTX_PLATFORM, "Failed to initialize audio client.");
 			return Result::ClientFailed;
 		}
 
 		REFERENCE_TIME defaultDevicePeriod = 0;
 		REFERENCE_TIME minDevicePeriod = 0;
 		if (FAILED(m_audioClient->GetDevicePeriod(&defaultDevicePeriod, &minDevicePeriod))) {
-			DALIA_LOG_ERR(LOG_CTX_BACKEND, "Failed to query device period.");
+			DALIA_LOG_ERR(LOG_CTX_PLATFORM, "Failed to query device period.");
 			return Result::ClientFailed;
 		}
 
 		m_periodSizeInFrames = static_cast<UINT32>((defaultDevicePeriod * m_sampleRate) / 10000000);
-		DALIA_LOG_DEBUG(LOG_CTX_BACKEND, "Audio client initialization succeeded with default periodicity (%u frames).",
+		DALIA_LOG_DEBUG(LOG_CTX_PLATFORM, "Audio client initialization succeeded with default periodicity (%u frames).",
 			m_periodSizeInFrames);
 
 		CoTaskMemFree(mixFormat); // Free mixFormat pointer
@@ -259,7 +264,7 @@ namespace dalia {
 				UINT32 padding = 0;
 				HRESULT hr = m_audioClient->GetCurrentPadding(&padding);
 				if (hr == AUDCLNT_E_DEVICE_INVALIDATED || hr == AUDCLNT_E_RESOURCES_INVALIDATED) {
-					DALIA_LOG_WARN(LOG_CTX_BACKEND,
+					DALIA_LOG_WARN(LOG_CTX_PLATFORM,
 						"Audio device invalidated during padding query. Stopping audio thread.");
 					m_hasFailed.store(true, std::memory_order_release);
 					break;
@@ -273,7 +278,7 @@ namespace dalia {
 				BYTE* pData = nullptr;
 				hr = m_renderClient->GetBuffer(framesToWrite, &pData);
 				if (hr == AUDCLNT_E_DEVICE_INVALIDATED || hr == AUDCLNT_E_RESOURCES_INVALIDATED) {
-					DALIA_LOG_WARN(LOG_CTX_BACKEND,
+					DALIA_LOG_WARN(LOG_CTX_PLATFORM,
 						"Audio device invalidated during buffer fetch. Stopping audio thread.");
 					m_hasFailed.store(true, std::memory_order_release);
 					break;
@@ -300,7 +305,7 @@ namespace dalia {
 							float* silenceStart = outBuffer + (framesRead * m_channels);
 							size_t samplesToClear = missingFrames * m_channels;
 							std::memset(silenceStart, 0, samplesToClear * sizeof(float));
-							DALIA_LOG_WARN(LOG_CTX_BACKEND, "Unable to fill audio frame. %zu frames missing.", missingFrames);
+							DALIA_LOG_WARN(LOG_CTX_PLATFORM, "Unable to fill audio frame. %zu frames missing.", missingFrames);
 						}
 					}
 					else {
@@ -315,7 +320,7 @@ namespace dalia {
 
 				hr = m_renderClient->ReleaseBuffer(framesToWrite, 0);
 				if (hr == AUDCLNT_E_DEVICE_INVALIDATED || hr == AUDCLNT_E_RESOURCES_INVALIDATED) {
-					DALIA_LOG_WARN(LOG_CTX_BACKEND, "Audio device invalidated during buffer release. Stopping audio thread.");
+					DALIA_LOG_WARN(LOG_CTX_PLATFORM, "Audio device invalidated during buffer release. Stopping audio thread.");
 					m_hasFailed.store(true, std::memory_order_release);
 					break;
 				}

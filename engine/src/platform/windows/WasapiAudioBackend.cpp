@@ -142,6 +142,20 @@ namespace dalia {
 			Microsoft::WRL::ComPtr<IMMDevice> device;
 			if (FAILED(collection->Item(i, &device))) continue;
 
+			// --- Channel layout safety guard ---
+			Microsoft::WRL::ComPtr<IAudioClient> audioClient;
+			if (FAILED(device->Activate(__uuidof(IAudioClient), CLSCTX_ALL, nullptr,
+				(void**)(&audioClient)))) continue;
+
+			WAVEFORMATEX* mixFormat = nullptr;
+			if (FAILED(audioClient->GetMixFormat(&mixFormat))) continue;
+
+			WORD channelCount = mixFormat->nChannels;
+			CoTaskMemFree(mixFormat);
+
+			if (channelCount > CHANNELS_SUPPORTED_MAX) continue; // Skip unsupported layouts
+			// ------
+
 			OutputDeviceInfo info{};
 
 			// Get device id

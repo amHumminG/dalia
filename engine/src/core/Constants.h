@@ -72,6 +72,7 @@ namespace dalia {
 	static constexpr uint32_t CHANNELS_MONO = 1;
 	static constexpr uint32_t CHANNELS_STEREO = 2;
     static constexpr uint32_t CHANNELS_MAX = 8;
+	static constexpr uint32_t CHANNELS_SUPPORTED_MAX = 2;
 
 	// Listeners
 	static constexpr uint32_t LISTENERS_DEFAULT = 1;
