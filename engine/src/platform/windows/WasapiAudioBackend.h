@@ -43,6 +43,7 @@ namespace dalia {
 			SPSCRingBuffer<OSDeviceNotification>& m_notificationQueue;
 		};
 
+		bool m_initialized = false;
 		Microsoft::WRL::ComPtr<NotificationClient> m_notificationClient;
 		Microsoft::WRL::ComPtr<IMMDeviceEnumerator> m_enumerator;
 

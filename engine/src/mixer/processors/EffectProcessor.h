@@ -26,7 +26,7 @@ namespace dalia {
 		void Shutdown();
 
 		void SyncNodes();
-		void SetOutputChannels(uint32_t outChannels) { m_outChannels = outChannels; }
+		void SetOutputChannels(uint32_t outChannels);
 
 		void ProcessEffectChain(EffectChain& chain, float* buffer, uint32_t frameCount);
 
@@ -43,6 +43,7 @@ namespace dalia {
 		bool IsAlive(EffectHandle handle);
 		void ProcessEffect(EffectHandle handle, float* buffer, uint32_t frameCount);
 
+		bool m_initialized = false;
 		AsyncMessageBus* m_asyncMessageBus = nullptr;
 
 		MixerPoolView<Biquad, BiquadParams> m_biquadPool;

@@ -1,12 +1,12 @@
 #include "mixer/nodes/effects/Biquad.h"
 
 #include "core/Constants.h"
+#include "core/Profiler.h"
+#include "core/Math.h"
 
 #include <cstring>
 #include <cmath>
 #include <algorithm>
-
-#include "core/Math.h"
 
 namespace dalia {
 
@@ -32,6 +32,8 @@ namespace dalia {
 	}
 
 	void Biquad::Process(float* buffer, uint32_t frameCount, uint32_t channels, uint32_t sampleRate) {
+		DALIA_PROFILE_SCOPE_N("Biquad::Process");
+
 		if (isFirstProcess) {
 			CalculateCoefficients(sampleRate);
 			isFirstProcess = false;

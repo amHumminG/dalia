@@ -30,22 +30,22 @@ namespace dalia {
 
 		// Construct threads
 		streamThread = std::make_unique<IntervalThread>(
-			"DALIA Stream Thread",
+			"Dalia - Stream Thread",
 			[this]() { asyncMessageBus->ProcessStreamCommands(); },
 			5000, ThreadPriority::High);
 		loadThread = std::make_unique<WakeableThread>(
-		"DALIA Load Thread",
+			"Dalia - Load Thread",
 			[this]() { asyncMessageBus->ProcessLoadCommands(); },
 			ThreadPriority::Normal
 		);
 		controlThread = std::make_unique<WakeableThread>(
-		"DALIA Control Thread",
+			"Dalia - Control Thread",
 			[this]() { asyncMessageBus->ProcessControlCommands(); },
 			ThreadPriority::Normal
 		);
 		mixerThread = std::make_unique<WakeableThread>(
-		"DALIA Mixer Thread",
-			[this]() { mixer->ProcessAudioPeriod(); },
+			"Mixer Thread",
+			[this]() { mixer->OnWake(); },
 			ThreadPriority::TimeCritical
 		);
 
@@ -58,6 +58,8 @@ namespace dalia {
 	}
 
 	Result EngineInternalState::Initialize(const EngineConfig& config) {
+		DALIA_PROFILE_SCOPE_N("EngineInternalState::Initialize")
+
 		Result res = ioController->Initialize(asyncMessageBus.get());
 		if (res != Result::Ok) return res;
 
@@ -114,6 +116,8 @@ namespace dalia {
 	}
 
 	void EngineInternalState::Shutdown() {
+		DALIA_PROFILE_SCOPE_N("EngineInternalState::Shutdown")
+
 		if (!initialized) return;
 
 		// Stop output device

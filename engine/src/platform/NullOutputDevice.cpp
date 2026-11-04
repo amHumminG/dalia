@@ -7,7 +7,9 @@
 namespace dalia {
 
 	NullOutputDevice::NullOutputDevice(uint32_t sampleRate, uint32_t periodSizeFrames)
-		: m_sampleRate(sampleRate), m_periodSizeFrames(periodSizeFrames) {}
+		: m_sampleRate(sampleRate), m_periodSizeFrames(periodSizeFrames) {
+		DALIA_PROFILE_PLOT_CONFIG("Null Output Drift (Microseconds)");
+	}
 
 	NullOutputDevice::~NullOutputDevice() {
 		Stop();
@@ -60,6 +62,7 @@ namespace dalia {
 
 	void NullOutputDevice::ThreadMain() {
 		PlatformThread::SetCurrentThreadPriority(ThreadPriority::TimeCritical);
+		DALIA_PROFILE_THREAD("Dalia - Null Output");
 
 		HighResTimer timer;
 		auto period = static_cast<std::chrono::microseconds>(m_periodSizeFrames * 1000000) / m_sampleRate;
@@ -71,9 +74,15 @@ namespace dalia {
 
 			auto now = std::chrono::steady_clock::now();
 			if (now < nextWakeTime) {
+				DALIA_PROFILE_SCOPE_N("NullOutput::Sleep");
+
 				auto sleepDuration = std::chrono::duration_cast<std::chrono::microseconds>(nextWakeTime - now).count();
 				timer.SleepMicroseconds(sleepDuration);
 			}
+
+			auto wakeTime = std::chrono::steady_clock::now();
+			int64_t driftMicroseconds = std::chrono::duration_cast<std::chrono::microseconds>(wakeTime - nextWakeTime).count();
+			DALIA_PROFILE_PLOT("Null Output Drift (Microseconds)", driftMicroseconds);
 
 			if (!m_isRunning.load(std::memory_order_relaxed)) break;
 

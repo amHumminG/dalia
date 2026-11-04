@@ -5,11 +5,14 @@
 #include "async/messaging/AsyncMixerMessaging.h"
 #include "mixer/nodes/effects/EffectTraits.h"
 #include "async/AsyncMessageBus.h"
+#include "core/Assert.h"
 
 namespace dalia {
 
 	template <typename TParams> requires requires (TParams p) { p.Sanitize(); }
 	Result MixController::CreateEffect(EffectHandle& effect, const TParams& params) {
+		DALIA_ASSERT(m_initialized, "MixController used before initialized.");
+
 		effect = INVALID_EFFECT_HANDLE;
 
 		using Traits = EffectTraits<TParams>;
@@ -37,6 +40,8 @@ namespace dalia {
 
 	template <typename TParams> requires requires (TParams p) { p.Sanitize(); }
 	Result MixController::SetEffectParams(EffectHandle effect, const TParams& params) {
+		DALIA_ASSERT(m_initialized, "MixController used before initialized.");
+
 		return ModifyEffectParams<TParams>(effect, [&](TParams& eParams) -> Result {
 			TParams sanitizedParams = params;
 			sanitizedParams.Sanitize();

@@ -1,9 +1,9 @@
 #include "DeviceController.h"
 
-#include <future>
-
 #include "async/messaging/AsyncControlMessaging.h"
 #include "async/AsyncMessageBus.h"
+#include "core/Profiler.h"
+#include "core/Assert.h"
 
 namespace dalia {
 	DeviceController::~DeviceController() {
@@ -12,6 +12,7 @@ namespace dalia {
 
 	Result DeviceController::Initialize(AsyncMessageBus* asyncMessageBus, Mixer* mixer,
 		uint32_t outSampleRate, uint32_t periodSizeInFrames, const std::string& outDeviceId) {
+		DALIA_PROFILE_SCOPE_N("DeviceController::Initialize");
 
 		// Setup OS specific device manager
 #ifdef _WIN32
@@ -60,24 +61,37 @@ namespace dalia {
 
 		m_mixer = mixer;
 
+		m_initialized = true;
 		return Result::Ok;
 	}
 
 	void DeviceController::Shutdown() {
+		DALIA_PROFILE_SCOPE_N("DeviceController::Shutdown");
+
+		if (!m_initialized) return;
+
 		if (m_outputDevice)		m_outputDevice->Stop();
 		if (m_nullOutputDevice)	m_nullOutputDevice->Stop();
+		m_initialized = false;
 	}
 
 	void DeviceController::Update() {
+		DALIA_ASSERT(m_initialized, "DeviceController used before initialized.");
+		DALIA_PROFILE_SCOPE_N("DeviceController::Update")
+
 		CheckForOutputDeviceChanges();
 	}
 
 	uint32_t DeviceController::GetOutputDeviceCount() {
+		DALIA_ASSERT(m_initialized, "DeviceController used before initialized.");
+
 		if (m_audioBackend) m_cachedOutputDeviceList = m_audioBackend->Enumerate(); // Refresh cache
 		return static_cast<uint32_t>(m_cachedOutputDeviceList.size());
 	}
 
 	Result DeviceController::GetOutputDeviceInfo(uint32_t index, OutputDeviceInfo& info) {
+		DALIA_ASSERT(m_initialized, "DeviceController used before initialized.");
+
 		if (index >= m_cachedOutputDeviceList.size()) return Result::InvalidArgs;
 
 		info = m_cachedOutputDeviceList[index];
@@ -85,6 +99,8 @@ namespace dalia {
 	}
 
 	Result DeviceController::GetActiveOutputDeviceInfo(OutputDeviceInfo& info) {
+		DALIA_ASSERT(m_initialized, "DeviceController used before initialized.");
+
 		if (!m_activeOutputDevice) return Result::StateCorrupted;
 
 		snprintf(info.name, MAX_STR_LEN_DEVICE, "%s", m_activeOutputDevice->GetName().c_str());
@@ -94,6 +110,8 @@ namespace dalia {
 	}
 
 	Result DeviceController::GetTargetOutputDeviceInfo(char* identifier, size_t maxLength) {
+		DALIA_ASSERT(m_initialized, "DeviceController used before initialized.");
+
 		if (!identifier || maxLength == 0) return Result::InvalidArgs;
 
 		snprintf(identifier, maxLength, "%s", m_targetOutputDeviceId.c_str());
@@ -101,6 +119,8 @@ namespace dalia {
 	}
 
 	Result DeviceController::SetOutputDevice(const char* identifier) {
+		DALIA_ASSERT(m_initialized, "DeviceController used before initialized.");
+
 		const char* target = (identifier && identifier[0]) != '\0' ? identifier : "default"; // emtpy/nullptr is default
 		if (m_targetOutputDeviceId == target) return Result::Ok;
 
@@ -113,30 +133,44 @@ namespace dalia {
 	}
 
 	Result DeviceController::StartActiveOutputDevice(Mixer* mixer) {
+		DALIA_ASSERT(m_initialized, "DeviceController used before initialized.");
+
 		return m_activeOutputDevice->Start(mixer);
 	}
 
 	void DeviceController::StopActiveOutputDevice() {
+		DALIA_ASSERT(m_initialized, "DeviceController used before initialized.");
+
 		m_activeOutputDevice->Stop();
 	}
 
 	SpeakerLayout DeviceController::GetActiveOutputSpeakerLayout() const {
+		DALIA_ASSERT(m_initialized, "DeviceController used before initialized.");
+
 		return m_speakerLayout;
 	}
 
 	uint32_t DeviceController::GetActiveOutputChannels() const {
+		DALIA_ASSERT(m_initialized, "DeviceController used before initialized.");
+
 		return m_outChannels;
 	}
 
 	uint32_t DeviceController::GetOutputSampleRate() const {
+		DALIA_ASSERT(m_initialized, "DeviceController used before initialized.");
+
 		return m_outSampleRate;
 	}
 
 	uint32_t DeviceController::GetPeriodSizeFrames() const {
+		DALIA_ASSERT(m_initialized, "DeviceController used before initialized.");
+
 		return m_periodSizeFrames;
 	}
 
 	uint32_t DeviceController::GetMaxPeriodSizeSamples() const {
+		DALIA_ASSERT(m_initialized, "DeviceController used before initialized.");
+
 		return m_periodSizeFrames * CHANNELS_MAX;
 	}
 
@@ -154,6 +188,8 @@ namespace dalia {
 	}
 
 	void DeviceController::CheckForOutputDeviceChanges() {
+		DALIA_PROFILE_SCOPE_N("DeviceController::CheckForOutputDeviceChanges")
+
 		// --- Wait For Ongoing Swap ---
 		if (m_isSwappingOutputDevice) return;
 
@@ -198,6 +234,8 @@ namespace dalia {
 	}
 
 	void DeviceController::FinalizeOutputDeviceSwap(const AsyncControlEvent& ev) {
+		DALIA_PROFILE_SCOPE_N("DeviceController::FinalizeOutputDeviceSwap")
+
 		m_outputDevice.reset(ev.data.swapOutputDevice.newDevice);
 
 		if (ev.data.swapOutputDevice.fellBackToDefault) {
@@ -236,6 +274,8 @@ namespace dalia {
 	}
 
 	void DeviceController::ExecuteOutputDeviceSwap(const AsyncControlCommand& cmd) {
+		DALIA_PROFILE_SCOPE_N("DeviceController::ExecuteOutputDeviceSwap")
+
 		// Teardown old device
 		if (cmd.data.swapOutputDevice.oldDevice) {
 			// Check the format before stopping the old device

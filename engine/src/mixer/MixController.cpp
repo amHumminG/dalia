@@ -3,6 +3,8 @@
 #include "asset/AssetController.h"
 #include "platform/DeviceController.h"
 #include "io/IoController.h"
+#include "core/Assert.h"
+#include "core/Profiler.h"
 
 #include <algorithm>
 
@@ -24,6 +26,7 @@ namespace dalia {
 
 	Result MixController::Initialize(AsyncMessageBus* asyncMessageBus, AssetController* assetController,
 		IoController* ioController) {
+		DALIA_PROFILE_SCOPE_N("MixController::Initialize");
 
 		m_asyncMessageBus = asyncMessageBus;
 		m_assetController = assetController;
@@ -52,11 +55,14 @@ namespace dalia {
 		m_asyncMessageBus->SubscribeToLoadEvent(AsyncLoadEvent::Type::SoundLoadFailed,
 			[this](const AsyncLoadEvent& ev) { HandleSoundLoadFailedEvent(ev); });
 
+		m_initialized = true;
 		return Result::Ok;
 	}
 
 	void MixController::Shutdown() {
-		if (!m_asyncMessageBus) return;
+		DALIA_PROFILE_SCOPE_N("MixController::Shutdown");
+
+		if (!m_initialized) return;
 
 		// Unsubscribe from mixer events
 		m_asyncMessageBus->UnsubscribeFromMixerEvent(AsyncMixerEvent::Type::VoiceStopped);
@@ -68,9 +74,14 @@ namespace dalia {
 		m_asyncMessageBus = nullptr;
 		m_assetController = nullptr;
 		m_ioController	  = nullptr;
+
+		m_initialized = false;
 	}
 
 	void MixController::SyncPools() {
+		DALIA_ASSERT(m_initialized, "MixController used before initialized.");
+		DALIA_PROFILE_SCOPE_N("MixController::SyncPools");
+
 		m_voices.Sync();
 		m_listeners.Sync();
 		m_buses.Sync();
@@ -78,8 +89,35 @@ namespace dalia {
 	}
 
 	void MixController::SetGlobalDopplerFactor(float globalDopplerFactor) {
+		DALIA_ASSERT(m_initialized, "MixController used before initialized.");
+		DALIA_PROFILE_SCOPE_N("MixController::SetGlobalDopplerFactor");
+
 		float clampedGlobalDopplerFactor = std::clamp(globalDopplerFactor, DOPPLER_FACTOR_MIN, DOPPLER_FACTOR_MAX);
 		m_asyncMessageBus->PublishMixerCommand(AsyncMixerCommand::SetGlobalDopplerFactor(clampedGlobalDopplerFactor));
+	}
+
+	StateSyncPool<Voice, VoiceMirror, VoiceParams>& MixController::GetVoicePool() {
+		DALIA_ASSERT(m_initialized, "MixController used before initialized.");
+
+		return m_voices;
+	}
+
+	StateSyncPool<Listener, ListenerMirror, ListenerParams>& MixController::GetListenerPool() {
+		DALIA_ASSERT(m_initialized, "MixController used before initialized.");
+
+		return m_listeners;
+	}
+
+	StateSyncPool<Bus, BusMirror, BusParams>& MixController::GetBusPool() {
+		DALIA_ASSERT(m_initialized, "MixController used before initialized.");
+
+		return m_buses;
+	}
+
+	StateSyncPool<Biquad, BiquadMirror, BiquadParams>& MixController::GetBiquadPool() {
+		DALIA_ASSERT(m_initialized, "MixController used before initialized.");
+
+		return m_biquads;
 	}
 
 	Result MixController::Validate(PlaybackHandle playback) {

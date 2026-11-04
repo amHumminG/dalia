@@ -26,6 +26,7 @@ namespace dalia {
 		: m_device(std::move(device)) {
 		m_bufferEvent = CreateEvent(nullptr, FALSE, FALSE, nullptr);
 		m_shutdownEvent = CreateEvent(nullptr, TRUE, FALSE, nullptr);
+		DALIA_PROFILE_PLOT_CONFIG("WASAPI Buffer Underruns");
 	}
 
 	WasapiOutputDevice::~WasapiOutputDevice() {
@@ -235,6 +236,8 @@ namespace dalia {
 	}
 
 	void WasapiOutputDevice::ThreadMain() {
+		DALIA_PROFILE_THREAD("Dalia - WASAPI Output");
+
 		// Ensure this thread is very high priority
 		DWORD taskIndex = 0;
 		HANDLE mmcssHandle = AvSetMmThreadCharacteristics(TEXT("Pro Audio"), &taskIndex);
@@ -258,6 +261,8 @@ namespace dalia {
 				break;
 			}
 			else if (waitResult == WAIT_OBJECT_0 + 1) {
+				DALIA_PROFILE_SCOPE_N("WASAPI::SubmitBuffer")
+
 				// Callback event was signaled
 
 				// Get the number of frames already in the buffer
@@ -293,7 +298,9 @@ namespace dalia {
 					// Underrun protection
 					if (framesRead < framesToWrite) {
 						size_t missingFrames = framesToWrite - framesRead;
+
 						if (m_mixerIsPriming) {
+							DALIA_PROFILE_PLOT("WASAPI Buffer Underruns", static_cast<int64_t>(0));
 							// Move the read frames to the end of the buffer
 							float* audioStart = outBuffer + (missingFrames * m_channels);
 							std::memmove(audioStart, outBuffer, framesRead * m_channels * sizeof(float));
@@ -302,6 +309,7 @@ namespace dalia {
 							m_mixerIsPriming = false;
 						}
 						else {
+							DALIA_PROFILE_PLOT("WASAPI Buffer Underruns", static_cast<int64_t>(missingFrames));
 							float* silenceStart = outBuffer + (framesRead * m_channels);
 							size_t samplesToClear = missingFrames * m_channels;
 							std::memset(silenceStart, 0, samplesToClear * sizeof(float));
@@ -309,6 +317,7 @@ namespace dalia {
 						}
 					}
 					else {
+						DALIA_PROFILE_PLOT("WASAPI Buffer Underruns", static_cast<int64_t>(0));
 						m_mixerIsPriming = false;
 					}
 

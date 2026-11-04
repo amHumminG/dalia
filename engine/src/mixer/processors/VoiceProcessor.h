@@ -36,12 +36,12 @@ namespace dalia {
 		);
 		void Shutdown();
 
-		void SyncNodes() { m_voicePool.SyncParams(); };
-		void SetOutputChannels(uint32_t outChannels) { m_outChannels = outChannels; }
+		void SyncNodes();
+		void SetOutputChannels(uint32_t outChannels);
 
 		[[nodiscard]] std::span<Voice> GetVoices() const { return m_voicePool.nodes; };
 
-		void ResolveStates();
+		void ResolveVoiceStates();
 
 		uint32_t RenderVoices(uint32_t frameCount);
 
@@ -80,6 +80,7 @@ namespace dalia {
 		[[nodiscard]] SourceBlock FetchSourceBlock(const Voice& voice, uint32_t maxFramesNeeded) const;
 		bool AdvanceVoiceBoundary(Voice& voice);
 
+		bool m_initialized = false;
 		AsyncMessageBus*	m_asyncMessageBus	= nullptr;
 		BusProcessor*		m_busProcessor		= nullptr;
 

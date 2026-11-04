@@ -1,6 +1,7 @@
 #include "AsyncMessageBus.h"
 
 #include "core/Logger.h"
+#include "core/Profiler.h"
 
 namespace dalia {
 	AsyncMessageBus::AsyncMessageBus(size_t mixerQueueCapacity, size_t streamQueueCapacity, size_t loadQueueCapacity,
@@ -12,37 +13,46 @@ namespace dalia {
 			m_mixerEventQueue(mixerQueueCapacity),
 			m_loadEventQueue(loadQueueCapacity),
 			m_controlEventQueue(controlQueueCapacity) {
+
+		DALIA_PROFILE_PLOT_CONFIG("AsyncMessageBus: Mixer Commands");
+		DALIA_PROFILE_PLOT_CONFIG("AsyncMessageBus: Stream Commands");
+		DALIA_PROFILE_PLOT_CONFIG("AsyncMessageBus: Load Commands");
+		DALIA_PROFILE_PLOT_CONFIG("AsyncMessageBus: Control Commands");
+		DALIA_PROFILE_PLOT_CONFIG("AsyncMessageBus: Mixer Events");
+		DALIA_PROFILE_PLOT_CONFIG("AsyncMessageBus: Load Events");
+		DALIA_PROFILE_PLOT_CONFIG("AsyncMessageBus: Control Events");
 	}
 
 	void AsyncMessageBus::DispatchStagedCommands() {
 		m_mixerCommandQueue.Dispatch();
 	}
 
-	void AsyncMessageBus::ProcessMainEvents() {
+	void AsyncMessageBus::ProcessEvents() {
+		DALIA_PROFILE_SCOPE_N("AsyncMessageBus::ProcessEvents");
 		CatchMixerEvents();
 		CatchLoadEvents();
 		CatchControlEvents();
 	}
 
 	void AsyncMessageBus::ProcessMixerCommands() {
+		DALIA_PROFILE_SCOPE_N("AsyncMessageBus::ProcessMixerCommands");
 		CatchMixerCommands();
 	}
 
 	void AsyncMessageBus::ProcessStreamCommands() {
+		DALIA_PROFILE_SCOPE_N("AsyncMessageBus::ProcessStreamCommands");
 		CatchStreamCommands();
 	}
 
 	void AsyncMessageBus::ProcessLoadCommands() {
+		DALIA_PROFILE_SCOPE_N("AsyncMessageBus::ProcessLoadCommands");
 		CatchLoadCommands();
 	}
 
 	void AsyncMessageBus::ProcessControlCommands() {
+		DALIA_PROFILE_SCOPE_N("AsyncMessageBus::ProcessControlCommands");
 		CatchControlCommands();
 	}
-
-	// void MessageRouter::SetStreamWakeupCallback(WakeupCallback cb) {
-	// 	m_streamWakeup = std::move(cb);
-	// }
 
 	void AsyncMessageBus::SetLoadWakeupCallback(WakeupCallback cb) {
 		m_loadWakeup = std::move(cb);
@@ -169,37 +179,72 @@ namespace dalia {
 	}
 
 	void AsyncMessageBus::CatchMixerCommands() {
+		int64_t processedCount = 0;
 		AsyncMixerCommand cmd;
-		while (m_mixerCommandQueue.Pop(cmd)) m_mixerCommandTable.Dispatch(cmd);
+		while (m_mixerCommandQueue.Pop(cmd)) {
+			m_mixerCommandTable.Dispatch(cmd);
+			processedCount++;
+		}
+		DALIA_PROFILE_PLOT("AsyncMessageBus: Mixer Commands", processedCount);
 	}
 
 	void AsyncMessageBus::CatchStreamCommands() {
+		int64_t processedCount = 0;
 		AsyncStreamCommand cmd;
-		while (m_streamCommandQueue.Pop(cmd)) m_streamCommandTable.Dispatch(cmd);
+		while (m_streamCommandQueue.Pop(cmd)) {
+			m_streamCommandTable.Dispatch(cmd);
+			processedCount++;
+		}
+		DALIA_PROFILE_PLOT("AsyncMessageBus: Stream Commands", processedCount);
 	}
 
 	void AsyncMessageBus::CatchLoadCommands() {
+		int64_t processedCount = 0;
 		AsyncLoadCommand cmd;
-		while (m_loadCommandQueue.Pop(cmd)) m_loadCommandTable.Dispatch(cmd);
+		while (m_loadCommandQueue.Pop(cmd)) {
+			m_loadCommandTable.Dispatch(cmd);
+			processedCount++;
+		}
+		DALIA_PROFILE_PLOT("AsyncMessageBus: Load Commands", processedCount);
 	}
 
 	void AsyncMessageBus::CatchControlCommands() {
+		int64_t processedCount = 0;
 		AsyncControlCommand cmd;
-		while (m_controlCommandQueue.Pop(cmd)) m_controlCommandTable.Dispatch(cmd);
+		while (m_controlCommandQueue.Pop(cmd)) {
+			m_controlCommandTable.Dispatch(cmd);
+			processedCount++;
+		}
+		DALIA_PROFILE_PLOT("AsyncMessageBus: Control Commands", processedCount);
 	}
 
 	void AsyncMessageBus::CatchMixerEvents() {
+		int64_t processedCount = 0;
 		AsyncMixerEvent ev;
-		while (m_mixerEventQueue.Pop(ev)) m_mixerEventTable.Dispatch(ev);
+		while (m_mixerEventQueue.Pop(ev)) {
+			m_mixerEventTable.Dispatch(ev);
+			processedCount++;
+		}
+		DALIA_PROFILE_PLOT("AsyncMessageBus: Mixer Events", processedCount);
 	}
 
 	void AsyncMessageBus::CatchLoadEvents() {
+		int64_t processedCount = 0;
 		AsyncLoadEvent ev;
-		while (m_loadEventQueue.Pop(ev)) m_loadEventTable.Dispatch(ev);
+		while (m_loadEventQueue.Pop(ev)) {
+			m_loadEventTable.Dispatch(ev);
+			processedCount++;
+		}
+		DALIA_PROFILE_PLOT("AsyncMessageBus: Load Events", processedCount);
 	}
 
 	void AsyncMessageBus::CatchControlEvents() {
+		int64_t processedCount = 0;
 		AsyncControlEvent ev;
-		while (m_controlEventQueue.Pop(ev)) m_controlEventTable.Dispatch(ev);
+		while (m_controlEventQueue.Pop(ev)) {
+			m_controlEventTable.Dispatch(ev);
+			processedCount++;
+		}
+		DALIA_PROFILE_PLOT("AsyncMessageBus: Control Events", processedCount);
 	}
 }

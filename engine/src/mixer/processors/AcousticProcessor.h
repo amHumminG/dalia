@@ -30,7 +30,7 @@ namespace dalia {
 		void Initialize(AsyncMessageBus* asyncMessageBus, const AcousticProcessorConfig& config);
 		void Shutdown();
 
-		void SyncNodes() { m_listenerPool.SyncParams(); }
+		void SyncNodes();
 		void SetOutputFormat(uint32_t outChannels, SpeakerLayout layout);
 
 		void EvaluateVoices(std::span<Voice> voices);
@@ -48,6 +48,7 @@ namespace dalia {
 		bool FindBestListener(const Voice& voice, ListenerParams& outBestListenerParams, float& outMaxGain) const;
 		[[nodiscard]] float ComputeDopplerMultiplier(const Voice& voice, const ListenerParams& listenerParams) const;
 
+		bool m_initialized = false;
 		AsyncMessageBus* m_asyncMessageBus = nullptr;
 
 		CoordinateSystem m_coordinateSystem = CoordinateSystem::LeftHanded;

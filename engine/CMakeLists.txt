@@ -129,6 +129,7 @@ set(ENGINE_FILES
     src/platform/OutputDevice.h
     src/platform/HighResTimer.h
     src/platform/PlatformThread.h
+    src/core/Assert.h
 )
 
 if (WIN32)
@@ -156,10 +157,6 @@ dalia_treat_warnings_as_errors(dalia_engine)
 target_include_directories(dalia_engine 
     PUBLIC include
     PRIVATE src
-)
-
-target_sources(dalia_engine
-    PRIVATE $<TARGET_OBJECTS:stb_vorbis_lib>
 )
 
 target_link_libraries(dalia_engine

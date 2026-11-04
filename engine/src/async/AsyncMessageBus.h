@@ -52,7 +52,7 @@ namespace dalia {
 
 		// --- Updates (to be called by each async system in its update loop) ---
 
-		void ProcessMainEvents();
+		void ProcessEvents();
 		void ProcessMixerCommands();
 		void ProcessStreamCommands();
 		void ProcessLoadCommands();

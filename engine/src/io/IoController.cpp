@@ -3,7 +3,9 @@
 #include "async/AsyncMessageBus.h"
 #include "async/messaging/AsyncLoadMessaging.h"
 #include "async/messaging/AsyncStreamMessaging.h"
+#include "core/Assert.h"
 #include "core/Logger.h"
+#include "core/Profiler.h"
 
 namespace dalia {
 
@@ -32,11 +34,12 @@ namespace dalia {
 		m_asyncMessageBus->SubscribeToStreamCommand(AsyncStreamCommand::Type::ReleaseStream,
 			[this](const AsyncStreamCommand& cmd) { HandleReleaseStreamCommand(cmd); });
 
+		m_initialized = true;
 		return Result::Ok;
 	}
 
 	void IoController::Shutdown() {
-		if (!m_asyncMessageBus) return;
+		if (!m_initialized) return;
 
 		// Unsubscribe from load commands (Load Thread)
 		m_asyncMessageBus->UnsubscribeFromLoadCommand(AsyncLoadCommand::Type::LoadSound);
@@ -54,9 +57,12 @@ namespace dalia {
 		}
 
 		m_asyncMessageBus = nullptr;
+		m_initialized = false;
 	}
 
 	Result IoController::AllocateAndPrepareStream(const char* filepath, uint32_t& streamIndex, uint32_t& streamGen) {
+		DALIA_ASSERT(m_initialized, "IoController used before initialized.");
+
 		if (!m_streams.Allocate(streamIndex)) return Result::StreamCapacityReached;
 
 		StreamContext& stream = m_streams.Get(streamIndex);
@@ -75,10 +81,13 @@ namespace dalia {
 	}
 
 	std::span<StreamContext> IoController::GetStreamPoolSpan() {
+		DALIA_ASSERT(m_initialized, "IoController used before initialized.");
 		return m_streams.GetSpan();
 	}
 
 	void IoController::HandleLoadSoundCommand(const AsyncLoadCommand& cmd) {
+		DALIA_PROFILE_SCOPE_N("IoController::HandleLoadSoundCommand");
+
 		const Codec* codec = Codec::GetCodecForFile(cmd.filepath);
 		if (!codec) {
 			DALIA_LOG_ERR(LOG_CTX_ASYNC, "Failed to load sound from file: %s. Unsupported file format.", cmd.filepath);
@@ -112,6 +121,8 @@ namespace dalia {
 	}
 
 	void IoController::HandlePrepareStreamCommand(const AsyncStreamCommand& cmd) {
+		DALIA_PROFILE_SCOPE_N("IoController::HandlePrepareStreamCommand");
+
 		StreamContext& stream = m_streams.Get(cmd.index);
 		if (stream.gen.load(std::memory_order_relaxed) != cmd.gen) return;
 		if (stream.state.load(std::memory_order_acquire) != StreamState::Preparing) return;
@@ -139,6 +150,8 @@ namespace dalia {
 	}
 
 	void IoController::HandleRefillStreamCommand(const AsyncStreamCommand& cmd) {
+		DALIA_PROFILE_SCOPE_N("IoController::HandleRefillStreamCommand");
+
 		StreamContext& stream = m_streams.Get(cmd.index);
 		if (stream.gen.load(std::memory_order_relaxed) != cmd.gen) return;
 		if (stream.state.load(std::memory_order_relaxed) != StreamState::Streaming) return;
@@ -147,6 +160,8 @@ namespace dalia {
 	}
 
 	void IoController::HandleSeekStreamCommand(const AsyncStreamCommand& cmd) {
+		DALIA_PROFILE_SCOPE_N("IoController::HandleSeekStreamCommand");
+
 		StreamContext& stream = m_streams.Get(cmd.index);
 		if (stream.gen.load(std::memory_order_relaxed) != cmd.gen) return;
 		if (stream.state.load(std::memory_order_relaxed) != StreamState::Streaming) return;
@@ -161,6 +176,8 @@ namespace dalia {
 	}
 
 	void IoController::HandleReleaseStreamCommand(const AsyncStreamCommand& cmd) {
+		DALIA_PROFILE_SCOPE_N("IoController::HandleReleaseStreamCommand");
+
 		StreamContext& stream = m_streams.Get(cmd.index);
 		if (stream.gen.load(std::memory_order_relaxed) != cmd.gen) return;
 
@@ -174,6 +191,8 @@ namespace dalia {
 	}
 
 	void IoController::FillStreamBuffer(StreamContext& stream, uint32_t bufferIndex) {
+		DALIA_PROFILE_SCOPE_N("IoController::FillStreamBuffer");
+
 		if (!stream.codec || !stream.decoderHandle) {
 			stream.state.store(StreamState::Error, std::memory_order_release);
 			return;

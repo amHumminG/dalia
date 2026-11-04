@@ -6,6 +6,8 @@
 #include "async/messaging/AsyncMixerMessaging.h"
 #include "core/Logger.h"
 #include "core/Math.h"
+#include "core/Assert.h"
+#include "core/Profiler.h"
 
 #include <cstring>
 
@@ -17,6 +19,7 @@ namespace dalia {
 
 	void BusProcessor::Initialize(AsyncMessageBus* asyncMessageBus, EffectProcessor* effectProcessor,
 		const BusProcessorConfig& config) {
+		DALIA_PROFILE_SCOPE_N("BusProcessor::Initialize");
 
 		m_asyncMessageBus		= asyncMessageBus;
 		m_effectProcessor		= effectProcessor;
@@ -34,21 +37,43 @@ namespace dalia {
 		m_isMixOrderDirty	= true;
 
 		SubscribeToCommands();
+		m_initialized = true;
 	}
 
 	void BusProcessor::Shutdown() {
-		if (!m_asyncMessageBus) return;
+		DALIA_PROFILE_SCOPE_N("BusProcessor::Shutdown");
+
+		if (!m_initialized) return;
 
 		UnsubscribeFromCommands();
 		m_asyncMessageBus = nullptr;
 		m_effectProcessor = nullptr;
+		m_initialized = false;
+	}
+
+	void BusProcessor::SyncNodes() {
+		DALIA_ASSERT(m_initialized, "BusProcessor used before initialized.");
+		DALIA_PROFILE_SCOPE_N("BusProcessor::SyncNodes");
+
+		m_busPool.SyncParams();
+	}
+
+	void BusProcessor::SetOutputChannels(uint32_t outChannels) {
+		DALIA_ASSERT(m_initialized, "BusProcessor used before initialized.");
+
+		m_outChannels = outChannels;
 	}
 
 	void BusProcessor::ClearBuffers() {
+		DALIA_ASSERT(m_initialized, "BusProcessor used before initialized.");
+		DALIA_PROFILE_SCOPE_N("BusProcessor::ClearBuffers")
+
 		std::memset(m_busBufferPool.get(), 0, m_busPool.capacity * m_maxSamplesPeriod * sizeof(float));
 	}
 
 	bool BusProcessor::ResolveStatesAndCompileGraph() {
+		DALIA_ASSERT(m_initialized, "BusProcessor used before initialized.");
+
 		m_isMixOrderDirty |= ResolveBusStates();
 
 		if (m_isMixOrderDirty) {
@@ -59,6 +84,9 @@ namespace dalia {
 	}
 
 	uint32_t BusProcessor::RenderBuses(uint32_t frameCount) {
+		DALIA_ASSERT(m_initialized, "BusProcessor used before initialized.");
+		DALIA_PROFILE_SCOPE_N("BusProcessor::RenderBuses");
+
 		std::span<const uint32_t> activeMixOrder(m_mixOrder.get(), m_mixOrderSize);
 		uint32_t busesRendered = 0;
 
@@ -99,6 +127,8 @@ namespace dalia {
 	}
 
 	float* BusProcessor::GetBusBuffer(uint32_t busIndex) const {
+		DALIA_ASSERT(m_initialized, "BusProcessor used before initialized.");
+
 		if (busIndex >= m_busPool.capacity) return nullptr;
 		return m_busBufferPool.get() + (static_cast<size_t>(busIndex) * m_maxSamplesPeriod);
 	}
@@ -168,6 +198,8 @@ namespace dalia {
 	}
 
 	bool BusProcessor::ResolveBusStates() {
+		DALIA_PROFILE_SCOPE_N("BusProcessor::ResolveBusStates");
+
 		bool topologyChanged = false;
 
 		for (uint32_t bIndex = 0; bIndex < m_busPool.capacity; bIndex++) {
@@ -194,6 +226,8 @@ namespace dalia {
 	}
 
 	bool BusProcessor::CompileMixGraph() {
+		DALIA_PROFILE_SCOPE_N("BusProcessor::CompileMixGraph");
+
 		m_mixOrderSize = m_mixGraphCompiler->Compile(
 			m_busPool.nodes,
 			std::span(m_mixOrder.get(), m_busPool.capacity)

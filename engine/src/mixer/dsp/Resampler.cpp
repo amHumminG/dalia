@@ -11,15 +11,15 @@ namespace dalia {
     }
 
     void ProcessResampler(
-    	ResamplerState& state,
-       const float* DALIA_RESTRICT sourceData,
-       uint32_t maxSourceFrames,
-       uint32_t channels,
-       float* DALIA_RESTRICT outBuffer,
-       uint32_t maxOutputFrames,
-       float phaseIncrement,
-       uint32_t& outFramesGenerated,
-       uint32_t& outFramesConsumed) {
+		ResamplerState& state,
+		const float* DALIA_RESTRICT sourceData,
+		uint32_t maxSourceFrames,
+		uint32_t channels,
+		float* DALIA_RESTRICT outBuffer,
+		uint32_t maxOutputFrames,
+		float phaseIncrement,
+		uint32_t& outFramesGenerated,
+		uint32_t& outFramesConsumed) {
 
        outFramesGenerated = 0;
        outFramesConsumed = 0;

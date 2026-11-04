@@ -40,7 +40,7 @@ namespace dalia {
 
 	class MixController {
 	public:
-		explicit MixController(const MixControllerConfig& config); // TODO: Change params
+		explicit MixController(const MixControllerConfig& config);
 		~MixController();
 
 		Result Initialize(
@@ -113,10 +113,10 @@ namespace dalia {
 		Result SetEffectParams(EffectHandle effect, const TParams& params);
 
 		// === DSP Pool Accessors ===
-		[[nodiscard]] auto& GetVoicePool() { return m_voices; }
-		[[nodiscard]] auto& GetListenerPool() { return m_listeners; }
-		[[nodiscard]] auto& GetBusPool() { return m_buses; }
-		[[nodiscard]] auto& GetBiquadPool() { return m_biquads; }
+		[[nodiscard]] StateSyncPool<Voice, VoiceMirror, VoiceParams>& GetVoicePool();
+		[[nodiscard]] StateSyncPool<Listener, ListenerMirror, ListenerParams>& GetListenerPool();
+		[[nodiscard]] StateSyncPool<Bus, BusMirror, BusParams>& GetBusPool();
+		[[nodiscard]] StateSyncPool<Biquad, BiquadMirror, BiquadParams>& GetBiquadPool();
 
 	private:
 		template<typename TParams>
@@ -253,6 +253,11 @@ namespace dalia {
 		template<typename TParams, typename TFunc>
 		Result ModifyEffectParams(EffectHandle effect, TFunc&& fn);
 
+		bool m_initialized = false;
+		AsyncMessageBus* m_asyncMessageBus = nullptr;
+		AssetController* m_assetController = nullptr;
+		IoController*	 m_ioController	   = nullptr;
+
 		CoordinateSystem m_coordinateSystem = CoordinateSystem::LeftHanded;
 
 		StateSyncPool<Voice, VoiceMirror, VoiceParams>			m_voices;
@@ -262,10 +267,6 @@ namespace dalia {
 		StateSyncPool<Biquad, BiquadMirror, BiquadParams>		m_biquads;
 
 		std::vector<PendingPlayback> m_pendingPlaybacks;
-
-		AsyncMessageBus* m_asyncMessageBus = nullptr;
-		AssetController* m_assetController = nullptr;
-		IoController*	 m_ioController	   = nullptr;
 	};
 }
 

@@ -1,10 +1,13 @@
 #include "mixer/MixController.h"
+#include "core/Assert.h"
 
 #include <algorithm>
 
 namespace dalia {
 
-		Result MixController::CreateBus(const char* bus, const char* parentBus) {
+	Result MixController::CreateBus(const char* bus, const char* parentBus) {
+		DALIA_ASSERT(m_initialized, "MixController used before initialized.");
+
 		uint32_t bIndex;
 		uint32_t bIndexParent = NO_PARENT;
 		bool parentFound = false;
@@ -53,6 +56,8 @@ namespace dalia {
 	}
 
 	Result MixController::DestroyBus(const char* bus) {
+		DALIA_ASSERT(m_initialized, "MixController used before initialized.");
+
 		auto it = m_busMap.find(BusID(bus));
 		if (it == m_busMap.end()) {
 			DALIA_LOG_ERR(LOG_CTX_CORE, "Failed to destroy bus (%s). Bus does not exist.", bus);
@@ -113,6 +118,8 @@ namespace dalia {
 	}
 
 	Result MixController::RouteBus(const char* bus, const char* parentBus) {
+		DALIA_ASSERT(m_initialized, "MixController used before initialized.");
+
 		// Fetch bus
 		uint32_t bIndex;
 		Result res = GetBusIndex(bus, bIndex);
@@ -155,6 +162,8 @@ namespace dalia {
 	}
 
 	Result MixController::SetBusVolumeDb(const char* bus, float volumeDb) {
+		DALIA_ASSERT(m_initialized, "MixController used before initialized.");
+
 		return ModifyBusParams(bus, [&](BusParams& params) {
 			params.gain = math::DbToGain(std::clamp(volumeDb, VOLUME_DB_MIN, VOLUME_DB_MAX));
 		});

@@ -2,6 +2,8 @@
 
 #include "platform/windows/WasapiOutputDevice.h"
 #include "core/Logger.h"
+#include "core/Assert.h"
+#include "core/Profiler.h"
 
 #include <functiondiscoverykeys_devpkey.h> // For PKEY_Device_FriendlyName
 #include <cstring>
@@ -96,6 +98,8 @@ namespace dalia {
 	}
 
 	Result WasapiAudioBackend::Initialize() {
+		DALIA_PROFILE_SCOPE_N("WasapiAudioBackend::Initialize");
+
 		// Initialize COM for this thread
 		HRESULT hr = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
 		if (FAILED(hr)) return Result::SystemError;
@@ -114,10 +118,14 @@ namespace dalia {
 		hr = m_enumerator->RegisterEndpointNotificationCallback(m_notificationClient.Get());
 		if (FAILED(hr)) return Result::SystemError;
 
+		m_initialized = true;
 		return Result::Ok;
 	}
 
 	std::vector<OutputDeviceInfo> WasapiAudioBackend::Enumerate() {
+		DALIA_ASSERT(m_initialized, "WasapiAudioBackend used before initialized.");
+		DALIA_PROFILE_SCOPE_N("WasapiAudioBackend::Enumerate");
+
 		std::vector<OutputDeviceInfo> deviceList;
 		if (!m_enumerator) return deviceList;
 
@@ -188,6 +196,9 @@ namespace dalia {
 	}
 
 	bool WasapiAudioBackend::PopDeviceChangeNotification(std::string& newDeviceId) {
+		DALIA_ASSERT(m_initialized, "WasapiAudioBackend used before initialized.");
+		DALIA_PROFILE_SCOPE_N("WasapiAudioBackend::PopDeviceChangeNotification");
+
 		OSDeviceNotification notification = {};
 		bool changeDetected = false;
 
@@ -201,6 +212,9 @@ namespace dalia {
 	}
 
 	std::unique_ptr<OutputDevice> WasapiAudioBackend::CreateOutputDevice(const char* identifier, uint32_t engineSampleRate) {
+		DALIA_ASSERT(m_initialized, "WasapiAudioBackend used before initialized.");
+		DALIA_PROFILE_SCOPE_N("WasapiAudioBackend::CreateOutputDevice");
+
 		Microsoft::WRL::ComPtr<IMMDevice> device;
 		HRESULT hr = S_OK;
 

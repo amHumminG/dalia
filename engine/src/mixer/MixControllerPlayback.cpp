@@ -2,6 +2,8 @@
 
 #include "asset/AssetController.h"
 #include "io/IoController.h"
+#include "core/Assert.h"
+#include "core/Profiler.h"
 
 namespace dalia {
 
@@ -80,6 +82,8 @@ namespace dalia {
 	}
 
 	Result MixController::RoutePlayback(PlaybackHandle playback, const char* bus) {
+		DALIA_ASSERT(m_initialized, "MixController used before initialized.");
+
 		return ModifyVoice(playback, [&](VoiceMirror& vMirror, uint32_t vIndex) -> Result {
 			uint32_t bIndex;
 			Result res = GetBusIndex(bus, bIndex);
@@ -104,6 +108,8 @@ namespace dalia {
 	}
 
 	Result MixController::PlayPlayback(PlaybackHandle playback) {
+		DALIA_ASSERT(m_initialized, "MixController used before initialized.");
+
 		return ModifyVoice(playback, [&](VoiceMirror& vMirror, uint32_t vIndex) -> Result {
 			if (vMirror.pendingLoad) {
 			   vMirror.state = VoiceState::Playing;
@@ -133,6 +139,8 @@ namespace dalia {
 	}
 
 	Result MixController::PausePlayback(PlaybackHandle playback) {
+		DALIA_ASSERT(m_initialized, "MixController used before initialized.");
+
 		return ModifyVoice(playback, [&](VoiceMirror& vMirror, uint32_t vIndex) -> Result {
 			if (vMirror.state != VoiceState::Playing) {
 				DALIA_LOG_WARN(LOG_CTX_API, "Calling pause on playback that is not currently playing.");
@@ -150,6 +158,8 @@ namespace dalia {
 	}
 
 	Result MixController::StopPlayback(PlaybackHandle playback) {
+		DALIA_ASSERT(m_initialized, "MixController used before initialized.");
+
 		return ModifyVoice(playback, [&](VoiceMirror& vMirror, uint32_t vIndex) -> Result {
 			// Handle pending playbacks
 			if (vMirror.pendingLoad) {
@@ -179,6 +189,8 @@ namespace dalia {
 	}
 
 	void MixController::StopPlaybacksForSound(SoundHandle sound) {
+		DALIA_ASSERT(m_initialized, "MixController used before initialized.");
+
 		uint64_t soundRawId = sound.GetRawId();
 
 		// Free pending playbacks
@@ -205,6 +217,8 @@ namespace dalia {
 	}
 
 	Result MixController::SeekPlayback(PlaybackHandle playback, double timeInSeconds) {
+		DALIA_ASSERT(m_initialized, "MixController used before initialized.");
+
 		return ModifyVoice(playback, [&](VoiceMirror& vMirror, uint32_t vIndex) -> Result {
 			if (timeInSeconds < 0.0) timeInSeconds = 0.0;
 
@@ -237,6 +251,8 @@ namespace dalia {
 	}
 
 	Result MixController::SetPlaybackVolumeDb(PlaybackHandle playback, float volumeDb) {
+		DALIA_ASSERT(m_initialized, "MixController used before initialized.");
+
 		return ModifyVoiceParams(playback, [&](VoiceParams& params) {
 			float clampedVolumeDb = std::clamp(volumeDb, VOLUME_DB_MIN, VOLUME_DB_MAX);
 			params.gain = math::DbToGain(clampedVolumeDb);
@@ -244,6 +260,8 @@ namespace dalia {
 	}
 
 	Result MixController::SetPlaybackRate(PlaybackHandle playback, float rate) {
+		DALIA_ASSERT(m_initialized, "MixController used before initialized.");
+
 		return ModifyVoiceParams(playback, [&](VoiceParams& params) {
 			float clampedRate = std::clamp(rate, PLAYBACK_RATE_MIN, PLAYBACK_RATE_MAX);
 			params.playbackRate = clampedRate;
@@ -251,6 +269,8 @@ namespace dalia {
 	}
 
 	Result MixController::SetPlaybackStereoPan(PlaybackHandle playback, float stereoPan) {
+		DALIA_ASSERT(m_initialized, "MixController used before initialized.");
+
 		return ModifyVoiceParams(playback, [&](VoiceParams& params) {
 			float clampedStereoPan = std::clamp(stereoPan, PAN_STEREO_MIN, PAN_STEREO_MAX);
 			params.stereoPan = clampedStereoPan;
@@ -258,42 +278,56 @@ namespace dalia {
 	}
 
 	Result MixController::SetPlaybackLooping(PlaybackHandle playback, bool looping) {
+		DALIA_ASSERT(m_initialized, "MixController used before initialized.");
+
 		return ModifyVoiceParams(playback, [&](VoiceParams& params) {
 			params.isLooping = looping;
 		});
 	}
 
 	Result MixController::SetPlaybackSpatial(PlaybackHandle playback, bool spatial) {
+		DALIA_ASSERT(m_initialized, "MixController used before initialized.");
+
 		return ModifyVoiceParams(playback, [&](VoiceParams& params) {
 			params.isSpatial = spatial;
 		});
 	}
 
 	Result MixController::SetPlaybackPosition(PlaybackHandle playback, math::Vector3 position) {
+		DALIA_ASSERT(m_initialized, "MixController used before initialized.");
+
 		return ModifyVoiceParams(playback, [&](VoiceParams& params) {
 			params.position = position;
 		});
 	}
 
 	Result MixController::SetPlaybackVelocity(PlaybackHandle playback, math::Vector3 velocity) {
+		DALIA_ASSERT(m_initialized, "MixController used before initialized.");
+
 		return ModifyVoiceParams(playback, [&](VoiceParams& params) {
 			params.velocity = velocity;
 		});
 	}
 
 	Result MixController::SetPlaybackDistanceMode(PlaybackHandle playback, DistanceMode distanceMode) {
+		DALIA_ASSERT(m_initialized, "MixController used before initialized.");
+
 		return ModifyVoiceParams(playback, [&](VoiceParams& params) {
 			params.distanceMode = distanceMode;
 		});
 	}
 
 	Result MixController::SetPlaybackAttenuationCurve(PlaybackHandle playback, AttenuationCurve curve) {
+		DALIA_ASSERT(m_initialized, "MixController used before initialized.");
+
 		return ModifyVoiceParams(playback, [&](VoiceParams& params) {
 			params.attenuationCurve = curve;
 		});
 	}
 
 	Result MixController::SetPlaybackMinMaxDistance(PlaybackHandle playback, float minDistance, float maxDistance) {
+		DALIA_ASSERT(m_initialized, "MixController used before initialized.");
+
 		return ModifyVoiceParams(playback, [&](VoiceParams& params) {
 			float clampedMinDistance = std::max(minDistance, MIN_DIST_MIN);
 			float clampedMaxDistance = std::max(maxDistance, clampedMinDistance);
@@ -303,18 +337,24 @@ namespace dalia {
 	}
 
 	Result MixController::SetPlaybackUseDoppler(PlaybackHandle playback, bool useDoppler) {
+		DALIA_ASSERT(m_initialized, "MixController used before initialized.");
+
 		return ModifyVoiceParams(playback, [&](VoiceParams& params) {
 			params.useDoppler = useDoppler;
 		});
 	}
 
 	Result MixController::SetPlaybackDopplerFactor(PlaybackHandle playback, float dopplerFactor) {
+		DALIA_ASSERT(m_initialized, "MixController used before initialized.");
+
 		return ModifyVoiceParams(playback, [&](VoiceParams& params) {
 			params.dopplerFactor = std::clamp(dopplerFactor, DOPPLER_FACTOR_MIN, DOPPLER_FACTOR_MAX);
 		});
 	}
 
 	Result MixController::SetPlaybackListenerMask(PlaybackHandle playback, ListenerMask listenerMask) {
+		DALIA_ASSERT(m_initialized, "MixController used before initialized.");
+
 		return ModifyVoiceParams(playback, [&](VoiceParams& params) {
 			params.listenerMask = listenerMask;
 		});

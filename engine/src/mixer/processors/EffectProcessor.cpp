@@ -3,6 +3,8 @@
 #include "async/AsyncMessageBus.h"
 #include "async/messaging/AsyncMixerMessaging.h"
 #include "core/Constants.h"
+#include "core/Profiler.h"
+#include "core/Assert.h"
 
 #include <cstring>
 
@@ -13,6 +15,8 @@ namespace dalia {
 	}
 
 	void EffectProcessor::Initialize(AsyncMessageBus* asyncMessageBus, const EffectProcessorConfig& config) {
+		DALIA_PROFILE_SCOPE_N("EffectProcessor::Initialize");
+
 		m_asyncMessageBus  = asyncMessageBus;
 		m_biquadPool       = config.biquadPool;
 		m_maxSamplesPeriod = config.maxSamplesPeriod;
@@ -25,20 +29,35 @@ namespace dalia {
 		m_scratchBuffer = std::make_unique<float[]>(m_maxSamplesPeriod);
 
 		SubscribeToCommands();
+		m_initialized = true;
 	}
 
 	void EffectProcessor::Shutdown() {
-		if (!m_asyncMessageBus) return;
+		DALIA_PROFILE_SCOPE_N("EffectProcessor::Shutdown");
+
+		if (!m_initialized) return;
 
 		UnsubscribeFromCommands();
 		m_asyncMessageBus = nullptr;
+		m_initialized = false;
 	}
 
 	void EffectProcessor::SyncNodes() {
+		DALIA_ASSERT(m_initialized, "EffectProcessor used before initialized.");
+		DALIA_PROFILE_SCOPE_N("EffectProcessor::SyncNodes");
+
 		m_biquadPool.SyncParams();
 	}
 
+	void EffectProcessor::SetOutputChannels(uint32_t outChannels) {
+		DALIA_ASSERT(m_initialized, "EffectProcessor used before initialized.");
+
+		m_outChannels = outChannels;
+	}
+
 	void EffectProcessor::ProcessEffectChain(EffectChain& chain, float* buffer, uint32_t frameCount) {
+		DALIA_ASSERT(m_initialized, "EffectProcessor used before initialized.");
+
 		for (EffectSlot& slot : chain.slots) {
 			if (slot.state == EffectSlotState::None) continue;
 			ProcessSlot(slot, buffer, frameCount);
@@ -46,6 +65,8 @@ namespace dalia {
 	}
 
 	bool EffectProcessor::FlushEffect(EffectHandle handle) {
+		DALIA_ASSERT(m_initialized, "EffectProcessor used before initialized.");
+
 		uint32_t eIndex = handle.GetIndex();
 		uint32_t eGen	= handle.GetGeneration();
 

@@ -36,8 +36,8 @@ namespace dalia {
 		);
 		void Shutdown();
 
-		void SyncNodes() { m_busPool.SyncParams(); }
-		void SetOutputChannels(uint32_t outChannels) { m_outChannels = outChannels; }
+		void SyncNodes();
+		void SetOutputChannels(uint32_t outChannels);
 
 		void ClearBuffers();
 
@@ -64,6 +64,7 @@ namespace dalia {
 		bool ResolveBusStates();
 		bool CompileMixGraph();
 
+		bool m_initialized = false;
 		AsyncMessageBus* m_asyncMessageBus = nullptr;
 		EffectProcessor* m_effectProcessor = nullptr;
 

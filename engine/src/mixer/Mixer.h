@@ -48,7 +48,7 @@ namespace dalia {
 		void Shutdown();
 
 		/// @brief Real-time thread entry point executed when mixerThread wakes up.
-		void ProcessAudioPeriod();
+		void OnWake();
 
 		// === OutputDevice / DeviceController Interface ===
 		size_t ReadDiscardAudio(float* buffer, uint32_t frameCount);
@@ -57,8 +57,11 @@ namespace dalia {
 		void SetOutputFormat(uint32_t channels, SpeakerLayout layout);
 
 	private:
-		void SyncParams();
+		void ProcessAudioPeriod();
+		void SyncNodes();
 		void Render(float* output, uint32_t frameCount);
+
+		bool m_initialized = false;
 
 		// --- Synchronization ---
 		std::atomic<bool> m_isProcessing{false};

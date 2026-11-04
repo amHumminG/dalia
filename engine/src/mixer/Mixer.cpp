@@ -2,6 +2,8 @@
 #include "mixer/dsp/Buffer.h"
 #include "mixer/dsp/Gain.h"
 #include "core/Logger.h"
+#include "core/Assert.h"
+#include "core/Profiler.h"
 #include "async/AsyncMessageBus.h"
 
 namespace dalia {
@@ -12,6 +14,8 @@ namespace dalia {
 
 	Result Mixer::Initialize(AsyncMessageBus* asyncMessageBus, WakeableThread* mixerThread,
 		const MixerConfig& config) {
+		DALIA_PROFILE_SCOPE_N("Mixer::Initialize");
+
 		m_asyncMessageBus  = asyncMessageBus;
 		m_mixerThread      = mixerThread;
 		m_periodSizeFrames = config.periodSizeFrames;
@@ -63,11 +67,14 @@ namespace dalia {
 		m_pcmRingBuffer->ClearAndSetFormat(m_periodSizeFrames * PCM_RING_BUFFER_FRAMES, m_outChannels);
 		m_scratchBuffer = std::make_unique<float[]>(m_maxSamplesPeriod);
 
+		m_initialized = true;
 		return Result::Ok;
 	}
 
 	void Mixer::Shutdown() {
-		if (!m_asyncMessageBus) return;
+		DALIA_PROFILE_SCOPE_N("Mixer::Shutdown");
+
+		if (!m_initialized) return;
 
 		m_acousticProcessor.Shutdown();
 		m_voiceProcessor.Shutdown();
@@ -76,10 +83,13 @@ namespace dalia {
 
 		m_asyncMessageBus = nullptr;
 		m_mixerThread	  = nullptr;
+
+		m_initialized = false;
 	}
 
-	void Mixer::ProcessAudioPeriod() {
-		DALIA_PROFILE_AUDIO_FRAME();
+	void Mixer::OnWake() {
+		DALIA_ASSERT(m_initialized, "Mixer used before initialized.");
+		DALIA_PROFILE_SCOPE_N("Mixer::OnWake")
 
 		m_isProcessing.store(true, std::memory_order_seq_cst);
 
@@ -89,18 +99,16 @@ namespace dalia {
 		}
 
 		while (m_pcmRingBuffer->GetAvailableFramesWrite() >= m_periodSizeFrames) {
-			DALIA_PROFILE_SCOPE_N("Mixer::ProcessAudioPeriod");
-			m_asyncMessageBus->ProcessMixerCommands();
-			SyncParams();
-
-			Render(m_scratchBuffer.get(), m_periodSizeFrames);
-			m_pcmRingBuffer->PushFrames(m_scratchBuffer.get(), m_periodSizeFrames);
+			ProcessAudioPeriod();
 		}
 
 		m_isProcessing.store(false, std::memory_order_seq_cst);
 	}
 
 	size_t Mixer::ReadDiscardAudio(float* buffer, uint32_t frameCount) {
+		DALIA_ASSERT(m_initialized, "Mixer used before initialized.");
+		DALIA_PROFILE_SCOPE_N("Mixer::ReadDiscardAudio");
+
 		size_t framesRead = m_pcmRingBuffer->PopFrames(buffer, frameCount);
 
 		if (framesRead > 0) {
@@ -118,14 +126,21 @@ namespace dalia {
 	}
 
 	size_t Mixer::DiscardAudio(uint32_t frameCount) {
+		DALIA_ASSERT(m_initialized, "Mixer used before initialized.");
+		DALIA_PROFILE_SCOPE_N("Mixer::DiscardAudio");
+
 		return m_pcmRingBuffer->DiscardFrames(frameCount);
 	}
 
 	void Mixer::Wake() {
+		DALIA_ASSERT(m_initialized, "Mixer used before initialized.");
 		if (m_mixerThread) m_mixerThread->Wake();
 	}
 
 	void Mixer::SetOutputFormat(uint32_t channels, SpeakerLayout layout) {
+		DALIA_ASSERT(m_initialized, "Mixer used before initialized.");
+		DALIA_PROFILE_SCOPE_N("Mixer::SetOutputFormat");
+
 		m_suspendRequest.store(true, std::memory_order_seq_cst);
 
 		// Wait for mixer to finish processing audio
@@ -145,7 +160,19 @@ namespace dalia {
 		m_suspendRequest.store(false, std::memory_order_seq_cst);
 	}
 
-	void Mixer::SyncParams() {
+	void Mixer::ProcessAudioPeriod() {
+		DALIA_PROFILE_AUDIO_FRAME();
+		DALIA_PROFILE_SCOPE_N("Mixer::ProcessAudioPeriod");
+		m_asyncMessageBus->ProcessMixerCommands();
+		SyncNodes();
+
+		Render(m_scratchBuffer.get(), m_periodSizeFrames);
+		m_pcmRingBuffer->PushFrames(m_scratchBuffer.get(), m_periodSizeFrames);
+	}
+
+	void Mixer::SyncNodes() {
+		DALIA_PROFILE_SCOPE_N("Mixer::SyncNodes");
+
 		m_acousticProcessor.SyncNodes();
 		m_voiceProcessor.SyncNodes();
 		m_busProcessor.SyncNodes();
@@ -153,7 +180,8 @@ namespace dalia {
 	}
 
 	void Mixer::Render(float* output, uint32_t frameCount) {
-		DALIA_PROFILE_SCOPE_N("Mixer::RenderFrame");
+		DALIA_PROFILE_SCOPE_N("Mixer::Render");
+
 		const uint32_t sampleCount = frameCount * m_outChannels;
 
 		// Zero bus buffers
@@ -161,7 +189,7 @@ namespace dalia {
 
 		// Evaluate 2D/3D acoustics & voice transitions
 		m_acousticProcessor.EvaluateVoices(m_voiceProcessor.GetVoices());
-		m_voiceProcessor.ResolveStates();
+		m_voiceProcessor.ResolveVoiceStates();
 
 		// Resolve bus routing & recompile mix order if necessary
 		if (!m_busProcessor.ResolveStatesAndCompileGraph()) {

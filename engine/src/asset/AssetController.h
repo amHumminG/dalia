@@ -43,6 +43,7 @@ namespace dalia {
 		[[nodiscard]] ResidentSound* GetResidentSound(SoundHandle sound);
 		[[nodiscard]] StreamSound* GetStreamSound(SoundHandle sound);
 
+		bool m_initialized = false;
 		AsyncMessageBus* m_asyncMessageBus = nullptr;
 		AssetRegistry m_assetRegistry;
 

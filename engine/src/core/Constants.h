@@ -8,16 +8,19 @@
     #define DALIA_DEBUG 0
 #endif
 
-// Compiler-specific restrict macros for SIMD auto-vectorization
+// Compiler-specific restrict macros
 #if defined(_MSC_VER)
     // Microsoft Visual C++ (Pointer-level restriction)
     #define DALIA_RESTRICT __restrict
+	#define DALIA_DEBUG_BREAK() __debugbreak()
 #elif defined(__GNUC__) || defined(__clang__)
     // GCC and Clang
     #define DALIA_RESTRICT __restrict__
+	#define DALIA_DEBUG_BREAK() __builtin_trap()
 #else
     // Fallback for unknown compilers
-    #define DALIA_RESTRICT
+    #define DALIA_RESTRICT ((void)0)
+	#define DALIA_DEBUG_BREAK ((void)0)
 #endif
 
 namespace dalia {

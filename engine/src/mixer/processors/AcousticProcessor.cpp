@@ -3,6 +3,8 @@
 #include "async/AsyncMessageBus.h"
 #include "async/messaging/AsyncMixerMessaging.h"
 #include "core/Math.h"
+#include "core/Assert.h"
+#include "core/Profiler.h"
 
 #include <algorithm>
 
@@ -13,29 +15,47 @@ namespace dalia {
 	}
 
 	void AcousticProcessor::Initialize(AsyncMessageBus* asyncMessageBus, const AcousticProcessorConfig& config) {
+		DALIA_PROFILE_SCOPE_N("AcousticProcessor::Initialize");
+
 		m_asyncMessageBus  = asyncMessageBus;
 		m_coordinateSystem = config.coordinateSystem;
 		m_listenerPool     = config.listenerPool;
 
+		m_initialized = true;
 		SetOutputFormat(config.outChannels, config.speakerLayout);
 
 		SubscribeToCommands();
 	}
 
 	void AcousticProcessor::Shutdown() {
-		if (!m_asyncMessageBus) return;
+		DALIA_PROFILE_SCOPE_N("AcousticProcessor::Shutdown");
+
+		if (!m_initialized) return;
 
 		UnsubscribeFromCommands();
 		m_asyncMessageBus = nullptr;
+		m_initialized = false;
+	}
+
+	void AcousticProcessor::SyncNodes() {
+		DALIA_ASSERT(m_initialized, "AcousticProcessor used before initialized.");
+		DALIA_PROFILE_SCOPE_N("AcousticProcessor::SyncNodes");
+		m_listenerPool.SyncParams();
 	}
 
 	void AcousticProcessor::SetOutputFormat(uint32_t outChannels, SpeakerLayout layout) {
+		DALIA_ASSERT(m_initialized, "AcousticProcessor used before initialized.");
+		DALIA_PROFILE_SCOPE_N("AcousticProcessor::SetOutputFormat");
+
 		m_outChannels = outChannels;
 		m_speakerLayout = layout;
 		ConfigureSpeakerLayout(layout);
 	}
 
 	void AcousticProcessor::EvaluateVoices(std::span<Voice> voices) {
+		DALIA_ASSERT(m_initialized, "AcousticProcessor used before initialized.");
+		DALIA_PROFILE_SCOPE_N("AcousticProcessor::EvaluateVoices");
+
 		for (Voice& voice : voices) {
 			if (voice.currentState != VoiceState::Playing) continue;
 
@@ -65,6 +85,8 @@ namespace dalia {
 	}
 
 	void AcousticProcessor::ConfigureSpeakerLayout(SpeakerLayout layout) {
+		DALIA_PROFILE_SCOPE_N("AcousticProcessor::ConfigureSpeakerLayout");
+
 		for (uint32_t c = 0; c < CHANNELS_MAX; c++) {
 			m_speakerMatrix[c] = { math::Vector3(0, 0, 0), c };
 		}

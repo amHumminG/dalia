@@ -58,6 +58,7 @@ namespace dalia {
 		void FinalizeOutputDeviceSwap(const AsyncControlEvent& ev);
 		void ExecuteOutputDeviceSwap(const AsyncControlCommand& cmd); // Runs on async control thread
 
+		bool m_initialized = false;
 		AsyncMessageBus* m_asyncMessageBus = nullptr;
 		Mixer* m_mixer = nullptr;
 

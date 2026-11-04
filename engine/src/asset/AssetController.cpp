@@ -7,8 +7,8 @@
 #include "mixer/nodes/StreamContext.h"
 #include "io/codec/Codec.h"
 #include "core/Logger.h"
-
-#include <future>
+#include "core/Assert.h"
+#include "core/Profiler.h"
 
 namespace dalia {
 
@@ -21,19 +21,27 @@ namespace dalia {
 	}
 
 	Result AssetController::Initialize(AsyncMessageBus* asyncMessageBus) {
+		DALIA_PROFILE_SCOPE_N("AssetController::Initialize");
+
 		m_asyncMessageBus = asyncMessageBus;
 
+		m_initialized = true;
 		return Result::Ok;
 	}
 
 	void AssetController::Shutdown() {
-		if (!m_asyncMessageBus) return;
+		DALIA_PROFILE_SCOPE_N("AssetController::Shutdown");
+
+		if (!m_initialized) return;
 
 		m_asyncMessageBus = nullptr;
+		m_initialized = false;
 	}
 
 	Result AssetController::LoadSoundAsync(SoundHandle& sound, SoundType type, const char* filepath,
 		AssetLoadCallback callback, uint32_t* requestId) {
+		DALIA_ASSERT(m_initialized, "AssetController used before initialized.");
+		DALIA_PROFILE_SCOPE_N("AssetController::LoadSoundAsync");
 
 		if (!filepath || filepath[0] == '\0') return Result::InvalidArgs;
 
@@ -100,6 +108,9 @@ namespace dalia {
 	}
 
 	Result AssetController::UnloadSound(SoundHandle sound) {
+		DALIA_ASSERT(m_initialized, "AssetController used before initialized.");
+		DALIA_PROFILE_SCOPE_N("AssetController::UnloadSound");
+
 		if (!sound.IsValid()) return Result::InvalidHandle;
 
 		uint32_t pathHash = 0;
@@ -121,10 +132,16 @@ namespace dalia {
 	}
 
 	Result AssetController::GetSoundDescriptor(SoundHandle sound, SoundDescriptor& soundDesc) {
+		DALIA_ASSERT(m_initialized, "AssetController used before initialized.");
+		DALIA_PROFILE_SCOPE_N("AssetController::GetSoundDescriptor");
+
 		return m_assetRegistry.GetSoundDescriptor(sound, soundDesc);
 	}
 
 	bool AssetController::AcquireSound(SoundHandle sound) {
+		DALIA_ASSERT(m_initialized, "AssetController used before initialized.");
+		DALIA_PROFILE_SCOPE_N("AssetController::AcquireSound");
+
 		if (sound.GetType() == SoundType::Resident) {
 			ResidentSound* rs = m_assetRegistry.GetResidentSound(sound);
 			if (!rs || rs->refCount == 0) return false;
@@ -140,6 +157,9 @@ namespace dalia {
 	}
 
 	void AssetController::ReleaseSound(SoundHandle sound) {
+		DALIA_ASSERT(m_initialized, "AssetController used before initialized.");
+		DALIA_PROFILE_SCOPE_N("AssetController::ReleaseSound");
+
 		if (!sound.IsValid()) return;
 
 		if (sound.GetType() == SoundType::Resident) {
@@ -163,6 +183,9 @@ namespace dalia {
 	}
 
 	void AssetController::FinalizeAsyncSoundLoad(SoundHandle sound, const AudioFormatInfo& info) {
+		DALIA_ASSERT(m_initialized, "AssetController used before initialized.");
+		DALIA_PROFILE_SCOPE_N("AssetController::FinalizeAsyncSoundLoad");
+
 		if (sound.GetType() == SoundType::Resident) {
 			if (ResidentSound* rs = m_assetRegistry.GetResidentSound(sound)) {
 				rs->channels = info.channels;
@@ -186,6 +209,9 @@ namespace dalia {
 	}
 
 	void AssetController::FailSoundLoad(SoundHandle sound) {
+		DALIA_ASSERT(m_initialized, "AssetController used before initialized.");
+		DALIA_PROFILE_SCOPE_N("AssetController::FailSoundLoad");
+
 		if (sound.GetType() == SoundType::Resident) {
 			if (ResidentSound* rs = m_assetRegistry.GetResidentSound(sound)) rs->state = LoadState::Error;
 		}
@@ -197,6 +223,9 @@ namespace dalia {
 	}
 
 	void AssetController::InvokeLoadCallback(uint32_t requestId, Result result) {
+		DALIA_ASSERT(m_initialized, "AssetController used before initialized.");
+		DALIA_PROFILE_SCOPE_N("AssetController::InvokeLoadCallback");
+
 		if (auto it = m_loadCallbacks.find(requestId); it != m_loadCallbacks.end()) {
 			AssetLoadCallback cb = std::move(it->second);
 			m_loadCallbacks.erase(it);
@@ -205,10 +234,14 @@ namespace dalia {
 	}
 
 	ResidentSound* AssetController::GetResidentSound(SoundHandle handle) {
+		DALIA_PROFILE_SCOPE_N("AssetController::GetResidentSound");
+
 		return m_assetRegistry.GetResidentSound(handle);
 	}
 
 	StreamSound* AssetController::GetStreamSound(SoundHandle handle) {
+		DALIA_PROFILE_SCOPE_N("AssetController::GetStreamSound");
+
 		return m_assetRegistry.GetStreamSound(handle);
 	}
 }

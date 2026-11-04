@@ -7,6 +7,8 @@
 #include "async/messaging/AsyncStreamMessaging.h"
 #include "core/Logger.h"
 #include "core/Math.h"
+#include "core/Profiler.h"
+#include "core/Assert.h"
 
 #include <algorithm>
 #include <cmath>
@@ -19,6 +21,7 @@ namespace dalia {
 
 	void VoiceProcessor::Initialize(AsyncMessageBus* asyncMessageBus, BusProcessor* busProcessor,
 		const VoiceProcessorConfig& config) {
+		DALIA_PROFILE_SCOPE_N("VoiceProcessor::Initialize");
 
 		m_asyncMessageBus      = asyncMessageBus;
 		m_busProcessor         = busProcessor;
@@ -33,17 +36,37 @@ namespace dalia {
 		m_scratchBuffer = std::make_unique<float[]>(m_maxSamplesPeriod);
 
 		SubscribeToCommands();
+		m_initialized = true;
 	}
 
 	void VoiceProcessor::Shutdown() {
-		if (!m_asyncMessageBus) return;
+		DALIA_PROFILE_SCOPE_N("VoiceProcessor::Shutdown");
+
+		if (!m_initialized) return;
 
 		UnsubscribeFromCommands();
 		m_asyncMessageBus = nullptr;
 		m_busProcessor	  = nullptr;
+		m_initialized = false;
 	}
 
-	void VoiceProcessor::ResolveStates() {
+	void VoiceProcessor::SyncNodes() {
+		DALIA_ASSERT(m_initialized, "VoiceProcessor used before initialized.");
+		DALIA_PROFILE_SCOPE_N("VoiceProcessor::SyncNodes");
+
+		m_voicePool.SyncParams();
+	}
+
+	void VoiceProcessor::SetOutputChannels(uint32_t outChannels) {
+		DALIA_ASSERT(m_initialized, "VoiceProcessor used before initialized.");
+
+		m_outChannels = outChannels;
+	}
+
+	void VoiceProcessor::ResolveVoiceStates() {
+		DALIA_ASSERT(m_initialized, "VoiceProcessor used before initialized.");
+		DALIA_PROFILE_SCOPE_N("VoiceProcessor::ResolveVoiceStates");
+
 		for (uint32_t vIndex = 0; vIndex < m_voicePool.capacity; vIndex++) {
 			Voice& voice = m_voicePool.nodes[vIndex];
 			if (voice.currentState == VoiceState::Free) continue;
@@ -66,6 +89,9 @@ namespace dalia {
 	}
 
 	uint32_t VoiceProcessor::RenderVoices(uint32_t frameCount) {
+		DALIA_ASSERT(m_initialized, "VoiceProcessor used before initialized.");
+		DALIA_PROFILE_SCOPE_N("VoiceProcessor::RenderVoices");
+
 		uint32_t voicesRendered = 0;
 
 		for (uint32_t vIndex = 0; vIndex < m_voicePool.capacity; vIndex++) {
