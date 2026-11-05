@@ -50,7 +50,7 @@ add_library(imguizmo_lib STATIC
 target_include_directories(imguizmo_lib SYSTEM PUBLIC ${imguizmo_SOURCE_DIR}/src)
 target_link_libraries(imguizmo_lib PUBLIC imgui_lib_demo)
 
-SET(DEMO_FILES
+SET(SANDBOX_FILES
     src/main.cpp
     src/Sandbox.cpp
     src/Sandbox.h
@@ -73,7 +73,7 @@ SET(DEMO_FILES
     src/BiquadEffect.h
 )
 
-add_executable(dalia_sandbox ${DEMO_FILES})
+add_executable(dalia_sandbox ${SANDBOX_FILES})
 
 target_link_libraries(dalia_sandbox
     PRIVATE dalia::engine

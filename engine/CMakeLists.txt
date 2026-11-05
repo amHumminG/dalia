@@ -14,7 +14,6 @@ function (dalia_treat_warnings_as_errors target_name)
 endfunction()
 
 add_subdirectory(vendor/stb_vorbis)
-add_subdirectory(vendor/tracy)
 
 # Source files
 set(ENGINE_FILES
@@ -154,6 +153,15 @@ endif()
 add_library(dalia_engine STATIC ${ENGINE_FILES})
 dalia_treat_warnings_as_errors(dalia_engine)
 
+if (DALIA_ENABLE_PROFILING)
+    target_compile_definitions(dalia_engine PUBLIC DALIA_PROFILE_ENABLE)
+    if (NOT TARGET Tracy::TracyClient)
+        add_subdirectory(vendor/tracy)
+    endif()
+
+    target_link_libraries(dalia_engine PUBLIC Tracy::TracyClient)
+endif()
+
 target_include_directories(dalia_engine 
     PUBLIC include
     PRIVATE src
@@ -169,11 +177,6 @@ if (WIN32)
         PRIVATE ole32 # Backend (COM)
         PRIVATE avrt  # Backend (MMCSS)
     )
-endif()
-
-if (DALIA_ENABLE_PROFILING)
-    target_compile_definitions(dalia_engine PRIVATE DALIA_PROFILE_ENABLE)
-    target_link_libraries(dalia_engine PRIVATE Tracy::TracyClient)
 endif()
 
 add_library(dalia::engine ALIAS dalia_engine)
