@@ -44,6 +44,7 @@ namespace dalia {
 
     	if (sound.GetType() == SoundType::Resident) {
 			ResidentSound* rs = m_residentSoundPool.Get(sound.GetIndex(), sound.GetGeneration());
+    		if (!rs) return Result::InvalidHandle;
     		soundDesc.soundType			= SoundType::Resident;
     		soundDesc.loadState			= rs->state;
     		soundDesc.channels			= rs->channels;
@@ -55,6 +56,7 @@ namespace dalia {
     	}
     	else {
     		StreamSound* ss = m_streamSoundPool.Get(sound.GetIndex(), sound.GetGeneration());
+    		if (!ss) return Result::InvalidHandle;
     		soundDesc.soundType			= SoundType::Stream;
     		soundDesc.loadState			= ss->state;
     		soundDesc.channels			= ss->channels;

@@ -32,6 +32,7 @@ namespace dalia {
             pathHash = 0;
 
             pcmData.clear();
+        	pcmData.shrink_to_fit();
             totalFrames = 0;
             channels = 0;
             sampleRate = 0;

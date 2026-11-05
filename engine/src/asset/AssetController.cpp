@@ -125,7 +125,10 @@ namespace dalia {
 			pathHash = ss->pathHash;
 		}
 
-		if (pathHash != 0) m_assetRegistry.UnregisterLoadedSound(SoundID::FromHash(pathHash));
+		if (pathHash != 0) {
+			m_assetRegistry.UnregisterLoadedSound(SoundID::FromHash(pathHash));
+			ReleaseSound(sound);
+		}
 
 		ReleaseSound(sound);
 		return Result::Ok;
@@ -166,7 +169,9 @@ namespace dalia {
 			ResidentSound* rs = m_assetRegistry.GetResidentSound(sound);
 			if (!rs || rs->refCount == 0) return;
 			rs->refCount--;
+
 			if (rs->refCount == 0) {
+				rs->Reset();
 				m_assetRegistry.FreeSound(sound);
 				DALIA_LOG_DEBUG(LOG_CTX_CORE, "Freed resident sound. Handle: 0x%016llx.", sound.GetRawId());
 			}
@@ -175,7 +180,9 @@ namespace dalia {
 			StreamSound* ss = m_assetRegistry.GetStreamSound(sound);
 			if (!ss || ss->refCount == 0) return;
 			ss->refCount--;
+
 			if (ss->refCount == 0) {
+				ss->Reset();
 				m_assetRegistry.FreeSound(sound);
 				DALIA_LOG_DEBUG(LOG_CTX_CORE, "Freed stream sound. Handle: 0x%016llx.", sound.GetRawId());
 			}
