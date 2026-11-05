@@ -77,7 +77,7 @@ namespace dalia {
 
 	void DeviceController::Update() {
 		DALIA_ASSERT(m_initialized, "DeviceController used before initialized.");
-		DALIA_PROFILE_SCOPE_N("DeviceController::Update")
+		DALIA_PROFILE_SCOPE_N("DeviceController::Update");
 
 		CheckForOutputDeviceChanges();
 	}
@@ -188,7 +188,7 @@ namespace dalia {
 	}
 
 	void DeviceController::CheckForOutputDeviceChanges() {
-		DALIA_PROFILE_SCOPE_N("DeviceController::CheckForOutputDeviceChanges")
+		DALIA_PROFILE_SCOPE_N("DeviceController::CheckForOutputDeviceChanges");
 
 		// --- Wait For Ongoing Swap ---
 		if (m_isSwappingOutputDevice) return;
@@ -234,7 +234,7 @@ namespace dalia {
 	}
 
 	void DeviceController::FinalizeOutputDeviceSwap(const AsyncControlEvent& ev) {
-		DALIA_PROFILE_SCOPE_N("DeviceController::FinalizeOutputDeviceSwap")
+		DALIA_PROFILE_SCOPE_N("DeviceController::FinalizeOutputDeviceSwap");
 
 		m_outputDevice.reset(ev.data.swapOutputDevice.newDevice);
 
@@ -274,7 +274,7 @@ namespace dalia {
 	}
 
 	void DeviceController::ExecuteOutputDeviceSwap(const AsyncControlCommand& cmd) {
-		DALIA_PROFILE_SCOPE_N("DeviceController::ExecuteOutputDeviceSwap")
+		DALIA_PROFILE_SCOPE_N("DeviceController::ExecuteOutputDeviceSwap");
 
 		// Teardown old device
 		if (cmd.data.swapOutputDevice.oldDevice) {

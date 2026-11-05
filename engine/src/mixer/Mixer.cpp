@@ -89,7 +89,7 @@ namespace dalia {
 
 	void Mixer::OnWake() {
 		DALIA_ASSERT(m_initialized, "Mixer used before initialized.");
-		DALIA_PROFILE_SCOPE_N("Mixer::OnWake")
+		DALIA_PROFILE_SCOPE_N("Mixer::OnWake");
 
 		m_isProcessing.store(true, std::memory_order_seq_cst);
 

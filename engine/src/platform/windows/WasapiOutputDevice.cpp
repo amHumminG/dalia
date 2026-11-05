@@ -261,7 +261,7 @@ namespace dalia {
 				break;
 			}
 			else if (waitResult == WAIT_OBJECT_0 + 1) {
-				DALIA_PROFILE_SCOPE_N("WASAPI::SubmitBuffer")
+				DALIA_PROFILE_SCOPE_N("WASAPI::SubmitBuffer");
 
 				// Callback event was signaled
 

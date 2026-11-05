@@ -66,7 +66,7 @@ namespace dalia {
 
 	void BusProcessor::ClearBuffers() {
 		DALIA_ASSERT(m_initialized, "BusProcessor used before initialized.");
-		DALIA_PROFILE_SCOPE_N("BusProcessor::ClearBuffers")
+		DALIA_PROFILE_SCOPE_N("BusProcessor::ClearBuffers");
 
 		std::memset(m_busBufferPool.get(), 0, m_busPool.capacity * m_maxSamplesPeriod * sizeof(float));
 	}

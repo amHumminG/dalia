@@ -58,7 +58,7 @@ namespace dalia {
 	}
 
 	Result EngineInternalState::Initialize(const EngineConfig& config) {
-		DALIA_PROFILE_SCOPE_N("EngineInternalState::Initialize")
+		DALIA_PROFILE_SCOPE_N("EngineInternalState::Initialize");
 
 		Result res = ioController->Initialize(asyncMessageBus.get());
 		if (res != Result::Ok) return res;
@@ -116,7 +116,7 @@ namespace dalia {
 	}
 
 	void EngineInternalState::Shutdown() {
-		DALIA_PROFILE_SCOPE_N("EngineInternalState::Shutdown")
+		DALIA_PROFILE_SCOPE_N("EngineInternalState::Shutdown");
 
 		if (!initialized) return;
 
