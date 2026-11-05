@@ -210,8 +210,10 @@ namespace dalia {
 		for (uint32_t i = 0; i < m_voices.Capacity(); ++i) {
 			VoiceMirror& vMirror = m_voices.GetMirror(i);
 			if (vMirror.gen != NO_GENERATION && vMirror.assetRawId == soundRawId) {
-				vMirror.state = VoiceState::Stopped;
-				m_asyncMessageBus->PublishMixerCommand(AsyncMixerCommand::StopVoice(i, vMirror.gen));
+				if (vMirror.state == VoiceState::Playing || vMirror.state == VoiceState::Paused) {
+					vMirror.state = VoiceState::Stopped;
+					m_asyncMessageBus->PublishMixerCommand(AsyncMixerCommand::StopVoice(i, vMirror.gen));
+				}
 			}
 		}
 	}

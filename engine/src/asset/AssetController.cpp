@@ -125,10 +125,7 @@ namespace dalia {
 			pathHash = ss->pathHash;
 		}
 
-		if (pathHash != 0) {
-			m_assetRegistry.UnregisterLoadedSound(SoundID::FromHash(pathHash));
-			ReleaseSound(sound);
-		}
+		if (pathHash != 0) m_assetRegistry.UnregisterLoadedSound(SoundID::FromHash(pathHash));
 
 		ReleaseSound(sound);
 		return Result::Ok;
