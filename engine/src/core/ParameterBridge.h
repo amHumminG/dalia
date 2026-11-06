@@ -18,7 +18,7 @@ struct ParameterBridge {
 	}
 
 	bool ConsumeUpdate(T& outParams) {
-		if (!isDirty.exchange(false, std::memory_order_relaxed)) return false;
+		if (!isDirty.exchange(false, std::memory_order_acquire)) return false;
 		outParams = buffers[writeIndex.load(std::memory_order_relaxed)];
 		return true;
 	}
