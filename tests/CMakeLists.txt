@@ -15,6 +15,8 @@ include(GoogleTest)
 # Unit Tests
 set(UNIT_TEST_FILES
     unit/core/SPSCRingBuffer_UT.cpp
+    unit/core/FixedStack_UT.cpp
+    unit/core/MPSCRingBuffer_UT.cpp
 )
 
 add_executable(dalia_unit_tests EXCLUDE_FROM_ALL ${UNIT_TEST_FILES})
