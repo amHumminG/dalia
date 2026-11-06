@@ -55,6 +55,7 @@ set(ENGINE_FILES
     src/core/ParameterBridge.h
     src/core/Speakers.h
     src/core/Profiler.h
+    src/core/Assert.h
 
     src/async/AsyncMessageBus.h
     src/async/AsyncMessageBus.cpp
@@ -128,7 +129,6 @@ set(ENGINE_FILES
     src/platform/OutputDevice.h
     src/platform/HighResTimer.h
     src/platform/PlatformThread.h
-    src/core/Assert.h
 )
 
 if (WIN32)
