@@ -8,14 +8,16 @@ FetchContent_Declare(
     googletest
     URL https://github.com/google/googletest/archive/refs/tags/v1.15.2.tar.gz
 )
-FetchContent_MakeAvailable(GoogleTest)
+FetchContent_MakeAvailable(googletest)
+
+include(GoogleTest)
 
 # Unit Tests
 set(UNIT_TEST_FILES
-
+    unit/core/SPSCRingBuffer_UT.cpp
 )
 
-add_executable(dalia_unit_tests ${UNIT_TEST_FILES})
+add_executable(dalia_unit_tests EXCLUDE_FROM_ALL ${UNIT_TEST_FILES})
 dalia_treat_warnings_as_errors(dalia_unit_tests)
 
 target_include_directories(dalia_unit_tests
@@ -33,7 +35,7 @@ set(INTEGRATION_TEST_FILES
 
 )
 
-add_executable(dalia_integration_tests ${INTEGRATION_TEST_FILES})
+add_executable(dalia_integration_tests EXCLUDE_FROM_ALL ${INTEGRATION_TEST_FILES})
 dalia_treat_warnings_as_errors(dalia_integration_tests)
 
 target_link_libraries(dalia_integration_tests
