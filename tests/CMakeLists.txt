@@ -25,6 +25,9 @@ set(UNIT_TEST_FILES
     unit/core/ResourcePool_UT.cpp
     unit/core/Math_UT.cpp
     unit/core/Logger_UT.cpp
+
+    unit/async/WakeableThread_UT.cpp
+    unit/async/IntervalThread_UT.cpp
 )
 
 add_executable(dalia_unit_tests EXCLUDE_FROM_ALL ${UNIT_TEST_FILES})
