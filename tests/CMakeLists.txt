@@ -32,7 +32,7 @@ target_link_libraries(dalia_unit_tests
 
 # Integration Tests
 set(INTEGRATION_TEST_FILES
-
+    integration/api/EngineLifecycle_IT.cpp
 )
 
 add_executable(dalia_integration_tests EXCLUDE_FROM_ALL ${INTEGRATION_TEST_FILES})
