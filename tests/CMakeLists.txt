@@ -21,6 +21,10 @@ set(UNIT_TEST_FILES
     unit/core/AsyncPool_UT.cpp
     unit/core/ParameterBridge_UT.cpp
     unit/core/StateSyncPool_UT.cpp
+    unit/core/SPSCRingBufferPCM_UT.cpp
+    unit/core/ResourcePool_UT.cpp
+    unit/core/Math_UT.cpp
+    unit/core/Logger_UT.cpp
 )
 
 add_executable(dalia_unit_tests EXCLUDE_FROM_ALL ${UNIT_TEST_FILES})
