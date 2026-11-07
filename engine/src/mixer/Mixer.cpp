@@ -8,6 +8,10 @@
 
 namespace dalia {
 
+	Mixer::Mixer() {
+		DALIA_PROFILE_PLOT_CONFIG("Rendered Voices");
+	}
+
 	Mixer::~Mixer() {
 		Shutdown();
 	}
@@ -198,7 +202,8 @@ namespace dalia {
 		}
 
 		// Render active voices into their target buses
-		m_voiceProcessor.RenderVoices(frameCount);
+		uint32_t renderedVoices = m_voiceProcessor.RenderVoices(frameCount);
+		DALIA_PROFILE_PLOT("Rendered Voices", static_cast<int64_t>(renderedVoices));
 
 		// Render buses
 		m_busProcessor.RenderBuses(frameCount);

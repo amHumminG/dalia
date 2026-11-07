@@ -41,7 +41,7 @@ namespace dalia {
 
 	class Mixer {
 	public:
-		Mixer() = default;
+		Mixer();
 		~Mixer();
 
 		Result Initialize(AsyncMessageBus* asyncMessageBus, WakeableThread* mixerThread, const MixerConfig& config);
