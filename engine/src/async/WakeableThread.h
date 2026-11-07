@@ -5,6 +5,7 @@
 #include <thread>
 #include <atomic>
 #include <functional>
+#include <semaphore>
 
 namespace dalia {
 

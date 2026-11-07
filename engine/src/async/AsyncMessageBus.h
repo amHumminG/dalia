@@ -6,6 +6,7 @@
 #include "async/messaging/AsyncStreamMessaging.h"
 
 #include <functional>
+#include <array>
 
 namespace dalia {
 

@@ -87,7 +87,7 @@ namespace dalia {
 	}
 
 	Result MixController::DetachEffect(EffectHandle effect) {
-		return ModifyEffect(effect, [&](EffectMirror& eMirror, uint32_t) -> Result {
+		Result res = ModifyEffect(effect, [&](EffectMirror& eMirror, uint32_t) -> Result {
 			if (eMirror.busIndex == NO_INDEX) {
 				DALIA_LOG_WARN(LOG_CTX_API, "Failed to detach effect. Effect is not attached.");
 				return Result::Ok;
@@ -97,6 +97,7 @@ namespace dalia {
 			return Result::Ok;
 		});
 
-		return FreeEffectFromPool(effect);
+		if (res == Result::Ok) return FreeEffectFromPool(effect);
+		return res;
 	}
 }

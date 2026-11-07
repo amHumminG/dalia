@@ -17,16 +17,16 @@ namespace dalia {
 
 		if (soundDesc.loadState == LoadState::Error) {
 			DALIA_LOG_ERR(LOG_CTX_MIXER, "Failed to play sound. Sound loading failed.");
-			return Result::SoundLoadError;
 			m_assetController->ReleaseSound(sound);
+			return Result::SoundLoadError;
 		}
 
 		// Sound exists -> Allocate a voice
 		uint32_t vIndex;
 		if (!m_voices.Allocate(vIndex)) {
 			DALIA_LOG_ERR(LOG_CTX_MIXER, "Failed to create playback instance. Voice pool capacity reached.");
-			return Result::VoiceCapacityReached;
 			m_assetController->ReleaseSound(sound);
+			return Result::VoiceCapacityReached;
 		}
 
 		// Prime voice mirror

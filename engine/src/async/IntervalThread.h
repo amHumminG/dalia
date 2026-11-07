@@ -7,6 +7,7 @@
 #include <functional>
 #include <cstdint>
 #include <string>
+#include <semaphore>
 
 namespace dalia {
 

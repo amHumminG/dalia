@@ -173,6 +173,8 @@ target_link_libraries(dalia_engine
 )
 
 if (WIN32)
+    target_compile_definitions(dalia_engine PUBLIC NOMINMAX)
+
     target_link_libraries(dalia_engine
         PRIVATE ole32 # Backend (COM)
         PRIVATE avrt  # Backend (MMCSS)

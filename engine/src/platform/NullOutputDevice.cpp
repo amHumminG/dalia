@@ -77,7 +77,7 @@ namespace dalia {
 				DALIA_PROFILE_SCOPE_N("NullOutput::Sleep");
 
 				auto sleepDuration = std::chrono::duration_cast<std::chrono::microseconds>(nextWakeTime - now).count();
-				timer.SleepMicroseconds(sleepDuration);
+				timer.SleepMicroseconds(static_cast<uint32_t>(sleepDuration));
 			}
 
 			auto wakeTime = std::chrono::steady_clock::now();
