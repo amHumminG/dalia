@@ -202,7 +202,7 @@ namespace dalia {
 		}
 
 		// Render active voices into their target buses
-		uint32_t renderedVoices = m_voiceProcessor.RenderVoices(frameCount);
+		[[maybe_unused]] uint32_t renderedVoices = m_voiceProcessor.RenderVoices(frameCount);
 		DALIA_PROFILE_PLOT("Rendered Voices", static_cast<int64_t>(renderedVoices));
 
 		// Render buses

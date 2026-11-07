@@ -81,7 +81,7 @@ namespace dalia {
 			}
 
 			auto wakeTime = std::chrono::steady_clock::now();
-			int64_t driftMicroseconds = std::chrono::duration_cast<std::chrono::microseconds>(wakeTime - nextWakeTime).count();
+			[[maybe_unused]] int64_t driftMicroseconds = std::chrono::duration_cast<std::chrono::microseconds>(wakeTime - nextWakeTime).count();
 			DALIA_PROFILE_PLOT("Null Output Drift (Microseconds)", driftMicroseconds);
 
 			if (!m_isRunning.load(std::memory_order_relaxed)) break;
