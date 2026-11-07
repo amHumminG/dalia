@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - main
+      - dev
     tags:
       - 'v*' # Triggers on a release tag
 
@@ -55,7 +56,7 @@ jobs:
           mike set-default latest --push
 
       - name: Deploy Dev Version
-      if: github.ref == 'refs/heads/dev'
+        if: github.ref == 'refs/heads/dev'
         run: |
-          # Keep a rolling 'dev' version of the docs but hide it from the dropdown
-          mike deploy dev --push --hidden
+          # Keep a rolling 'dev' version of the docs
+          mike deploy dev --push
