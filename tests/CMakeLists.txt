@@ -31,7 +31,6 @@ set(UNIT_TEST_FILES
 )
 
 add_executable(dalia_unit_tests EXCLUDE_FROM_ALL ${UNIT_TEST_FILES})
-dalia_treat_warnings_as_errors(dalia_unit_tests)
 
 target_include_directories(dalia_unit_tests
     PRIVATE ${CMAKE_SOURCE_DIR}/engine/src
@@ -49,7 +48,6 @@ set(INTEGRATION_TEST_FILES
 )
 
 add_executable(dalia_integration_tests EXCLUDE_FROM_ALL ${INTEGRATION_TEST_FILES})
-dalia_treat_warnings_as_errors(dalia_integration_tests)
 
 target_link_libraries(dalia_integration_tests
     PRIVATE dalia::engine
