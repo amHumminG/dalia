@@ -51,28 +51,31 @@ TEST(WakeableThreadTest, WakeTriggersProcessFunction) {
 }
 
 TEST(WakeableThreadTest, MultipleWakesRunMultipleTimes) {
-    std::atomic<int32_t> executionCount{0};
-    
-    WakeableThread thread("TestWakeable_Multiple", [&executionCount]() {
-        executionCount++;
-    });
-    
-    thread.Start();
-    
-    // Wake multiple times
-    const int32_t targetWakes = 5;
-    for (int32_t i = 0; i < targetWakes; ++i) {
-        thread.Wake();
-    }
-    
-    // Wait for all executions to complete
-    int32_t attempts = 0;
-    while (executionCount.load() < targetWakes && attempts < 100) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
-        attempts++;
-    }
-    
-    EXPECT_GE(executionCount.load(), targetWakes);
-    
-    thread.Stop();
+	std::atomic<int32_t> executionCount{0};
+
+	WakeableThread thread("TestWakeable_Multiple", [&executionCount]() {
+		executionCount++;
+	});
+
+	thread.Start();
+
+	const int32_t targetWakes = 5;
+	for (int32_t i = 0; i < targetWakes; ++i) {
+		// Record where we are before waking
+		int32_t expectedCount = i + 1;
+
+		thread.Wake();
+
+		// Wait specifically for this single execution to finish
+		int32_t attempts = 0;
+		while (executionCount.load() < expectedCount && attempts < 100) {
+			std::this_thread::sleep_for(std::chrono::milliseconds(1));
+			attempts++;
+		}
+
+		// Ensure it actually incremented before we fire the next Wake
+		EXPECT_EQ(executionCount.load(), expectedCount);
+	}
+
+	thread.Stop();
 }
