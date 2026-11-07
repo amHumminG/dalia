@@ -40,20 +40,19 @@ namespace dalia {
 			m_pushCursor = 0;
 		}
 
-		bool IsEmpty() {
+		bool IsEmpty() const {
 			return m_popCursor == m_pushCursor;
 		}
 
-		bool IsFull() {
-			return (m_pushCursor + 1) == m_popCursor;
+		bool IsFull() const {
+			return ((m_pushCursor + 1) & m_mask) == m_popCursor;
 		}
 
-		// TODO: Implement
-		// size_t Size() {
-		//
-		// }
+		size_t Size() const {
+			return (m_pushCursor - m_popCursor) & m_mask;
+		}
 
-		size_t Capacity() {
+		size_t Capacity() const {
 			return m_capacity;
 		}
 

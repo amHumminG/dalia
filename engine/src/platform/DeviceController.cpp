@@ -28,27 +28,34 @@ namespace dalia {
 		m_periodSizeFrames = periodSizeInFrames;
 
 		// Set up output devices
-		SetupOutputDeviceTargeted(outDeviceId);
 		SetupNullOutputDevice();
 
-		if (m_outputDevice) {
-			m_activeOutputDevice = m_outputDevice.get();
-			m_nullOutputDevice->SetOutputFormat(m_outputDevice->GetChannels(), m_outputDevice->GetSpeakerLayout());
-
-			// Logging
-			std::string layout;
-			switch (m_speakerLayout) {
-				case SpeakerLayout::Mono: layout = "Mono"; break;
-				case SpeakerLayout::Stereo: layout = "Stereo"; break;
-				case SpeakerLayout::Surround51: layout = "5.1"; break;
-				case SpeakerLayout::Surround71: layout = "7.1"; break;
-			}
-			DALIA_LOG_INFO(LOG_CTX_CORE, "Initialized audio device \"%s\". %s layout with %u channel(s).",
-				m_outputDevice->GetName().c_str(), layout.c_str(), m_outputDevice->GetChannels());
+		if (outDeviceId == "null") {
+			DALIA_LOG_INFO(LOG_CTX_CORE, "Null output device requested on initialization. Audio will render to void.");
+			m_activeOutputDevice = m_nullOutputDevice.get();
 		}
 		else {
-			DALIA_LOG_WARN(LOG_CTX_CORE, "No output audio device found. Audio will render to void for now.");
-			m_activeOutputDevice = m_nullOutputDevice.get();
+			SetupOutputDeviceTargeted(outDeviceId);
+
+			if (m_outputDevice) {
+				m_activeOutputDevice = m_outputDevice.get();
+				m_nullOutputDevice->SetOutputFormat(m_outputDevice->GetChannels(), m_outputDevice->GetSpeakerLayout());
+
+				// Logging
+				std::string layout;
+				switch (m_speakerLayout) {
+					case SpeakerLayout::Mono: layout = "Mono"; break;
+					case SpeakerLayout::Stereo: layout = "Stereo"; break;
+					case SpeakerLayout::Surround51: layout = "5.1"; break;
+					case SpeakerLayout::Surround71: layout = "7.1"; break;
+				}
+				DALIA_LOG_INFO(LOG_CTX_CORE, "Initialized audio device \"%s\". %s layout with %u channel(s).",
+					m_outputDevice->GetName().c_str(), layout.c_str(), m_outputDevice->GetChannels());
+			}
+			else {
+				DALIA_LOG_WARN(LOG_CTX_CORE, "No output audio device found. Audio will render to void for now.");
+				m_activeOutputDevice = m_nullOutputDevice.get();
+			}
 		}
 
 		m_asyncMessageBus = asyncMessageBus;
