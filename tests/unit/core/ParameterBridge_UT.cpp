@@ -3,10 +3,12 @@
 
 #include <thread>
 
-struct TestParams {
-	float volume = 1.0f;
-	float pitch = 1.0f;
-};
+namespace {
+	struct TestParams {
+		float volume = 1.0f;
+		float pitch = 1.0f;
+	};
+}
 
 TEST(ParameterBridgeTest, InitialState) {
 	ParameterBridge<TestParams> bridge;

@@ -7,23 +7,25 @@
 
 using namespace dalia;
 
-struct TestParams {
-    uint32_t frequency = 1000;
-    uint32_t qFactor = 1000;
-};
+namespace {
+	struct TestParams {
+		uint32_t frequency = 1000;
+		uint32_t qFactor = 1000;
+	};
 
-struct TestMirror {
-    TestParams params;
-};
+	struct TestMirror {
+		TestParams params;
+	};
 
-struct TestMixerItem {
-    TestParams activeParams;
+	struct TestMixerItem {
+		TestParams activeParams;
 
-    // Required by MixerPoolView::SyncParams()
-    void SetParams(const TestParams& p) {
-        activeParams = p;
-    }
-};
+		// Required by MixerPoolView::SyncParams()
+		void SetParams(const TestParams& p) {
+			activeParams = p;
+		}
+	};
+}
 
 class StateSyncPoolTest : public ::testing::Test {
 protected:
@@ -73,6 +75,7 @@ TEST_F(StateSyncPoolTest, EndToEndSyncCycle) {
 TEST_F(StateSyncPoolTest, NoSyncWithoutMarkingDirty) {
     uint32_t idx;
     ASSERT_TRUE(pool.Allocate(idx));
+	EXPECT_EQ(pool.Get(idx).activeParams.frequency, 1000);
 
     // Bypassing GetMirrorParamsForWrite and secretly modifying the mirror
     pool.GetMirror(idx).params.frequency = 500;
