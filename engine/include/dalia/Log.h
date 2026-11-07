@@ -1,6 +1,6 @@
 #pragma once
 
-/// @file LogLevel.h
+/// @file Log.h
 ///	@brief Logging severity levels and callback signatures.
 
 #include <functional>

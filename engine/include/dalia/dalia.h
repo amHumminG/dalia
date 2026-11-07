@@ -6,10 +6,10 @@
 /// This file includes the entire public API. It is provided for convenience and is ideal for inclusion in precompiled
 /// headers.
 
-#include "Engine.h"
-#include "Playback.h"
-#include "Sound.h"
-#include "Effect.h"
-#include "Device.h"
-#include "Log.h"
-#include "Result.h"
+#include "dalia/Engine.h"
+#include "dalia/Playback.h"
+#include "dalia/Sound.h"
+#include "dalia/Effect.h"
+#include "dalia/Device.h"
+#include "dalia/Log.h"
+#include "dalia/Result.h"
