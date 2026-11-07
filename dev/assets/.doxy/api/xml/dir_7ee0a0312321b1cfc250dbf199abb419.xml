@@ -1,0 +1,19 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.9.8" xml:lang="en-US">
+  <compounddef id="dir_7ee0a0312321b1cfc250dbf199abb419" kind="dir">
+    <compoundname>dalia</compoundname>
+    <innerfile refid="dalia_8h">dalia.h</innerfile>
+    <innerfile refid="Device_8h">Device.h</innerfile>
+    <innerfile refid="Effect_8h">Effect.h</innerfile>
+    <innerfile refid="Engine_8h">Engine.h</innerfile>
+    <innerfile refid="Log_8h">Log.h</innerfile>
+    <innerfile refid="Playback_8h">Playback.h</innerfile>
+    <innerfile refid="Result_8h">Result.h</innerfile>
+    <innerfile refid="Sound_8h">Sound.h</innerfile>
+    <briefdescription>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <location file="dalia/"/>
+  </compounddef>
+</doxygen>
