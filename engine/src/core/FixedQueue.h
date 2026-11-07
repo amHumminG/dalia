@@ -1,5 +1,6 @@
 #pragma once
 #include <memory>
+#include <bit>
 
 namespace dalia {
 
