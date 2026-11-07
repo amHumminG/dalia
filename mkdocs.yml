@@ -72,3 +72,7 @@ plugins:
             RECURSIVE: True
             EXTRACT_ALL: True
             STRIP_FROM_PATH: engine/include
+
+extra:
+  version:
+    provider: mike
