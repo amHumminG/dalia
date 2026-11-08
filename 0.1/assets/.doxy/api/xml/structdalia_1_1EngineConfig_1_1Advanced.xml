@@ -1,0 +1,97 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.9.8" xml:lang="en-US">
+  <compounddef id="structdalia_1_1EngineConfig_1_1Advanced" kind="struct" language="C++" prot="public">
+    <compoundname>dalia::EngineConfig::Advanced</compoundname>
+    <includes refid="Engine_8h" local="no">Engine.h</includes>
+    <sectiondef kind="public-attrib">
+      <memberdef kind="variable" id="structdalia_1_1EngineConfig_1_1Advanced_1a3efbdfd4d1c90a2f462247b47b0db986" prot="public" static="no" mutable="no">
+        <type>uint32_t</type>
+        <definition>uint32_t dalia::EngineConfig::Advanced::periodSizeFrames</definition>
+        <argsstring></argsstring>
+        <name>periodSizeFrames</name>
+        <qualifiedname>dalia::EngineConfig::Advanced::periodSizeFrames</qualifiedname>
+        <initializer>= 512</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="dalia/Engine.h" line="44" column="10" bodyfile="dalia/Engine.h" bodystart="44" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structdalia_1_1EngineConfig_1_1Advanced_1a3d9b909bfc25eba87846718f4395de5a" prot="public" static="no" mutable="no">
+        <type>size_t</type>
+        <definition>size_t dalia::EngineConfig::Advanced::mixerQueueCapacity</definition>
+        <argsstring></argsstring>
+        <name>mixerQueueCapacity</name>
+        <qualifiedname>dalia::EngineConfig::Advanced::mixerQueueCapacity</qualifiedname>
+        <initializer>= 1024</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="dalia/Engine.h" line="47" column="8" bodyfile="dalia/Engine.h" bodystart="47" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structdalia_1_1EngineConfig_1_1Advanced_1ad478789027dc9d30c17f1c0664d0dc74" prot="public" static="no" mutable="no">
+        <type>size_t</type>
+        <definition>size_t dalia::EngineConfig::Advanced::streamQueueCapacity</definition>
+        <argsstring></argsstring>
+        <name>streamQueueCapacity</name>
+        <qualifiedname>dalia::EngineConfig::Advanced::streamQueueCapacity</qualifiedname>
+        <initializer>= 256</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="dalia/Engine.h" line="48" column="8" bodyfile="dalia/Engine.h" bodystart="48" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structdalia_1_1EngineConfig_1_1Advanced_1a5dadfff5e0bd5e56caf5949dfd9d3a43" prot="public" static="no" mutable="no">
+        <type>size_t</type>
+        <definition>size_t dalia::EngineConfig::Advanced::loadQueueCapacity</definition>
+        <argsstring></argsstring>
+        <name>loadQueueCapacity</name>
+        <qualifiedname>dalia::EngineConfig::Advanced::loadQueueCapacity</qualifiedname>
+        <initializer>= 128</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="dalia/Engine.h" line="49" column="8" bodyfile="dalia/Engine.h" bodystart="49" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structdalia_1_1EngineConfig_1_1Advanced_1a7fa5ebe1c12209ab7c4a21782f203480" prot="public" static="no" mutable="no">
+        <type>size_t</type>
+        <definition>size_t dalia::EngineConfig::Advanced::controlQueueCapacity</definition>
+        <argsstring></argsstring>
+        <name>controlQueueCapacity</name>
+        <qualifiedname>dalia::EngineConfig::Advanced::controlQueueCapacity</qualifiedname>
+        <initializer>= 32</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="dalia/Engine.h" line="50" column="8" bodyfile="dalia/Engine.h" bodystart="50" bodyend="-1"/>
+      </memberdef>
+    </sectiondef>
+    <briefdescription>
+<para><ref refid="structdalia_1_1EngineConfig_1_1Advanced" kindref="compound">Advanced</ref> settings. Only touch if you have very tight constraints. </para>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <location file="dalia/Engine.h" line="43" column="1" bodyfile="dalia/Engine.h" bodystart="43" bodyend="51"/>
+    <listofallmembers>
+      <member refid="structdalia_1_1EngineConfig_1_1Advanced_1a7fa5ebe1c12209ab7c4a21782f203480" prot="public" virt="non-virtual"><scope>dalia::EngineConfig::Advanced</scope><name>controlQueueCapacity</name></member>
+      <member refid="structdalia_1_1EngineConfig_1_1Advanced_1a5dadfff5e0bd5e56caf5949dfd9d3a43" prot="public" virt="non-virtual"><scope>dalia::EngineConfig::Advanced</scope><name>loadQueueCapacity</name></member>
+      <member refid="structdalia_1_1EngineConfig_1_1Advanced_1a3d9b909bfc25eba87846718f4395de5a" prot="public" virt="non-virtual"><scope>dalia::EngineConfig::Advanced</scope><name>mixerQueueCapacity</name></member>
+      <member refid="structdalia_1_1EngineConfig_1_1Advanced_1a3efbdfd4d1c90a2f462247b47b0db986" prot="public" virt="non-virtual"><scope>dalia::EngineConfig::Advanced</scope><name>periodSizeFrames</name></member>
+      <member refid="structdalia_1_1EngineConfig_1_1Advanced_1ad478789027dc9d30c17f1c0664d0dc74" prot="public" virt="non-virtual"><scope>dalia::EngineConfig::Advanced</scope><name>streamQueueCapacity</name></member>
+    </listofallmembers>
+  </compounddef>
+</doxygen>
