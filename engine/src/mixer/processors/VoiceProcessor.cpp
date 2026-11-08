@@ -278,6 +278,7 @@ namespace dalia {
 				voice.data.stream.frontBufferIndex = 0;
 				voice.hasPendingSeek = false;
 				voice.pendingSeekFrame = 0;
+				voice.resamplerState = {};
 			}
 		}
 	}
@@ -372,7 +373,7 @@ namespace dalia {
 				framesMixed += outputFramesGenerated;
 			}
 
-			if (block.framesAvailable < sourceFramesNeeded) {
+			if (block.framesAvailable < sourceFramesNeeded || framesMixed < frameCount) {
 				if (!AdvanceVoiceBoundary(voice)) break;
 			}
 		}

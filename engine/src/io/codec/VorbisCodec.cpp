@@ -152,7 +152,7 @@ namespace dalia {
 
 	Result VorbisCodec::SeekStreamFrame(void* decoderHandle, uint32_t targetFrame) const {
 		stb_vorbis* decoder = static_cast<stb_vorbis*>(decoderHandle);
-		stb_vorbis_seek_frame(decoder, targetFrame);
+		stb_vorbis_seek(decoder, targetFrame);
 		return Result::Ok;
 	}
 

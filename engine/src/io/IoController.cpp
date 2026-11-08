@@ -164,7 +164,12 @@ namespace dalia {
 
 		StreamContext& stream = m_streams.Get(cmd.index);
 		if (stream.gen.load(std::memory_order_relaxed) != cmd.gen) return;
-		if (stream.state.load(std::memory_order_relaxed) != StreamState::Streaming) return;
+		if (stream.state.load(std::memory_order_relaxed) != StreamState::Seeking) return;
+
+		stream.bufferReady[0].store(false, std::memory_order_release);
+		stream.bufferReady[1].store(false, std::memory_order_release);
+		stream.eofIndex[0] = NO_EOF;
+		stream.eofIndex[1] = NO_EOF;
 
 		if (stream.codec && stream.decoderHandle) {
 			stream.codec->SeekStreamFrame(stream.decoderHandle, cmd.data.streamSeek.seekFrame);
