@@ -1,9 +1,10 @@
 <div align="center">
-  <img src="docs/assets/dalia_engine_logo_transparent.png" width="600" alt="DALIA Engine Logo">
-  <br><br>
-  <i>Dedicated Abstraction Layer for Interactive Audio in C++</i>
+    <img src="docs/assets/dalia_engine_logo_transparent.png" width="600" alt="DALIA Engine Logo">
+    <br><br>
+    <i>Dedicated Abstraction Layer for Interactive Audio in C++</i>
+    <br><br>
 
-[![Docs](https://img.shields.io/badge/Docs-amhumming.github.io%2Fdalia-blue?style=flat-square)](https://amhumming.github.io/dalia/)
+[![Docs](https://img.shields.io/static/v1?label=Docs&message=amhumming.github.io/dalia&color=blue&style=flat-square)](https://amhumming.github.io/dalia/)
 [![Release](https://img.shields.io/github/v/release/amhumming/dalia?color=orange&style=flat-square)](https://github.com/amhumming/dalia/releases)
 [![Platform](https://img.shields.io/badge/Platform-Windows-lightgrey?style=flat-square)](#building-from-source)
 [![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)](LICENSE)
