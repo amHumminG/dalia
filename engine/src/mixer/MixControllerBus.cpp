@@ -102,6 +102,7 @@ namespace dalia {
 				));
 				orphanedPlaybacks++;
 				DALIA_LOG_DEBUG(LOG_CTX_API, "Orphaned voice (index: %d).", i);
+				m_asyncMessageBus->PublishMixerCommand(AsyncMixerCommand::StopVoice(i, vMirrorChild.gen));
 			}
 		}
 		if (orphanedPlaybacks > 0) DALIA_LOG_WARN(LOG_CTX_CORE, "Destroying bus %s. Orphaned %d playbacks.",
