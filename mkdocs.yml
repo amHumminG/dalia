@@ -55,8 +55,8 @@ markdown_extensions:
   - pymdownx.snippets
   - pymdownx.superfences
   - pymdownx.emoji:
-      emoji_index: !!python/name:materialx.emoji.twemoji
-      emoji_generator: !!python/name:materialx.emoji.to_svg
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
 
 extra_css:
   - stylesheets/extra.css
@@ -72,3 +72,7 @@ plugins:
             RECURSIVE: True
             EXTRACT_ALL: True
             STRIP_FROM_PATH: engine/include
+
+extra:
+  version:
+    provider: mike

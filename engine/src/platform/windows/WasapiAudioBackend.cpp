@@ -1,0 +1,243 @@
+#include "platform/windows/WasapiAudioBackend.h"
+
+#include "platform/windows/WasapiOutputDevice.h"
+#include "core/Logger.h"
+#include "core/Assert.h"
+#include "core/Profiler.h"
+
+#include <functiondiscoverykeys_devpkey.h> // For PKEY_Device_FriendlyName
+#include <cstring>
+#include <memory>
+
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+
+namespace dalia {
+
+	// --- Notification Client Implementation ---
+
+	WasapiAudioBackend::NotificationClient::NotificationClient(SPSCRingBuffer<OSDeviceNotification>& queue)
+		: m_notificationQueue(queue) {}
+
+	ULONG STDMETHODCALLTYPE WasapiAudioBackend::NotificationClient::AddRef() {
+		return InterlockedIncrement(&m_refCount);
+	}
+
+	ULONG STDMETHODCALLTYPE WasapiAudioBackend::NotificationClient::Release() {
+		ULONG count = InterlockedDecrement(&m_refCount);
+		if (count == 0) delete this;
+
+		return count;
+	}
+
+	HRESULT STDMETHODCALLTYPE WasapiAudioBackend::NotificationClient::QueryInterface(REFIID riid, void** ppv) {
+		if (riid == __uuidof(IUnknown) || riid == __uuidof(IMMNotificationClient)) {
+			*ppv = static_cast<IMMNotificationClient*>(this);
+			AddRef();
+			return S_OK;
+		}
+		*ppv = nullptr;
+
+		return E_NOINTERFACE;
+	}
+
+	HRESULT STDMETHODCALLTYPE WasapiAudioBackend::NotificationClient::OnDefaultDeviceChanged(EDataFlow flow, ERole role, LPCWSTR pwstrDeviceId) {
+		// Only account for cases where the default rendering device changed
+		if (flow == eRender && role == eConsole) {
+			OSDeviceNotification notification = {};
+
+			// Capture new default device id
+			if (pwstrDeviceId != nullptr) {
+				WideCharToMultiByte(
+					CP_UTF8,
+					0,
+					pwstrDeviceId,
+					-1,
+					notification.deviceId,
+					MAX_STR_LEN_DEVICE,
+					nullptr,
+					nullptr
+				);
+			}
+
+			m_notificationQueue.Push(notification);
+		}
+
+		return S_OK;
+	}
+
+	HRESULT STDMETHODCALLTYPE WasapiAudioBackend::NotificationClient::OnDeviceStateChanged(LPCWSTR /*pwstrDeviceId*/, DWORD /*dwNewState*/) {
+		return S_OK;
+	}
+
+	HRESULT STDMETHODCALLTYPE WasapiAudioBackend::NotificationClient::OnDeviceAdded(LPCWSTR /*pwstrDeviceId*/) {
+		return S_OK;
+	}
+
+	HRESULT STDMETHODCALLTYPE WasapiAudioBackend::NotificationClient::OnDeviceRemoved(LPCWSTR /*pwstrDeviceId*/) {
+		return S_OK;
+	}
+
+	HRESULT STDMETHODCALLTYPE WasapiAudioBackend::NotificationClient::OnPropertyValueChanged(LPCWSTR /*pwstrDeviceId*/, const PROPERTYKEY /*key*/) {
+		return S_OK;
+	}
+
+	// -------
+
+	WasapiAudioBackend::WasapiAudioBackend() = default;
+
+	WasapiAudioBackend::~WasapiAudioBackend() {
+		if (m_enumerator && m_notificationClient) {
+			m_enumerator->UnregisterEndpointNotificationCallback(m_notificationClient.Get());
+		}
+
+		m_enumerator.Reset();
+		m_notificationClient.Reset();
+
+		CoUninitialize();
+	}
+
+	Result WasapiAudioBackend::Initialize() {
+		DALIA_PROFILE_SCOPE_N("WasapiAudioBackend::Initialize");
+
+		// Initialize COM for this thread
+		HRESULT hr = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
+		if (FAILED(hr)) return Result::SystemError;
+
+		// Create device enumerator
+		hr = CoCreateInstance(
+			__uuidof(MMDeviceEnumerator),
+			nullptr,
+			CLSCTX_ALL,
+			IID_PPV_ARGS(&m_enumerator)
+		);
+		if (FAILED(hr)) return Result::SystemError;
+
+		// Create notification client
+		m_notificationClient = new NotificationClient(m_notificationQueue);
+		hr = m_enumerator->RegisterEndpointNotificationCallback(m_notificationClient.Get());
+		if (FAILED(hr)) return Result::SystemError;
+
+		m_initialized = true;
+		return Result::Ok;
+	}
+
+	std::vector<OutputDeviceInfo> WasapiAudioBackend::Enumerate() {
+		DALIA_ASSERT(m_initialized, "WasapiAudioBackend used before initialized.");
+		DALIA_PROFILE_SCOPE_N("WasapiAudioBackend::Enumerate");
+
+		std::vector<OutputDeviceInfo> deviceList;
+		if (!m_enumerator) return deviceList;
+
+		// Find the current default device ID
+		Microsoft::WRL::ComPtr<IMMDevice> defaultDevice;
+		LPWSTR defaultIdW = nullptr;
+		if (SUCCEEDED(m_enumerator->GetDefaultAudioEndpoint(eRender, eConsole, &defaultDevice))) {
+			defaultDevice->GetId(&defaultIdW);
+		}
+
+		Microsoft::WRL::ComPtr<IMMDeviceCollection> collection;
+		if (FAILED(m_enumerator->EnumAudioEndpoints(eRender, DEVICE_STATE_ACTIVE, &collection))) {
+			if (defaultIdW) CoTaskMemFree(defaultIdW);
+			return deviceList;
+		}
+
+		UINT count = 0;
+		collection->GetCount(&count);
+
+		// Get all other devices
+		for (UINT i = 0; i < count; i++) {
+			Microsoft::WRL::ComPtr<IMMDevice> device;
+			if (FAILED(collection->Item(i, &device))) continue;
+
+			// --- Channel layout safety guard ---
+			Microsoft::WRL::ComPtr<IAudioClient> audioClient;
+			if (FAILED(device->Activate(__uuidof(IAudioClient), CLSCTX_ALL, nullptr,
+				(void**)(&audioClient)))) continue;
+
+			WAVEFORMATEX* mixFormat = nullptr;
+			if (FAILED(audioClient->GetMixFormat(&mixFormat))) continue;
+
+			WORD channelCount = mixFormat->nChannels;
+			CoTaskMemFree(mixFormat);
+
+			if (channelCount > CHANNELS_SUPPORTED_MAX) continue; // Skip unsupported layouts
+			// ------
+
+			OutputDeviceInfo info{};
+
+			// Get device id
+			LPWSTR deviceIdW = nullptr;
+			if (SUCCEEDED(device->GetId(&deviceIdW))) {
+				WideCharToMultiByte(CP_UTF8, 0, deviceIdW, -1, info.identifier, MAX_STR_LEN_DEVICE, nullptr, nullptr);
+				info.identifier[MAX_STR_LEN_DEVICE - 1] = '\0';
+
+				info.isDefault = (defaultIdW && wcscmp(deviceIdW, defaultIdW) == 0);
+				CoTaskMemFree(deviceIdW);
+			}
+
+			// Get friendly name
+			Microsoft::WRL::ComPtr<IPropertyStore> props;
+			if (SUCCEEDED(device->OpenPropertyStore(STGM_READ, &props))) {
+				PROPVARIANT varName;
+				PropVariantInit(&varName);
+				if (SUCCEEDED(props->GetValue(PKEY_Device_FriendlyName, &varName)) && varName.pwszVal) {
+					WideCharToMultiByte(CP_UTF8, 0, varName.pwszVal, -1, info.name, MAX_STR_LEN_DEVICE, nullptr, nullptr);
+					info.name[MAX_STR_LEN_DEVICE - 1] = '\0';
+				}
+				PropVariantClear(&varName);
+			}
+
+			deviceList.push_back(info);
+		}
+
+		if (defaultIdW) CoTaskMemFree(defaultIdW);
+		return deviceList;
+	}
+
+	bool WasapiAudioBackend::PopDeviceChangeNotification(std::string& newDeviceId) {
+		DALIA_ASSERT(m_initialized, "WasapiAudioBackend used before initialized.");
+		DALIA_PROFILE_SCOPE_N("WasapiAudioBackend::PopDeviceChangeNotification");
+
+		OSDeviceNotification notification = {};
+		bool changeDetected = false;
+
+		// Pop until queue is emtpy
+		while (m_notificationQueue.Pop(notification)) {
+			newDeviceId = notification.deviceId;
+			changeDetected = true;
+		}
+
+		return changeDetected;
+	}
+
+	std::unique_ptr<OutputDevice> WasapiAudioBackend::CreateOutputDevice(const char* identifier, uint32_t engineSampleRate) {
+		DALIA_ASSERT(m_initialized, "WasapiAudioBackend used before initialized.");
+		DALIA_PROFILE_SCOPE_N("WasapiAudioBackend::CreateOutputDevice");
+
+		Microsoft::WRL::ComPtr<IMMDevice> device;
+		HRESULT hr = S_OK;
+
+		if (!identifier || std::strcmp(identifier, "default") == 0 || std::strlen(identifier) == 0) {
+			hr = m_enumerator->GetDefaultAudioEndpoint(eRender, eConsole, &device); // Get OS default device
+		}
+		else {
+			// Convert identifier string and get device
+			int size = MultiByteToWideChar(CP_UTF8, 0, identifier, -1, nullptr, 0);
+			if (size > 0) {
+				std::wstring wIdentifier(size - 1, 0);
+				MultiByteToWideChar(CP_UTF8, 0, identifier, -1, wIdentifier.data(), size);
+				hr = m_enumerator->GetDevice(wIdentifier.c_str(), &device);
+			}
+		}
+
+		if (FAILED(hr) || !device) return nullptr;
+
+		auto wasapiDevice = std::make_unique<WasapiOutputDevice>(device);
+		if (wasapiDevice->Initialize(engineSampleRate) != Result::Ok) return nullptr; // Negotiate format and buffer size
+
+		return wasapiDevice;
+	}
+}
+
+

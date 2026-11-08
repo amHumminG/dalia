@@ -1,25 +1,37 @@
 #pragma once
 
 #include <atomic>
+#include <cstdint>
 
 template <typename T>
 struct ParameterBridge {
-	T buffers[2];
-	std::atomic<uint32_t> writeIndex;
-	std::atomic<bool> isDirty;
+	struct SharedState {
+		uint32_t index = 1;
+		bool isDirty = false;
+	};
 
-	ParameterBridge() : writeIndex(0), isDirty(false) {}
+	T buffers[3];
+	std::atomic<SharedState> sharedState{ SharedState{.index = 1, .isDirty = false} };
+
+	uint32_t writeIndex = 2; // Owned by producer
+	uint32_t readIndex = 0;	 // Owned by consumer
 
 	void PushUpdate(const T& newParams) {
-		uint32_t nextWrite = (writeIndex.load(std::memory_order_relaxed) + 1) & 1;
-		buffers[nextWrite] = newParams;
-		writeIndex.store(nextWrite, std::memory_order_release);
-		isDirty.store(true, std::memory_order_release);
+		buffers[writeIndex] = newParams;
+
+		SharedState newState{.index = writeIndex, .isDirty = true};
+		SharedState oldState = sharedState.exchange(newState, std::memory_order_acq_rel);
+		writeIndex = oldState.index;
 	}
 
 	bool ConsumeUpdate(T& outParams) {
-		if (!isDirty.exchange(false, std::memory_order_relaxed)) return false;
-		outParams = buffers[writeIndex.load(std::memory_order_relaxed)];
+		if (!sharedState.load(std::memory_order_acquire).isDirty) return false;
+
+		SharedState newState{.index = readIndex, .isDirty = false};
+		SharedState oldState = sharedState.exchange(newState, std::memory_order_acq_rel);
+		readIndex = oldState.index;
+
+		outParams = buffers[readIndex];
 		return true;
 	}
 };

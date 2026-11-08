@@ -8,21 +8,25 @@
     #define DALIA_DEBUG 0
 #endif
 
-// Compiler-specific restrict macros for SIMD auto-vectorization
+// Compiler-specific restrict macros
 #if defined(_MSC_VER)
     // Microsoft Visual C++ (Pointer-level restriction)
     #define DALIA_RESTRICT __restrict
+	#define DALIA_DEBUG_BREAK() __debugbreak()
 #elif defined(__GNUC__) || defined(__clang__)
     // GCC and Clang
     #define DALIA_RESTRICT __restrict__
+	#define DALIA_DEBUG_BREAK() __builtin_trap()
 #else
     // Fallback for unknown compilers
-    #define DALIA_RESTRICT
+    #define DALIA_RESTRICT ((void)0)
+	#define DALIA_DEBUG_BREAK ((void)0)
 #endif
 
 namespace dalia {
 
 	// --- Backend ---
+	constexpr size_t OUTPUT_FORMAT_BITS_PER_SAMPLE = 32;
 	constexpr size_t DEVICE_NOTIFICATION_QUEUE_CAPACITY = 8;
 
 	// --- Async ---
@@ -71,6 +75,7 @@ namespace dalia {
 	static constexpr uint32_t CHANNELS_MONO = 1;
 	static constexpr uint32_t CHANNELS_STEREO = 2;
     static constexpr uint32_t CHANNELS_MAX = 8;
+	static constexpr uint32_t CHANNELS_SUPPORTED_MAX = 2;
 
 	// Listeners
 	static constexpr uint32_t LISTENERS_DEFAULT = 1;
@@ -94,10 +99,12 @@ namespace dalia {
     constexpr float FILTER_RESONANCE_MAX = 10.0f;
 
 	// Static engine configs
-	static constexpr uint32_t MAX_PERIOD_FRAMES = 2048;
+	static constexpr size_t PCM_RING_BUFFER_FRAMES = 2; // The number of audio periods the ring buffer can hold at once
 
 	static constexpr size_t STREAM_BUFFER_FRAMES = 16384;
-	static constexpr size_t STREAM_BUFFER_SIZE = STREAM_BUFFER_FRAMES * CHANNELS_MAX;
+	static constexpr size_t STREAM_BUFFER_CAPACITY = STREAM_BUFFER_FRAMES * CHANNELS_MAX;
+
+	constexpr uint32_t MAX_EFFECTS_PER_BUS = 4;
 
     // --- Handles, Indices & Generations ---
     static constexpr uint64_t INVALID_RAW_ID = 0;
@@ -114,6 +121,7 @@ namespace dalia {
 	// Physics
 	static constexpr float SPEED_OF_SOUND = 343.3f;
 
+	static constexpr float DOPPLER_FACTOR_DEFAULT = 1.0f;
 	static constexpr float DOPPLER_FACTOR_MIN = 0.0f;
 	static constexpr float DOPPLER_FACTOR_MAX = 10.0f;
 

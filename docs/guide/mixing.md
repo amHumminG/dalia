@@ -1,7 +1,7 @@
 # Mixing & Routing
 
-## The Mixing Hierarchy
-The mixing hierarchy exists to allow for dynamic runtime mixing. The hierarchy consists of buses. A bus is an audio node
+## The Mix Graph
+The mix graph exists to allow for dynamic runtime mixing. The graph consists of buses. A bus is an audio node
 that takes multiple input audio streams, mixes them together, and outputs a single combined stream. Buses are managed 
 via string identifiers.
 
@@ -35,12 +35,12 @@ same number of times as `Engine::CreateBus()` for the same identifier in order t
 ```c++
 engine->DestroyBus("UI");
 ```
-**Note:** *If a bus is destroyed, any child buses or active playbacks that are routed to the bus are orphaned. An orphaned 
-bus can be rerouted to a new parent bus, but an orphaned voice will immediately be stopped by the engine with the exit 
-condition `PlaybackExitCondition::ExplicitStop`.*
+**Note:** *If a bus is destroyed, any child buses or active playbacks that are routed to the bus are orphaned. 
+An orphaned bus can be rerouted to a new parent bus, but an orphaned voice will immediately be stopped by the engine 
+with the exit condition `PlaybackExitCondition::ExplicitStop`.*
 
 ### Bus Parameter Control
-The volume of a bus can be changed at any point. Doing this will identically scale the volume of every playback and
+The volume of a bus can be changed at any point. Doing this will effectively scale the volume of every playback and
 child bus routed into it.
 ```c++
 engine->SetBusVolumeDb("SFX", -3.0f); // Lowers the volume of the "SFX" bus by 3dB
@@ -48,13 +48,13 @@ engine->SetBusVolumeDb("SFX", -3.0f); // Lowers the volume of the "SFX" bus by 3
 
 ## Routing Playback Instances
 By default, all new playback instances are routed directly to the `Master` bus. To route it to the desired bus in your
-mixing hierarchy, use `Engine::RoutePlayback()`. This can be done at any point before or during playback.
+mix graph, use `Engine::RoutePlayback()`. This can be done at any point before or during playback.
 ```c++
 engine->RoutePlayback(explosionPlayback, "SFX"); // Routes explosionPlayback to the "SFX" bus
 ```
 
 ## Effects
-A bus does not just combine audio. It can also process it. Every bus has an Effects Rack with 4 effect slots
+A bus does not just combine audio. It can also process it. Every bus has an effect-chain with 4 effect slots
 (indices `0` through `3`). Before the output of a bus is mixed into its parent, it is processed sequentially through the
 effect slots in the order `0`, `1`, `2`, `3`.
 
@@ -77,7 +77,8 @@ Once you have a valid `EffectHandle`, you can attach it to a specific slot on a 
 engine->AttachEffect(lowpassFilter, "SFX", 0);
 ```
 Effects are exclusively attached. A single effect instance can only be attached to one bus at a time. If you attach an
-effect to a slot that is already occupied, the old effect is forcefully detached and replaced with the new one.
+effect to a slot that is already occupied, the old effect is forcefully detached and replaced with the new one
+(hot-swapped).
 
 **Note:** *Hot-swapping an effect on a bus that is actively playing audio bypasses internal fade-outs and may cause "pops".
 It is advised to only attach and detach effects when a bus is not actively playing audio.*

@@ -12,7 +12,7 @@ namespace dalia {
 	class AsyncPool {
 	public:
 		AsyncPool(uint32_t capacity)
-			: m_capacity(capacity), m_freeList(capacity) {
+			: m_capacity(capacity), m_freeList(capacity + 1) {
 			m_pool = std::make_unique<T[]>(capacity);
 
 			for (uint32_t i = 0; i < capacity; i++) m_freeList.Push(i);

@@ -4,12 +4,11 @@
 /// @brief Core DALIA engine lifecycle, configuration, and API entry points.
 
 #include "dalia/Result.h"
-#include "LogLevel.h"
-
-#include "DeviceControl.h"
-#include "PlaybackControl.h"
-#include "dalia/SoundControl.h"
-#include "EffectControl.h"
+#include "dalia/Log.h"
+#include "dalia/Device.h"
+#include "dalia/Playback.h"
+#include "dalia/Sound.h"
+#include "dalia/Effect.h"
 
 namespace dalia {
 
@@ -17,8 +16,8 @@ namespace dalia {
 
 	/// @brief Configuration containing all user-exposed engine settings.
 	struct EngineConfig {
-		// Core Settings
 		uint32_t sampleRate = 48000; // Internal mixing sample rate
+		const char* startupOutputDeviceId = "default"; // Output device that should attempt to start on initialization.
 
 		// Logging
 		LogLevel logLevel = LogLevel::Warning; // The level at which the engine will log messages.
@@ -34,19 +33,21 @@ namespace dalia {
 
 		// Mixing Capacities
 		uint32_t voiceCapacity		= 128; // The maximum number of playback instances that can exist at once.
-		uint32_t streamCapacity		= 32; // The maximum number of playback instances playing stream sounds at once.
-		uint32_t busCapacity		= 64; // The maximum number of buses that can exist at once.
+		uint32_t streamCapacity		= 32;  // The maximum number of playback instances playing stream sounds at once.
+		uint32_t busCapacity		= 64;  // The maximum number of buses that can exist at once.
 
 		// Effect Capacities
 		uint32_t biquadCapacity	= 32; // The maximum number of biquad filters that can exist at once.
 
-		/// @brief Advanced settings. Only touch if you have very tight constraints or experience queue overflows.
+		/// @brief Advanced settings. Only touch if you have very tight constraints.
 		struct Advanced {
+			uint32_t periodSizeFrames = 512; // The number of frames per audio period.
+
 			// Internal Messaging Queue Capacities (must be power of 2)
-			size_t RealTimeQueueCapacity		= 1024;
-			size_t AsyncStreamQueueCapacity		= 256;
-			size_t AsyncLoadQueueCapacity		= 128;
-			size_t AsyncControlQueueCapacity	= 32;
+			size_t mixerQueueCapacity	= 1024;
+			size_t streamQueueCapacity	= 256;
+			size_t loadQueueCapacity	= 128;
+			size_t controlQueueCapacity	= 32;
 		} advanced;
 	};
 
@@ -77,7 +78,8 @@ namespace dalia {
 		///
 		/// @retval Result::Ok					The engine was successfully initialized and is ready for use.
 		/// @retval Result::AlreadyInitialized	Attempted to initialize an already initialized engine.
-		/// @retval Result::DeviceFailed		The operating system failed to initialize or start the audio device.
+		/// @retval Result::SystemError			The operating system is not supported.
+		/// @retval Result::DeviceFailed		The operating system failed to start the output device.
 		Result Initialize(const EngineConfig& config = EngineConfig{});
 
 		/// @brief Halts all audio processing, terminates all background threads and frees allocated engine memory.
@@ -116,6 +118,14 @@ namespace dalia {
 		/// @retval Result::Ok				The global scaling factor for the Doppler effect was successfully set.
 		/// @retval Result::NotInitialized	The engine is not initialized.
 		Result SetGlobalDopplerFactor(float globalDopplerFactor);
+
+#pragma endregion ENGINE_SETTINGS
+
+		// ============================================================================
+		// [ DEVICE MANAGEMENT ]
+		// Methods for handling output devices.
+		// ============================================================================
+#pragma region DEVICE_MANAGEMENT
 
 		/// @brief Queries the OS for available output devices and retrieves the total count.
 		///
@@ -174,7 +184,7 @@ namespace dalia {
 		/// @retval Result::NotInitialized	The engine is not initialized.
 		Result SetOutputDevice(const char* identifier);
 
-#pragma endregion ENGINE_SETTINGS
+#pragma endregion ENGINE_DEVICE
 
 		// ============================================================================
 		// [ ASSET MANAGEMENT ]
@@ -198,8 +208,8 @@ namespace dalia {
 		/// @param[in]  type			Specifies if the sound should be fully decoded into memory (Resident) or
 		///								streamed directly from disk (Stream).
 		/// @param[in]  filepath		The string path to the audio asset.
-		/// @param[in]  callback		Optional. If provided, this function will be called when the load finishes.
-		/// @param[out] outRequestId	Optional. Populated with a unique ID for the async request. It will evaluate to
+		/// @param[in]  loadCallback	Optional. If provided, this function will be called when the load finishes.
+		/// @param[out] requestId		Optional. Populated with a unique ID for the async request. It will evaluate to
 		///								INVALID_REQUEST_ID if the asset is already loaded.
 		///
 		/// @retval Result::Ok							The request was successfully queued for load or is already
@@ -208,7 +218,7 @@ namespace dalia {
 		/// @retval Result::ResidentSoundPoolExhausted	The allocated capacity for resident sounds has been reached.
 		/// @retval Result::StreamSoundPoolExhausted	The allocated capacity for stream sounds has been reached.
 		Result LoadSoundAsync(SoundHandle& sound, SoundType type, const char* filepath,
-			AssetLoadCallback callback = nullptr, uint32_t* outRequestId = nullptr);
+			AssetLoadCallback loadCallback = nullptr, uint32_t* requestId = nullptr);
 
 		/// @brief Decrements the reference count of a sound and unloads it if the count reaches zero.
 		///
@@ -247,14 +257,14 @@ namespace dalia {
 		/// called for an identifier that already exists, the engine will increment its reference count. If the bus
 		/// already exists, any new parentIdentifier provided in subsequent calls is ignored and a warning is logged.
 		///
-		/// @param[in] identifier		The unique string identifier of the bus.
-		/// @param[in] parentIdentifier	Optional. The unique string identifier of the parent bus (defaults to Master).
+		/// @param[in] bus			The unique string identifier of the bus.
+		/// @param[in] parentBus	Optional. The unique string identifier of the parent bus (defaults to Master).
 		///
 		/// @retval Result::Ok					The bus was successfully created or its reference count was incremented.
 		/// @retval Result::NotInitialized		The engine is not initialized.
 		/// @retval Result::BusNotFound			The parent bus does not exist.
 		/// @retval Result::BusPoolExhausted	The allocated bus capacity has been reached.
-		Result CreateBus(const char* identifier, const char* parentIdentifier = "Master");
+		Result CreateBus(const char* bus, const char* parentBus = "Master");
 
 		/// @brief Decrements the reference count of a bus and destroys it if the count reaches zero.
 		///
@@ -264,13 +274,13 @@ namespace dalia {
 		///
 		/// @note [Master Immunity] The Master bus is permanently allocated by the engine and cannot be destroyed.
 		///
-		/// @param[in] identifier The unique string identifier of the bus.
+		/// @param[in] bus The unique string identifier of the bus.
 		///
 		/// @retval Result::Ok				The bus was successfully destroyed or its reference count was decremented.
 		/// @retval Result::NotInitialized	The engine is not initialized.
 		/// @retval Result::BusNotFound		The bus does not exist or has already been destroyed.
 		/// @retval Result::Error			Attempted to destroy Master bus.
-		Result DestroyBus(const char* identifier);
+		Result DestroyBus(const char* bus);
 
 		/// @brief Modifies the routing topology by changing the output destination of an existing bus.
 		///
@@ -281,19 +291,19 @@ namespace dalia {
 		/// If an attempt is made to route a bus into itself or into one of its own descendants, this function
 		/// will return an error. Additionally, the Master bus cannot be re-routed.
 		///
-		/// @param[in] identifier		The unique string identifier of the bus.
-		/// @param[in] parentIdentifier	The unique string identifier of the new parent bus (must be an existing bus).
+		/// @param[in] bus			The unique string identifier of the bus.
+		/// @param[in] parentBus	The unique string identifier of the new parent bus (must be an existing bus).
 		///
 		/// @retval Result::Ok				The bus was successfully re-routed.
 		/// @retval Result::NotInitialized	The engine is not initialized.
 		/// @retval Result::InvalidRouting	Attempted a route that would result in a cyclic bus hierarchy, or
 		///									attempted to route Master.
 		/// @retval Result::BusNotFound		Either the bus or the parent bus does not exist.
-		Result RouteBus(const char* identifier, const char* parentIdentifier);
+		Result RouteBus(const char* bus, const char* parentBus);
 
 		/// @brief Sets the mixing volume of a bus in decibels (dB).
 		///
-		/// @param[in] identifier	The unique string identifier of the bus.
+		/// @param[in] bus			The unique string identifier of the bus.
 		/// @param[in] volumeDb		The new volume in decibels (dB). A value of 0.0 represents unity gain. The volume
 		///							is automatically clamped to the engine's safe operating range
 		///							(between -60.0dB and +12.0dB).
@@ -301,7 +311,7 @@ namespace dalia {
 		/// @retval Result::Ok				The mixing volume of the bus was successfully updated.
 		/// @retval Result::NotInitialized	The engine is not initialized.
 		/// @retval Result::BusNotFound		The bus does not exist.
-		Result SetBusVolumeDb(const char* identifier, float volumeDb);
+		Result SetBusVolumeDb(const char* bus, float volumeDb);
 
 #pragma endregion BUS_MANAGEMENT
 
@@ -325,63 +335,7 @@ namespace dalia {
 		/// @retval Result::NotInitialized			The engine is not initialized.
 		/// @retval Result::EffectPoolExhausted		The allocated effect capacity has been reached.
 		template <typename TParams>
-		requires requires(TParams p) {p.Sanitize(); }
 		Result CreateEffect(EffectHandle& effect, const TParams& params);
-
-		/// @brief Updates the parameters of an effect instance.
-		///
-		/// @note [Params Typing] The params type must match the params type of the effect
-		/// instance that the provided handle is referencing.
-		///
-		/// @tparam TParams		The parameter struct containing the effect settings.
-		/// @param[in] effect	The handle to the effect instance.
-		/// @param[in] params	The new parameters.
-		///
-		/// @retval Result::Ok						The effect parameters were successfully updated.
-		/// @retval Result::NotInitialized			The engine is not initialized.
-		/// @retval Result::InvalidHandle			The effect handle is not recognized.
-		/// @retval Result::ExpiredHandle			The effect handle points to an already destroyed effect.
-		template <typename TParams>
-		requires requires(TParams p) {p.Sanitize(); }
-		Result SetEffectParams(EffectHandle effect, const TParams& params);
-
-		/// @brief Inserts an allocated effect into the processing chain of a specified bus.
-		///
-		/// A bus can hold up to four effects at a time. Attached effects are processed sequentially from
-		/// slot 0 to slot 3.
-		///
-		/// @note [Exclusive Routing] A single effect instance can only be attached to one bus at a time.
-		/// Attaching an effect that is already attached to a bus will forcefully detach that effect from its old bus.
-		/// Doing so is generally not recommended if the bus is being played through as it can potentially cause a pop
-		/// in the audio output due to bypassing the built-in effect fade-out.
-		///
-		/// @note [Hot-Swap] If the specified slot on the target bus is already occupied by another effect, the
-		/// existing effect will be forcefully detached and replaced by the new effect. Doing so is generally not
-		/// recommended for the same reasons mentioned above.
-		///
-		/// @param[in] effect			The handle to the effect instance.
-		/// @param[in] busIdentifier	The unique string identifier of the target bus.
-		/// @param[in] effectSlot		The index in the effect rack of the bus (0 to 3).
-		///
-		/// @retval Result::Ok						The effect was successfully attached to the bus.
-		/// @retval Result::NotInitialized			The engine is not initialized.
-		/// @retval Result::InvalidHandle			The effect handle is not recognized.
-		/// @retval Result::ExpiredHandle			The effect handle points to an already destroyed effect.
-		/// @retval Result::BusNotFound				The target bus does not exist.
-		/// @retval Result::InvalidEffectSlot		The requested slot exceeds the rack index limit.
-		Result AttachEffect(EffectHandle effect, const char* busIdentifier, uint32_t effectSlot);
-
-		/// @brief Removes an effect from the mix graph, regardless of which bus it is routed to.
-		///
-		/// @note [Effect Lifetime] Detaching an effect does not destroy it.
-		///
-		/// @param[in] effect The handle to the effect instance.
-		///
-		/// @retval Result::Ok					The effect was successfully detached.
-		/// @retval Result::NotInitialized		The engine is not initialized.
-		/// @retval Result::InvalidHandle		The effect handle is not recognized.
-		/// @retval Result::ExpiredHandle		The effect handle points to an already destroyed effect.
-		Result DetachEffect(EffectHandle effect);
 
 		/// @brief Destroys an effect.
 		///
@@ -398,6 +352,60 @@ namespace dalia {
 		/// @retval Result::InvalidHandle	The effect handle is not recognized.
 		/// @retval Result::ExpiredHandle	The effect handle points to an already destroyed effect.
 		Result DestroyEffect(EffectHandle effect);
+
+		/// @brief Inserts an allocated effect into the processing chain of a specified bus.
+		///
+		/// A bus can hold up to four effects at a time. Attached effects are processed sequentially from
+		/// slot 0 to slot 3.
+		///
+		/// @note [Exclusive Routing] A single effect instance can only be attached to one bus at a time.
+		/// Attaching an effect that is already attached to a bus will forcefully detach that effect from its old bus.
+		/// Doing so is generally not recommended if the bus is being played through as it can potentially cause a pop
+		/// in the audio output due to bypassing the built-in effect fade-out.
+		///
+		/// @note [Hot-Swap] If the specified slot on the target bus is already occupied by another effect, the
+		/// existing effect will be forcefully detached and replaced by the new effect. Doing so is generally not
+		/// recommended for the same reasons mentioned above.
+		///
+		/// @param[in] effect		The handle to the effect instance.
+		/// @param[in] bus			The unique string identifier of the target bus.
+		/// @param[in] effectSlot	The index in the effect rack of the bus (0 to 3).
+		///
+		/// @retval Result::Ok						The effect was successfully attached to the bus.
+		/// @retval Result::NotInitialized			The engine is not initialized.
+		/// @retval Result::InvalidHandle			The effect handle is not recognized.
+		/// @retval Result::ExpiredHandle			The effect handle points to an already destroyed effect.
+		/// @retval Result::BusNotFound				The target bus does not exist.
+		/// @retval Result::InvalidEffectSlot		The requested slot exceeds the rack index limit.
+		Result AttachEffect(EffectHandle effect, const char* bus, uint32_t effectSlot);
+
+		/// @brief Removes an effect from the mix graph, regardless of which bus it is routed to.
+		///
+		/// @note [Effect Lifetime] Detaching an effect does not destroy it.
+		///
+		/// @param[in] effect The handle to the effect instance.
+		///
+		/// @retval Result::Ok					The effect was successfully detached.
+		/// @retval Result::NotInitialized		The engine is not initialized.
+		/// @retval Result::InvalidHandle		The effect handle is not recognized.
+		/// @retval Result::ExpiredHandle		The effect handle points to an already destroyed effect.
+		Result DetachEffect(EffectHandle effect);
+
+		/// @brief Updates the parameters of an effect instance.
+		///
+		/// @note [Params Typing] The params type must match the params type of the effect
+		/// instance that the provided handle is referencing.
+		///
+		/// @tparam TParams		The parameter struct containing the effect settings.
+		/// @param[in] effect	The handle to the effect instance.
+		/// @param[in] params	The new parameters.
+		///
+		/// @retval Result::Ok						The effect parameters were successfully updated.
+		/// @retval Result::NotInitialized			The engine is not initialized.
+		/// @retval Result::InvalidHandle			The effect handle is not recognized.
+		/// @retval Result::ExpiredHandle			The effect handle points to an already destroyed effect.
+		template <typename TParams>
+		Result SetEffectParams(EffectHandle effect, const TParams& params);
 
 #pragma endregion EFFECTS_MANAGEMENT
 
@@ -420,7 +428,7 @@ namespace dalia {
 		///
 		/// @param[out] playback	The handle to be populated.
 		/// @param[in] sound		The handle to the sound.
-		/// @param[in] callback		Optional. If provided, this function will be called when the playback terminates.
+		/// @param[in] exitCallback	Optional. If provided, this function will be called when the playback terminates.
 		///
 		/// @retval Result::Ok							The playback instance was successfully created.
 		/// @retval Result::NotInitialized				The engine is not initialized.
@@ -429,22 +437,21 @@ namespace dalia {
 		/// @retval Result::VoicePoolExhausted			The allocated voice capacity has been reached.
 		/// @retval Result::StreamPoolExhausted			The allocated stream capacity has been reached.
 		/// @retval Result::IoStreamRequestQueueFull	The I/O streaming request queue is at capacity.
-		Result CreatePlayback(PlaybackHandle& playback, SoundHandle sound,
-		                      PlaybackExitCallback callback = nullptr);
+		Result CreatePlayback(PlaybackHandle& playback, SoundHandle sound, PlaybackExitCallback exitCallback = nullptr);
 
 		/// @brief Routes a playback instance to output its audio into the specified mixing bus.
 		///
 		/// This function can be called both before and during playback.
 		///
 		/// @param[in] playback			The handle to the playback instance.
-		/// @param[in] busIdentifier	The unique string identifier of the target bus.
+		/// @param[in] bus				The unique string identifier of the target bus.
 		///
 		/// @retval Result::Ok				The voice was successfully routed.
 		/// @retval Result::NotInitialized	The engine is not initialized.
 		/// @retval Result::InvalidHandle	The playback handle is not recognized.
 		/// @retval Result::ExpiredHandle	The playback handle has already stopped playing.
 		/// @retval Result::BusNotFound		The target bus does not exist.
-		Result RoutePlayback(PlaybackHandle playback, const char* busIdentifier);
+		Result RoutePlayback(PlaybackHandle playback, const char* bus);
 
 		/// @brief Starts or resumes a playback instance.
 		///
@@ -530,15 +537,15 @@ namespace dalia {
 		///
 		/// @note[Spatial] This only affects playback instances that have spatialization disabled.
 		///
-		/// @param[in] playback The handle to the playback instance.
-		/// @param[in] pan		The normalized pan position. A value of 0.0 represents an equal distribution between
-		///						L and R, -1.0 is full L and 1.0 is full R.
+		/// @param[in] playback		The handle to the playback instance.
+		/// @param[in] stereoPan	The normalized pan position. A value of 0.0 represents an equal distribution between
+		///							L and R, -1.0 is full L and 1.0 is full R.
 		///
 		/// @retval Result::Ok					The pan of the playback instance was successfully set.
 		/// @retval Result::NotInitialized		The engine is not initialized.
 		/// @retval Result::InvalidHandle		The playback handle is not recognized.
 		/// @retval Result::ExpiredHandle		The playback handle has already stopped playing.
-		Result SetPlaybackStereoPan(PlaybackHandle playback, float pan);
+		Result SetPlaybackStereoPan(PlaybackHandle playback, float stereoPan);
 
 		/// @brief Sets the looping state a playback instance.
 		///
@@ -564,19 +571,47 @@ namespace dalia {
 		/// @retval Result::ExpiredHandle		The playback handle has already stopped playing.
 		Result SetPlaybackSpatial(PlaybackHandle playback, bool spatial);
 
+		/// @brief Updates the 3D world position of a playback instance.
+		///
+		/// @note[Spatial only] This only affects playback instances that have spatialization enabled.
+		///
+		/// @param[in] playback The handle to the playback instance.
+		/// @param[in] position	The new 3D world coordinates.
+		///
+		/// @retval Result::Ok					The playback world position was successfully set.
+		/// @retval Result::NotInitialized		The engine is not initialized.
+		/// @retval Result::InvalidHandle		The playback handle is not recognized.
+		/// @retval Result::ExpiredHandle		The playback handle has already stopped playing.
+		Result SetPlaybackPosition(PlaybackHandle playback, const Vec3& position);
+
+		/// @brief Sets the velocity of a playback instance.
+		///
+		/// Velocity is used exclusively to calculate the Doppler effect. If the Effect is disabled, this value is ignored.
+		///
+		/// @note[Spatial only] This only affects playback instances that have spatialization enabled.
+		///
+		/// @param[in] playback The handle to the playback instance.
+		/// @param[in] velocity	The velocity vector (in m/s).
+		///
+		/// @retval Result::Ok					The playback velocity was successfully set.
+		/// @retval Result::NotInitialized		The engine is not initialized.
+		/// @retval Result::InvalidHandle		The playback handle is not recognized.
+		/// @retval Result::ExpiredHandle		The playback handle has already stopped playing.
+		Result SetPlaybackVelocity(PlaybackHandle playback, const Vec3& velocity);
+
 		/// @brief Defines which listener position is used when calculating the distance attenuation for a playback
 		/// instance.
 		///
 		/// @note[Spatial only] This only affects playback instances that have spatialization enabled.
 		///
-		/// @param[in] playback The handle to the playback instance.
-		/// @param[in] mode		The distance evaluation mode to apply.
+		/// @param[in] playback		The handle to the playback instance.
+		/// @param[in] distanceMode	The distance evaluation mode to apply.
 		///
 		/// @retval Result::Ok					The playback distance mode was successfully applied.
 		/// @retval Result::NotInitialized		The engine is not initialized.
 		/// @retval Result::InvalidHandle		The playback handle is not recognized.
 		/// @retval Result::ExpiredHandle		The playback handle has already stopped playing.
-		Result SetPlaybackDistanceMode(PlaybackHandle playback, DistanceMode mode);
+		Result SetPlaybackDistanceMode(PlaybackHandle playback, DistanceMode distanceMode);
 
 		/// @brief Sets the curve used to evaluate volume drop-off over distance for a playback instance.
 		///
@@ -590,19 +625,6 @@ namespace dalia {
 		/// @retval Result::InvalidHandle		The playback handle is not recognized.
 		/// @retval Result::ExpiredHandle		The playback handle has already stopped playing.
 		Result SetPlaybackAttenuationCurve(PlaybackHandle playback, AttenuationCurve curve);
-
-		/// @brief Updates the 3D world position of a playback instance.
-		///
-		/// @note[Spatial only] This only affects playback instances that have spatialization enabled.
-		///
-		/// @param[in] playback The handle to the playback instance.
-		/// @param[in] position	The new 3D world coordinates.
-		///
-		/// @retval Result::Ok					The playback world position was successfully set.
-		/// @retval Result::NotInitialized		The engine is not initialized.
-		/// @retval Result::InvalidHandle		The playback handle is not recognized.
-		/// @retval Result::ExpiredHandle		The playback handle has already stopped playing.
-		Result SetPlaybackPosition(PlaybackHandle playback, const Vec3& position);
 
 		/// @brief Defines the distance boundaries for the attenuation curve of a playback instance.
 		///
@@ -651,35 +673,20 @@ namespace dalia {
 		/// @retval Result::ExpiredHandle		The playback handle has already stopped playing.
 		Result SetPlaybackDopplerFactor(PlaybackHandle playback, float dopplerFactor);
 
-		/// @brief Sets the velocity of a playback instance.
-		///
-		/// Velocity is used exclusively to calculate the Doppler effect. If the Effect is disabled, this value is ignored.
-		///
-		/// @note[Spatial only] This only affects playback instances that have spatialization enabled.
-		///
-		/// @param[in] playback The handle to the playback instance.
-		/// @param[in] velocity	The velocity vector (in m/s).
-		///
-		/// @retval Result::Ok					The playback velocity was successfully set.
-		/// @retval Result::NotInitialized		The engine is not initialized.
-		/// @retval Result::InvalidHandle		The playback handle is not recognized.
-		/// @retval Result::ExpiredHandle		The playback handle has already stopped playing.
-		Result SetPlaybackVelocity(PlaybackHandle playback, const Vec3& velocity);
-
 		/// @brief Sets the listener routing mask for a playback instance.
 		///
 		/// The routing mask determines which listeners are allowed to hear and evaluate the playback instance.
 		///
 		/// @note[Spatial only] This only affects playback instances that have spatialization enabled.
 		///
-		/// @param[in] playback The handle to the playback instance.
-		/// @param[in] mask		The listener routing bitmask.
+		/// @param[in] playback		The handle to the playback instance.
+		/// @param[in] listenerMask	The listener routing bitmask.
 		///
 		/// @retval Result::Ok					The listener routing mask for the playback instance was successfully set.
 		/// @retval Result::NotInitialized		The engine is not initialized.
 		/// @retval Result::InvalidHandle		The playback handle is not recognized.
 		/// @retval Result::ExpiredHandle		The playback handle has already stopped playing.
-		Result SetPlaybackListenerMask(PlaybackHandle playback, ListenerMask mask);
+		Result SetPlaybackListenerMask(PlaybackHandle playback, ListenerMask listenerMask);
 
 #pragma endregion PLAYBACK_MANAGEMENT
 
@@ -699,16 +706,6 @@ namespace dalia {
 		/// @retval Result::ListenerNotFound	The listener index exceeds the allocated listener capacity.
 		Result SetListenerActive(uint32_t listenerIndex, bool active);
 
-		/// @brief Updates the complete 3D state of a listener.
-		///
-		/// @param listenerIndex	The zero-based index of the listener.
-		/// @param attributes		The new 3D attributes.
-		///
-		/// @retval Result::Ok					The listener 3D attributes were successfully set.
-		/// @retval Result::NotInitialized		The engine is not initialized.
-		/// @retval Result::ListenerNotFound	The listener index exceeds the allocated listener capacity.
-		Result SetListener3DAttributes(uint32_t listenerIndex, const Listener3DAttributes& attributes);
-
 		/// @brief Updates the world position of a listener.
 		///
 		/// @param[in] listenerIndex	The zero-based index of the listener.
@@ -724,13 +721,23 @@ namespace dalia {
 		/// @note [Usage]	This position is only used for distance attenuation by playback instances with distance mode
 		///					set to FromDistanceProbe.
 		///
-		/// @param[in] listenerIndex			The zero-based index of the listener.
-		/// @param[in] distanceProbePosition	The new world position.
+		/// @param[in] listenerIndex	The zero-based index of the listener.
+		/// @param[in] position			The new world position.
 		///
 		/// @retval Result::Ok					The listener's distance probe world position was successfully set.
 		/// @retval Result::NotInitialized		The engine is not initialized.
 		/// @retval Result::ListenerNotFound	The listener index exceeds the allocated listener capacity.
-		Result SetListenerDistanceProbePosition(uint32_t listenerIndex, const Vec3& distanceProbePosition);
+		Result SetListenerDistanceProbePosition(uint32_t listenerIndex, const Vec3& position);
+
+		/// @brief Sets the velocity of a listener.
+		///
+		/// @param[in] listenerIndex	The zero-based index of the listener.
+		/// @param[in] velocity			The velocity vector (in m/s).
+		///
+		/// @retval Result::Ok					The listener velocity was successfully set.
+		/// @retval Result::NotInitialized		The engine is not initialized.
+		/// @retval Result::ListenerNotFound	The listener index exceeds the allocated listener capacity.
+		Result SetListenerVelocity(uint32_t listenerIndex, const Vec3& velocity);
 
 		/// @brief Sets the facing direction of a listener.
 		///
@@ -743,22 +750,19 @@ namespace dalia {
 		/// @retval Result::ListenerNotFound	The listener index exceeds the allocated listener capacity.
 		Result SetListenerOrientation(uint32_t listenerIndex, const Vec3& forward, const Vec3& up);
 
-		/// @brief Sets the velocity of a listener.
+		/// @brief Updates the complete 3D state of a listener.
 		///
-		/// @param[in] listenerIndex	The zero-based index of the listener.
-		/// @param[in] velocity			The velocity vector (in m/s).
+		/// @param listenerIndex	The zero-based index of the listener.
+		/// @param attributes		The new 3D attributes.
 		///
-		/// @retval Result::Ok					The listener velocity was successfully set.
+		/// @retval Result::Ok					The listener 3D attributes were successfully set.
 		/// @retval Result::NotInitialized		The engine is not initialized.
 		/// @retval Result::ListenerNotFound	The listener index exceeds the allocated listener capacity.
-		Result SetListenerVelocity(uint32_t listenerIndex, const Vec3& velocity);
+		Result SetListener3DAttributes(uint32_t listenerIndex, const Listener3DAttributes& attributes);
 
 #pragma endregion LISTENER_MANAGEMENT
 
 	private:
-		void TeardownInternal();
-
 		EngineInternalState* m_state = nullptr;
-
 	};
 }

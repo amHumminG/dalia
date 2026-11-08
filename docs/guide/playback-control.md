@@ -12,7 +12,7 @@ engine->CreatePlayback(explosionPlayback, explosionSound);
 ### Exit Callbacks
 You can optionally pass a `PlaybackExitCallback` function when creating the playback instance. This callback will be
 triggered during the `Engine::Update()` tick when the sound exits. A playback exit could happen for a number of reasons. 
-All conditions are covered by the `PlaybackExitCondition` enum. If you want to trigger something when a playback instance
+All conditions are covered by the `PlaybackExitCondition` enum. If you want to create a trigger when a playback instance
 finishes naturally, just check the value of the `PlaybackExitCondition` parameter. The `PlaybackHandle` parameter will 
 hold the handle to the playback instance that just stopped. This is especially useful if you intend to use the same
 callback for multiple playback instances.
@@ -37,7 +37,7 @@ engine->StopPlayback(explosionPlayback); // Stops the playback
 Stopping a playback instance is an irreversible action. A playback instance is considered "dead" after stopping (be it
 explicitly or non-explicitly). This means that the internal voice is freed and the playback handle is invalidated. If
 you want to play the sound again, a new playback instance must be created. A call to any playback control function 
-using the handle of a "dead" playback instance will simply return the `Result::ExpiredHandle` error.
+using the handle of a "dead" playback instance will simply return the `Result::ExpiredHandle` error code.
 
 ## Parameter Control
 You can modify the parameters of a playback instance in real time. This goes for playback instances in all states

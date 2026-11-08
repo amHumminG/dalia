@@ -31,6 +31,8 @@ public:
 	dalia::SoundType GetSoundType() { return m_soundType; }
 	void SetSoundType(dalia::SoundType type) { m_soundType = type; }
 
+	PlaybackState GetState() const { return m_state; }
+
 	dalia::PlaybackHandle GetHandle() const { return m_handle; }
 
 	std::string GetBusIdentifier() const { return m_busIdentifier; }

@@ -1,0 +1,57 @@
+#pragma once
+
+#include "core/Constants.h"
+#include "io/codec/Codec.h"
+
+#include <cstdint>
+#include <array>
+#include <atomic>
+#include <algorithm>
+
+typedef struct stb_vorbis stb_vorbis;
+
+namespace dalia {
+
+    enum class StreamState : uint8_t {
+        Free,           // Not used by any voice
+        Preparing,      // I/O thread is preparing the stream
+        Streaming,      // Streaming from double buffer
+        Seeking,        // I/O thread is performing a seek and filling both buffers with new data
+        Finished,       // Waiting to be freed by I/O thread
+        Error           // Stream state is corrupted (something failed, probably on the I/O thread)
+    };
+
+    struct StreamContext {
+        std::atomic<uint32_t> gen{0};
+        std::atomic<StreamState> state = StreamState::Free;
+
+        alignas(64) float buffers[2][STREAM_BUFFER_CAPACITY];
+
+        std::array<std::atomic<bool>, 2> bufferReady{false, false};
+        std::array<uint32_t, 2> eofIndex = {NO_EOF, NO_EOF};
+
+        const Codec* codec = nullptr;
+    	void* decoderHandle = nullptr;
+        uint32_t channels = 0;
+        uint32_t sampleRate = 0;
+
+        // Called by the io-thread on request by the audio thread upon voice finish
+        void Reset() {
+        	uint32_t nextGen = gen.load(std::memory_order_relaxed) + 1;
+        	if (nextGen == NO_GENERATION) nextGen = START_GENERATION;
+        	gen.store(nextGen, std::memory_order_release);
+
+            state.store(StreamState::Free, std::memory_order_release);
+
+            std::fill_n(&buffers[0][0], (2 * STREAM_BUFFER_CAPACITY), 0.0f);
+
+            bufferReady[0].store(false);
+            bufferReady[1].store(false);
+            eofIndex = {NO_EOF, NO_EOF};
+
+            decoderHandle = nullptr;
+            channels = 0;
+            sampleRate = 0;
+        }
+    };
+}
