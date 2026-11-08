@@ -8,6 +8,7 @@ on:
       - dev
     tags:
       - 'v*' # Triggers on a release tag
+  workflow_dispatch:
 
 # Action has permission to write to gh pages
 permissions:
@@ -38,8 +39,8 @@ jobs:
 
       - name: Configure Git User
         run: |
-          git config --local user.name "github-actions[bot]"
-          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "amHumminG"
+          git config --local user.email "salliban03@gmail.com"
 
       # Pushing a release tag
       - name: Deploy Release Version
