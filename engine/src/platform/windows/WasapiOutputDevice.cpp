@@ -136,14 +136,30 @@ namespace dalia {
 		}
 
 		if (m_channels > CHANNELS_SUPPORTED_MAX) {
-			DALIA_LOG_ERR(LOG_CTX_PLATFORM, "Failed to initialize output device. Speaker layout not supported.");
-			return Result::DeviceFailed;
+			// Channel layout is not supported -> Force stereo layout
+
+		    DALIA_LOG_WARN(LOG_CTX_PLATFORM, "Speaker layout not supported (%u channels). Forcing Stereo.",
+		    	mixFormat->nChannels);
+
+		    mixFormat->nChannels = CHANNELS_STEREO;
+		    mixFormat->nBlockAlign = (mixFormat->wBitsPerSample / 8) * mixFormat->nChannels;
+		    mixFormat->nAvgBytesPerSec = mixFormat->nSamplesPerSec * mixFormat->nBlockAlign;
+
+		    if (mixFormat->wFormatTag == WAVE_FORMAT_EXTENSIBLE) {
+		        auto* extFormat = reinterpret_cast<WAVEFORMATEXTENSIBLE*>(mixFormat);
+		        extFormat->dwChannelMask = KSAUDIO_SPEAKER_STEREO;
+		    }
+
+		    m_channels = CHANNELS_STEREO;
+		    m_speakerLayout = SpeakerLayout::Stereo;
 		}
 
 		// --- Audio Client Initialization ---
 
 		// Initialize WASAPI with auto-convert pcm for best device compatibility
-		DWORD streamFlags = AUDCLNT_STREAMFLAGS_EVENTCALLBACK | AUDCLNT_STREAMFLAGS_AUTOCONVERTPCM;
+		DWORD streamFlags = AUDCLNT_STREAMFLAGS_EVENTCALLBACK |
+		                    AUDCLNT_STREAMFLAGS_AUTOCONVERTPCM |
+		                    AUDCLNT_STREAMFLAGS_SRC_DEFAULT_QUALITY;
 
 		hr = m_audioClient->Initialize(
 			AUDCLNT_SHAREMODE_SHARED,
@@ -170,7 +186,7 @@ namespace dalia {
 		DALIA_LOG_DEBUG(LOG_CTX_PLATFORM, "Audio client initialization succeeded with default periodicity (%u frames).",
 			m_periodSizeInFrames);
 
-		CoTaskMemFree(mixFormat); // Free mixFormat pointer
+		if (mixFormat) CoTaskMemFree(mixFormat); // Free mixFormat pointer
 
 		// Bind wake-up event
 		hr = m_audioClient->SetEventHandle(m_bufferEvent);
