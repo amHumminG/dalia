@@ -285,7 +285,7 @@ namespace dalia {
 				UINT32 padding = 0;
 				HRESULT hr = m_audioClient->GetCurrentPadding(&padding);
 				if (hr == AUDCLNT_E_DEVICE_INVALIDATED || hr == AUDCLNT_E_RESOURCES_INVALIDATED) {
-					DALIA_LOG_WARN(LOG_CTX_PLATFORM,
+					DALIA_LOG_ERR(LOG_CTX_PLATFORM,
 						"Audio device invalidated during padding query. Stopping audio thread.");
 					m_hasFailed.store(true, std::memory_order_release);
 					break;
@@ -299,7 +299,7 @@ namespace dalia {
 				BYTE* pData = nullptr;
 				hr = m_renderClient->GetBuffer(framesToWrite, &pData);
 				if (hr == AUDCLNT_E_DEVICE_INVALIDATED || hr == AUDCLNT_E_RESOURCES_INVALIDATED) {
-					DALIA_LOG_WARN(LOG_CTX_PLATFORM,
+					DALIA_LOG_ERR(LOG_CTX_PLATFORM,
 						"Audio device invalidated during buffer fetch. Stopping audio thread.");
 					m_hasFailed.store(true, std::memory_order_release);
 					break;
@@ -329,7 +329,7 @@ namespace dalia {
 							float* silenceStart = outBuffer + (framesRead * m_channels);
 							size_t samplesToClear = missingFrames * m_channels;
 							std::memset(silenceStart, 0, samplesToClear * sizeof(float));
-							DALIA_LOG_WARN(LOG_CTX_PLATFORM, "Unable to fill audio frame. %zu frames missing.", missingFrames);
+							DALIA_LOG_ERR(LOG_CTX_PLATFORM, "Unable to fill audio frame. %zu frames missing.", missingFrames);
 						}
 					}
 					else {
@@ -345,7 +345,7 @@ namespace dalia {
 
 				hr = m_renderClient->ReleaseBuffer(framesToWrite, 0);
 				if (hr == AUDCLNT_E_DEVICE_INVALIDATED || hr == AUDCLNT_E_RESOURCES_INVALIDATED) {
-					DALIA_LOG_WARN(LOG_CTX_PLATFORM, "Audio device invalidated during buffer release. Stopping audio thread.");
+					DALIA_LOG_ERR(LOG_CTX_PLATFORM, "Audio device invalidated during buffer release. Stopping audio thread.");
 					m_hasFailed.store(true, std::memory_order_release);
 					break;
 				}
