@@ -51,7 +51,7 @@ toggle components with `-D<OPTION>=ON/OFF`:
 ctest --test-dir build --output-on-failure
 ```
 
-Please make sure that all tests pass and that any new features are accompanied with appropriate tests before submitting
+Please make sure that all tests pass and that any new features are accompanied by appropriate tests before submitting
 a pull request.
 
 ## Code Style
