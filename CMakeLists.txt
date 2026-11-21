@@ -17,12 +17,12 @@ message(STATUS "Dalia - DALIA_BUILD_SANDBOX=${DALIA_BUILD_TESTS}")
 
 # Profiling
 if (TRACY_ENABLE)
-    set(DALIA_PROFILING_DEFAULT ON)
+    set(DALIA_PROFILE_DEFAULT ON)
 else()
     set(DALIA_PROFILE_DEFAULT OFF)
 endif()
 
-option(DALIA_PROFILE_ENABLE "Enable Tracy profiling in Dalia Engine" ${DALIA_PROFILING_DEFAULT})
+option(DALIA_PROFILE_ENABLE "Enable Tracy profiling in Dalia Engine" ${DALIA_PROFILE_DEFAULT})
 message(STATUS "Dalia - DALIA_PROFILE_ENABLE=${DALIA_PROFILE_ENABLE}")
 
 set(DALIA_TRACY_INCLUDE_DIR "" CACHE PATH "Optional path to host project's Tracy include directory")
