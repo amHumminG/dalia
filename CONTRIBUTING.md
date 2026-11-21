@@ -27,6 +27,7 @@ cmake --preset vs-win-x64
 ```
 
 Or if you prefer to not use presets:
+
 ```bash
 cmake -B build
 cmake --build build --config Release
@@ -37,12 +38,12 @@ cmake --build build --config Release
 When building Dalia as a top-level project, the sandbox application, tests and profiling are enabled by default. You can
 toggle components with `-D<OPTION>=ON/OFF`:
 
-| Option                   | Default | Description                            |
-|:-------------------------|:--------|:---------------------------------------|
-| `DALIA_BUILD_TESTS`      | `ON`    | Build the Dalia test suite             |
-| `DALIA_BUILD_SANDBOX`    | `ON`    | Build the Dalia Engine sandbox         |
-| `DALIA_BUILD_STUDIO`     | `OFF`   | Build the Dalia Studio editor          |
-| `DALIA_ENABLE_PROFILING` | `ON`    | Enable Tracy profiling in Dalia Engine |
+| Option                 | Default | Description                            |
+|:-----------------------|:--------|:---------------------------------------|
+| `DALIA_BUILD_TESTS`    | `ON`    | Build the Dalia test suite             |
+| `DALIA_BUILD_SANDBOX`  | `ON`    | Build the Dalia Engine sandbox         |
+| `DALIA_BUILD_STUDIO`   | `OFF`   | Build the Dalia Studio editor          |
+| `DALIA_PROFILE_ENABLE` | `ON`    | Enable Tracy profiling in Dalia Engine |
 
 ### Running Tests
 
@@ -110,8 +111,8 @@ You are welcome to use AI tools to assist you while programming, subject to the 
 1. Open an issue for new features or large changes so that they can be reviewed and discussed before being implemented.
    Smaller changes such as bugfixes and typos can bypass this requirement.
 2. Fork the repository and create a new branch from `dev`:
-   - `feature/` for new features
-   - `fix/` for bugfixes
+    - `feature/` for new features
+    - `fix/` for bugfixes
 3. Make sure your changes follow the code style, have corresponding tests, and pass all existing tests.
 4. Open a pull request targeting `dev` in which a clear description includes what changed and why.
 
