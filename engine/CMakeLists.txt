@@ -153,13 +153,27 @@ endif()
 add_library(dalia_engine STATIC ${ENGINE_FILES})
 dalia_treat_warnings_as_errors(dalia_engine)
 
-if (DALIA_ENABLE_PROFILING)
+if (DALIA_PROFILE_ENABLE)
     target_compile_definitions(dalia_engine PUBLIC DALIA_PROFILE_ENABLE)
-    if (NOT TARGET Tracy::TracyClient)
-        add_subdirectory(vendor/tracy)
-    endif()
 
-    target_link_libraries(dalia_engine PUBLIC Tracy::TracyClient)
+    if (DALIA_TRACY_INCLUDE_DIR)
+        # External non-CMake host -> Use headers and definitions directly
+        target_include_directories(dalia_engine PUBLIC "${DALIA_TRACY_INCLUDE_DIR}")
+        target_compile_definitions(dalia_engine PUBLIC TRACY_ENABLE)
+
+        if (TRACY_ON_DEMAND)
+            target_compile_definitions(dalia_engine PUBLIC TRACY_ON_DEMAND)
+        endif()
+        if (TRACY_FIBERS)
+            target_compile_definitions(dalia_engine PUBLIC TRACY_FIBERS)
+        endif()
+    else()
+        # Standalone CMake or CMake subprojects
+        if (NOT TARGET Tracy::TracyClient)
+            add_subdirectory(vendor/tracy)
+        endif()
+        target_link_libraries(dalia_engine PUBLIC Tracy::TracyClient)
+    endif()
 endif()
 
 target_include_directories(dalia_engine 

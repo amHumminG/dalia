@@ -6,8 +6,8 @@ endif()
 if (NOT TARGET Tracy::TracyClient)
     include(FetchContent)
 
-    set(TRACY_ENABLE ON CACHE BOOL "" FORCE)
-    set(TRACY_ON_DEMAND ON CACHE BOOL "" FORCE)
+    set(TRACY_ENABLE ON CACHE BOOL "Enable profiling" FORCE)
+    option(TRACY_ON_DEMAND "On-demand profiling" ON)
 
     FetchContent_Declare(
         tracy
