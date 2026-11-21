@@ -1304,10 +1304,10 @@
 <p>To generate a Visual Studio solution:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>cmake<span class="w"> </span>--preset<span class="w"> </span>vs-win-x64
 </code></pre></div>
-<p>Or if you prefer to not use presets:
+<p>Or if you prefer to not use presets:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>cmake<span class="w"> </span>-B<span class="w"> </span>build
 <a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>cmake<span class="w"> </span>--build<span class="w"> </span>build<span class="w"> </span>--config<span class="w"> </span>Release
-</code></pre></div></p>
+</code></pre></div>
 <h3 id="build-options">Build Options<a class="headerlink" href="#build-options" title="Permanent link">&para;</a></h3>
 <p>When building Dalia as a top-level project, the sandbox application, tests and profiling are enabled by default. You can
 toggle components with <code>-D&lt;OPTION&gt;=ON/OFF</code>:</p>
@@ -1336,7 +1336,7 @@ toggle components with <code>-D&lt;OPTION&gt;=ON/OFF</code>:</p>
 <td style="text-align: left;">Build the Dalia Studio editor</td>
 </tr>
 <tr>
-<td style="text-align: left;"><code>DALIA_ENABLE_PROFILING</code></td>
+<td style="text-align: left;"><code>DALIA_PROFILE_ENABLE</code></td>
 <td style="text-align: left;"><code>ON</code></td>
 <td style="text-align: left;">Enable Tracy profiling in Dalia Engine</td>
 </tr>
@@ -1449,9 +1449,11 @@ heap-memory should be pre-allocated at engine initialization.</p>
 <ol>
 <li>Open an issue for new features or large changes so that they can be reviewed and discussed before being implemented.
    Smaller changes such as bugfixes and typos can bypass this requirement.</li>
-<li>Fork the repository and create a new branch from <code>dev</code>:</li>
+<li>Fork the repository and create a new branch from <code>dev</code>:<ul>
 <li><code>feature/</code> for new features</li>
 <li><code>fix/</code> for bugfixes</li>
+</ul>
+</li>
 <li>Make sure your changes follow the code style, have corresponding tests, and pass all existing tests.</li>
 <li>Open a pull request targeting <code>dev</code> in which a clear description includes what changed and why.</li>
 </ol>
