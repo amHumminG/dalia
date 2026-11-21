@@ -7,7 +7,7 @@ locking any of the priority threads (the main thread and the mixer thread), DALI
 for most of its inter-thread communication.
 
 ### Thread Communication Diagram
-![Thread Communication](assets/diagrams/dalia_thread_communication_diagram.svg)
+![Thread Communication](../assets/diagrams/dalia_thread_communication_diagram.svg)
 
 The **Main Thread** is where `Engine::Update()` is called. It acts purely as a command dispatcher. When a
 call to the engine is made, it is packaged into a command struct and pushed into a lock-free queue. When 
@@ -29,7 +29,7 @@ can't run on the main thread (e.g. device initialization). It uses a semaphore t
 ## Engine Structure
 
 ### Class Diagram
-![Subsystem Dependency Graph](assets/diagrams/dalia_subsystem_dependency_graph.svg)
+![Subsystem Dependency Graph](../assets/diagrams/dalia_subsystem_dependency_graph.svg)
 
 The engine consist of multiple subsystems communicating in a strict hierarchical fashion.
 
@@ -52,7 +52,7 @@ The DSP pipeline is a Directed Acyclic Graph (DAG). In order to route audio dyna
 (voice or bus) holds a reference (more specifically an index) to its parent node. 
 
 ### Mix Graph Diagram
-![Mixing Graph](assets/diagrams/dalia_mix_graph_diagram.svg)
+![Mixing Graph](../assets/diagrams/dalia_mix_graph_diagram.svg)
 
 This system is designed for CPU cache efficiency. The engine maintains a flat, topologically sorted array of active nodes.
 During an audio frame, the audio thread simply runs through this contiguous array, accumulating audio data into the
@@ -60,7 +60,7 @@ correct parent buffers. To achieve this, the engine intentionally trades memory 
 intermediate buffers for every bus during initialization.
 
 ### Mix Graph Compilation Diagram
-![Mix Compilation](assets/diagrams/dalia_mixer_processing_diagram.svg)
+![Mix Compilation](../assets/diagrams/dalia_mixer_processing_diagram.svg)
 
 Every audio frame is evaluated in multiple passes: 
 
