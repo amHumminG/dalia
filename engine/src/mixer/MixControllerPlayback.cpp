@@ -130,7 +130,20 @@ namespace dalia {
 				return Result::PlaybackCorrupted;
 			}
 
-			vMirror.state = VoiceState::Playing;
+			// Check if any listeners are active that the voice can play to
+			if (vMirror.params.isSpatial) {
+				bool foundListener = false;
+				for (uint32_t i = 0; i < LISTENERS_MAX; i++) {
+					if (m_listeners.GetMirror(i).params.isActive) {
+						if (vMirror.params.listenerMask & MakeListenerMask(i)) foundListener = true;
+					}
+				}
+				if (!foundListener) {
+					DALIA_LOG_WARN(LOG_CTX_API,
+						"Setting spatial playback instance to play without a valid listener active");
+				}
+			}
+						vMirror.state = VoiceState::Playing;
 			m_asyncMessageBus->PublishMixerCommand(AsyncMixerCommand::PlayVoice(vIndex, playback.GetGeneration()));
 			DALIA_LOG_DEBUG(LOG_CTX_API, "Setting voice %d state: Playing.", vIndex);
 

@@ -151,10 +151,7 @@ namespace dalia {
 		ListenerParams bestListenerParams{};
 		float maxSpatialGain = GAIN_SILENCE;
 
-		if (!FindBestListener(voice, bestListenerParams, maxSpatialGain)) {
-			DALIA_LOG_ERR(LOG_CTX_MIXER, "Failed to find listener for spatial playback instance.");
-			return;
-		}
+		if (!FindBestListener(voice, bestListenerParams, maxSpatialGain)) return;
 
 		float baseGain = voice.params.gain;
 		float finalGain = baseGain * maxSpatialGain;

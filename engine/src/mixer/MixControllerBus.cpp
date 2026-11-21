@@ -149,7 +149,7 @@ namespace dalia {
 
 		BusMirror& bMirror = m_buses.GetMirror(bIndex);
 		if (bMirror.parentBusIndex == bIndexParent) {
-			DALIA_LOG_WARN(LOG_CTX_CORE, "Attempting to route bus (%s -> %s). %s is already routed to %s.",
+			DALIA_LOG_DEBUG(LOG_CTX_CORE, "Attempting to route bus (%s -> %s). %s is already routed to %s.",
 				bus, parentBus, bus, parentBus);
 			return Result::Ok;
 		}
