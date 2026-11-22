@@ -1,10 +1,10 @@
-#include "mixer/MixController.h"
+#include "mixer/MixController.hpp"
 
-#include "asset/AssetController.h"
-#include "platform/DeviceController.h"
-#include "io/IoController.h"
-#include "core/Assert.h"
-#include "core/Profiler.h"
+#include "asset/AssetController.hpp"
+#include "platform/DeviceController.hpp"
+#include "io/IoController.hpp"
+#include "core/Assert.hpp"
+#include "core/Profiler.hpp"
 
 #include <algorithm>
 
@@ -12,10 +12,10 @@ namespace dalia {
 
 	MixController::MixController(const MixControllerConfig& config)
 		: m_coordinateSystem(config.coordinateSystem),
-		m_voices(config.voiceCapacity),
-		m_listeners(config.listenerCapacity),
-		m_buses(config.busCapacity),
-		m_biquads(config.biquadCapacity) {
+		  m_voices(config.voiceCapacity),
+		  m_listeners(config.listenerCapacity),
+		  m_buses(config.busCapacity),
+		  m_biquads(config.biquadCapacity) {
 
 		m_busMap.reserve(config.busCapacity);
 	}
@@ -30,30 +30,36 @@ namespace dalia {
 
 		m_asyncMessageBus = asyncMessageBus;
 		m_assetController = assetController;
-		m_ioController	  = ioController;
+		m_ioController    = ioController;
 
 		// Initialize master bus at index 0
 		uint32_t masterIndex; // Temporary
 		m_buses.Allocate(masterIndex);
 		assert(masterIndex == MASTER_BUS_INDEX && "Master bus was not allocated at index 0.");
 		m_buses.GetMirror(MASTER_BUS_INDEX).refCount = 1;
-		m_buses.Get(MASTER_BUS_INDEX).isActive = true;
+		m_buses.Get(MASTER_BUS_INDEX).isActive       = true;
 		constexpr BusID masterId("Master");
 		m_busMap[masterId] = MASTER_BUS_INDEX;
 
 		// Initialize listener 0 to be active
-		m_listeners.Get(0).params.isActive = true;
+		m_listeners.Get(0).params.isActive       = true;
 		m_listeners.GetMirror(0).params.isActive = true;
 
 		// Subscribe to mixer events
 		m_asyncMessageBus->SubscribeToMixerEvent(AsyncMixerEvent::Type::VoiceStopped,
-			[this](const AsyncMixerEvent& ev) { HandleVoiceStoppedEvent(ev); });
+			[this](const AsyncMixerEvent& ev) {
+				HandleVoiceStoppedEvent(ev);
+			});
 
 		// Subscribe to load events
 		m_asyncMessageBus->SubscribeToLoadEvent(AsyncLoadEvent::Type::SoundLoaded,
-			[this](const AsyncLoadEvent& ev) { HandleSoundLoadedEvent(ev); });
+			[this](const AsyncLoadEvent& ev) {
+				HandleSoundLoadedEvent(ev);
+			});
 		m_asyncMessageBus->SubscribeToLoadEvent(AsyncLoadEvent::Type::SoundLoadFailed,
-			[this](const AsyncLoadEvent& ev) { HandleSoundLoadFailedEvent(ev); });
+			[this](const AsyncLoadEvent& ev) {
+				HandleSoundLoadFailedEvent(ev);
+			});
 
 		m_initialized = true;
 		return Result::Ok;
@@ -73,7 +79,7 @@ namespace dalia {
 
 		m_asyncMessageBus = nullptr;
 		m_assetController = nullptr;
-		m_ioController	  = nullptr;
+		m_ioController    = nullptr;
 
 		m_initialized = false;
 	}
@@ -121,19 +127,27 @@ namespace dalia {
 	}
 
 	Result MixController::Validate(PlaybackHandle playback) {
-		return ModifyVoice(playback, [](const VoiceMirror&, uint32_t) { return Result::Ok; });
+		return ModifyVoice(playback, [](const VoiceMirror&, uint32_t) {
+			return Result::Ok;
+		});
 	}
 
 	Result MixController::Validate(uint32_t listenerIndex) {
-		return ModifyListener(listenerIndex, [](const ListenerMirror&, uint32_t) { return Result::Ok; });
+		return ModifyListener(listenerIndex, [](const ListenerMirror&, uint32_t) {
+			return Result::Ok;
+		});
 	}
 
 	Result MixController::Validate(const char* busIdentifier) {
-		return ModifyBus(busIdentifier, [](const BusMirror&, uint32_t) { return Result::Ok; });
+		return ModifyBus(busIdentifier, [](const BusMirror&, uint32_t) {
+			return Result::Ok;
+		});
 	}
 
 	Result MixController::Validate(EffectHandle effect) {
-		return ModifyEffect(effect, [](const EffectMirror&, uint32_t) { return Result::Ok; });
+		return ModifyEffect(effect, [](const EffectMirror&, uint32_t) {
+			return Result::Ok;
+		});
 	}
 
 	Result MixController::GetBusIndex(const char* busIdentifier, uint32_t& index) {
@@ -164,23 +178,23 @@ namespace dalia {
 			if (!eMirror.IsAttached()) return Result::Ok;
 
 			uint32_t bIndex = eMirror.busIndex;
-			uint32_t slot = eMirror.effectSlot;
+			uint32_t slot   = eMirror.effectSlot;
 
 			BusMirror& bMirror = m_buses.GetMirror(bIndex);
 			if (bMirror.effectSlots[slot] == effect) bMirror.effectSlots[slot] = INVALID_EFFECT_HANDLE;
 
-			eMirror.busIndex = NO_INDEX;
+			eMirror.busIndex   = NO_INDEX;
 			eMirror.effectSlot = NO_INDEX;
 
 			if (fadeOut) {
 				m_asyncMessageBus->PublishMixerCommand(AsyncMixerCommand::FadeDetachEffect(
 					effect.GetIndex(), eMirror.gen, effect.GetType(), bIndex, slot
-				));
+					));
 			}
 			else {
 				m_asyncMessageBus->PublishMixerCommand(AsyncMixerCommand::ForceDetachEffect(
 					effect.GetIndex(), eMirror.gen, effect.GetType(), bIndex, slot
-				));
+					));
 			}
 
 			return Result::Ok;
@@ -198,7 +212,7 @@ namespace dalia {
 
 	void MixController::HandleVoiceStoppedEvent(const AsyncMixerEvent& ev) {
 		uint32_t vIndex = ev.data.voice.index;
-		uint32_t vGen = ev.data.voice.gen;
+		uint32_t vGen   = ev.data.voice.gen;
 		if (vIndex >= m_voices.Capacity()) return;
 
 		VoiceMirror& vMirror = m_voices.GetMirror(vIndex);
@@ -226,7 +240,7 @@ namespace dalia {
 			}
 
 			PlaybackHandle pb = it->playback;
-			it = m_pendingPlaybacks.erase(it);
+			it                = m_pendingPlaybacks.erase(it);
 
 			uint32_t vIndex = pb.GetIndex();
 			if (m_voices.GetMirror(vIndex).gen != pb.GetGeneration()) continue;
@@ -252,7 +266,7 @@ namespace dalia {
 			}
 
 			PlaybackHandle pb = it->playback;
-			it = m_pendingPlaybacks.erase(it);
+			it                = m_pendingPlaybacks.erase(it);
 
 			uint32_t vIndex = pb.GetIndex();
 			if (m_voices.GetMirror(vIndex).gen == pb.GetGeneration()) ResetAndFreeVoice(vIndex);
@@ -263,7 +277,7 @@ namespace dalia {
 	}
 
 	Result MixController::PrepareDeferredVoice(PlaybackHandle playback, SoundHandle sound) {
-		uint32_t vIndex = playback.GetIndex();
+		uint32_t vIndex      = playback.GetIndex();
 		VoiceMirror& vMirror = m_voices.GetMirror(vIndex);
 
 		SoundDescriptor soundDesc{};
@@ -277,23 +291,23 @@ namespace dalia {
 			m_asyncMessageBus->PublishMixerCommand(AsyncMixerCommand::PrepareVoiceResident(
 				vIndex, vMirror.gen, soundDesc.pcmData,
 				soundDesc.totalFrames, soundDesc.channels, soundDesc.sampleRate
-			));
+				));
 		}
 		else if (sound.GetType() == SoundType::Stream) {
-			uint32_t sIndex = NO_INDEX;
-			uint32_t sGen = NO_GENERATION;
+			uint32_t sIndex  = NO_INDEX;
+			uint32_t sGen    = NO_GENERATION;
 			Result streamRes = m_ioController->AllocateAndPrepareStream(soundDesc.filepath, sIndex, sGen);
 			if (streamRes != Result::Ok) return streamRes;
 
 			m_asyncMessageBus->PublishMixerCommand(AsyncMixerCommand::PrepareVoiceStreaming(
 				vIndex, vMirror.gen, sIndex, sGen,
 				soundDesc.channels, soundDesc.sampleRate
-			));
+				));
 		}
 
 		vMirror.totalFrames = soundDesc.totalFrames;
-		vMirror.channels	= soundDesc.channels;
-		vMirror.sampleRate	= soundDesc.sampleRate;
+		vMirror.channels    = soundDesc.channels;
+		vMirror.sampleRate  = soundDesc.sampleRate;
 		vMirror.pendingLoad = false;
 
 		if (vMirror.initialSeekTarget > 0.0) {
@@ -301,14 +315,14 @@ namespace dalia {
 			if (targetFrame < vMirror.totalFrames) {
 				m_asyncMessageBus->PublishMixerCommand(AsyncMixerCommand::SeekVoice(
 					vIndex, vMirror.gen, targetFrame
-				));
+					));
 			}
 		}
 
 		if (vMirror.state == VoiceState::Playing) {
 			m_asyncMessageBus->PublishMixerCommand(AsyncMixerCommand::PlayVoice(
 				vIndex, vMirror.gen
-			));
+				));
 		}
 
 		return Result::Ok;
@@ -316,7 +330,7 @@ namespace dalia {
 
 	void MixController::ResetAndFreeVoice(uint32_t vIndex) {
 		VoiceMirror& vMirror = m_voices.GetMirror(vIndex);
-		uint64_t assetRawId = vMirror.assetRawId;
+		uint64_t assetRawId  = vMirror.assetRawId;
 
 		vMirror.Reset();
 		m_voices.Free(vIndex);

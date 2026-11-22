@@ -1,8 +1,8 @@
-#include "mixer/nodes/effects/Biquad.h"
+#include "mixer/nodes/effects/Biquad.hpp"
 
-#include "core/Constants.h"
-#include "core/Profiler.h"
-#include "core/Math.h"
+#include "core/Constants.hpp"
+#include "core/Profiler.hpp"
+#include "core/Math.hpp"
 
 #include <cstring>
 #include <cmath>
@@ -40,33 +40,33 @@ namespace dalia {
 		}
 
 		for (uint32_t i = 0; i < frameCount; i += CONTROL_RATE) {
-            uint32_t framesThisChunk = std::min(CONTROL_RATE, frameCount - i);
+			uint32_t framesThisChunk = std::min(CONTROL_RATE, frameCount - i);
 
-            bool paramsChanged = forceRecalculate;
-			paramsChanged |= frequencySlew.Process();
-			paramsChanged |= resonanceSlew.Process();
+			bool paramsChanged = forceRecalculate;
+			paramsChanged      |= frequencySlew.Process();
+			paramsChanged      |= resonanceSlew.Process();
 
-            if (paramsChanged) {
-	            CalculateCoefficients(sampleRate);
-            	forceRecalculate = false;
-            }
+			if (paramsChanged) {
+				CalculateCoefficients(sampleRate);
+				forceRecalculate = false;
+			}
 
-            for (uint32_t j = 0; j < framesThisChunk; j++) {
-                uint32_t frameIndex = i + j;
+			for (uint32_t j = 0; j < framesThisChunk; j++) {
+				uint32_t frameIndex = i + j;
 
-                for (uint32_t channel = 0; channel < channels; channel++) {
-                    uint32_t sampleIndex = (frameIndex * channels) + channel;
-                    auto x = static_cast<double>(buffer[sampleIndex]); // Sample
+				for (uint32_t channel = 0; channel < channels; channel++) {
+					uint32_t sampleIndex = (frameIndex * channels) + channel;
+					auto x               = static_cast<double>(buffer[sampleIndex]); // Sample
 
-                    double y = (b0 * x) + z1[channel];
-                    z1[channel] = (b1 * x) - (a1 * y) + z2[channel];
-                    z2[channel] = (b2 * x) - (a2 * y);
+					double y    = (b0 * x) + z1[channel];
+					z1[channel] = (b1 * x) - (a1 * y) + z2[channel];
+					z2[channel] = (b2 * x) - (a2 * y);
 
-                    buffer[sampleIndex] = static_cast<float>(y);
-                }
-            }
-        }
-    }
+					buffer[sampleIndex] = static_cast<float>(y);
+				}
+			}
+		}
+	}
 
 	void Biquad::Flush() {
 		isFirstProcess = true;
@@ -74,10 +74,10 @@ namespace dalia {
 	}
 
 	void Biquad::Reset() {
-		isFirstProcess = true;
+		isFirstProcess   = true;
 		forceRecalculate = false;
 
-		type = BiquadParams::Type::LowPass;
+		type          = BiquadParams::Type::LowPass;
 		frequencySlew = dsp::SlewFloat{};
 		resonanceSlew = dsp::SlewFloat{};
 
@@ -89,14 +89,14 @@ namespace dalia {
 
 	void Biquad::CalculateCoefficients(uint32_t sampleRate) {
 		float fSampleRate = static_cast<float>(sampleRate);
-		float nyquist = fSampleRate * 0.5f; // Nyquist limit
-		float frequency = std::clamp(frequencySlew.current, 10.0f, nyquist - 10.0f);
-		float q = std::max(resonanceSlew.current, 0.1f);
+		float nyquist     = fSampleRate * 0.5f; // Nyquist limit
+		float frequency   = std::clamp(frequencySlew.current, 10.0f, nyquist - 10.0f);
+		float q           = std::max(resonanceSlew.current, 0.1f);
 
 		// RBJ variables
 		double omega = 2.0 * dPI * frequency / fSampleRate;
-		double sn = std::sin(omega);
-		double cs = std::cos(omega);
+		double sn    = std::sin(omega);
+		double cs    = std::cos(omega);
 		double alpha = sn / (2.0 * q);
 
 		double a0 = 1.0;
@@ -106,7 +106,7 @@ namespace dalia {
 				b0 = (1.0 - cs) * 0.5;
 				b1 = 1.0 - cs;
 				b2 = (1.0 - cs) * 0.5;
-				a0       = 1.0 + alpha;
+				a0 = 1.0 + alpha;
 				a1 = -2.0 * cs;
 				a2 = 1.0 - alpha;
 				break;
@@ -115,7 +115,7 @@ namespace dalia {
 				b0 = (1.0 + cs) * 0.5;
 				b1 = -(1.0 + cs);
 				b2 = (1.0 + cs) * 0.5;
-				a0       = 1.0 + alpha;
+				a0 = 1.0 + alpha;
 				a1 = -2.0 * cs;
 				a2 = 1.0 - alpha;
 				break;
@@ -124,7 +124,7 @@ namespace dalia {
 				b0 = alpha;
 				b1 = 0.0;
 				b2 = -alpha;
-				a0       = 1.0 + alpha;
+				a0 = 1.0 + alpha;
 				a1 = -2.0 * cs;
 				a2 = 1.0 - alpha;
 				break;
@@ -132,11 +132,11 @@ namespace dalia {
 		}
 
 		double a0Inverse = 1.0 / a0;
-		b0 *= a0Inverse;
-		b1 *= a0Inverse;
-		b2 *= a0Inverse;
-		a1 *= a0Inverse;
-		a2 *= a0Inverse;
+		b0               *= a0Inverse;
+		b1               *= a0Inverse;
+		b2               *= a0Inverse;
+		a1               *= a0Inverse;
+		a2               *= a0Inverse;
 	}
 
 	void Biquad::ClearDelayLines() {

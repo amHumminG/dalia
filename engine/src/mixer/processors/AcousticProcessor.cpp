@@ -1,10 +1,10 @@
-#include "mixer/processors/AcousticProcessor.h"
-#include "mixer/dsp/Spatial.h"
-#include "async/AsyncMessageBus.h"
-#include "async/messaging/AsyncMixerMessaging.h"
-#include "core/Math.h"
-#include "core/Assert.h"
-#include "core/Profiler.h"
+#include "mixer/processors/AcousticProcessor.hpp"
+#include "mixer/dsp/Spatial.hpp"
+#include "async/AsyncMessageBus.hpp"
+#include "async/messaging/AsyncMixerMessaging.hpp"
+#include "core/Math.hpp"
+#include "core/Assert.hpp"
+#include "core/Profiler.hpp"
 
 #include <algorithm>
 
@@ -34,7 +34,7 @@ namespace dalia {
 
 		UnsubscribeFromCommands();
 		m_asyncMessageBus = nullptr;
-		m_initialized = false;
+		m_initialized     = false;
 	}
 
 	void AcousticProcessor::SyncNodes() {
@@ -47,7 +47,7 @@ namespace dalia {
 		DALIA_ASSERT(m_initialized, "AcousticProcessor used before initialized.");
 		DALIA_PROFILE_SCOPE_N("AcousticProcessor::SetOutputFormat");
 
-		m_outChannels = outChannels;
+		m_outChannels   = outChannels;
 		m_speakerLayout = layout;
 		ConfigureSpeakerLayout(layout);
 	}
@@ -73,7 +73,9 @@ namespace dalia {
 
 	void AcousticProcessor::SubscribeToCommands() {
 		m_asyncMessageBus->SubscribeToMixerCommand(AsyncMixerCommand::Type::SetGlobalDopplerFactor,
-			[this](const AsyncMixerCommand& cmd) { HandleSetGlobalDopplerFactorCommand(cmd); });
+			[this](const AsyncMixerCommand& cmd) {
+				HandleSetGlobalDopplerFactorCommand(cmd);
+			});
 	}
 
 	void AcousticProcessor::UnsubscribeFromCommands() {
@@ -88,16 +90,16 @@ namespace dalia {
 		DALIA_PROFILE_SCOPE_N("AcousticProcessor::ConfigureSpeakerLayout");
 
 		for (uint32_t c = 0; c < CHANNELS_MAX; c++) {
-			m_speakerMatrix[c] = { math::Vector3(0, 0, 0), c };
+			m_speakerMatrix[c] = {math::Vector3(0, 0, 0), c};
 		}
 
 		if (layout == SpeakerLayout::Mono) {
-			m_speakerMatrix[0] = { math::AngleToVector3(0.0f),  0 };
+			m_speakerMatrix[0]    = {math::AngleToVector3(0.0f), 0};
 			m_spatialSpeakerCount = 1;
 		}
 		else if (layout == SpeakerLayout::Stereo) {
-			m_speakerMatrix[0] = { math::AngleToVector3(-30.0f), 0 }; // Left
-			m_speakerMatrix[1] = { math::AngleToVector3(30.0f), 1 };  // Right
+			m_speakerMatrix[0]    = {math::AngleToVector3(-30.0f), 0}; // Left
+			m_speakerMatrix[1]    = {math::AngleToVector3(30.0f), 1}; // Right
 			m_spatialSpeakerCount = 2;
 		}
 		else if (layout == SpeakerLayout::Surround51) {
@@ -117,13 +119,13 @@ namespace dalia {
 
 	void AcousticProcessor::EvaluateNonSpatialVoice(Voice& voice) const {
 		voice.finalPlaybackRate = voice.params.playbackRate;
-		float baseGain = voice.params.gain;
+		float baseGain          = voice.params.gain;
 
 		if (voice.channels == CHANNELS_MONO) {
 			// Constant power panning
 			float panNormalized = (voice.params.stereoPan + 1.0f) * 0.5f;
-			float leftSqr		= 1.0f - panNormalized;
-			float rightSqr		= panNormalized;
+			float leftSqr       = 1.0f - panNormalized;
+			float rightSqr      = panNormalized;
 
 			float gainL = (leftSqr > EPSILON_GAIN) ? leftSqr * math::CalculateInvSqrt(leftSqr) : GAIN_SILENCE;
 			float gainR = (rightSqr > EPSILON_GAIN) ? rightSqr * math::CalculateInvSqrt(rightSqr) : GAIN_SILENCE;
@@ -153,8 +155,8 @@ namespace dalia {
 
 		if (!FindBestListener(voice, bestListenerParams, maxSpatialGain)) return;
 
-		float baseGain = voice.params.gain;
-		float finalGain = baseGain * maxSpatialGain;
+		float baseGain                       = voice.params.gain;
+		float finalGain                      = baseGain * maxSpatialGain;
 		float vbapDistribution[CHANNELS_MAX] = {};
 
 		// Panning
@@ -168,18 +170,18 @@ namespace dalia {
 				m_speakerMatrix,
 				m_spatialSpeakerCount,
 				vbapDistribution
-			);
+				);
 		}
 
 		// Final Playback Rate Evaluation
 		voice.finalPlaybackRate = voice.params.playbackRate;
 		if (voice.params.useDoppler) {
-			float dopplerMult = ComputeDopplerMultiplier(voice, bestListenerParams);
+			float dopplerMult       = ComputeDopplerMultiplier(voice, bestListenerParams);
 			voice.finalPlaybackRate = std::clamp(
 				voice.finalPlaybackRate * dopplerMult,
 				PLAYBACK_RATE_MIN,
 				PLAYBACK_RATE_MAX
-			);
+				);
 		}
 
 		// Implicit downmix
@@ -217,15 +219,15 @@ namespace dalia {
 				voice.params.minDistance,
 				voice.params.maxDistance,
 				voice.params.attenuationCurve
-			);
+				);
 
 			// NOTE: If we add directional sound cones or occlusion in the future, this is probably where we do that
 
 			// Check if the voice was loudest for this listener
 			if (distGain > outMaxGain) {
-				outMaxGain = distGain;
+				outMaxGain            = distGain;
 				outBestListenerParams = listener.params;
-				found = true;
+				found                 = true;
 			}
 		}
 
@@ -237,21 +239,21 @@ namespace dalia {
 		if (totalDopplerFactor <= 0.0f) return 1.0f;
 
 		math::Vector3 listenerToEmitter = voice.params.position - listenerParams.position;
-		float distance = math::Vector3::Length(listenerToEmitter);
+		float distance                  = math::Vector3::Length(listenerToEmitter);
 		if (math::NearlyEqual(distance, 0.0f, EPSILON)) return 1.0f;
 
 		math::Vector3 direction = listenerToEmitter * (1.0f / distance);
 
 		// Radial velocities
 		float listenerRadial = listenerParams.velocity.Dot(direction);
-		float emitterRadial = voice.params.velocity.Dot(direction);
+		float emitterRadial  = voice.params.velocity.Dot(direction);
 
 		// Scale velocities to avoid powf call
 		listenerRadial *= totalDopplerFactor;
-		emitterRadial *= totalDopplerFactor;
+		emitterRadial  *= totalDopplerFactor;
 
 		listenerRadial = std::max(listenerRadial, -SPEED_OF_SOUND);
-		emitterRadial = std::max(emitterRadial, -SPEED_OF_SOUND + EPSILON);
+		emitterRadial  = std::max(emitterRadial, -SPEED_OF_SOUND + EPSILON);
 
 		return (SPEED_OF_SOUND + listenerRadial) / (SPEED_OF_SOUND + emitterRadial);
 	}

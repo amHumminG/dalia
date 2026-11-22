@@ -1,6 +1,6 @@
-#include "Sandbox.h"
+#include "Sandbox.hpp"
 
-#include "DrawHelper.h"
+#include "DrawHelper.hpp"
 
 #include <cstring>
 #include <filesystem>
@@ -13,8 +13,7 @@ Sandbox::Sandbox()
 		Listener(&m_engine, 1, false),
 		Listener(&m_engine, 2, false),
 		Listener(&m_engine, 3, false)
-	}
-{
+	} {
 	// Window initialization
 	SetConfigFlags(FLAG_WINDOW_RESIZABLE);
 	InitWindow(1280, 720, "Dalia Engine Sandbox");
@@ -24,11 +23,11 @@ Sandbox::Sandbox()
 	SetWindowIcon(icon);
 	UnloadImage(icon);
 
-	int monitor = GetCurrentMonitor();
-	int monitorWidth = GetMonitorWidth(monitor);
+	int monitor       = GetCurrentMonitor();
+	int monitorWidth  = GetMonitorWidth(monitor);
 	int monitorHeight = GetMonitorHeight(monitor);
 
-	int windowWidth = static_cast<int>(monitorWidth * 0.8f);
+	int windowWidth  = static_cast<int>(monitorWidth * 0.8f);
 	int windowHeight = static_cast<int>(monitorHeight * 0.8f);
 	SetWindowSize(windowWidth, windowHeight);
 	SetWindowPosition((monitorWidth - windowWidth) / 2, (monitorHeight - windowHeight) / 2);
@@ -42,27 +41,27 @@ Sandbox::Sandbox()
 	rlImGuiSetup(true);
 	ImGuizmo::SetImGuiContext(ImGui::GetCurrentContext());
 	ApplyTheme();
-	ImGuiIO& io = ImGui::GetIO();
-	io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+	ImGuiIO& io                        = ImGui::GetIO();
+	io.ConfigFlags                     |= ImGuiConfigFlags_DockingEnable;
 	io.ConfigDockingTransparentPayload = true;
 
 	m_ui.defaultFont = io.Fonts->AddFontFromFileTTF("assets/fonts/Inter_18pt-Regular.ttf", 16.0f);
-	m_ui.headerFont = io.Fonts->AddFontFromFileTTF("assets/fonts/Inter_18pt-SemiBold.ttf", 18.0f);
+	m_ui.headerFont  = io.Fonts->AddFontFromFileTTF("assets/fonts/Inter_18pt-SemiBold.ttf", 18.0f);
 
 	io.FontDefault = m_ui.defaultFont;
 
 	// Camera Setup
-	m_spectatorCamera.position = { 0.0f, 10.0f, -10.0f };
-	m_spectatorCamera.target = { 0.0f, 0.0f, 0.0f };
-	m_spectatorCamera.up = { 0.0f, 1.0f, 0.0f };
-	m_spectatorCamera.fovy = 45.0f;
+	m_spectatorCamera.position   = {0.0f, 10.0f, -10.0f};
+	m_spectatorCamera.target     = {0.0f, 0.0f, 0.0f};
+	m_spectatorCamera.up         = {0.0f, 1.0f, 0.0f};
+	m_spectatorCamera.fovy       = 45.0f;
 	m_spectatorCamera.projection = CAMERA_PERSPECTIVE;
 
 	// Dalia Engine Initialization
 	dalia::EngineConfig config;
 	config.coordinateSystem = dalia::CoordinateSystem::RightHanded;
-	config.logLevel = dalia::LogLevel::Debug;
-	config.logCallback = [this](dalia::LogLevel level, const char* context, const char* message) {
+	config.logLevel         = dalia::LogLevel::Debug;
+	config.logCallback      = [this](dalia::LogLevel level, const char* context, const char* message) {
 		m_logs.push_back({level, context, message});
 	};
 	config.listenerCapacity = 4;
@@ -88,74 +87,74 @@ void Sandbox::Run() {
 
 void Sandbox::ApplyTheme() {
 	ImGuiStyle& style = ImGui::GetStyle();
-    ImVec4* colors = style.Colors;
+	ImVec4* colors    = style.Colors;
 
-    // Base Styling
-    style.WindowRounding    = 4.0f;
-    style.FrameRounding     = 3.0f;
-    style.ScrollbarRounding = 2.0f;
-    style.GrabRounding      = 2.0f;
-    style.WindowBorderSize  = 1.0f;
-    style.FrameBorderSize   = 1.0f;
+	// Base Styling
+	style.WindowRounding    = 4.0f;
+	style.FrameRounding     = 3.0f;
+	style.ScrollbarRounding = 2.0f;
+	style.GrabRounding      = 2.0f;
+	style.WindowBorderSize  = 1.0f;
+	style.FrameBorderSize   = 1.0f;
 
-    // Backgrounds
-    colors[ImGuiCol_WindowBg]             = ImVec4(0.06f, 0.06f, 0.06f, 1.00f);
-    colors[ImGuiCol_ChildBg]              = ImVec4(0.08f, 0.08f, 0.08f, 1.00f);
-    colors[ImGuiCol_PopupBg]              = ImVec4(0.04f, 0.04f, 0.04f, 0.96f);
-    colors[ImGuiCol_Border]               = ImVec4(0.20f, 0.20f, 0.20f, 1.00f);
-    colors[ImGuiCol_FrameBg]              = ImVec4(0.14f, 0.14f, 0.14f, 1.00f);
+	// Backgrounds
+	colors[ImGuiCol_WindowBg] = ImVec4(0.06f, 0.06f, 0.06f, 1.00f);
+	colors[ImGuiCol_ChildBg]  = ImVec4(0.08f, 0.08f, 0.08f, 1.00f);
+	colors[ImGuiCol_PopupBg]  = ImVec4(0.04f, 0.04f, 0.04f, 0.96f);
+	colors[ImGuiCol_Border]   = ImVec4(0.20f, 0.20f, 0.20f, 1.00f);
+	colors[ImGuiCol_FrameBg]  = ImVec4(0.14f, 0.14f, 0.14f, 1.00f);
 
-    // Interactions
-    colors[ImGuiCol_FrameBgHovered]       = ImVec4(0.24f, 0.24f, 0.24f, 1.00f);
-    colors[ImGuiCol_FrameBgActive]        = ImVec4(0.38f, 0.38f, 0.38f, 1.00f);
-    colors[ImGuiCol_Button]               = ImVec4(0.18f, 0.18f, 0.18f, 1.00f);
-    colors[ImGuiCol_ButtonHovered]        = ImVec4(0.28f, 0.28f, 0.28f, 1.00f);
-    colors[ImGuiCol_ButtonActive]         = ImVec4(0.45f, 0.45f, 0.45f, 1.00f);
+	// Interactions
+	colors[ImGuiCol_FrameBgHovered] = ImVec4(0.24f, 0.24f, 0.24f, 1.00f);
+	colors[ImGuiCol_FrameBgActive]  = ImVec4(0.38f, 0.38f, 0.38f, 1.00f);
+	colors[ImGuiCol_Button]         = ImVec4(0.18f, 0.18f, 0.18f, 1.00f);
+	colors[ImGuiCol_ButtonHovered]  = ImVec4(0.28f, 0.28f, 0.28f, 1.00f);
+	colors[ImGuiCol_ButtonActive]   = ImVec4(0.45f, 0.45f, 0.45f, 1.00f);
 
-    // Accents
-    colors[ImGuiCol_CheckMark]            = ImVec4(0.95f, 0.95f, 0.95f, 1.00f);
-    colors[ImGuiCol_SliderGrab]           = ImVec4(0.60f, 0.60f, 0.60f, 1.00f);
-    colors[ImGuiCol_SliderGrabActive]     = ImVec4(0.95f, 0.95f, 0.95f, 1.00f);
+	// Accents
+	colors[ImGuiCol_CheckMark]        = ImVec4(0.95f, 0.95f, 0.95f, 1.00f);
+	colors[ImGuiCol_SliderGrab]       = ImVec4(0.60f, 0.60f, 0.60f, 1.00f);
+	colors[ImGuiCol_SliderGrabActive] = ImVec4(0.95f, 0.95f, 0.95f, 1.00f);
 
-    // Headers & Tabs
+	// Headers & Tabs
 
-    colors[ImGuiCol_Header]               = ImVec4(0.20f, 0.20f, 0.20f, 1.00f);
-    colors[ImGuiCol_HeaderHovered]        = ImVec4(0.30f, 0.30f, 0.30f, 1.00f);
-    colors[ImGuiCol_HeaderActive]         = ImVec4(0.45f, 0.45f, 0.45f, 1.00f);
-    colors[ImGuiCol_Tab]                  = ImVec4(0.10f, 0.10f, 0.10f, 1.00f);
-    colors[ImGuiCol_TabHovered]           = ImVec4(0.28f, 0.28f, 0.28f, 1.00f);
-    colors[ImGuiCol_TabSelected]          = ImVec4(0.20f, 0.20f, 0.20f, 1.00f);
-    colors[ImGuiCol_TabDimmed]			  = ImVec4(0.08f, 0.08f, 0.08f, 1.00f);
-    colors[ImGuiCol_TabDimmedSelected]    = ImVec4(0.16f, 0.16f, 0.16f, 1.00f);
+	colors[ImGuiCol_Header]            = ImVec4(0.20f, 0.20f, 0.20f, 1.00f);
+	colors[ImGuiCol_HeaderHovered]     = ImVec4(0.30f, 0.30f, 0.30f, 1.00f);
+	colors[ImGuiCol_HeaderActive]      = ImVec4(0.45f, 0.45f, 0.45f, 1.00f);
+	colors[ImGuiCol_Tab]               = ImVec4(0.10f, 0.10f, 0.10f, 1.00f);
+	colors[ImGuiCol_TabHovered]        = ImVec4(0.28f, 0.28f, 0.28f, 1.00f);
+	colors[ImGuiCol_TabSelected]       = ImVec4(0.20f, 0.20f, 0.20f, 1.00f);
+	colors[ImGuiCol_TabDimmed]         = ImVec4(0.08f, 0.08f, 0.08f, 1.00f);
+	colors[ImGuiCol_TabDimmedSelected] = ImVec4(0.16f, 0.16f, 0.16f, 1.00f);
 
-    // Text
-    colors[ImGuiCol_Text]                 = ImVec4(0.95f, 0.95f, 0.95f, 1.00f);
-    colors[ImGuiCol_TextDisabled]         = ImVec4(0.40f, 0.40f, 0.40f, 1.00f);
+	// Text
+	colors[ImGuiCol_Text]         = ImVec4(0.95f, 0.95f, 0.95f, 1.00f);
+	colors[ImGuiCol_TextDisabled] = ImVec4(0.40f, 0.40f, 0.40f, 1.00f);
 
-    // Docking specifics
-    colors[ImGuiCol_TitleBg]              = ImVec4(0.04f, 0.04f, 0.04f, 1.00f);
-    colors[ImGuiCol_TitleBgActive]        = ImVec4(0.08f, 0.08f, 0.08f, 1.00f);
-    colors[ImGuiCol_TitleBgCollapsed]     = ImVec4(0.00f, 0.00f, 0.00f, 0.51f);
-    colors[ImGuiCol_DockingPreview]       = ImVec4(0.60f, 0.60f, 0.60f, 0.70f);
+	// Docking specifics
+	colors[ImGuiCol_TitleBg]          = ImVec4(0.04f, 0.04f, 0.04f, 1.00f);
+	colors[ImGuiCol_TitleBgActive]    = ImVec4(0.08f, 0.08f, 0.08f, 1.00f);
+	colors[ImGuiCol_TitleBgCollapsed] = ImVec4(0.00f, 0.00f, 0.00f, 0.51f);
+	colors[ImGuiCol_DockingPreview]   = ImVec4(0.60f, 0.60f, 0.60f, 0.70f);
 
 	// Separators (The lines between docked panels)
-	colors[ImGuiCol_Separator]            = ImVec4(0.20f, 0.20f, 0.20f, 1.00f);
-	colors[ImGuiCol_SeparatorHovered]     = ImVec4(0.30f, 0.30f, 0.30f, 1.00f);
-	colors[ImGuiCol_SeparatorActive]      = ImVec4(0.45f, 0.45f, 0.45f, 1.00f);
+	colors[ImGuiCol_Separator]        = ImVec4(0.20f, 0.20f, 0.20f, 1.00f);
+	colors[ImGuiCol_SeparatorHovered] = ImVec4(0.30f, 0.30f, 0.30f, 1.00f);
+	colors[ImGuiCol_SeparatorActive]  = ImVec4(0.45f, 0.45f, 0.45f, 1.00f);
 
 	// Resize Grips (Bottom right corners of floating windows)
-	colors[ImGuiCol_ResizeGrip]           = ImVec4(0.20f, 0.20f, 0.20f, 1.00f);
-	colors[ImGuiCol_ResizeGripHovered]    = ImVec4(0.30f, 0.30f, 0.30f, 1.00f);
-	colors[ImGuiCol_ResizeGripActive]     = ImVec4(0.45f, 0.45f, 0.45f, 1.00f);
+	colors[ImGuiCol_ResizeGrip]        = ImVec4(0.20f, 0.20f, 0.20f, 1.00f);
+	colors[ImGuiCol_ResizeGripHovered] = ImVec4(0.30f, 0.30f, 0.30f, 1.00f);
+	colors[ImGuiCol_ResizeGripActive]  = ImVec4(0.45f, 0.45f, 0.45f, 1.00f);
 
 	// Text Selection
-	colors[ImGuiCol_TextSelectedBg]       = ImVec4(0.38f, 0.38f, 0.38f, 0.50f);
+	colors[ImGuiCol_TextSelectedBg] = ImVec4(0.38f, 0.38f, 0.38f, 0.50f);
 
 	// Drag & Drop Target
-	colors[ImGuiCol_DragDropTarget]       = ImVec4(0.80f, 0.80f, 0.80f, 1.00f);
+	colors[ImGuiCol_DragDropTarget] = ImVec4(0.80f, 0.80f, 0.80f, 1.00f);
 
 	// Nav Highlight
-	colors[ImGuiCol_NavHighlight]         = ImVec4(0.60f, 0.60f, 0.60f, 1.00f);
+	colors[ImGuiCol_NavHighlight] = ImVec4(0.60f, 0.60f, 0.60f, 1.00f);
 
 	// Scrollbars
 	colors[ImGuiCol_ScrollbarBg]          = ImVec4(0.04f, 0.04f, 0.04f, 0.50f);
@@ -164,22 +163,22 @@ void Sandbox::ApplyTheme() {
 	colors[ImGuiCol_ScrollbarGrabActive]  = ImVec4(0.45f, 0.45f, 0.45f, 1.00f);
 
 	// Tab Overlines (The thin line at the top of active/selected tabs)
-	colors[ImGuiCol_TabSelectedOverline]        = ImVec4(0.60f, 0.60f, 0.60f, 1.00f);
-	colors[ImGuiCol_TabDimmedSelectedOverline]  = ImVec4(0.20f, 0.20f, 0.20f, 1.00f);
+	colors[ImGuiCol_TabSelectedOverline]       = ImVec4(0.60f, 0.60f, 0.60f, 1.00f);
+	colors[ImGuiCol_TabDimmedSelectedOverline] = ImVec4(0.20f, 0.20f, 0.20f, 1.00f);
 
 	// Nav Windowing
-	colors[ImGuiCol_NavWindowingHighlight]      = ImVec4(0.60f, 0.60f, 0.60f, 0.70f);
-	colors[ImGuiCol_NavWindowingDimBg]          = ImVec4(0.04f, 0.04f, 0.04f, 0.20f);
+	colors[ImGuiCol_NavWindowingHighlight] = ImVec4(0.60f, 0.60f, 0.60f, 0.70f);
+	colors[ImGuiCol_NavWindowingDimBg]     = ImVec4(0.04f, 0.04f, 0.04f, 0.20f);
 
 	// Modals
-	colors[ImGuiCol_ModalWindowDimBg]           = ImVec4(0.00f, 0.00f, 0.00f, 0.60f);
+	colors[ImGuiCol_ModalWindowDimBg] = ImVec4(0.00f, 0.00f, 0.00f, 0.60f);
 
 	// Tables
-	colors[ImGuiCol_TableHeaderBg]              = ImVec4(0.14f, 0.14f, 0.14f, 1.00f);
-	colors[ImGuiCol_TableBorderStrong]          = ImVec4(0.20f, 0.20f, 0.20f, 1.00f);
-	colors[ImGuiCol_TableBorderLight]           = ImVec4(0.20f, 0.20f, 0.20f, 0.50f);
-	colors[ImGuiCol_TableRowBg]                 = ImVec4(0.00f, 0.00f, 0.00f, 0.00f);
-	colors[ImGuiCol_TableRowBgAlt]              = ImVec4(1.00f, 1.00f, 1.00f, 0.03f);
+	colors[ImGuiCol_TableHeaderBg]     = ImVec4(0.14f, 0.14f, 0.14f, 1.00f);
+	colors[ImGuiCol_TableBorderStrong] = ImVec4(0.20f, 0.20f, 0.20f, 1.00f);
+	colors[ImGuiCol_TableBorderLight]  = ImVec4(0.20f, 0.20f, 0.20f, 0.50f);
+	colors[ImGuiCol_TableRowBg]        = ImVec4(0.00f, 0.00f, 0.00f, 0.00f);
+	colors[ImGuiCol_TableRowBgAlt]     = ImVec4(1.00f, 1.00f, 1.00f, 0.03f);
 }
 
 void Sandbox::Update() {
@@ -189,8 +188,8 @@ void Sandbox::Update() {
 
 		if (!m_isFullscreenBl) {
 			// Enter fullscreen borderless
-			m_savedWindowPos = GetWindowPosition();
-			m_savedWindowSize = { static_cast<float>(GetScreenWidth()), static_cast<float>(GetScreenHeight()) };
+			m_savedWindowPos  = GetWindowPosition();
+			m_savedWindowSize = {static_cast<float>(GetScreenWidth()), static_cast<float>(GetScreenHeight())};
 
 			SetWindowState(FLAG_WINDOW_UNDECORATED);
 			SetWindowSize(GetMonitorWidth(monitor), GetMonitorHeight(monitor));
@@ -244,7 +243,7 @@ void Sandbox::Update() {
 	}
 
 	for (auto& listener : m_listeners) listener.Update(GetFrameTime());
-	for (auto& playback: m_playbackInstances) playback->Update(GetFrameTime());
+	for (auto& playback : m_playbackInstances) playback->Update(GetFrameTime());
 
 	m_engine.Update();
 }
@@ -282,7 +281,8 @@ void Sandbox::Draw() {
 	ImGui::DockSpaceOverViewport(dockspaceId, ImGui::GetMainViewport(), ImGuiDockNodeFlags_None);
 
 	// Do we want to reset the panel layout or is the ini file missing?
-	if (m_resetPanelLayout || ImGui::DockBuilderGetNode(dockspaceId) == NULL || ImGui::DockBuilderGetNode(dockspaceId)->IsEmpty()) {
+	if (m_resetPanelLayout || ImGui::DockBuilderGetNode(dockspaceId) == NULL || ImGui::DockBuilderGetNode(dockspaceId)->
+		IsEmpty()) {
 		BuildDefaultDockingLayout(dockspaceId);
 		m_resetPanelLayout = false;
 	}
@@ -339,8 +339,8 @@ void Sandbox::DrawMenuBar() {
 
 		if (ImGui::BeginMenu("Tools")) {
 			if (ImGui::MenuItem("Reset Camera")) {
-				m_spectatorCamera.position = { 0.0f, 10.0f, -10.0f };
-				m_spectatorCamera.target = { 0.0f, 0.0f, 0.0f };
+				m_spectatorCamera.position = {0.0f, 10.0f, -10.0f};
+				m_spectatorCamera.target   = {0.0f, 0.0f, 0.0f};
 			}
 
 			ImGui::EndMenu();
@@ -372,7 +372,7 @@ void Sandbox::DrawSceneOutliner() {
 			snprintf(label, sizeof(label), "[L] %u", listener.GetIndex());
 
 			if (ImGui::Selectable(label, isSelected)) {
-				m_selectionType = SelectionType::Listener;
+				m_selectionType  = SelectionType::Listener;
 				m_selectedObject = &listener;
 			}
 		}
@@ -387,7 +387,7 @@ void Sandbox::DrawSceneOutliner() {
 			snprintf(label, sizeof(label), "[B] %s", bus->GetIdentifier().c_str());
 
 			if (ImGui::Selectable(label, isSelected)) {
-				m_selectionType = SelectionType::Bus;
+				m_selectionType  = SelectionType::Bus;
 				m_selectedObject = bus.get();
 			}
 		}
@@ -398,13 +398,13 @@ void Sandbox::DrawSceneOutliner() {
 		for (auto& effect : m_effects) {
 			bool isSelected = (m_selectionType == SelectionType::Effect && m_selectedObject == effect.get());
 
-			std::string label = "[E] "+ effect->GetName();
+			std::string label = "[E] " + effect->GetName();
 			if (effect->IsAttached()) {
 				label += " -> " + effect->GetBusId() + "[" + std::to_string(effect->GetSlotIndex()) + "]";
 			}
 
 			if (ImGui::Selectable(label.c_str(), isSelected)) {
-				m_selectionType = SelectionType::Effect;
+				m_selectionType  = SelectionType::Effect;
 				m_selectedObject = effect.get();
 			}
 		}
@@ -420,7 +420,7 @@ void Sandbox::DrawSceneOutliner() {
 			snprintf(label, sizeof(label), "[P] %s (%s)", playback->GetName().c_str(), typeTag);
 
 			if (ImGui::Selectable(label, isSelected)) {
-				m_selectionType = SelectionType::Playback;
+				m_selectionType  = SelectionType::Playback;
 				m_selectedObject = playback.get();
 			}
 		}
@@ -463,7 +463,7 @@ void Sandbox::DrawInspector() {
 
 			if (ImGui::Button("Create Playback Instance", ImVec2(-1, 30))) {
 				std::filesystem::path fullpath = sound->GetFilePath();
-				std::string baseName = fullpath.stem().string();
+				std::string baseName           = fullpath.stem().string();
 
 				static uint32_t playbackSpawnCounter = 0;
 				char nameBuffer[128];
@@ -473,7 +473,7 @@ void Sandbox::DrawInspector() {
 				if (playback->GetResult() == dalia::Result::Ok) {
 					playback->SetSoundType(sound->GetType());
 					m_selectedObject = playback.get();
-					m_selectionType = SelectionType::Playback;
+					m_selectionType  = SelectionType::Playback;
 					m_playbackInstances.push_back(std::move(playback));
 				}
 			}
@@ -508,7 +508,7 @@ void Sandbox::DrawInspector() {
 			if (effectInSlot) {
 				if (ImGui::Button(effectInSlot->GetName().c_str(), ImVec2(-1, 0))) {
 					m_selectedObject = effectInSlot;
-					m_selectionType = SelectionType::Effect;
+					m_selectionType  = SelectionType::Effect;
 				}
 			}
 			else {
@@ -551,7 +551,7 @@ void Sandbox::DrawInspector() {
 			ImGui::Spacing();
 
 			static int targetBusIndex = 0;
-			static int targetSlot = 0;
+			static int targetSlot     = 0;
 
 			if (!m_buses.empty()) {
 
@@ -578,7 +578,8 @@ void Sandbox::DrawInspector() {
 					std::string targetBusId = m_buses[targetBusIndex]->GetIdentifier();
 
 					for (auto& e : m_effects) {
-						if (e.get() != effect && e->IsAttached() && e->GetBusId() == targetBusId && e->GetSlotIndex() == targetSlot) {
+						if (e.get() != effect && e->IsAttached() && e->GetBusId() == targetBusId && e->GetSlotIndex() ==
+							targetSlot) {
 							e->Detach();
 							break;
 						}
@@ -621,7 +622,7 @@ void Sandbox::DrawInspector() {
 			});
 		}
 
-		m_selectionType = SelectionType::None;
+		m_selectionType  = SelectionType::None;
 		m_selectedObject = nullptr;
 	}
 
@@ -655,7 +656,7 @@ void Sandbox::DrawAssetBrowser() {
 		std::string path(m_newSoundPathBuffer);
 		if (!path.empty()) {
 			// Check if sound already exists
-			bool exists = false;
+			bool exists           = false;
 			dalia::SoundType type = (m_newSoundType == 0) ? dalia::SoundType::Resident : dalia::SoundType::Stream;
 			for (const auto& sound : m_sounds) {
 				if (path == sound->GetFilePath() && sound->GetType() == type) exists = true;
@@ -666,14 +667,14 @@ void Sandbox::DrawAssetBrowser() {
 				m_showDuplicateSoundWarning = true;
 			}
 			else {
-				auto sound = std::make_unique<SoundAsset>(&m_engine, type, path);
+				auto sound        = std::make_unique<SoundAsset>(&m_engine, type, path);
 				dalia::Result res = sound->GetResult();
 				if (res == dalia::Result::Ok) {
 					m_selectedObject = sound.get();
-					m_selectionType = SelectionType::Sound;
+					m_selectionType  = SelectionType::Sound;
 					m_sounds.push_back(std::move(sound));
 				}
-				m_newSoundPathBuffer[0] = '\0';
+				m_newSoundPathBuffer[0]     = '\0';
 				m_showDuplicateSoundWarning = false;
 			}
 		}
@@ -696,7 +697,7 @@ void Sandbox::DrawAssetBrowser() {
 		snprintf(label, sizeof(label), "[A] %s (%s)", filename.c_str(), typeTag);
 
 		if (ImGui::Selectable(label, isSelected)) {
-			m_selectionType = SelectionType::Sound;
+			m_selectionType  = SelectionType::Sound;
 			m_selectedObject = sound.get();
 		}
 	}
@@ -710,7 +711,7 @@ void Sandbox::DrawViewport() {
 
 	// ---  Dynamic Resizing ---
 	ImVec2 size = ImGui::GetContentRegionAvail();
-	ImVec2 pos = ImGui::GetWindowPos();
+	ImVec2 pos  = ImGui::GetWindowPos();
 
 	if (size.x > 0 && size.y > 0) {
 		// Resize render texture if panel is resized
@@ -724,8 +725,8 @@ void Sandbox::DrawViewport() {
 	}
 
 	// --- Viewport Hover Controls ---
-	static bool isDraggingCamera = false;
-	static Vector2 anchorMousePos = { 0, 0 };
+	static bool isDraggingCamera  = false;
+	static Vector2 anchorMousePos = {0, 0};
 
 	if (!m_inFreeCamMode) {
 		ImGuiIO& io = ImGui::GetIO();
@@ -733,13 +734,14 @@ void Sandbox::DrawViewport() {
 		if (ImGui::IsWindowHovered()) {
 			// Snap camera target to selection (F)
 			if (ImGui::IsKeyPressed(ImGuiKey_F) && m_selectedObject != nullptr) {
-				Vector3 focusPos = { 0, 0, 0 };
+				Vector3 focusPos    = {0, 0, 0};
 				bool hasFocusTarget = false;
 
 				if (m_selectionType == SelectionType::Listener) {
 					auto* listener = static_cast<Listener*>(m_selectedObject);
 					if (listener->IsActive()) {
-						if (listener->targetBody == Listener::TargetBody::Probe) focusPos = listener->GetProbePosition();
+						if (listener->targetBody == Listener::TargetBody::Probe) focusPos = listener->
+							GetProbePosition();
 						else focusPos = listener->GetPosition();
 						hasFocusTarget = true;
 					}
@@ -753,19 +755,19 @@ void Sandbox::DrawViewport() {
 				if (hasFocusTarget) {
 					Vector3 currentOffset = Vector3Subtract(m_spectatorCamera.position, m_spectatorCamera.target);
 					Vector3 lookDirection = Vector3Normalize(currentOffset);
-					float distance = Vector3Distance(m_spectatorCamera.position, focusPos);
+					float distance        = Vector3Distance(m_spectatorCamera.position, focusPos);
 
-					m_spectatorCamera.target = focusPos;
+					m_spectatorCamera.target   = focusPos;
 					m_spectatorCamera.position = Vector3Add(focusPos, Vector3Scale(lookDirection, distance));
 				}
 			}
 
 			// Camera movement forwards and backwards using (MOUSE SCROLL)
 			if (io.MouseWheel != 0.0f) {
-				Vector3 lookDir = Vector3Subtract(m_spectatorCamera.target, m_spectatorCamera.position);
+				Vector3 lookDir   = Vector3Subtract(m_spectatorCamera.target, m_spectatorCamera.position);
 				float currentDist = Vector3Length(lookDir);
-				lookDir = Vector3Normalize(lookDir);
-				float zoomAmount = io.MouseWheel * 2.5f;
+				lookDir           = Vector3Normalize(lookDir);
+				float zoomAmount  = io.MouseWheel * 2.5f;
 
 				// If we zoom past original target, push target forward
 				if (zoomAmount > 0.0f && (currentDist - zoomAmount) < 1.0f) {
@@ -776,7 +778,7 @@ void Sandbox::DrawViewport() {
 
 			if (ImGui::IsMouseClicked(ImGuiMouseButton_Right) || ImGui::IsMouseClicked(ImGuiMouseButton_Middle)) {
 				isDraggingCamera = true;
-				anchorMousePos = GetMousePosition();
+				anchorMousePos   = GetMousePosition();
 				HideCursor();
 			}
 		}
@@ -784,11 +786,11 @@ void Sandbox::DrawViewport() {
 		if (isDraggingCamera) {
 			ImGui::SetMouseCursor(ImGuiMouseCursor_None);
 
-			Vector3 movement = { 0.0f, 0.0f, 0.0f };
-			Vector3 rotation = { 0.0f, 0.0f, 0.0f };
+			Vector3 movement = {0.0f, 0.0f, 0.0f};
+			Vector3 rotation = {0.0f, 0.0f, 0.0f};
 
 			Vector2 currentMousePos = GetMousePosition();
-			Vector2 delta = {
+			Vector2 delta           = {
 				currentMousePos.x - anchorMousePos.x,
 				currentMousePos.y - anchorMousePos.y
 			};
@@ -797,42 +799,42 @@ void Sandbox::DrawViewport() {
 			// Rotate Camera (LEFT ALT + MOUSE 2)
 			if (ImGui::IsMouseDown(ImGuiMouseButton_Right) && ImGui::IsKeyDown(ImGuiKey_LeftAlt)) {
 				float lookSensitivity = 0.20f;
-				rotation.x = delta.x * lookSensitivity;
-				rotation.y = delta.y * lookSensitivity;
+				rotation.x            = delta.x * lookSensitivity;
+				rotation.y            = delta.y * lookSensitivity;
 				UpdateCameraPro(&m_spectatorCamera, movement, rotation, 0.0f);
 			}
 
 			// Orbit Camera (LEFT ALT + MOUSE 2)
 			else if (ImGui::IsMouseDown(ImGuiMouseButton_Right)) {
-				Vector3 pivot = m_spectatorCamera.target;
+				Vector3 pivot  = m_spectatorCamera.target;
 				Vector3 offset = Vector3Subtract(m_spectatorCamera.position, pivot);
 
 				float orbitSpeed = 0.005f;
-				float yawAngle = -delta.x * orbitSpeed;
+				float yawAngle   = -delta.x * orbitSpeed;
 				float pitchAngle = -delta.y * orbitSpeed;
 
 				// Apply yaw
-				Matrix yawMatrix = MatrixRotate({0.0f,  1.0f, 0.0f}, yawAngle);
-				offset = Vector3Transform(offset, yawMatrix);
+				Matrix yawMatrix = MatrixRotate({0.0f, 1.0f, 0.0f}, yawAngle);
+				offset           = Vector3Transform(offset, yawMatrix);
 
 				// Apply pitch
-				Vector3 right = Vector3Normalize(Vector3CrossProduct({0.0f, 1.0f, 0.0f}, offset));
+				Vector3 right      = Vector3Normalize(Vector3CrossProduct({0.0f, 1.0f, 0.0f}, offset));
 				Matrix pitchMatrix = MatrixRotate(right, pitchAngle);
 
 				Vector3 newOffset = Vector3Transform(offset, pitchMatrix);
-				float upDot = Vector3DotProduct(Vector3Normalize(newOffset), {0.0f, 1.0f, 0.0f});
+				float upDot       = Vector3DotProduct(Vector3Normalize(newOffset), {0.0f, 1.0f, 0.0f});
 
 				if (fabs(upDot) < 0.99f) offset = newOffset; // Safety check
 
 				m_spectatorCamera.position = Vector3Add(pivot, offset);
-				m_spectatorCamera.target = pivot;
+				m_spectatorCamera.target   = pivot;
 			}
 
 			// Pan Camera (MIDDLE MOUSE)
 			else if (ImGui::IsMouseDown(ImGuiMouseButton_Middle)) {
 				float panSensitivity = 0.05f;
-				movement.y = -delta.x * panSensitivity;
-				movement.z = delta.y * panSensitivity;
+				movement.y           = -delta.x * panSensitivity;
+				movement.z           = delta.y * panSensitivity;
 				UpdateCameraPro(&m_spectatorCamera, movement, rotation, 0.0f);
 			}
 		}
@@ -849,10 +851,10 @@ void Sandbox::DrawViewport() {
 	static ImGuizmo::OPERATION currentGizmoOp = ImGuizmo::TRANSLATE;
 
 	bool shouldDrawGizmo = false;
-	Vector3 objPos = {0, 0, 0};
-	Vector3 objFwd = {0, 0, 1};
-	Vector3 objUp  = {0, 1, 0};
-	bool canRotate = false;
+	Vector3 objPos       = {0, 0, 0};
+	Vector3 objFwd       = {0, 0, 1};
+	Vector3 objUp        = {0, 1, 0};
+	bool canRotate       = false;
 
 	// Should we draw a gizmo?
 	if (!m_inFreeCamMode && m_selectedObject != nullptr) {
@@ -861,10 +863,10 @@ void Sandbox::DrawViewport() {
 
 			if (listener->IsActive() && listener->GetMovementState().type == MovementPreset::Manual) {
 				if (listener->targetBody == Listener::TargetBody::Probe) objPos = listener->GetProbePosition();
-				else objPos = listener->GetPosition();
+				else objPos                                                     = listener->GetPosition();
 
 				shouldDrawGizmo = true;
-				objFwd = listener->GetForward();
+				objFwd          = listener->GetForward();
 				if (listener->targetBody != Listener::TargetBody::Probe) canRotate = true;
 			}
 		}
@@ -873,32 +875,33 @@ void Sandbox::DrawViewport() {
 
 			if (playback->IsSpatial() && playback->GetMovementState().type == MovementPreset::Manual) {
 				shouldDrawGizmo = true;
-				objPos = playback->GetPosition();
-				canRotate = false;
-				currentGizmoOp = ImGuizmo::TRANSLATE;
+				objPos          = playback->GetPosition();
+				canRotate       = false;
+				currentGizmoOp  = ImGuizmo::TRANSLATE;
 			}
 		}
 	}
 
 	if (shouldDrawGizmo) {
 		Vector3 objRight = Vector3CrossProduct(objUp, objFwd);
-		if (Vector3Length(objRight) < 0.001f) objRight = { 1.0f, 0.0f, 0.0f};
-		else objRight = Vector3Normalize(objRight);
+		if (Vector3Length(objRight) < 0.001f) objRight = {1.0f, 0.0f, 0.0f};
+		else objRight                                  = Vector3Normalize(objRight);
 
-		Vector3 orthoUp = Vector3Normalize(Vector3CrossProduct(objFwd, objRight));
+		Vector3 orthoUp     = Vector3Normalize(Vector3CrossProduct(objFwd, objRight));
 		float matrixArr[16] = {
-			objRight.x, objRight.y, objRight.z, 0.0f,	// Red Arrow
-			orthoUp.x,  orthoUp.y,  orthoUp.z,  0.0f,	// Green Arrow
-			objFwd.x,   objFwd.y,   objFwd.z,   0.0f,	// Blue Arrow
-			objPos.x,   objPos.y,   objPos.z,   1.0f	// Position
+			objRight.x, objRight.y, objRight.z, 0.0f, // Red Arrow
+			orthoUp.x, orthoUp.y, orthoUp.z, 0.0f, // Green Arrow
+			objFwd.x, objFwd.y, objFwd.z, 0.0f, // Blue Arrow
+			objPos.x, objPos.y, objPos.z, 1.0f // Position
 		};
 
 		ImGuizmo::SetDrawlist();
 		ImGuizmo::SetRect(pos.x, pos.y + ImGui::GetCursorStartPos().y, size.x, size.y);
 
-		Matrix view = MatrixTranspose(GetCameraMatrix(m_spectatorCamera));
+		Matrix view       = MatrixTranspose(GetCameraMatrix(m_spectatorCamera));
 		float aspectRatio = size.x / size.y;
-		Matrix projection = MatrixTranspose(MatrixPerspective(m_spectatorCamera.fovy * DEG_TO_RAD, aspectRatio, 0.1f, 1000.0f));
+		Matrix projection = MatrixTranspose(MatrixPerspective(m_spectatorCamera.fovy * DEG_TO_RAD, aspectRatio, 0.1f,
+			1000.0f));
 		ImGuizmo::SetOrthographic(false);
 
 		if (canRotate) {
@@ -925,8 +928,8 @@ void Sandbox::DrawViewport() {
 				auto* listener = static_cast<Listener*>(m_selectedObject);
 
 				if (currentGizmoOp == ImGuizmo::TRANSLATE) {
-					Vector3 draggedPos = {matrixArr[12], matrixArr[13], matrixArr[14] };
-					Vector3 delta = Vector3Subtract(draggedPos, objPos);
+					Vector3 draggedPos = {matrixArr[12], matrixArr[13], matrixArr[14]};
+					Vector3 delta      = Vector3Subtract(draggedPos, objPos);
 
 					if (listener->targetBody == Listener::TargetBody::Head) {
 						listener->SetPosition(draggedPos);
@@ -940,7 +943,7 @@ void Sandbox::DrawViewport() {
 					}
 				}
 				else if (currentGizmoOp == ImGuizmo::ROTATE) {
-					listener->SetForward(Vector3Normalize({matrixArr[8], matrixArr[9], matrixArr[10] }));
+					listener->SetForward(Vector3Normalize({matrixArr[8], matrixArr[9], matrixArr[10]}));
 				}
 			}
 			else if (m_selectionType == SelectionType::Playback) {
@@ -951,7 +954,7 @@ void Sandbox::DrawViewport() {
 	}
 
 	// Text Overlays
-	ImVec2 windowPos = ImGui::GetWindowPos();
+	ImVec2 windowPos  = ImGui::GetWindowPos();
 	ImVec2 windowSize = ImGui::GetWindowSize();
 
 	// FPS (top right)
@@ -962,7 +965,7 @@ void Sandbox::DrawViewport() {
 		ImVec2(windowPos.x + windowSize.x - fpsTextWidth - 10, windowPos.y + 30),
 		IM_COL32(255, 255, 255, 150),
 		fpsText
-	);
+		);
 
 	// Camera coordinates (top left)
 	Vector3 cameraPos = m_spectatorCamera.position;
@@ -972,16 +975,16 @@ void Sandbox::DrawViewport() {
 		ImVec2(windowPos.x + 10, windowPos.y + 30), // 20 pixels below the FPS text
 		IM_COL32(255, 255, 255, 150),
 		coordText
-	);
+		);
 
 	// Free-cam mode instruction (top center)
 	const char* text = m_inFreeCamMode ? "Press C to exit free camera mode" : "Press C to enter free camera mode";
-	float textWidth = ImGui::CalcTextSize(text).x;
+	float textWidth  = ImGui::CalcTextSize(text).x;
 	ImGui::GetWindowDrawList()->AddText(
 		ImVec2(windowPos.x + (windowSize.x / 2) - (textWidth / 2), windowPos.y + 30),
 		IM_COL32(255, 255, 255, 150),
 		text
-	);
+		);
 
 	ImGui::End();
 	ImGui::PopStyleVar();
@@ -997,9 +1000,12 @@ void Sandbox::DrawConsole() {
 
 	ImGui::TextDisabled("| Filters:");
 	ImGui::SameLine();
-	ImGui::Checkbox("Debug", &m_showDebug); ImGui::SameLine();
-	ImGui::Checkbox("Info", &m_showInfo); ImGui::SameLine();
-	ImGui::Checkbox("Warnings", &m_showWarnings); ImGui::SameLine();
+	ImGui::Checkbox("Debug", &m_showDebug);
+	ImGui::SameLine();
+	ImGui::Checkbox("Info", &m_showInfo);
+	ImGui::SameLine();
+	ImGui::Checkbox("Warnings", &m_showWarnings);
+	ImGui::SameLine();
 	ImGui::Checkbox("Error", &m_showErrors);
 
 	ImGui::Separator();
@@ -1026,10 +1032,11 @@ void Sandbox::DrawConsole() {
 			if (!m_showDebug && log.level == dalia::LogLevel::Debug) continue;
 			if (!m_showInfo && log.level == dalia::LogLevel::Info) continue;
 			if (!m_showWarnings && log.level == dalia::LogLevel::Warning) continue;
-			if (!m_showErrors && (log.level == dalia::LogLevel::Error || log.level == dalia::LogLevel::Critical)) continue;
+			if (!m_showErrors && (log.level == dalia::LogLevel::Error || log.level == dalia::LogLevel::Critical))
+				continue;
 
 			const char* levelStr = "NONE";
-			ImVec4 color = ImVec4(0.7f, 0.7f, 0.7f, 1.0f); // Gray
+			ImVec4 color         = ImVec4(0.7f, 0.7f, 0.7f, 1.0f); // Gray
 
 			switch (log.level) {
 				case dalia::LogLevel::Debug:
@@ -1102,7 +1109,7 @@ void Sandbox::DrawMixingHierarchy() {
 		else if (!newName.empty()) {
 			auto bus = std::make_unique<MixingBus>(&m_engine, newName);
 			if (bus->GetResult() == dalia::Result::Ok) m_buses.push_back(std::move(bus));
-			m_newBusNameBuffer[0] = '\0';
+			m_newBusNameBuffer[0]     = '\0';
 			m_showDuplicateBusWarning = false;
 		}
 	}
@@ -1146,7 +1153,7 @@ void Sandbox::DrawBusNodeRecursive(MixingBus* currentBus) {
 	bool hasChildren = hasChildBuses || hasChildPlaybacks;
 
 	// --- Set up flags ---
-	ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_OpenOnArrow |ImGuiTreeNodeFlags_OpenOnDoubleClick |
+	ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick |
 		ImGuiTreeNodeFlags_SpanAvailWidth;
 
 	if (m_selectionType == SelectionType::Bus && m_selectedObject == currentBus) {
@@ -1161,7 +1168,7 @@ void Sandbox::DrawBusNodeRecursive(MixingBus* currentBus) {
 
 	// Selection handling
 	if (ImGui::IsItemClicked() && !ImGui::IsItemToggledOpen()) {
-		m_selectionType = SelectionType::Bus;
+		m_selectionType  = SelectionType::Bus;
 		m_selectedObject = currentBus;
 	}
 
@@ -1180,7 +1187,8 @@ void Sandbox::DrawBusNodeRecursive(MixingBus* currentBus) {
 		if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("DND_BUS_NODE")) {
 			MixingBus* droppedBus = *(MixingBus**)payload->Data;
 
-			dalia::Result res = m_engine.RouteBus(droppedBus->GetIdentifier().c_str(), currentBus->GetIdentifier().c_str());
+			dalia::Result res = m_engine.RouteBus(droppedBus->GetIdentifier().c_str(),
+				currentBus->GetIdentifier().c_str());
 			if (res == dalia::Result::Ok) {
 				droppedBus->SetParentIdentifier(currentBus->GetIdentifier());
 			}
@@ -1190,7 +1198,8 @@ void Sandbox::DrawBusNodeRecursive(MixingBus* currentBus) {
 		if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("DND_PLAYBACK_NODE")) {
 			PlaybackInstance* droppedPlayback = *(PlaybackInstance**)payload->Data;
 
-			dalia::Result res = m_engine.RoutePlayback(droppedPlayback->GetHandle(), currentBus->GetIdentifier().c_str());
+			dalia::Result res = m_engine.RoutePlayback(droppedPlayback->GetHandle(),
+				currentBus->GetIdentifier().c_str());
 			if (res != dalia::Result::Ok) droppedPlayback->SetResult(res);
 			else droppedPlayback->SetBusIdentifier(currentBus->GetIdentifier());
 		}
@@ -1222,7 +1231,7 @@ void Sandbox::DrawBusNodeRecursive(MixingBus* currentBus) {
 				ImGui::TreeNodeEx(playback.get(), pFlags, "[P] %s (%s)", playback->GetName().c_str(), typeTag);
 
 				if (ImGui::IsItemClicked() && !ImGui::IsItemToggledOpen()) {
-					m_selectionType = SelectionType::Playback;
+					m_selectionType  = SelectionType::Playback;
 					m_selectedObject = playback.get();
 				}
 
@@ -1248,12 +1257,12 @@ void Sandbox::DrawEffectBrowser() {
 
 		if (ImGui::Button("Create Biquad Filter", ImVec2(-1.0f, 30.0f))) {
 			biquadCount++;
-			std::string typeNames[] = { "LowPass", "HighPass", "BandPass" };
-			std::string filterName = "Biquad " + std::to_string(biquadCount);
+			std::string typeNames[] = {"LowPass", "HighPass", "BandPass"};
+			std::string filterName  = "Biquad " + std::to_string(biquadCount);
 
-			auto newBiquad = std::make_unique<BiquadEffect>(&m_engine, filterName);
+			auto newBiquad   = std::make_unique<BiquadEffect>(&m_engine, filterName);
 			m_selectedObject = newBiquad.get();
-			m_selectionType = SelectionType::Effect;
+			m_selectionType  = SelectionType::Effect;
 
 			m_effects.push_back(std::move(newBiquad));
 		}
@@ -1449,10 +1458,10 @@ void Sandbox::BuildDefaultDockingLayout(ImGuiID dockspaceId) {
 	ImGuiID dockIdMain = dockspaceId;
 
 	// Dockspace splitting
-	ImGuiID dockIdLeft = ImGui::DockBuilderSplitNode(dockIdMain, ImGuiDir_Left, 0.20f, NULL, &dockIdMain);
+	ImGuiID dockIdLeft       = ImGui::DockBuilderSplitNode(dockIdMain, ImGuiDir_Left, 0.20f, NULL, &dockIdMain);
 	ImGuiID dockIdLeftBottom = ImGui::DockBuilderSplitNode(dockIdLeft, ImGuiDir_Down, 0.45f, NULL, &dockIdLeft);
-	ImGuiID dockIdRight = ImGui::DockBuilderSplitNode(dockIdMain, ImGuiDir_Right, 0.25f, NULL, &dockIdMain);
-	ImGuiID dockIdBottom = ImGui::DockBuilderSplitNode(dockIdMain, ImGuiDir_Down, 0.35f, NULL, &dockIdMain);
+	ImGuiID dockIdRight      = ImGui::DockBuilderSplitNode(dockIdMain, ImGuiDir_Right, 0.25f, NULL, &dockIdMain);
+	ImGuiID dockIdBottom     = ImGui::DockBuilderSplitNode(dockIdMain, ImGuiDir_Down, 0.35f, NULL, &dockIdMain);
 
 	ImGui::DockBuilderDockWindow("Scene Outliner", dockIdLeft);
 	ImGui::DockBuilderDockWindow("Mixing Hierarchy", dockIdLeft);

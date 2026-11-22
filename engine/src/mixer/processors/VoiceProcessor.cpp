@@ -1,14 +1,14 @@
-#include "mixer/processors/VoiceProcessor.h"
-#include "BusProcessor.h"
-#include "mixer/dsp/Buffer.h"
-#include "mixer/dsp/Resampler.h"
-#include "async/AsyncMessageBus.h"
-#include "async/messaging/AsyncMixerMessaging.h"
-#include "async/messaging/AsyncStreamMessaging.h"
-#include "core/Logger.h"
-#include "core/Math.h"
-#include "core/Profiler.h"
-#include "core/Assert.h"
+#include "mixer/processors/VoiceProcessor.hpp"
+#include "BusProcessor.hpp"
+#include "mixer/dsp/Buffer.hpp"
+#include "mixer/dsp/Resampler.hpp"
+#include "async/AsyncMessageBus.hpp"
+#include "async/messaging/AsyncMixerMessaging.hpp"
+#include "async/messaging/AsyncStreamMessaging.hpp"
+#include "core/Logger.hpp"
+#include "core/Math.hpp"
+#include "core/Profiler.hpp"
+#include "core/Assert.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -46,8 +46,8 @@ namespace dalia {
 
 		UnsubscribeFromCommands();
 		m_asyncMessageBus = nullptr;
-		m_busProcessor	  = nullptr;
-		m_initialized = false;
+		m_busProcessor    = nullptr;
+		m_initialized     = false;
 	}
 
 	void VoiceProcessor::SyncNodes() {
@@ -107,23 +107,41 @@ namespace dalia {
 
 	void VoiceProcessor::SubscribeToCommands() {
 		m_asyncMessageBus->SubscribeToMixerCommand(AsyncMixerCommand::Type::AllocateVoice,
-			[this](const AsyncMixerCommand& cmd) { HandleAllocateVoiceCommand(cmd); });
+			[this](const AsyncMixerCommand& cmd) {
+				HandleAllocateVoiceCommand(cmd);
+			});
 		m_asyncMessageBus->SubscribeToMixerCommand(AsyncMixerCommand::Type::FreeVoice,
-			[this](const AsyncMixerCommand& cmd) { HandleFreeVoiceCommand(cmd); });
+			[this](const AsyncMixerCommand& cmd) {
+				HandleFreeVoiceCommand(cmd);
+			});
 		m_asyncMessageBus->SubscribeToMixerCommand(AsyncMixerCommand::Type::PrepareVoiceResident,
-			[this](const AsyncMixerCommand& cmd) { HandlePrepareVoiceResidentCommand(cmd); });
+			[this](const AsyncMixerCommand& cmd) {
+				HandlePrepareVoiceResidentCommand(cmd);
+			});
 		m_asyncMessageBus->SubscribeToMixerCommand(AsyncMixerCommand::Type::PrepareVoiceStreaming,
-			[this](const AsyncMixerCommand& cmd) { HandlePrepareVoiceStreamingCommand(cmd); });
+			[this](const AsyncMixerCommand& cmd) {
+				HandlePrepareVoiceStreamingCommand(cmd);
+			});
 		m_asyncMessageBus->SubscribeToMixerCommand(AsyncMixerCommand::Type::SeekVoice,
-			[this](const AsyncMixerCommand& cmd) { HandleSeekVoiceCommand(cmd); });
+			[this](const AsyncMixerCommand& cmd) {
+				HandleSeekVoiceCommand(cmd);
+			});
 		m_asyncMessageBus->SubscribeToMixerCommand(AsyncMixerCommand::Type::PlayVoice,
-			[this](const AsyncMixerCommand& cmd) { HandlePlayVoiceCommand(cmd); });
+			[this](const AsyncMixerCommand& cmd) {
+				HandlePlayVoiceCommand(cmd);
+			});
 		m_asyncMessageBus->SubscribeToMixerCommand(AsyncMixerCommand::Type::PauseVoice,
-			[this](const AsyncMixerCommand& cmd) { HandlePauseVoiceCommand(cmd); });
+			[this](const AsyncMixerCommand& cmd) {
+				HandlePauseVoiceCommand(cmd);
+			});
 		m_asyncMessageBus->SubscribeToMixerCommand(AsyncMixerCommand::Type::StopVoice,
-			[this](const AsyncMixerCommand& cmd) { HandleStopVoiceCommand(cmd); });
+			[this](const AsyncMixerCommand& cmd) {
+				HandleStopVoiceCommand(cmd);
+			});
 		m_asyncMessageBus->SubscribeToMixerCommand(AsyncMixerCommand::Type::SetVoiceParent,
-			[this](const AsyncMixerCommand& cmd) { HandleSetVoiceParentCommand(cmd); });
+			[this](const AsyncMixerCommand& cmd) {
+				HandleSetVoiceParentCommand(cmd);
+			});
 	}
 
 	void VoiceProcessor::UnsubscribeFromCommands() {
@@ -141,9 +159,9 @@ namespace dalia {
 	void VoiceProcessor::HandleAllocateVoiceCommand(const AsyncMixerCommand& cmd) {
 		Voice& voice = m_voicePool.nodes[cmd.targetIndex];
 
-		voice.gen			= cmd.targetGen;
-		voice.currentState	= VoiceState::Inactive;
-		voice.targetState	= VoiceState::Inactive;
+		voice.gen          = cmd.targetGen;
+		voice.currentState = VoiceState::Inactive;
+		voice.targetState  = VoiceState::Inactive;
 	}
 
 	void VoiceProcessor::HandleFreeVoiceCommand(const AsyncMixerCommand& cmd) {
@@ -158,11 +176,11 @@ namespace dalia {
 		if (voice.gen != cmd.targetGen || voice.isExiting) return;
 
 		// Voice setup
-		voice.soundType					= SoundType::Resident;
-		voice.data.resident.pcmData		= cmd.data.prepResident.pcmData;
-		voice.data.resident.frameCount	= cmd.data.prepResident.totalFrames;
-		voice.channels					= cmd.data.prepResident.channels;
-		voice.sampleRate				= cmd.data.prepResident.sampleRate;
+		voice.soundType                = SoundType::Resident;
+		voice.data.resident.pcmData    = cmd.data.prepResident.pcmData;
+		voice.data.resident.frameCount = cmd.data.prepResident.totalFrames;
+		voice.channels                 = cmd.data.prepResident.channels;
+		voice.sampleRate               = cmd.data.prepResident.sampleRate;
 	}
 
 	void VoiceProcessor::HandlePrepareVoiceStreamingCommand(const AsyncMixerCommand& cmd) {
@@ -170,20 +188,20 @@ namespace dalia {
 		if (voice.gen != cmd.targetGen || voice.isExiting) return;
 
 		// Voice setup
-		voice.soundType							= SoundType::Stream;
-		voice.data.stream.streamContextIndex	= cmd.data.prepStreaming.streamIndex;
-		voice.data.stream.streamContextGen		= cmd.data.prepStreaming.streamGen;
-		voice.data.stream.frontBufferIndex		= 0;
-		voice.channels							= cmd.data.prepStreaming.channels;
-		voice.sampleRate						= cmd.data.prepStreaming.sampleRate;
+		voice.soundType                      = SoundType::Stream;
+		voice.data.stream.streamContextIndex = cmd.data.prepStreaming.streamIndex;
+		voice.data.stream.streamContextGen   = cmd.data.prepStreaming.streamGen;
+		voice.data.stream.frontBufferIndex   = 0;
+		voice.channels                       = cmd.data.prepStreaming.channels;
+		voice.sampleRate                     = cmd.data.prepStreaming.sampleRate;
 	}
 
 	void VoiceProcessor::HandleSeekVoiceCommand(const AsyncMixerCommand& cmd) {
 		Voice& voice = m_voicePool.nodes[cmd.targetIndex];
 		if (voice.gen != cmd.targetGen || voice.isExiting) return;
 
-		voice.hasPendingSeek	= true;
-		voice.pendingSeekFrame	= cmd.data.seek.seekFrame;
+		voice.hasPendingSeek   = true;
+		voice.pendingSeekFrame = cmd.data.seek.seekFrame;
 	}
 
 	void VoiceProcessor::HandlePlayVoiceCommand(const AsyncMixerCommand& cmd) {
@@ -204,8 +222,8 @@ namespace dalia {
 		Voice& voice = m_voicePool.nodes[cmd.targetIndex];
 		if (voice.gen != cmd.targetGen || voice.isExiting) return;
 
-		voice.targetState	= VoiceState::Stopped;
-		voice.isExiting		= true;
+		voice.targetState = VoiceState::Stopped;
+		voice.isExiting   = true;
 	}
 
 	void VoiceProcessor::HandleSetVoiceParentCommand(const AsyncMixerCommand& cmd) {
@@ -243,7 +261,7 @@ namespace dalia {
 		// Stream state
 		if (voice.soundType == SoundType::Stream && voice.targetState != VoiceState::Stopped) {
 			StreamContext& stream = m_streamPool[voice.data.stream.streamContextIndex];
-			auto sState = stream.state.load(std::memory_order_acquire);
+			auto sState           = stream.state.load(std::memory_order_acquire);
 
 			// Block if stream is waiting on I/O
 			if (sState == StreamState::Preparing || sState == StreamState::Seeking) return;
@@ -258,12 +276,12 @@ namespace dalia {
 
 	void VoiceProcessor::ExecutePendingSeek(Voice& voice) {
 		if (voice.soundType == SoundType::Resident) {
-			voice.cursor = static_cast<double>(voice.pendingSeekFrame);
-			voice.hasPendingSeek = false;
+			voice.cursor           = static_cast<double>(voice.pendingSeekFrame);
+			voice.hasPendingSeek   = false;
 			voice.pendingSeekFrame = 0;
 		}
 		else if (voice.soundType == SoundType::Stream) {
-			StreamContext& stream = m_streamPool[voice.data.stream.streamContextIndex];
+			StreamContext& stream     = m_streamPool[voice.data.stream.streamContextIndex];
 			StreamState expectedState = StreamState::Streaming;
 
 			if (stream.state.compare_exchange_strong(expectedState, StreamState::Seeking,
@@ -272,13 +290,13 @@ namespace dalia {
 					voice.data.stream.streamContextIndex,
 					stream.gen.load(std::memory_order_relaxed),
 					voice.pendingSeekFrame
-				));
+					));
 
-				voice.cursor = 0.0;
+				voice.cursor                       = 0.0;
 				voice.data.stream.frontBufferIndex = 0;
-				voice.hasPendingSeek = false;
-				voice.pendingSeekFrame = 0;
-				voice.resamplerState = {};
+				voice.hasPendingSeek               = false;
+				voice.pendingSeekFrame             = 0;
+				voice.resamplerState               = {};
 			}
 		}
 	}
@@ -289,7 +307,7 @@ namespace dalia {
 		if (voice.soundType == SoundType::Stream) {
 			m_asyncMessageBus->PublishStreamCommand(AsyncStreamCommand::ReleaseStream(
 				voice.data.stream.streamContextIndex, m_streamPool[voice.data.stream.streamContextIndex].gen
-			));
+				));
 		}
 
 		if (voice.exitCondition == PlaybackExitCondition::NaturalEnd) {
@@ -307,7 +325,7 @@ namespace dalia {
 
 		m_asyncMessageBus->PublishMixerEvent(AsyncMixerEvent::VoiceStopped(
 			voiceIndex, voice.gen, voice.exitCondition
-		));
+			));
 		voice.Reset();
 	}
 
@@ -319,7 +337,7 @@ namespace dalia {
 		}
 
 		uint32_t framesMixed = 0;
-		float phaseInc = voice.finalPlaybackRate *
+		float phaseInc       = voice.finalPlaybackRate *
 			(static_cast<float>(voice.sampleRate) / static_cast<float>(m_outSampleRate));
 
 		while (framesMixed < frameCount) {
@@ -330,7 +348,7 @@ namespace dalia {
 
 			SourceBlock block = FetchSourceBlock(voice, sourceFramesNeeded);
 			if (block.isError) {
-				voice.currentState = VoiceState::Stopped;
+				voice.currentState  = VoiceState::Stopped;
 				voice.exitCondition = PlaybackExitCondition::Error;
 				break;
 			}
@@ -341,7 +359,7 @@ namespace dalia {
 
 			if (block.framesAvailable > 0) {
 				uint32_t outputFramesGenerated = 0;
-				uint32_t sourceFramesConsumed = 0;
+				uint32_t sourceFramesConsumed  = 0;
 
 				ProcessResampler(
 					voice.resamplerState,
@@ -353,7 +371,7 @@ namespace dalia {
 					phaseInc,
 					outputFramesGenerated,
 					sourceFramesConsumed
-				);
+					);
 
 				dsp::MixVoiceBlock(
 					m_scratchBuffer.get(),
@@ -367,10 +385,10 @@ namespace dalia {
 					voice.currentGainMatrix,
 					voice.targetGainMatrix,
 					m_smoothingCoefficient
-				);
+					);
 
 				voice.cursor += static_cast<double>(sourceFramesConsumed);
-				framesMixed += outputFramesGenerated;
+				framesMixed  += outputFramesGenerated;
 			}
 
 			if (block.framesAvailable < sourceFramesNeeded || framesMixed < frameCount) {
@@ -384,19 +402,19 @@ namespace dalia {
 		auto cursorInt = static_cast<uint32_t>(voice.cursor);
 
 		if (voice.soundType == SoundType::Resident) {
-			block.channels = voice.channels;
+			block.channels             = voice.channels;
 			uint32_t totalSourceFrames = voice.data.resident.frameCount;
 
 			if (cursorInt < totalSourceFrames) {
 				block.framesAvailable = std::min(maxFramesNeeded, totalSourceFrames - cursorInt);
-				block.pcmData = voice.data.resident.pcmData + (cursorInt * block.channels);
+				block.pcmData         = voice.data.resident.pcmData + (cursorInt * block.channels);
 			}
 
 			return block;
 		}
 
 		if (voice.soundType == SoundType::Stream) {
-			StreamContext& stream = m_streamPool[voice.data.stream.streamContextIndex];
+			StreamContext& stream  = m_streamPool[voice.data.stream.streamContextIndex];
 			uint32_t frontBufIndex = voice.data.stream.frontBufferIndex;
 
 			if (stream.state.load(std::memory_order_acquire) == StreamState::Error) {
@@ -409,7 +427,7 @@ namespace dalia {
 				return block;
 			}
 
-			block.channels = stream.channels;
+			block.channels          = stream.channels;
 			uint32_t framesInSource = STREAM_BUFFER_FRAMES;
 			const uint32_t eofIndex = stream.eofIndex[frontBufIndex];
 
@@ -417,7 +435,7 @@ namespace dalia {
 
 			if (cursorInt < framesInSource) {
 				block.framesAvailable = std::min(maxFramesNeeded, framesInSource - cursorInt);
-				block.pcmData = stream.buffers[frontBufIndex] + (cursorInt * block.channels);
+				block.pcmData         = stream.buffers[frontBufIndex] + (cursorInt * block.channels);
 			}
 
 			return block;
@@ -434,19 +452,19 @@ namespace dalia {
 				if (voice.cursor < 0.0) voice.cursor = 0.0;
 				return true;
 			}
-			voice.currentState = VoiceState::Stopped;
+			voice.currentState  = VoiceState::Stopped;
 			voice.exitCondition = PlaybackExitCondition::NaturalEnd;
 			return false;
 		}
 
 		if (voice.soundType == SoundType::Stream) {
-			uint32_t sIndex = voice.data.stream.streamContextIndex;
+			uint32_t sIndex        = voice.data.stream.streamContextIndex;
 			uint32_t frontBufIndex = voice.data.stream.frontBufferIndex;
-			StreamContext& stream = m_streamPool[sIndex];
+			StreamContext& stream  = m_streamPool[sIndex];
 
 			// Exit check
 			if (!voice.params.isLooping && stream.eofIndex[frontBufIndex] != NO_EOF) {
-				voice.currentState = VoiceState::Stopped;
+				voice.currentState  = VoiceState::Stopped;
 				voice.exitCondition = PlaybackExitCondition::NaturalEnd;
 				return false;
 			}
@@ -457,10 +475,10 @@ namespace dalia {
 				sIndex,
 				stream.gen.load(std::memory_order_relaxed),
 				frontBufIndex
-			));
+				));
 
 			voice.data.stream.frontBufferIndex = 1 - frontBufIndex;
-			voice.cursor -= static_cast<double>(STREAM_BUFFER_FRAMES);
+			voice.cursor                       -= static_cast<double>(STREAM_BUFFER_FRAMES);
 			if (voice.cursor < 0.0) voice.cursor = 0.0;
 
 			return true;

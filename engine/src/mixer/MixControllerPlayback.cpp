@@ -1,9 +1,9 @@
-#include "mixer/MixController.h"
+#include "mixer/MixController.hpp"
 
-#include "asset/AssetController.h"
-#include "io/IoController.h"
-#include "core/Assert.h"
-#include "core/Profiler.h"
+#include "asset/AssetController.hpp"
+#include "io/IoController.hpp"
+#include "core/Assert.hpp"
+#include "core/Profiler.hpp"
 
 namespace dalia {
 
@@ -31,12 +31,12 @@ namespace dalia {
 
 		// Prime voice mirror
 		VoiceMirror& vMirror = m_voices.GetMirror(vIndex);
-		vMirror.state = VoiceState::Inactive;
-		vMirror.assetRawId = sound.GetRawId();
-		vMirror.totalFrames = soundDesc.totalFrames;
-		vMirror.channels = soundDesc.channels;
-		vMirror.sampleRate = soundDesc.sampleRate;
-		vMirror.soundType = soundDesc.soundType;
+		vMirror.state        = VoiceState::Inactive;
+		vMirror.assetRawId   = sound.GetRawId();
+		vMirror.totalFrames  = soundDesc.totalFrames;
+		vMirror.channels     = soundDesc.channels;
+		vMirror.sampleRate   = soundDesc.sampleRate;
+		vMirror.soundType    = soundDesc.soundType;
 		if (exitCallback) vMirror.onStopCallback = std::move(exitCallback);
 
 		if (soundDesc.loadState == LoadState::Loading) {
@@ -52,7 +52,7 @@ namespace dalia {
 			m_asyncMessageBus->PublishMixerCommand(AsyncMixerCommand::AllocateVoice(vIndex, vMirror.gen));
 			m_asyncMessageBus->PublishMixerCommand(AsyncMixerCommand::PrepareVoiceResident(
 				vIndex, vMirror.gen, soundDesc.pcmData, soundDesc.totalFrames, soundDesc.channels, soundDesc.sampleRate
-			));
+				));
 		}
 		else if (soundDesc.soundType == SoundType::Stream) {
 			uint32_t sIndex, sGen;
@@ -73,7 +73,7 @@ namespace dalia {
 			m_asyncMessageBus->PublishMixerCommand(AsyncMixerCommand::AllocateVoice(vIndex, vMirror.gen));
 			m_asyncMessageBus->PublishMixerCommand(AsyncMixerCommand::PrepareVoiceStreaming(
 				vIndex, vMirror.gen, sIndex, sGen, soundDesc.channels, soundDesc.sampleRate
-			));
+				));
 		}
 
 		playback = PlaybackHandle::Create(vIndex, vMirror.gen);
@@ -100,7 +100,7 @@ namespace dalia {
 			vMirror.parentBusIndex = bIndex;
 			m_asyncMessageBus->PublishMixerCommand(AsyncMixerCommand::SetVoiceParent(
 				vIndex, playback.GetGeneration(), bIndex
-			));
+				));
 			DALIA_LOG_DEBUG(LOG_CTX_API, "Routed voice %d to bus %s (index: %d).", vIndex, bus, bIndex);
 
 			return Result::Ok;
@@ -112,9 +112,10 @@ namespace dalia {
 
 		return ModifyVoice(playback, [&](VoiceMirror& vMirror, uint32_t vIndex) -> Result {
 			if (vMirror.pendingLoad) {
-			   vMirror.state = VoiceState::Playing;
-			   DALIA_LOG_DEBUG(LOG_CTX_API, "Calling play on sound that is still loading. Will play when done loading.");
-			   return Result::Ok;
+				vMirror.state = VoiceState::Playing;
+				DALIA_LOG_DEBUG(LOG_CTX_API,
+					"Calling play on sound that is still loading. Will play when done loading.");
+				return Result::Ok;
 			}
 
 			// Check for double calls
@@ -143,7 +144,7 @@ namespace dalia {
 						"Setting spatial playback instance to play without a valid listener active");
 				}
 			}
-						vMirror.state = VoiceState::Playing;
+			vMirror.state = VoiceState::Playing;
 			m_asyncMessageBus->PublishMixerCommand(AsyncMixerCommand::PlayVoice(vIndex, playback.GetGeneration()));
 			DALIA_LOG_DEBUG(LOG_CTX_API, "Setting voice %d state: Playing.", vIndex);
 
@@ -176,7 +177,7 @@ namespace dalia {
 		return ModifyVoice(playback, [&](VoiceMirror& vMirror, uint32_t vIndex) -> Result {
 			// Handle pending playbacks
 			if (vMirror.pendingLoad) {
-				for (auto it = m_pendingPlaybacks.begin(); it != m_pendingPlaybacks.end(); ) {
+				for (auto it = m_pendingPlaybacks.begin(); it != m_pendingPlaybacks.end();) {
 					if (it->playback.GetIndex() == vIndex) {
 						if (vMirror.onStopCallback) {
 							vMirror.onStopCallback(playback, PlaybackExitCondition::ExplicitStop);
@@ -209,7 +210,7 @@ namespace dalia {
 		// Free pending playbacks
 		for (auto it = m_pendingPlaybacks.begin(); it != m_pendingPlaybacks.end();) {
 			if (it->assetRawId == soundRawId) {
-				uint32_t vIndex = it->playback.GetIndex();
+				uint32_t vIndex      = it->playback.GetIndex();
 				VoiceMirror& vMirror = m_voices.GetMirror(vIndex);
 				if (vMirror.gen == it->playback.GetGeneration()) ResetAndFreeVoice(vIndex);
 				it = m_pendingPlaybacks.erase(it);
@@ -239,7 +240,7 @@ namespace dalia {
 
 			if (vMirror.pendingLoad) {
 				// Voice is pending
-				for (auto it = m_pendingPlaybacks.begin(); it != m_pendingPlaybacks.end(); ) {
+				for (auto it = m_pendingPlaybacks.begin(); it != m_pendingPlaybacks.end();) {
 					if (it->playback.GetIndex() == vIndex) {
 						vMirror.initialSeekTarget = timeInSeconds;
 						return Result::Ok;
@@ -249,16 +250,17 @@ namespace dalia {
 			}
 
 			auto seekFrame64 = static_cast<uint64_t>(timeInSeconds * vMirror.sampleRate);
-			if (seekFrame64 >= vMirror.totalFrames) { // Safety clamps
+			if (seekFrame64 >= vMirror.totalFrames) {
+				// Safety clamps
 				DALIA_LOG_WARN(LOG_CTX_API, "Seeking beyond final sound frame. Clamping to final frame.");
 				if (vMirror.totalFrames > 0) seekFrame64 = vMirror.totalFrames - 1;
-				else seekFrame64 = 0;
+				else seekFrame64                         = 0;
 			}
 
 			auto seekFrame = static_cast<uint32_t>(seekFrame64);
 			m_asyncMessageBus->PublishMixerCommand(AsyncMixerCommand::SeekVoice(
 				vIndex, playback.GetGeneration(), seekFrame
-			));
+				));
 			DALIA_LOG_DEBUG(LOG_CTX_API, "Seeking voice %d to frame %d.", vIndex, seekFrame);
 
 			return Result::Ok;
@@ -270,7 +272,7 @@ namespace dalia {
 
 		return ModifyVoiceParams(playback, [&](VoiceParams& params) {
 			float clampedVolumeDb = std::clamp(volumeDb, VOLUME_DB_MIN, VOLUME_DB_MAX);
-			params.gain = math::DbToGain(clampedVolumeDb);
+			params.gain           = math::DbToGain(clampedVolumeDb);
 		});
 	}
 
@@ -278,7 +280,7 @@ namespace dalia {
 		DALIA_ASSERT(m_initialized, "MixController used before initialized.");
 
 		return ModifyVoiceParams(playback, [&](VoiceParams& params) {
-			float clampedRate = std::clamp(rate, PLAYBACK_RATE_MIN, PLAYBACK_RATE_MAX);
+			float clampedRate   = std::clamp(rate, PLAYBACK_RATE_MIN, PLAYBACK_RATE_MAX);
 			params.playbackRate = clampedRate;
 		});
 	}
@@ -288,7 +290,7 @@ namespace dalia {
 
 		return ModifyVoiceParams(playback, [&](VoiceParams& params) {
 			float clampedStereoPan = std::clamp(stereoPan, PAN_STEREO_MIN, PAN_STEREO_MAX);
-			params.stereoPan = clampedStereoPan;
+			params.stereoPan       = clampedStereoPan;
 		});
 	}
 
@@ -346,8 +348,8 @@ namespace dalia {
 		return ModifyVoiceParams(playback, [&](VoiceParams& params) {
 			float clampedMinDistance = std::max(minDistance, MIN_DIST_MIN);
 			float clampedMaxDistance = std::max(maxDistance, clampedMinDistance);
-			params.minDistance = clampedMinDistance;
-			params.maxDistance = clampedMaxDistance;
+			params.minDistance       = clampedMinDistance;
+			params.maxDistance       = clampedMaxDistance;
 		});
 	}
 

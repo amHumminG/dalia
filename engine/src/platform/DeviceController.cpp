@@ -1,9 +1,9 @@
-#include "DeviceController.h"
+#include "DeviceController.hpp"
 
-#include "async/messaging/AsyncControlMessaging.h"
-#include "async/AsyncMessageBus.h"
-#include "core/Profiler.h"
-#include "core/Assert.h"
+#include "async/messaging/AsyncControlMessaging.hpp"
+#include "async/AsyncMessageBus.hpp"
+#include "core/Profiler.hpp"
+#include "core/Assert.hpp"
 
 namespace dalia {
 	DeviceController::~DeviceController() {
@@ -24,7 +24,7 @@ namespace dalia {
 		Result res = m_audioBackend->Initialize();
 		if (res != Result::Ok) return res;
 
-		m_outSampleRate = outSampleRate;
+		m_outSampleRate    = outSampleRate;
 		m_periodSizeFrames = periodSizeInFrames;
 
 		// Set up output devices
@@ -44,10 +44,18 @@ namespace dalia {
 				// Logging
 				std::string layout;
 				switch (m_speakerLayout) {
-					case SpeakerLayout::Mono: layout = "Mono"; break;
-					case SpeakerLayout::Stereo: layout = "Stereo"; break;
-					case SpeakerLayout::Surround51: layout = "5.1"; break;
-					case SpeakerLayout::Surround71: layout = "7.1"; break;
+					case SpeakerLayout::Mono:
+						layout = "Mono";
+						break;
+					case SpeakerLayout::Stereo:
+						layout = "Stereo";
+						break;
+					case SpeakerLayout::Surround51:
+						layout = "5.1";
+						break;
+					case SpeakerLayout::Surround71:
+						layout = "7.1";
+						break;
 				}
 				DALIA_LOG_INFO(LOG_CTX_CORE, "Initialized audio device \"%s\". %s layout with %u channel(s).",
 					m_outputDevice->GetName().c_str(), layout.c_str(), m_outputDevice->GetChannels());
@@ -61,10 +69,14 @@ namespace dalia {
 		m_asyncMessageBus = asyncMessageBus;
 
 		m_asyncMessageBus->SubscribeToControlEvent(AsyncControlEvent::Type::OutputDeviceSwapped,
-			[this](const AsyncControlEvent& ev){ FinalizeOutputDeviceSwap(ev); });
+			[this](const AsyncControlEvent& ev) {
+				FinalizeOutputDeviceSwap(ev);
+			});
 
 		m_asyncMessageBus->SubscribeToControlCommand(AsyncControlCommand::Type::SwapOutputDevice,
-			[this](const AsyncControlCommand& cmd) { ExecuteOutputDeviceSwap(cmd); });
+			[this](const AsyncControlCommand& cmd) {
+				ExecuteOutputDeviceSwap(cmd);
+			});
 
 		m_mixer = mixer;
 
@@ -77,8 +89,8 @@ namespace dalia {
 
 		if (!m_initialized) return;
 
-		if (m_outputDevice)		m_outputDevice->Stop();
-		if (m_nullOutputDevice)	m_nullOutputDevice->Stop();
+		if (m_outputDevice) m_outputDevice->Stop();
+		if (m_nullOutputDevice) m_nullOutputDevice->Stop();
 		m_initialized = false;
 	}
 
@@ -131,7 +143,7 @@ namespace dalia {
 		const char* target = (identifier && identifier[0]) != '\0' ? identifier : "default"; // emtpy/nullptr is default
 		if (m_targetOutputDeviceId == target) return Result::Ok;
 
-		m_targetOutputDeviceId = target;
+		m_targetOutputDeviceId    = target;
 		m_pendingOutputDeviceSwap = true;
 
 		DALIA_LOG_DEBUG(LOG_CTX_CORE, "Set output device (id: %s).", identifier);
@@ -191,7 +203,8 @@ namespace dalia {
 	}
 
 	void DeviceController::SetupNullOutputDevice() {
-		m_nullOutputDevice = std::make_unique<NullOutputDevice>(m_outSampleRate, (m_outSampleRate * 10) / 1000); // TODO: Try this with m_periodSizeFrames
+		m_nullOutputDevice = std::make_unique<NullOutputDevice>(m_outSampleRate, (m_outSampleRate * 10) / 1000);
+		// TODO: Try this with m_periodSizeFrames
 	}
 
 	void DeviceController::CheckForOutputDeviceChanges() {
@@ -202,10 +215,10 @@ namespace dalia {
 
 		// --- Initiate Swap If Needed ---
 		std::string newOsDefaultOutputId;
-		bool osDefaultOutputChanged = m_audioBackend->PopDeviceChangeNotification(newOsDefaultOutputId);
+		bool osDefaultOutputChanged        = m_audioBackend->PopDeviceChangeNotification(newOsDefaultOutputId);
 		bool shouldReactToOsDefaultChanged = osDefaultOutputChanged && (m_targetOutputDeviceId == "default");
-		bool manualChangePending = m_pendingOutputDeviceSwap;
-		bool deviceFailed = m_activeOutputDevice && m_activeOutputDevice->HasFailed();
+		bool manualChangePending           = m_pendingOutputDeviceSwap;
+		bool deviceFailed                  = m_activeOutputDevice && m_activeOutputDevice->HasFailed();
 
 		// Async shield (for double swaps)
 		if (shouldReactToOsDefaultChanged && m_activeOutputDevice && !deviceFailed) {
@@ -218,22 +231,25 @@ namespace dalia {
 
 		if (shouldReactToOsDefaultChanged || manualChangePending || deviceFailed) {
 			m_pendingOutputDeviceSwap = false;
-			m_isSwappingOutputDevice = true;
+			m_isSwappingOutputDevice  = true;
 
-			if (deviceFailed) DALIA_LOG_INFO(LOG_CTX_API, "Active output device reported failure. Initiating swap sequence.");
-			else if (manualChangePending) DALIA_LOG_INFO(LOG_CTX_API, "Output device swap requested. Initiating swap sequence.");
-			else DALIA_LOG_INFO(LOG_CTX_API, "OS default output device changed. Initiating swap sequence.");
+			if (deviceFailed)
+				DALIA_LOG_INFO(LOG_CTX_API, "Active output device reported failure. Initiating swap sequence.");
+			else if (manualChangePending)
+				DALIA_LOG_INFO(LOG_CTX_API, "Output device swap requested. Initiating swap sequence.");
+			else
+				DALIA_LOG_INFO(LOG_CTX_API, "OS default output device changed. Initiating swap sequence.");
 
 			// Release ownership of active device
 			OutputDevice* deviceToKill = m_outputDevice.release();
-			m_activeOutputDevice = nullptr; // Temporarily without output
+			m_activeOutputDevice       = nullptr; // Temporarily without output
 
 			// Push swap command to async control system
 			AsyncControlCommand cmd = AsyncControlCommand::SwapOutputDevice(
 				deviceToKill,
 				m_targetOutputDeviceId.c_str(),
 				m_outSampleRate
-			);
+				);
 			if (!m_asyncMessageBus->PublishControlCommand(cmd)) {
 				// TODO: Rollback ?
 			}
@@ -254,24 +270,32 @@ namespace dalia {
 
 		if (m_outputDevice) {
 			m_activeOutputDevice = m_outputDevice.get();
-			m_outChannels = m_activeOutputDevice->GetChannels();
-			m_speakerLayout = m_activeOutputDevice->GetSpeakerLayout();
+			m_outChannels        = m_activeOutputDevice->GetChannels();
+			m_speakerLayout      = m_activeOutputDevice->GetSpeakerLayout();
 
 			std::string layout;
 			switch (m_speakerLayout) {
-				case SpeakerLayout::Mono: layout = "Mono"; break;
-				case SpeakerLayout::Stereo: layout = "Stereo"; break;
-				case SpeakerLayout::Surround51: layout = "5.1"; break;
-				case SpeakerLayout::Surround71: layout = "7.1"; break;
+				case SpeakerLayout::Mono:
+					layout = "Mono";
+					break;
+				case SpeakerLayout::Stereo:
+					layout = "Stereo";
+					break;
+				case SpeakerLayout::Surround51:
+					layout = "5.1";
+					break;
+				case SpeakerLayout::Surround71:
+					layout = "7.1";
+					break;
 			}
 			DALIA_LOG_INFO(LOG_CTX_API, "Successfully swapped output device to \"%s\". %s layout with %u channel(s).",
 				m_outputDevice->GetName().c_str(), layout.c_str(), m_outChannels);
 		}
 		else {
 			// Both the requested device and the OS default device failed
-			m_activeOutputDevice = m_nullOutputDevice.get(); // Fall back to null device
-			m_outChannels = m_activeOutputDevice->GetChannels();
-			m_speakerLayout = m_activeOutputDevice->GetSpeakerLayout();
+			m_activeOutputDevice   = m_nullOutputDevice.get(); // Fall back to null device
+			m_outChannels          = m_activeOutputDevice->GetChannels();
+			m_speakerLayout        = m_activeOutputDevice->GetSpeakerLayout();
 			m_targetOutputDeviceId = "default";
 
 			DALIA_LOG_ERR(LOG_CTX_API, "No output devices available. Audio will render to void for now.");
@@ -286,7 +310,7 @@ namespace dalia {
 		// Teardown old device
 		if (cmd.data.swapOutputDevice.oldDevice) {
 			// Check the format before stopping the old device
-			uint32_t oldChannels = cmd.data.swapOutputDevice.oldDevice->GetChannels();
+			uint32_t oldChannels    = cmd.data.swapOutputDevice.oldDevice->GetChannels();
 			SpeakerLayout oldLayout = cmd.data.swapOutputDevice.oldDevice->GetSpeakerLayout();
 			m_nullOutputDevice->SetOutputFormat(oldChannels, oldLayout);
 
@@ -303,15 +327,16 @@ namespace dalia {
 		std::unique_ptr<OutputDevice> newDevice = m_audioBackend->CreateOutputDevice(
 			cmd.data.swapOutputDevice.targetOutputDeviceId,
 			cmd.data.swapOutputDevice.sampleRate
-		);
+			);
 
 		// Fall back to default if requested device failed
 		bool fellBack = false;
 		if (!newDevice && std::string(cmd.data.swapOutputDevice.targetOutputDeviceId) != "default") {
 			newDevice = m_audioBackend->CreateOutputDevice("default", cmd.data.swapOutputDevice.sampleRate);
-			fellBack = true;
+			fellBack  = true;
 			if (newDevice) {
-				DALIA_LOG_DEBUG(LOG_CTX_PLATFORM, "Fell back to OS default output device \"%s\".", newDevice->GetName().c_str());
+				DALIA_LOG_DEBUG(LOG_CTX_PLATFORM, "Fell back to OS default output device \"%s\".",
+					newDevice->GetName().c_str());
 			}
 		}
 

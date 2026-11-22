@@ -1,8 +1,8 @@
-#include "MixingBus.h"
+#include "MixingBus.hpp"
 
-#include "raymath.h"
-#include "rlImGui.h"
-#include "imgui.h"
+#include <raymath.h>
+#include <rlImGui.h>
+#include <imgui.h>
 
 #include <cstring>
 
@@ -76,7 +76,3 @@ void MixingBus::DrawInspectorUI(const UIContext& ui) {
 
 	ImGui::PopID();
 }
-
-
-
-

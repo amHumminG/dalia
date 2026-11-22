@@ -10,11 +10,14 @@ IndentWidth: 4
 AccessModifierOffset: -4
 NamespaceIndentation: All
 IndentCaseBlocks: true
+IndentPPDirectives: BeforeHash
+IndentCaseLabels: true
 
 # Alignment
 AlignConsecutiveAssignments: Consecutive
 AlignConsecutiveDeclarations: false
 AlignAfterOpenBracket: DontAlign
+AllowShortLambdasOnASingleLine: All
 AlignOperands: false
 AlignTrailingComments: false
 
@@ -43,11 +46,12 @@ PointerAlignment: Left
 ReferenceAlignment: Pointer
 
 # Functions & Constructors
-AllowShortFunctionsOnASingleLine: Empty
+AllowShortFunctionsOnASingleLine: Inline
 AlwaysBreakTemplateDeclarations: Yes
 BreakConstructorInitializers: BeforeColon
 BreakConstructorInitializersBeforeComma: false
 ConstructorInitializerAllOnOneLineOrOnePerLine: false
+AllowShortIfStatementsOnASingleLine: WithoutElse
 
 # Includes & Spacing
 SortIncludes: Never

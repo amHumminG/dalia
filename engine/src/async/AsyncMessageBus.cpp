@@ -1,18 +1,18 @@
-#include "AsyncMessageBus.h"
+#include "AsyncMessageBus.hpp"
 
-#include "core/Logger.h"
-#include "core/Profiler.h"
+#include "core/Logger.hpp"
+#include "core/Profiler.hpp"
 
 namespace dalia {
 	AsyncMessageBus::AsyncMessageBus(size_t mixerQueueCapacity, size_t streamQueueCapacity, size_t loadQueueCapacity,
-		size_t controlQueueCapacity)
-			: m_mixerCommandQueue(mixerQueueCapacity),
-			m_streamCommandQueue(streamQueueCapacity),
-			m_loadCommandQueue(loadQueueCapacity),
-			m_controlCommandQueue(controlQueueCapacity),
-			m_mixerEventQueue(mixerQueueCapacity),
-			m_loadEventQueue(loadQueueCapacity),
-			m_controlEventQueue(controlQueueCapacity) {
+	                                 size_t controlQueueCapacity)
+		: m_mixerCommandQueue(mixerQueueCapacity),
+		  m_streamCommandQueue(streamQueueCapacity),
+		  m_loadCommandQueue(loadQueueCapacity),
+		  m_controlCommandQueue(controlQueueCapacity),
+		  m_mixerEventQueue(mixerQueueCapacity),
+		  m_loadEventQueue(loadQueueCapacity),
+		  m_controlEventQueue(controlQueueCapacity) {
 
 		DALIA_PROFILE_PLOT_CONFIG("AsyncMessageBus: Mixer Commands");
 		DALIA_PROFILE_PLOT_CONFIG("AsyncMessageBus: Stream Commands");
@@ -95,22 +95,22 @@ namespace dalia {
 	}
 
 	void AsyncMessageBus::SubscribeToMixerCommand(AsyncMixerCommand::Type type,
-		MessageCallback<AsyncMixerCommand> cb) {
+	                                              MessageCallback<AsyncMixerCommand> cb) {
 		m_mixerCommandTable.Subscribe(type, cb);
 	}
 
 	void AsyncMessageBus::SubscribeToStreamCommand(AsyncStreamCommand::Type type,
-	MessageCallback<AsyncStreamCommand> cb) {
+	                                               MessageCallback<AsyncStreamCommand> cb) {
 		m_streamCommandTable.Subscribe(type, cb);
 	}
 
 	void AsyncMessageBus::SubscribeToLoadCommand(AsyncLoadCommand::Type type,
-		MessageCallback<AsyncLoadCommand> cb) {
+	                                             MessageCallback<AsyncLoadCommand> cb) {
 		m_loadCommandTable.Subscribe(type, cb);
 	}
 
 	void AsyncMessageBus::SubscribeToControlCommand(AsyncControlCommand::Type type,
-		MessageCallback<AsyncControlCommand> cb) {
+	                                                MessageCallback<AsyncControlCommand> cb) {
 		m_controlCommandTable.Subscribe(type, cb);
 	}
 

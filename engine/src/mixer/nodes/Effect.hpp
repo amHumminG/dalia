@@ -1,0 +1,25 @@
+#pragma once
+
+#include "core/Constants.hpp"
+
+#include <cstdint>
+
+namespace dalia {
+
+	struct EffectMirror {
+		uint32_t gen        = START_GENERATION;
+		uint32_t busIndex   = NO_INDEX;
+		uint32_t effectSlot = NO_INDEX;
+
+		[[nodiscard]] bool IsAttached() const {
+			return busIndex != NO_INDEX;
+		}
+
+		void ResetBase() {
+			gen++;
+			if (gen == NO_GENERATION) gen = START_GENERATION;
+			busIndex   = NO_INDEX;
+			effectSlot = NO_INDEX;
+		}
+	};
+}

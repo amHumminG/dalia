@@ -1,7 +1,7 @@
-#include "Listener.h"
+#include "Listener.hpp"
 
-#include "rlgl.h"
-#include "DrawHelper.h"
+#include <rlgl.h>
+#include "DrawHelper.hpp"
 
 Listener::Listener(dalia::Engine* engine, uint32_t index, bool isActive)
 	: m_engine(engine), m_index(index), m_isActive(isActive) {
@@ -16,7 +16,7 @@ void Listener::Update(float deltaTime) {
 	Vector3 movementDelta = Vector3Subtract(m_position, m_previousPosition);
 	if (m_movementState.type != MovementPreset::Manual) m_probePosition = Vector3Add(m_probePosition, movementDelta);
 
-	Vector3 rawVelocity = { 0.0f, 0.0f, 0.0f };
+	Vector3 rawVelocity = {0.0f, 0.0f, 0.0f};
 	if (deltaTime > 0.0001f) {
 		if (Vector3Length(movementDelta) < 10.0f) {
 			rawVelocity = Vector3Scale(movementDelta, 1.0f / deltaTime);
@@ -24,18 +24,18 @@ void Listener::Update(float deltaTime) {
 	}
 
 	float smoothing = 15.0f * deltaTime;
-	m_velocity.x = std::lerp(m_velocity.x, rawVelocity.x, smoothing);
-	m_velocity.y = std::lerp(m_velocity.y, rawVelocity.y, smoothing);
-	m_velocity.z = std::lerp(m_velocity.z, rawVelocity.z, smoothing);
+	m_velocity.x    = std::lerp(m_velocity.x, rawVelocity.x, smoothing);
+	m_velocity.y    = std::lerp(m_velocity.y, rawVelocity.y, smoothing);
+	m_velocity.z    = std::lerp(m_velocity.z, rawVelocity.z, smoothing);
 
 	m_previousPosition = m_position;
 
 	dalia::Listener3DAttributes attributes;
-	attributes.position = {m_position.x, m_position.y, m_position.z};
+	attributes.position              = {m_position.x, m_position.y, m_position.z};
 	attributes.distanceProbePosition = {m_probePosition.x, m_probePosition.y, m_probePosition.z};
-	attributes.forward = {m_forward.x, m_forward.y, m_forward.z};
-	attributes.up = {m_up.x, m_up.y, m_up.z};
-	attributes.velocity = {m_velocity.x, m_velocity.y, m_velocity.z};
+	attributes.forward               = {m_forward.x, m_forward.y, m_forward.z};
+	attributes.up                    = {m_up.x, m_up.y, m_up.z};
+	attributes.velocity              = {m_velocity.x, m_velocity.y, m_velocity.z};
 
 	dalia::Result res = m_engine->SetListener3DAttributes(m_index, attributes);
 	if (res != dalia::Result::Ok) m_result = res;
@@ -48,7 +48,7 @@ void Listener::Draw3D(bool isSelected) {
 	if (!isPiloted || targetBody != TargetBody::Head) {
 		DrawSphere(m_position, headRadius, Fade(SKYBLUE, 0.8f));
 
-		Vector3 left = Vector3Normalize(Vector3CrossProduct(m_forward, m_up));
+		Vector3 left  = Vector3Normalize(Vector3CrossProduct(m_forward, m_up));
 		Vector3 right = Vector3Normalize(Vector3CrossProduct(m_up, m_forward));
 
 		Vector3 earLeft = {
@@ -65,8 +65,8 @@ void Listener::Draw3D(bool isSelected) {
 		DrawSphere(earRight, 0.15f, BLACK);
 
 		// Headband
-		int segments = 16;
-		float bandRadius = headRadius + 0.05f;
+		int segments        = 16;
+		float bandRadius    = headRadius + 0.05f;
 		float bandThickness = 0.03f;
 
 		Vector3 prevPoint = {
@@ -92,8 +92,8 @@ void Listener::Draw3D(bool isSelected) {
 
 		// --- FACE ICONOGRAPHY ---
 		float eyeWhiteRadius = 0.07f;
-		float pupilRadius = 0.035f;
-		float noseRadius = 0.08f;
+		float pupilRadius    = 0.035f;
+		float noseRadius     = 0.08f;
 
 		// Calculate normalized directions for the eyes
 		Vector3 leftEyeDir = Vector3Normalize({
@@ -109,15 +109,15 @@ void Listener::Draw3D(bool isSelected) {
 		});
 
 		// Position the Eye Whites on the surface
-		Vector3 leftEye = Vector3Add(m_position, Vector3Scale(leftEyeDir, headRadius));
+		Vector3 leftEye  = Vector3Add(m_position, Vector3Scale(leftEyeDir, headRadius));
 		Vector3 rightEye = Vector3Add(m_position, Vector3Scale(rightEyeDir, headRadius));
 
 		DrawSphere(leftEye, eyeWhiteRadius, WHITE);
 		DrawSphere(rightEye, eyeWhiteRadius, WHITE);
 
 		// Position the Pupils
-		float pupilOffset = headRadius + (eyeWhiteRadius * 0.7f);
-		Vector3 leftPupil = Vector3Add(m_position, Vector3Scale(leftEyeDir, pupilOffset));
+		float pupilOffset  = headRadius + (eyeWhiteRadius * 0.7f);
+		Vector3 leftPupil  = Vector3Add(m_position, Vector3Scale(leftEyeDir, pupilOffset));
 		Vector3 rightPupil = Vector3Add(m_position, Vector3Scale(rightEyeDir, pupilOffset));
 
 		DrawSphere(leftPupil, pupilRadius, BLACK);
@@ -144,11 +144,15 @@ void Listener::Draw3D(bool isSelected) {
 	float AnchorOffset = 0.1f;
 	if (isSelected) {
 		DrawSelectionAnchor(m_position, headRadius + AnchorOffset, WHITE);
-		if (Vector3Distance(m_probePosition, m_position) > 0.001f) DrawSelectionAnchor(m_probePosition, probeRadius + AnchorOffset, WHITE);
+		if (Vector3Distance(m_probePosition, m_position) > 0.001f)
+			DrawSelectionAnchor(m_probePosition,
+				probeRadius + AnchorOffset, WHITE);
 	}
 	else {
 		DrawSelectionAnchor(m_position, headRadius + AnchorOffset, DARKGRAY);
-		if (Vector3Distance(m_probePosition, m_position) > 0.001f) DrawSelectionAnchor(m_probePosition, probeRadius + AnchorOffset, DARKGRAY);
+		if (Vector3Distance(m_probePosition, m_position) > 0.001f)
+			DrawSelectionAnchor(m_probePosition,
+				probeRadius + AnchorOffset, DARKGRAY);
 	}
 }
 
@@ -172,8 +176,8 @@ void Listener::DrawInspectorUI(const UIContext& ui) {
 		ImGui::SameLine();
 
 		bool changed = false;
-		int target = static_cast<int>(targetBody);
-		changed |= ImGui::RadioButton("Both", &target, static_cast<int>(TargetBody::Both));
+		int target   = static_cast<int>(targetBody);
+		changed      |= ImGui::RadioButton("Both", &target, static_cast<int>(TargetBody::Both));
 		ImGui::SameLine();
 		changed |= ImGui::RadioButton("Head", &target, static_cast<int>(TargetBody::Head));
 		ImGui::SameLine();
@@ -202,15 +206,15 @@ void Listener::DrawInspectorUI(const UIContext& ui) {
 
 void Listener::SyncWithCamera(const Camera3D& camera) {
 	if (targetBody == TargetBody::Both) {
-		m_position = camera.position;
+		m_position      = camera.position;
 		m_probePosition = camera.position;
-		m_forward = Vector3Normalize(Vector3Subtract(camera.target, camera.position));
-		m_up = camera.up;
+		m_forward       = Vector3Normalize(Vector3Subtract(camera.target, camera.position));
+		m_up            = camera.up;
 	}
 	else if (targetBody == TargetBody::Head) {
 		m_position = camera.position;
-		m_forward = Vector3Normalize(Vector3Subtract(camera.target, camera.position));
-		m_up = camera.up;
+		m_forward  = Vector3Normalize(Vector3Subtract(camera.target, camera.position));
+		m_up       = camera.up;
 	}
 	else if (targetBody == TargetBody::Probe) {
 		m_probePosition = camera.position;

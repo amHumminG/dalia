@@ -68,7 +68,7 @@ it is recommended to create an `EngineConfig`. This config can be used to specif
 engine along with other useful settings. For simplicity, we will leave the config to use its default values in this 
 guide.
 ```c++
-#include <dalia/dalia.h>
+#include <dalia/dalia.hpp>
 #include <iostream>
 
 int main() {

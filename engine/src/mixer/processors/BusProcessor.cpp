@@ -1,13 +1,13 @@
-#include "mixer/processors/BusProcessor.h"
-#include "mixer/processors/EffectProcessor.h"
-#include "mixer/dsp/Gain.h"
-#include "mixer/dsp/Buffer.h"
-#include "async/AsyncMessageBus.h"
-#include "async/messaging/AsyncMixerMessaging.h"
-#include "core/Logger.h"
-#include "core/Math.h"
-#include "core/Assert.h"
-#include "core/Profiler.h"
+#include "mixer/processors/BusProcessor.hpp"
+#include "mixer/processors/EffectProcessor.hpp"
+#include "mixer/dsp/Gain.hpp"
+#include "mixer/dsp/Buffer.hpp"
+#include "async/AsyncMessageBus.hpp"
+#include "async/messaging/AsyncMixerMessaging.hpp"
+#include "core/Logger.hpp"
+#include "core/Math.hpp"
+#include "core/Assert.hpp"
+#include "core/Profiler.hpp"
 
 #include <cstring>
 
@@ -21,20 +21,20 @@ namespace dalia {
 		const BusProcessorConfig& config) {
 		DALIA_PROFILE_SCOPE_N("BusProcessor::Initialize");
 
-		m_asyncMessageBus		= asyncMessageBus;
-		m_effectProcessor		= effectProcessor;
-		m_busPool				= config.busPool;
-		m_maxSamplesPeriod		= config.maxSamplesPeriod;
-		m_outChannels			= config.outChannels;
-		m_outSampleRate			= config.outSampleRate;
-		m_smoothingCoefficient	= config.smoothingCoefficient;
-		m_fadeStep				= config.fadeStep;
+		m_asyncMessageBus      = asyncMessageBus;
+		m_effectProcessor      = effectProcessor;
+		m_busPool              = config.busPool;
+		m_maxSamplesPeriod     = config.maxSamplesPeriod;
+		m_outChannels          = config.outChannels;
+		m_outSampleRate        = config.outSampleRate;
+		m_smoothingCoefficient = config.smoothingCoefficient;
+		m_fadeStep             = config.fadeStep;
 
 		const auto busCount = static_cast<uint32_t>(m_busPool.capacity);
-		m_mixGraphCompiler	= std::make_unique<MixGraphCompiler>(busCount);
-		m_mixOrder			= std::make_unique<uint32_t[]>(busCount);
-		m_busBufferPool		= std::make_unique<float[]>(busCount * m_maxSamplesPeriod);
-		m_isMixOrderDirty	= true;
+		m_mixGraphCompiler  = std::make_unique<MixGraphCompiler>(busCount);
+		m_mixOrder          = std::make_unique<uint32_t[]>(busCount);
+		m_busBufferPool     = std::make_unique<float[]>(busCount * m_maxSamplesPeriod);
+		m_isMixOrderDirty   = true;
 
 		SubscribeToCommands();
 		m_initialized = true;
@@ -48,7 +48,7 @@ namespace dalia {
 		UnsubscribeFromCommands();
 		m_asyncMessageBus = nullptr;
 		m_effectProcessor = nullptr;
-		m_initialized = false;
+		m_initialized     = false;
 	}
 
 	void BusProcessor::SyncNodes() {
@@ -93,7 +93,7 @@ namespace dalia {
 		for (uint32_t bIndex : activeMixOrder) {
 			busesRendered++;
 
-			Bus& bus = m_busPool.nodes[bIndex];
+			Bus& bus      = m_busPool.nodes[bIndex];
 			float* buffer = GetBusBuffer(bIndex);
 
 			// Process Effect chain
@@ -101,7 +101,7 @@ namespace dalia {
 				bus.effectChain,
 				buffer,
 				frameCount
-			);
+				);
 
 			// Apply gain and fade
 			dsp::ApplyGainAndFade(
@@ -114,7 +114,7 @@ namespace dalia {
 				bus.currentFadeGain,
 				bus.targetFadeGain,
 				m_fadeStep
-			);
+				);
 
 			// Mix into parent
 			if (bus.currentParentIndex != NO_PARENT) {
@@ -135,18 +135,30 @@ namespace dalia {
 
 	void BusProcessor::SubscribeToCommands() {
 		m_asyncMessageBus->SubscribeToMixerCommand(AsyncMixerCommand::Type::AllocateBus,
-			[this](const AsyncMixerCommand& cmd) { HandleAllocateBusCommand(cmd); });
+			[this](const AsyncMixerCommand& cmd) {
+				HandleAllocateBusCommand(cmd);
+			});
 		m_asyncMessageBus->SubscribeToMixerCommand(AsyncMixerCommand::Type::FreeBus,
-			[this](const AsyncMixerCommand& cmd) { HandleFreeBusCommand(cmd); });
+			[this](const AsyncMixerCommand& cmd) {
+				HandleFreeBusCommand(cmd);
+			});
 		m_asyncMessageBus->SubscribeToMixerCommand(AsyncMixerCommand::Type::SetBusParent,
-			[this](const AsyncMixerCommand& cmd) { HandleSetBusParentCommand(cmd); });
+			[this](const AsyncMixerCommand& cmd) {
+				HandleSetBusParentCommand(cmd);
+			});
 
 		m_asyncMessageBus->SubscribeToMixerCommand(AsyncMixerCommand::Type::AttachEffect,
-			[this](const AsyncMixerCommand& cmd) { HandleAttachEffectCommand(cmd); });
+			[this](const AsyncMixerCommand& cmd) {
+				HandleAttachEffectCommand(cmd);
+			});
 		m_asyncMessageBus->SubscribeToMixerCommand(AsyncMixerCommand::Type::FadeDetachEffect,
-			[this](const AsyncMixerCommand& cmd) { HandleFadeDetachEffectCommand(cmd); });
+			[this](const AsyncMixerCommand& cmd) {
+				HandleFadeDetachEffectCommand(cmd);
+			});
 		m_asyncMessageBus->SubscribeToMixerCommand(AsyncMixerCommand::Type::ForceDetachEffect,
-			[this](const AsyncMixerCommand& cmd) { HandleForceDetachEffectCommand(cmd); });
+			[this](const AsyncMixerCommand& cmd) {
+				HandleForceDetachEffectCommand(cmd);
+			});
 	}
 
 	void BusProcessor::UnsubscribeFromCommands() {
@@ -163,9 +175,9 @@ namespace dalia {
 		Bus& bus = m_busPool.nodes[cmd.targetIndex];
 
 		bus.currentParentIndex = cmd.data.setParent.parentIndex;
-		bus.targetParentIndex = cmd.data.setParent.parentIndex;
-		bus.isActive = true;
-		m_isMixOrderDirty = true;
+		bus.targetParentIndex  = cmd.data.setParent.parentIndex;
+		bus.isActive           = true;
+		m_isMixOrderDirty      = true;
 	}
 
 	void BusProcessor::HandleFreeBusCommand(const AsyncMixerCommand& cmd) {
@@ -231,7 +243,7 @@ namespace dalia {
 		m_mixOrderSize = m_mixGraphCompiler->Compile(
 			m_busPool.nodes,
 			std::span(m_mixOrder.get(), m_busPool.capacity)
-		);
+			);
 
 		if (m_mixOrderSize == 0) {
 			DALIA_LOG_ERR(LOG_CTX_MIXER, "Failed to compile mix graph. Cycle detected.");

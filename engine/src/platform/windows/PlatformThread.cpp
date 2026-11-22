@@ -1,7 +1,7 @@
-#include "platform/PlatformThread.h"
-#include "platform/DeviceController.h"
+#include "platform/PlatformThread.hpp"
+#include "platform/DeviceController.hpp"
 
-#include "core/Logger.h"
+#include "core/Logger.hpp"
 #include <iostream>
 
 #define WIN32_LEAN_AND_MEAN
@@ -14,9 +14,15 @@ namespace dalia {
 		int winPriority = THREAD_PRIORITY_NORMAL;
 
 		switch (priority) {
-			case ThreadPriority::Normal: winPriority		= THREAD_PRIORITY_NORMAL; break;
-			case ThreadPriority::High: winPriority			= THREAD_PRIORITY_HIGHEST; break;
-			case ThreadPriority::TimeCritical: winPriority	= THREAD_PRIORITY_TIME_CRITICAL; break;
+			case ThreadPriority::Normal:
+				winPriority = THREAD_PRIORITY_NORMAL;
+				break;
+			case ThreadPriority::High:
+				winPriority = THREAD_PRIORITY_HIGHEST;
+				break;
+			case ThreadPriority::TimeCritical:
+				winPriority = THREAD_PRIORITY_TIME_CRITICAL;
+				break;
 		}
 
 		if (!SetThreadPriority(GetCurrentThread(), winPriority)) {
@@ -26,7 +32,7 @@ namespace dalia {
 
 	void PlatformThread::SetCurrentThreadName(const std::string& name) {
 		std::wstring wideString = std::wstring(name.begin(), name.end());
-		LPCWSTR lpcwstr = wideString.c_str();
+		LPCWSTR lpcwstr         = wideString.c_str();
 		SetThreadDescription(GetCurrentThread(), lpcwstr);
 	}
 

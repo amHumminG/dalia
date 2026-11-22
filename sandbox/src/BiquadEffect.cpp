@@ -1,10 +1,10 @@
-#include "BiquadEffect.h"
+#include "BiquadEffect.hpp"
 
-#include "imgui.h"
+#include <imgui.h>
 
 BiquadEffect::BiquadEffect(dalia::Engine* engine, const std::string& name) {
 	m_engine = engine;
-	m_name = name;
+	m_name   = name;
 
 	m_result = engine->CreateEffect(m_handle, m_config);
 	if (m_result != dalia::Result::Ok) return;
@@ -39,7 +39,8 @@ void BiquadEffect::DrawInspectorUI(const UIContext& ui) {
 		paramsChanged = true;
 	}
 
-	if (ImGui::SliderFloat("Frequency", &m_config.frequency, 20.0f, 20000.0f, "%.0f Hz", ImGuiSliderFlags_Logarithmic)) {
+	if (ImGui::SliderFloat("Frequency", &m_config.frequency, 20.0f, 20000.0f, "%.0f Hz",
+		ImGuiSliderFlags_Logarithmic)) {
 		paramsChanged = true;
 	}
 

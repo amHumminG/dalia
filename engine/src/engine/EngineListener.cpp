@@ -1,6 +1,6 @@
-#include "dalia/Engine.h"
-#include "engine/EngineInternalState.h"
-#include "core/Math.h"
+#include "dalia/Engine.hpp"
+#include "engine/EngineInternalState.hpp"
+#include "core/Math.hpp"
 
 namespace dalia {
 
@@ -39,6 +39,6 @@ namespace dalia {
 			math::Vector3::FromPublic(attributes.forward),
 			math::Vector3::FromPublic(attributes.up),
 			math::Vector3::FromPublic(attributes.velocity)
-		);
+			);
 	}
 }

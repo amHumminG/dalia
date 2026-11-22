@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include "async/IntervalThread.h"
+#include "async/IntervalThread.hpp"
 #include <atomic>
 #include <chrono>
 #include <thread>

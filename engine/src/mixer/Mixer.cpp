@@ -1,10 +1,10 @@
-#include "mixer/Mixer.h"
-#include "mixer/dsp/Buffer.h"
-#include "mixer/dsp/Gain.h"
-#include "core/Logger.h"
-#include "core/Assert.h"
-#include "core/Profiler.h"
-#include "async/AsyncMessageBus.h"
+#include "mixer/Mixer.hpp"
+#include "mixer/dsp/Buffer.hpp"
+#include "mixer/dsp/Gain.hpp"
+#include "core/Logger.hpp"
+#include "core/Assert.hpp"
+#include "core/Profiler.hpp"
+#include "async/AsyncMessageBus.hpp"
 
 namespace dalia {
 
@@ -32,42 +32,42 @@ namespace dalia {
 		m_fadeStep = dsp::CalculateLinearFadeStep(FADE_TIME_GAIN, m_outSampleRate);
 
 		m_acousticProcessor.Initialize(m_asyncMessageBus, {
-			.coordinateSystem	= config.coordinateSystem,
-			.speakerLayout		= config.speakerLayout,
-			.outChannels		= m_outChannels,
-			.listenerPool		= config.listenerPool
+			.coordinateSystem = config.coordinateSystem,
+			.speakerLayout = config.speakerLayout,
+			.outChannels = m_outChannels,
+			.listenerPool = config.listenerPool
 		});
 
 		m_voiceProcessor.Initialize(m_asyncMessageBus, &m_busProcessor, {
-			.voicePool            = config.voicePool,
-			.streamPool           = config.streamPool,
-			.maxSamplesPeriod     = m_maxSamplesPeriod,
-			.outChannels          = m_outChannels,
-			.outSampleRate        = m_outSampleRate,
+			.voicePool = config.voicePool,
+			.streamPool = config.streamPool,
+			.maxSamplesPeriod = m_maxSamplesPeriod,
+			.outChannels = m_outChannels,
+			.outSampleRate = m_outSampleRate,
 			.smoothingCoefficient = smoothingCoefficient,
-			.fadeStep             = m_fadeStep
+			.fadeStep = m_fadeStep
 		});
 
 		m_busProcessor.Initialize(m_asyncMessageBus, &m_effectProcessor, {
-			.busPool              = config.busPool,
-			.maxSamplesPeriod     = m_maxSamplesPeriod,
-			.outChannels          = m_outChannels,
-			.outSampleRate        = m_outSampleRate,
+			.busPool = config.busPool,
+			.maxSamplesPeriod = m_maxSamplesPeriod,
+			.outChannels = m_outChannels,
+			.outSampleRate = m_outSampleRate,
 			.smoothingCoefficient = smoothingCoefficient,
-			.fadeStep             = m_fadeStep
+			.fadeStep = m_fadeStep
 		});
 
 		m_effectProcessor.Initialize(m_asyncMessageBus, {
-			.biquadPool       = config.biquadPool,
+			.biquadPool = config.biquadPool,
 			.maxSamplesPeriod = m_maxSamplesPeriod,
-			.outChannels      = m_outChannels,
-			.outSampleRate    = m_outSampleRate
+			.outChannels = m_outChannels,
+			.outSampleRate = m_outSampleRate
 		});
 
 		m_masterPeakLimiter.Initialize(static_cast<float>(m_outSampleRate));
 		m_pcmRingBuffer = std::make_unique<SPSCRingBufferPCM<float>>(
 			m_periodSizeFrames * PCM_RING_BUFFER_FRAMES * CHANNELS_MAX
-		);
+			);
 		m_pcmRingBuffer->ClearAndSetFormat(m_periodSizeFrames * PCM_RING_BUFFER_FRAMES, m_outChannels);
 		m_scratchBuffer = std::make_unique<float[]>(m_maxSamplesPeriod);
 
@@ -86,7 +86,7 @@ namespace dalia {
 		m_effectProcessor.Shutdown();
 
 		m_asyncMessageBus = nullptr;
-		m_mixerThread	  = nullptr;
+		m_mixerThread     = nullptr;
 
 		m_initialized = false;
 	}
@@ -123,7 +123,7 @@ namespace dalia {
 				m_outputFadeGain,
 				GAIN_DEFAULT,
 				m_fadeStep
-			);
+				);
 		}
 
 		return framesRead;

@@ -1,12 +1,12 @@
 #include <gtest/gtest.h>
-#include "core/ParameterBridge.h"
+#include "core/ParameterBridge.hpp"
 
 #include <thread>
 
 namespace {
 	struct TestParams {
 		float volume = 1.0f;
-		float pitch = 1.0f;
+		float pitch  = 1.0f;
 	};
 }
 
@@ -21,7 +21,7 @@ TEST(ParameterBridgeTest, InitialState) {
 TEST(ParameterBridgeTest, PushAndConsume) {
 	ParameterBridge<TestParams> bridge;
 
-	TestParams inParams{ 0.5f, 2.0f };
+	TestParams inParams{0.5f, 2.0f};
 	bridge.PushUpdate(inParams);
 
 	TestParams outParams;
@@ -36,8 +36,8 @@ TEST(ParameterBridgeTest, PushAndConsume) {
 TEST(ParameterBridgeTest, OverwriteBeforeConsumeGetsLatest) {
 	ParameterBridge<TestParams> bridge;
 
-	TestParams first{ 0.1f, 1.0f };
-	TestParams second{ 0.9f, 1.0f };
+	TestParams first{0.1f, 1.0f};
+	TestParams second{0.9f, 1.0f};
 
 	// Producer pushes twice before consumer wakes up
 	bridge.PushUpdate(first);
@@ -87,7 +87,8 @@ TEST(ParameterBridgeTest, ConcurrencyNoMemoryTearing) {
 				// Ensure time only moves forward
 				ASSERT_GT(out.a, lastSeen) << "ABA problem: read an older update after a newer one.";
 				lastSeen = out.a;
-			} else {
+			}
+			else {
 				std::this_thread::yield();
 			}
 		}

@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include "core/FixedStack.h"
+#include "core/FixedStack.hpp"
 #include <cstdint>
 
 using namespace dalia;
@@ -24,9 +24,12 @@ TEST(FixedStackTest, PushPop) {
 	int32_t val = 0;
 
 	// Must pop in reverse order (Last-In, First-Out)
-	EXPECT_TRUE(stack.Pop(val)); EXPECT_EQ(val, 30);
-	EXPECT_TRUE(stack.Pop(val)); EXPECT_EQ(val, 20);
-	EXPECT_TRUE(stack.Pop(val)); EXPECT_EQ(val, 10);
+	EXPECT_TRUE(stack.Pop(val));
+	EXPECT_EQ(val, 30);
+	EXPECT_TRUE(stack.Pop(val));
+	EXPECT_EQ(val, 20);
+	EXPECT_TRUE(stack.Pop(val));
+	EXPECT_EQ(val, 10);
 
 	EXPECT_TRUE(stack.IsEmpty());
 }

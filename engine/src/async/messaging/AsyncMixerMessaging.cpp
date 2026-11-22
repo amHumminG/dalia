@@ -1,6 +1,6 @@
-#include "AsyncMixerMessaging.h"
+#include "AsyncMixerMessaging.hpp"
 
-#include "core/Logger.h"
+#include "core/Logger.hpp"
 
 namespace dalia {
 
@@ -17,7 +17,8 @@ namespace dalia {
 		size_t commandsPushed = 0;
 		for (const auto& command : m_stagingArea) {
 			if (!m_buffer.Push(command)) {
-				DALIA_LOG_WARN(LOG_CTX_ASYNC, "Unable to push all mixer commands this frame. Command queue is at capacity.");
+				DALIA_LOG_WARN(LOG_CTX_ASYNC,
+					"Unable to push all mixer commands this frame. Command queue is at capacity.");
 				break;
 			}
 			commandsPushed++;

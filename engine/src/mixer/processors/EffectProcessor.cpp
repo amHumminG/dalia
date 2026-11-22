@@ -1,10 +1,10 @@
-#include "mixer/processors/EffectProcessor.h"
-#include "mixer/dsp/Buffer.h"
-#include "async/AsyncMessageBus.h"
-#include "async/messaging/AsyncMixerMessaging.h"
-#include "core/Constants.h"
-#include "core/Profiler.h"
-#include "core/Assert.h"
+#include "mixer/processors/EffectProcessor.hpp"
+#include "mixer/dsp/Buffer.hpp"
+#include "async/AsyncMessageBus.hpp"
+#include "async/messaging/AsyncMixerMessaging.hpp"
+#include "core/Constants.hpp"
+#include "core/Profiler.hpp"
+#include "core/Assert.hpp"
 
 #include <cstring>
 
@@ -24,7 +24,7 @@ namespace dalia {
 		m_outSampleRate    = config.outSampleRate;
 
 		constexpr float FADE_DURATION_SECONDS = 0.1f;
-		m_crossFadeDelta = 1.0f / (static_cast<float>(m_outSampleRate) * FADE_DURATION_SECONDS);
+		m_crossFadeDelta                      = 1.0f / (static_cast<float>(m_outSampleRate) * FADE_DURATION_SECONDS);
 
 		m_scratchBuffer = std::make_unique<float[]>(m_maxSamplesPeriod);
 
@@ -39,7 +39,7 @@ namespace dalia {
 
 		UnsubscribeFromCommands();
 		m_asyncMessageBus = nullptr;
-		m_initialized = false;
+		m_initialized     = false;
 	}
 
 	void EffectProcessor::SyncNodes() {
@@ -68,7 +68,7 @@ namespace dalia {
 		DALIA_ASSERT(m_initialized, "EffectProcessor used before initialized.");
 
 		uint32_t eIndex = handle.GetIndex();
-		uint32_t eGen	= handle.GetGeneration();
+		uint32_t eGen   = handle.GetGeneration();
 
 		switch (handle.GetType()) {
 			case EffectType::Biquad: {
@@ -87,9 +87,13 @@ namespace dalia {
 
 	void EffectProcessor::SubscribeToCommands() {
 		m_asyncMessageBus->SubscribeToMixerCommand(AsyncMixerCommand::Type::AllocateEffect,
-			[this](const AsyncMixerCommand& cmd) { HandleAllocateEffectCommand(cmd); });
+			[this](const AsyncMixerCommand& cmd) {
+				HandleAllocateEffectCommand(cmd);
+			});
 		m_asyncMessageBus->SubscribeToMixerCommand(AsyncMixerCommand::Type::FreeEffect,
-			[this](const AsyncMixerCommand& cmd) { HandleFreeEffectCommand(cmd); });
+			[this](const AsyncMixerCommand& cmd) {
+				HandleFreeEffectCommand(cmd);
+			});
 	}
 
 	void EffectProcessor::UnsubscribeFromCommands() {
@@ -99,12 +103,12 @@ namespace dalia {
 
 	void EffectProcessor::HandleAllocateEffectCommand(const AsyncMixerCommand& cmd) {
 		uint32_t eIndex = cmd.targetIndex;
-		uint32_t eGen = cmd.targetGen;
+		uint32_t eGen   = cmd.targetGen;
 
 		switch (cmd.data.effect.type) {
 			case EffectType::Biquad: {
 				Biquad& biquad = m_biquadPool.nodes[eIndex];
-				biquad.gen = eGen;
+				biquad.gen     = eGen;
 				return;
 			}
 			default:
@@ -114,7 +118,7 @@ namespace dalia {
 
 	void EffectProcessor::HandleFreeEffectCommand(const AsyncMixerCommand& cmd) {
 		uint32_t eIndex = cmd.targetIndex;
-		uint32_t eGen = cmd.targetGen;
+		uint32_t eGen   = cmd.targetGen;
 
 		switch (cmd.data.effect.type) {
 			case EffectType::Biquad: {
@@ -154,7 +158,7 @@ namespace dalia {
 				slot.currentMix,
 				targetMix,
 				m_crossFadeDelta
-			);
+				);
 
 			if (slot.state == EffectSlotState::FadingIn && slot.currentMix >= GAIN_DEFAULT) {
 				slot.state = EffectSlotState::Active;
@@ -167,7 +171,7 @@ namespace dalia {
 
 	bool EffectProcessor::IsAlive(EffectHandle handle) {
 		uint32_t eIndex = handle.GetIndex();
-		uint32_t eGen	= handle.GetGeneration();
+		uint32_t eGen   = handle.GetGeneration();
 
 		switch (handle.GetType()) {
 			case EffectType::Biquad:

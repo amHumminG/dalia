@@ -1,6 +1,6 @@
-#include "io/codec/Codec.h"
+#include "io/codec/Codec.hpp"
 
-#include "io/codec/VorbisCodec.h"
+#include "io/codec/VorbisCodec.hpp"
 
 #include <string_view>
 

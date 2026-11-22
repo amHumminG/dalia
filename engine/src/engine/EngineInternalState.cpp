@@ -1,4 +1,4 @@
-#include "engine/EngineInternalState.h"
+#include "engine/EngineInternalState.hpp"
 
 #include <algorithm>
 

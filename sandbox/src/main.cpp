@@ -1,4 +1,4 @@
-#include "Sandbox.h"
+#include "Sandbox.hpp"
 
 #if defined(DALIA_PROFILE_ENABLE) && defined(TRACY_ENABLE)
 #include <tracy/Tracy.hpp>
@@ -57,5 +57,5 @@ int main() {
 	Sandbox sandbox;
 	sandbox.Run();
 
-    return 0;
+	return 0;
 }

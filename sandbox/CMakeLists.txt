@@ -53,24 +53,24 @@ target_link_libraries(imguizmo_lib PUBLIC imgui_lib_demo)
 SET(SANDBOX_FILES
     src/main.cpp
     src/Sandbox.cpp
-    src/Sandbox.h
-    src/Panel.h
+    src/Sandbox.hpp
+    src/Panel.hpp
     src/PlaybackInstance.cpp
-    src/PlaybackInstance.h
+    src/PlaybackInstance.hpp
     src/Listener.cpp
-    src/Listener.h
+    src/Listener.hpp
     src/SoundAsset.cpp
-    src/SoundAsset.h
+    src/SoundAsset.hpp
     src/MixingBus.cpp
-    src/MixingBus.h
-    src/UI.h
-    src/DrawHelper.h
+    src/MixingBus.hpp
+    src/UI.hpp
+    src/DrawHelper.hpp
     src/DrawHelper.cpp
-    src/Movement.h
+    src/Movement.hpp
     src/Movement.cpp
-    src/Effect.h
+    src/Effect.hpp
     src/BiquadEffect.cpp
-    src/BiquadEffect.h
+    src/BiquadEffect.hpp
 )
 
 add_executable(dalia_sandbox ${SANDBOX_FILES})
