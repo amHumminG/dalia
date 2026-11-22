@@ -10,7 +10,7 @@
 
 [_**Advanced**_](structdalia_1_1EngineConfig_1_1Advanced.md) _settings. Only touch if you have very tight constraints._
 
-* `#include <Engine.h>`
+* `#include <Engine.hpp>`
 
 
 
@@ -154,5 +154,5 @@ size_t dalia::EngineConfig::Advanced::streamQueueCapacity;
 <hr>
 
 ------------------------------
-The documentation for this class was generated from the following file `dalia/Engine.h`
+The documentation for this class was generated from the following file `dalia/Engine.hpp`
 

@@ -2,7 +2,7 @@
 <doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.15.0" xml:lang="en-US">
   <compounddef id="classdalia_1_1Engine" kind="class" language="C++" prot="public">
     <compoundname>dalia::Engine</compoundname>
-    <includes refid="Engine_8h" local="no">Engine.h</includes>
+    <includes refid="Engine_8hpp" local="no">Engine.hpp</includes>
     <sectiondef kind="private-attrib">
       <memberdef kind="variable" id="classdalia_1_1Engine_1aaa59b14ae7ba10d65e496929d06dc5db" prot="private" static="no" mutable="no">
         <type>EngineInternalState *</type>
@@ -17,7 +17,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="dalia/Engine.h" line="766" column="21" bodyfile="dalia/Engine.h" bodystart="766" bodyend="-1"/>
+        <location file="dalia/Engine.hpp" line="766" column="21" bodyfile="dalia/Engine.hpp" bodystart="766" bodyend="-1"/>
       </memberdef>
     </sectiondef>
     <sectiondef kind="public-func">
@@ -33,7 +33,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="dalia/Engine.h" line="57" column="1"/>
+        <location file="dalia/Engine.hpp" line="57" column="1"/>
       </memberdef>
       <memberdef kind="function" id="classdalia_1_1Engine_1accc5593af97018c2060197467d76f60a" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type></type>
@@ -47,7 +47,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="dalia/Engine.h" line="58" column="1"/>
+        <location file="dalia/Engine.hpp" line="58" column="1"/>
       </memberdef>
       <memberdef kind="function" id="classdalia_1_1Engine_1aaf797c8c979b19ede45164ebe3203fa5" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type></type>
@@ -64,7 +64,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="dalia/Engine.h" line="60" column="1"/>
+        <location file="dalia/Engine.hpp" line="60" column="1"/>
       </memberdef>
       <memberdef kind="function" id="classdalia_1_1Engine_1a86e152e97889fb174c899fb0ad23065b" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type><ref refid="classdalia_1_1Engine_1a2fca7712552fe1e7ca9bf56ab9d1be13" kindref="member">Engine</ref> &amp;</type>
@@ -81,7 +81,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="dalia/Engine.h" line="61" column="8"/>
+        <location file="dalia/Engine.hpp" line="61" column="8"/>
       </memberdef>
       <memberdef kind="function" id="classdalia_1_1Engine_1ae4860626525d5562092e867cf5a96bc9" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909" kindref="member">Result</ref></type>
@@ -147,7 +147,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="dalia/Engine.h" line="83" column="8"/>
+        <location file="dalia/Engine.hpp" line="83" column="8"/>
       </memberdef>
       <memberdef kind="function" id="classdalia_1_1Engine_1a0f631c3f073d87445140817a628af01b" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909" kindref="member">Result</ref></type>
@@ -192,7 +192,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="dalia/Engine.h" line="95" column="8"/>
+        <location file="dalia/Engine.hpp" line="95" column="8"/>
       </memberdef>
       <memberdef kind="function" id="classdalia_1_1Engine_1a38b33f1acb8e123651b454de5c897c2c" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>void</type>
@@ -211,7 +211,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="dalia/Engine.h" line="104" column="6"/>
+        <location file="dalia/Engine.hpp" line="104" column="6"/>
       </memberdef>
       <memberdef kind="function" id="classdalia_1_1Engine_1a6a8095c701262ecd7cb658439e935183" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909" kindref="member">Result</ref></type>
@@ -257,7 +257,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="dalia/Engine.h" line="120" column="8"/>
+        <location file="dalia/Engine.hpp" line="120" column="8"/>
       </memberdef>
       <memberdef kind="function" id="classdalia_1_1Engine_1addfa279d4067e5a5e620c0ff984e6cad" prot="public" static="no" const="yes" explicit="no" inline="no" virt="non-virtual">
         <type><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909" kindref="member">Result</ref></type>
@@ -304,7 +304,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="dalia/Engine.h" line="140" column="8"/>
+        <location file="dalia/Engine.hpp" line="140" column="8"/>
       </memberdef>
       <memberdef kind="function" id="classdalia_1_1Engine_1a47e848ced6bc979935c2d8da17cedb0a" prot="public" static="no" const="yes" explicit="no" inline="no" virt="non-virtual">
         <type><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909" kindref="member">Result</ref></type>
@@ -370,7 +370,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="dalia/Engine.h" line="150" column="8"/>
+        <location file="dalia/Engine.hpp" line="150" column="8"/>
       </memberdef>
       <memberdef kind="function" id="classdalia_1_1Engine_1afc533fd8a15bbd02d04f94e833f915bc" prot="public" static="no" const="yes" explicit="no" inline="no" virt="non-virtual">
         <type><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909" kindref="member">Result</ref></type>
@@ -424,7 +424,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="dalia/Engine.h" line="159" column="8"/>
+        <location file="dalia/Engine.hpp" line="159" column="8"/>
       </memberdef>
       <memberdef kind="function" id="classdalia_1_1Engine_1a674a90e915c35c7efa3e74035abb6a7e" prot="public" static="no" const="yes" explicit="no" inline="no" virt="non-virtual">
         <type><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909" kindref="member">Result</ref></type>
@@ -492,7 +492,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="dalia/Engine.h" line="175" column="8"/>
+        <location file="dalia/Engine.hpp" line="175" column="8"/>
       </memberdef>
       <memberdef kind="function" id="classdalia_1_1Engine_1a645e4fd7df9a92016abb811f6342f6d0" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909" kindref="member">Result</ref></type>
@@ -538,7 +538,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="dalia/Engine.h" line="185" column="8"/>
+        <location file="dalia/Engine.hpp" line="185" column="8"/>
       </memberdef>
       <memberdef kind="function" id="classdalia_1_1Engine_1a8ae0fc9921550ab0e689b9a8994e5813" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909" kindref="member">Result</ref></type>
@@ -653,7 +653,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="dalia/Engine.h" line="220" column="8"/>
+        <location file="dalia/Engine.hpp" line="220" column="8"/>
       </memberdef>
       <memberdef kind="function" id="classdalia_1_1Engine_1a0a01cf22fa76223497879a9adf12d6ed" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909" kindref="member">Result</ref></type>
@@ -708,7 +708,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="dalia/Engine.h" line="234" column="8"/>
+        <location file="dalia/Engine.hpp" line="234" column="8"/>
       </memberdef>
       <memberdef kind="function" id="classdalia_1_1Engine_1ae67615289466762674c0864cc8a5c47e" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909" kindref="member">Result</ref></type>
@@ -774,7 +774,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="dalia/Engine.h" line="244" column="8"/>
+        <location file="dalia/Engine.hpp" line="244" column="8"/>
       </memberdef>
       <memberdef kind="function" id="classdalia_1_1Engine_1a86e9e7ed187b4c857540c6d2d25c20f6" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909" kindref="member">Result</ref></type>
@@ -851,7 +851,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="dalia/Engine.h" line="267" column="8"/>
+        <location file="dalia/Engine.hpp" line="267" column="8"/>
       </memberdef>
       <memberdef kind="function" id="classdalia_1_1Engine_1aca9c45de93f051886911e7903db8685e" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909" kindref="member">Result</ref></type>
@@ -916,7 +916,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="dalia/Engine.h" line="283" column="8"/>
+        <location file="dalia/Engine.hpp" line="283" column="8"/>
       </memberdef>
       <memberdef kind="function" id="classdalia_1_1Engine_1a2ed95bb07edd89b702e2cea3caea8990" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909" kindref="member">Result</ref></type>
@@ -993,7 +993,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="dalia/Engine.h" line="302" column="8"/>
+        <location file="dalia/Engine.hpp" line="302" column="8"/>
       </memberdef>
       <memberdef kind="function" id="classdalia_1_1Engine_1ae1bffa67df43683d6e68ce4a51a712f9" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909" kindref="member">Result</ref></type>
@@ -1059,7 +1059,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="dalia/Engine.h" line="314" column="8"/>
+        <location file="dalia/Engine.hpp" line="314" column="8"/>
       </memberdef>
       <memberdef kind="function" id="classdalia_1_1Engine_1a28dfcd55be9787cdd63a547c2ad1977a" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <templateparamlist>
@@ -1140,7 +1140,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="dalia/Engine.h" line="338" column="8"/>
+        <location file="dalia/Engine.hpp" line="338" column="8"/>
       </memberdef>
       <memberdef kind="function" id="classdalia_1_1Engine_1aa521a754247a3cf0843912c8734d5ffa" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909" kindref="member">Result</ref></type>
@@ -1205,7 +1205,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="dalia/Engine.h" line="354" column="8"/>
+        <location file="dalia/Engine.hpp" line="354" column="8"/>
       </memberdef>
       <memberdef kind="function" id="classdalia_1_1Engine_1a3ba8934c8c1a40f9c795b89bef897c6d" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909" kindref="member">Result</ref></type>
@@ -1312,7 +1312,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="dalia/Engine.h" line="380" column="8"/>
+        <location file="dalia/Engine.hpp" line="380" column="8"/>
       </memberdef>
       <memberdef kind="function" id="classdalia_1_1Engine_1a2a73dc69eb079bf0c2f33a11e66ecc67" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909" kindref="member">Result</ref></type>
@@ -1376,7 +1376,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="dalia/Engine.h" line="392" column="8"/>
+        <location file="dalia/Engine.hpp" line="392" column="8"/>
       </memberdef>
       <memberdef kind="function" id="classdalia_1_1Engine_1a99a7a4f601237c99b0db00c271a28ac0" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <templateparamlist>
@@ -1466,7 +1466,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="dalia/Engine.h" line="408" column="8"/>
+        <location file="dalia/Engine.hpp" line="408" column="8"/>
       </memberdef>
       <memberdef kind="function" id="classdalia_1_1Engine_1a931d605c32f8a72e41360c50e94f4f0d" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909" kindref="member">Result</ref></type>
@@ -1582,7 +1582,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="dalia/Engine.h" line="440" column="8"/>
+        <location file="dalia/Engine.hpp" line="440" column="8"/>
       </memberdef>
       <memberdef kind="function" id="classdalia_1_1Engine_1a21c7d9b61b74e99ca2c9eda3dbeaec62" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909" kindref="member">Result</ref></type>
@@ -1665,7 +1665,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="dalia/Engine.h" line="454" column="8"/>
+        <location file="dalia/Engine.hpp" line="454" column="8"/>
       </memberdef>
       <memberdef kind="function" id="classdalia_1_1Engine_1a987c48b22766dbe1f8bcd824887a9c09" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909" kindref="member">Result</ref></type>
@@ -1738,7 +1738,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="dalia/Engine.h" line="471" column="8"/>
+        <location file="dalia/Engine.hpp" line="471" column="8"/>
       </memberdef>
       <memberdef kind="function" id="classdalia_1_1Engine_1a1779506316ee1cf0a89aaf5fdae743f4" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909" kindref="member">Result</ref></type>
@@ -1800,7 +1800,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="dalia/Engine.h" line="481" column="8"/>
+        <location file="dalia/Engine.hpp" line="481" column="8"/>
       </memberdef>
       <memberdef kind="function" id="classdalia_1_1Engine_1af617540b3eede2b3bbb40ff23ea0deaa" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909" kindref="member">Result</ref></type>
@@ -1865,7 +1865,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="dalia/Engine.h" line="497" column="8"/>
+        <location file="dalia/Engine.hpp" line="497" column="8"/>
       </memberdef>
       <memberdef kind="function" id="classdalia_1_1Engine_1a1afba0203932455971eb00d455efad59" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909" kindref="member">Result</ref></type>
@@ -1939,7 +1939,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="dalia/Engine.h" line="509" column="8"/>
+        <location file="dalia/Engine.hpp" line="509" column="8"/>
       </memberdef>
       <memberdef kind="function" id="classdalia_1_1Engine_1ad5b479c5851f6075ff78d517d7f45b2a" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909" kindref="member">Result</ref></type>
@@ -2013,7 +2013,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="dalia/Engine.h" line="522" column="8"/>
+        <location file="dalia/Engine.hpp" line="522" column="8"/>
       </memberdef>
       <memberdef kind="function" id="classdalia_1_1Engine_1aa09c17780d9bfcdd9dcd2128232c1119" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909" kindref="member">Result</ref></type>
@@ -2087,7 +2087,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="dalia/Engine.h" line="534" column="8"/>
+        <location file="dalia/Engine.hpp" line="534" column="8"/>
       </memberdef>
       <memberdef kind="function" id="classdalia_1_1Engine_1a13d5bfe046152f59f56a061593e16ce8" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909" kindref="member">Result</ref></type>
@@ -2163,7 +2163,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="dalia/Engine.h" line="548" column="8"/>
+        <location file="dalia/Engine.hpp" line="548" column="8"/>
       </memberdef>
       <memberdef kind="function" id="classdalia_1_1Engine_1acd9cc8abc9094ab07854e02f5763b68e" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909" kindref="member">Result</ref></type>
@@ -2238,7 +2238,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="dalia/Engine.h" line="561" column="8"/>
+        <location file="dalia/Engine.hpp" line="561" column="8"/>
       </memberdef>
       <memberdef kind="function" id="classdalia_1_1Engine_1a97c9ce2c1950efbd565e122b75c89b90" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909" kindref="member">Result</ref></type>
@@ -2312,7 +2312,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="dalia/Engine.h" line="572" column="8"/>
+        <location file="dalia/Engine.hpp" line="572" column="8"/>
       </memberdef>
       <memberdef kind="function" id="classdalia_1_1Engine_1ad718d71872f76bfeafb7c487401ae624" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909" kindref="member">Result</ref></type>
@@ -2388,7 +2388,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="dalia/Engine.h" line="585" column="8"/>
+        <location file="dalia/Engine.hpp" line="585" column="8"/>
       </memberdef>
       <memberdef kind="function" id="classdalia_1_1Engine_1a05d95de8b78784ce16c0f8d392f4c066" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909" kindref="member">Result</ref></type>
@@ -2465,7 +2465,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="dalia/Engine.h" line="600" column="8"/>
+        <location file="dalia/Engine.hpp" line="600" column="8"/>
       </memberdef>
       <memberdef kind="function" id="classdalia_1_1Engine_1ab02baa9400581072f5e69c1f670e2718" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909" kindref="member">Result</ref></type>
@@ -2541,7 +2541,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="dalia/Engine.h" line="614" column="8"/>
+        <location file="dalia/Engine.hpp" line="614" column="8"/>
       </memberdef>
       <memberdef kind="function" id="classdalia_1_1Engine_1abe2e4c83ee3725c1b36ddc7852a23e06" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909" kindref="member">Result</ref></type>
@@ -2617,7 +2617,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="dalia/Engine.h" line="627" column="8"/>
+        <location file="dalia/Engine.hpp" line="627" column="8"/>
       </memberdef>
       <memberdef kind="function" id="classdalia_1_1Engine_1a1def45fb2577a6d3ed1ef4e06b5e29da" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909" kindref="member">Result</ref></type>
@@ -2707,7 +2707,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="dalia/Engine.h" line="644" column="8"/>
+        <location file="dalia/Engine.hpp" line="644" column="8"/>
       </memberdef>
       <memberdef kind="function" id="classdalia_1_1Engine_1acbb7ac8db0ac50b6a173e2bac88af257" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909" kindref="member">Result</ref></type>
@@ -2785,7 +2785,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="dalia/Engine.h" line="660" column="8"/>
+        <location file="dalia/Engine.hpp" line="660" column="8"/>
       </memberdef>
       <memberdef kind="function" id="classdalia_1_1Engine_1a5c9acdd1ab05153631f9a3eb2b129762" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909" kindref="member">Result</ref></type>
@@ -2861,7 +2861,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="dalia/Engine.h" line="674" column="8"/>
+        <location file="dalia/Engine.hpp" line="674" column="8"/>
       </memberdef>
       <memberdef kind="function" id="classdalia_1_1Engine_1a86f42c3cb554e5e80291f38f2665a0aa" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909" kindref="member">Result</ref></type>
@@ -2938,7 +2938,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="dalia/Engine.h" line="689" column="8"/>
+        <location file="dalia/Engine.hpp" line="689" column="8"/>
       </memberdef>
       <memberdef kind="function" id="classdalia_1_1Engine_1a67f18bd255344d04076c6cf52b9dd91e" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909" kindref="member">Result</ref></type>
@@ -3004,7 +3004,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="dalia/Engine.h" line="707" column="8"/>
+        <location file="dalia/Engine.hpp" line="707" column="8"/>
       </memberdef>
       <memberdef kind="function" id="classdalia_1_1Engine_1ae43797220fbc8f351ff97dc5131ca63a" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909" kindref="member">Result</ref></type>
@@ -3070,7 +3070,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="dalia/Engine.h" line="717" column="8"/>
+        <location file="dalia/Engine.hpp" line="717" column="8"/>
       </memberdef>
       <memberdef kind="function" id="classdalia_1_1Engine_1a9a62975bfff0d3fa5f801d0bf5167fdf" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909" kindref="member">Result</ref></type>
@@ -3138,7 +3138,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="dalia/Engine.h" line="730" column="8"/>
+        <location file="dalia/Engine.hpp" line="730" column="8"/>
       </memberdef>
       <memberdef kind="function" id="classdalia_1_1Engine_1ad736e3410333f8b3f75caf2e4f8a84cd" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909" kindref="member">Result</ref></type>
@@ -3204,7 +3204,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="dalia/Engine.h" line="740" column="8"/>
+        <location file="dalia/Engine.hpp" line="740" column="8"/>
       </memberdef>
       <memberdef kind="function" id="classdalia_1_1Engine_1a651d604c79d283ed11ba8265c6d81282" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909" kindref="member">Result</ref></type>
@@ -3282,7 +3282,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="dalia/Engine.h" line="751" column="8"/>
+        <location file="dalia/Engine.hpp" line="751" column="8"/>
       </memberdef>
       <memberdef kind="function" id="classdalia_1_1Engine_1a67840ab698ddaf203013bf49073fa2ff" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type><ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909" kindref="member">Result</ref></type>
@@ -3348,7 +3348,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="dalia/Engine.h" line="761" column="8"/>
+        <location file="dalia/Engine.hpp" line="761" column="8"/>
       </memberdef>
     </sectiondef>
     <briefdescription>
@@ -3356,7 +3356,7 @@
     </briefdescription>
     <detaileddescription>
     </detaileddescription>
-    <location file="dalia/Engine.h" line="55" column="1" bodyfile="dalia/Engine.h" bodystart="55" bodyend="767"/>
+    <location file="dalia/Engine.hpp" line="55" column="1" bodyfile="dalia/Engine.hpp" bodystart="55" bodyend="767"/>
     <listofallmembers>
       <member refid="classdalia_1_1Engine_1a3ba8934c8c1a40f9c795b89bef897c6d" prot="public" virt="non-virtual"><scope>dalia::Engine</scope><name>AttachEffect</name></member>
       <member refid="classdalia_1_1Engine_1a86e9e7ed187b4c857540c6d2d25c20f6" prot="public" virt="non-virtual"><scope>dalia::Engine</scope><name>CreateBus</name></member>

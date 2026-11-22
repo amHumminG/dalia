@@ -10,7 +10,7 @@
 
 _Contains metadata for an audio output device._ 
 
-* `#include <Device.h>`
+* `#include <Device.hpp>`
 
 
 
@@ -126,5 +126,5 @@ char dalia::OutputDeviceInfo::name[MAX_STR_LEN_DEVICE];
 <hr>
 
 ------------------------------
-The documentation for this class was generated from the following file `dalia/Device.h`
+The documentation for this class was generated from the following file `dalia/Device.hpp`
 

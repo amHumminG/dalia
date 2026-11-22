@@ -39,7 +39,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="dalia/Effect.h" line="11" column="1" bodyfile="dalia/Effect.h" bodystart="11" bodyend="14"/>
+        <location file="dalia/Effect.hpp" line="11" column="1" bodyfile="dalia/Effect.hpp" bodystart="11" bodyend="14"/>
       </memberdef>
       <memberdef kind="enum" id="namespacedalia_1a40292ca92ab9ebce52df2a4544a27c61" prot="public" static="no" strong="yes">
         <type>int</type>
@@ -100,7 +100,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="dalia/Log.h" line="11" column="1" bodyfile="dalia/Log.h" bodystart="11" bodyend="18"/>
+        <location file="dalia/Log.hpp" line="11" column="1" bodyfile="dalia/Log.hpp" bodystart="11" bodyend="18"/>
       </memberdef>
       <memberdef kind="enum" id="namespacedalia_1a5eaf1ed282132ac2afbff1574d6c0336" prot="public" static="no" strong="yes">
         <type>uint8_t</type>
@@ -153,7 +153,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="dalia/Playback.h" line="47" column="1" bodyfile="dalia/Playback.h" bodystart="47" bodyend="53"/>
+        <location file="dalia/Playback.hpp" line="64" column="1" bodyfile="dalia/Playback.hpp" bodystart="64" bodyend="70"/>
       </memberdef>
       <memberdef kind="enum" id="namespacedalia_1a4c457a3406e132cdd206279b1827f73f" prot="public" static="no" strong="yes">
         <type>uint8_t</type>
@@ -187,7 +187,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="dalia/Playback.h" line="62" column="1" bodyfile="dalia/Playback.h" bodystart="62" bodyend="66"/>
+        <location file="dalia/Playback.hpp" line="79" column="1" bodyfile="dalia/Playback.hpp" bodystart="79" bodyend="83"/>
       </memberdef>
       <memberdef kind="enum" id="namespacedalia_1ab240c6866fcf8d2aa499ae0164f1fe7c" prot="public" static="no" strong="yes">
         <type>uint8_t</type>
@@ -214,7 +214,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="dalia/Playback.h" line="69" column="1" bodyfile="dalia/Playback.h" bodystart="69" bodyend="72"/>
+        <location file="dalia/Playback.hpp" line="86" column="1" bodyfile="dalia/Playback.hpp" bodystart="86" bodyend="89"/>
       </memberdef>
       <memberdef kind="enum" id="namespacedalia_1aa0c5c389cc67006c3550a3697096e391" prot="public" static="no" strong="yes">
         <type>uint8_t</type>
@@ -243,7 +243,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="dalia/Playback.h" line="134" column="1" bodyfile="dalia/Playback.h" bodystart="134" bodyend="137"/>
+        <location file="dalia/Playback.hpp" line="153" column="1" bodyfile="dalia/Playback.hpp" bodystart="153" bodyend="156"/>
       </memberdef>
       <memberdef kind="enum" id="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909" prot="public" static="no" strong="yes">
         <type>int</type>
@@ -505,7 +505,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="dalia/Result.h" line="11" column="1" bodyfile="dalia/Result.h" bodystart="11" bodyend="55"/>
+        <location file="dalia/Result.hpp" line="12" column="1" bodyfile="dalia/Result.hpp" bodystart="12" bodyend="56"/>
       </memberdef>
       <memberdef kind="enum" id="namespacedalia_1aeae4a70bf40c2732cf099bd25d505e83" prot="public" static="no" strong="yes">
         <type>uint8_t</type>
@@ -542,7 +542,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="dalia/Sound.h" line="17" column="5" bodyfile="dalia/Sound.h" bodystart="17" bodyend="21"/>
+        <location file="dalia/Sound.hpp" line="17" column="1" bodyfile="dalia/Sound.hpp" bodystart="17" bodyend="21"/>
       </memberdef>
     </sectiondef>
     <sectiondef kind="typedef">
@@ -586,7 +586,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="dalia/Log.h" line="28" column="1" bodyfile="dalia/Log.h" bodystart="28" bodyend="-1"/>
+        <location file="dalia/Log.hpp" line="28" column="1" bodyfile="dalia/Log.hpp" bodystart="28" bodyend="-1"/>
       </memberdef>
       <memberdef kind="typedef" id="namespacedalia_1a026474250f9ffa87a93b5fab0320c992" prot="public" static="no">
         <type>std::function&lt; void(<ref refid="structdalia_1_1PlaybackHandle" kindref="compound">PlaybackHandle</ref> playback, <ref refid="namespacedalia_1a5eaf1ed282132ac2afbff1574d6c0336" kindref="member">PlaybackExitCondition</ref> exitCondition)&gt;</type>
@@ -619,7 +619,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="dalia/Playback.h" line="59" column="1" bodyfile="dalia/Playback.h" bodystart="59" bodyend="-1"/>
+        <location file="dalia/Playback.hpp" line="76" column="1" bodyfile="dalia/Playback.hpp" bodystart="76" bodyend="-1"/>
       </memberdef>
       <memberdef kind="typedef" id="namespacedalia_1a481e23ea1f3b33681ff776594aa2c9af" prot="public" static="no">
         <type>uint32_t</type>
@@ -634,7 +634,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="dalia/Playback.h" line="115" column="1" bodyfile="dalia/Playback.h" bodystart="115" bodyend="-1"/>
+        <location file="dalia/Playback.hpp" line="132" column="1" bodyfile="dalia/Playback.hpp" bodystart="132" bodyend="-1"/>
       </memberdef>
       <memberdef kind="typedef" id="namespacedalia_1a94916406d3efedc9c96950c5d2402294" prot="public" static="no">
         <type>std::function&lt; void(uint32_t requestId, <ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909" kindref="member">Result</ref> result)&gt;</type>
@@ -668,7 +668,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="dalia/Sound.h" line="80" column="5" bodyfile="dalia/Sound.h" bodystart="80" bodyend="-1"/>
+        <location file="dalia/Sound.hpp" line="100" column="1" bodyfile="dalia/Sound.hpp" bodystart="100" bodyend="-1"/>
       </memberdef>
     </sectiondef>
     <sectiondef kind="var">
@@ -686,7 +686,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="dalia/Device.h" line="11" column="18" bodyfile="dalia/Device.h" bodystart="11" bodyend="-1"/>
+        <location file="dalia/Device.hpp" line="11" column="18" bodyfile="dalia/Device.hpp" bodystart="11" bodyend="-1"/>
       </memberdef>
       <memberdef kind="variable" id="namespacedalia_1a59842a7af426ccc3ac9f551d1defb1d5" prot="public" static="no" constexpr="yes" mutable="no">
         <type><ref refid="structdalia_1_1EffectHandle" kindref="compound">EffectHandle</ref></type>
@@ -702,7 +702,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="dalia/Effect.h" line="65" column="28" bodyfile="dalia/Effect.h" bodystart="65" bodyend="65"/>
+        <location file="dalia/Effect.hpp" line="84" column="24" bodyfile="dalia/Effect.hpp" bodystart="84" bodyend="84"/>
       </memberdef>
       <memberdef kind="variable" id="namespacedalia_1ad06c09c0d5dc3ff87992c19a11345b10" prot="public" static="no" constexpr="yes" mutable="no">
         <type><ref refid="structdalia_1_1PlaybackHandle" kindref="compound">PlaybackHandle</ref></type>
@@ -718,7 +718,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="dalia/Playback.h" line="44" column="26" bodyfile="dalia/Playback.h" bodystart="44" bodyend="44"/>
+        <location file="dalia/Playback.hpp" line="61" column="26" bodyfile="dalia/Playback.hpp" bodystart="61" bodyend="61"/>
       </memberdef>
       <memberdef kind="variable" id="namespacedalia_1a27f136fc18dae58a7d4a7367018879f1" prot="public" static="no" constexpr="yes" mutable="no">
         <type><ref refid="namespacedalia_1a481e23ea1f3b33681ff776594aa2c9af" kindref="member">ListenerMask</ref></type>
@@ -734,7 +734,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="dalia/Playback.h" line="117" column="24" bodyfile="dalia/Playback.h" bodystart="117" bodyend="-1"/>
+        <location file="dalia/Playback.hpp" line="134" column="24" bodyfile="dalia/Playback.hpp" bodystart="134" bodyend="-1"/>
       </memberdef>
       <memberdef kind="variable" id="namespacedalia_1a9d0ce121f1dd3f647d5850fbade59cae" prot="public" static="no" constexpr="yes" mutable="no">
         <type><ref refid="namespacedalia_1a481e23ea1f3b33681ff776594aa2c9af" kindref="member">ListenerMask</ref></type>
@@ -750,7 +750,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="dalia/Playback.h" line="118" column="24" bodyfile="dalia/Playback.h" bodystart="118" bodyend="-1"/>
+        <location file="dalia/Playback.hpp" line="135" column="24" bodyfile="dalia/Playback.hpp" bodystart="135" bodyend="-1"/>
       </memberdef>
       <memberdef kind="variable" id="namespacedalia_1ac73da665f5a29e4cdec077dacb9c1b4c" prot="public" static="no" constexpr="yes" mutable="no">
         <type><ref refid="namespacedalia_1a481e23ea1f3b33681ff776594aa2c9af" kindref="member">ListenerMask</ref></type>
@@ -766,7 +766,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="dalia/Playback.h" line="119" column="24" bodyfile="dalia/Playback.h" bodystart="119" bodyend="-1"/>
+        <location file="dalia/Playback.hpp" line="136" column="24" bodyfile="dalia/Playback.hpp" bodystart="136" bodyend="-1"/>
       </memberdef>
       <memberdef kind="variable" id="namespacedalia_1a95ce9a8dc77521d762a6a93ab6454cad" prot="public" static="no" constexpr="yes" mutable="no">
         <type><ref refid="namespacedalia_1a481e23ea1f3b33681ff776594aa2c9af" kindref="member">ListenerMask</ref></type>
@@ -782,7 +782,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="dalia/Playback.h" line="120" column="24" bodyfile="dalia/Playback.h" bodystart="120" bodyend="-1"/>
+        <location file="dalia/Playback.hpp" line="137" column="24" bodyfile="dalia/Playback.hpp" bodystart="137" bodyend="-1"/>
       </memberdef>
       <memberdef kind="variable" id="namespacedalia_1a9bcd20341d810d30b1e951e757a7f0f2" prot="public" static="no" constexpr="yes" mutable="no">
         <type><ref refid="namespacedalia_1a481e23ea1f3b33681ff776594aa2c9af" kindref="member">ListenerMask</ref></type>
@@ -798,7 +798,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="dalia/Playback.h" line="121" column="24" bodyfile="dalia/Playback.h" bodystart="121" bodyend="-1"/>
+        <location file="dalia/Playback.hpp" line="138" column="24" bodyfile="dalia/Playback.hpp" bodystart="138" bodyend="-1"/>
       </memberdef>
       <memberdef kind="variable" id="namespacedalia_1a5bb415dbf786ac9c9239d093dd563187" prot="public" static="no" constexpr="yes" mutable="no">
         <type><ref refid="namespacedalia_1a481e23ea1f3b33681ff776594aa2c9af" kindref="member">ListenerMask</ref></type>
@@ -814,7 +814,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="dalia/Playback.h" line="122" column="24" bodyfile="dalia/Playback.h" bodystart="122" bodyend="-1"/>
+        <location file="dalia/Playback.hpp" line="139" column="24" bodyfile="dalia/Playback.hpp" bodystart="139" bodyend="-1"/>
       </memberdef>
       <memberdef kind="variable" id="namespacedalia_1aec5df7c0ac33671f6a88c0a5cb8ccdd4" prot="public" static="no" constexpr="yes" mutable="no">
         <type>size_t</type>
@@ -830,7 +830,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="dalia/Sound.h" line="14" column="18" bodyfile="dalia/Sound.h" bodystart="14" bodyend="-1"/>
+        <location file="dalia/Sound.hpp" line="14" column="18" bodyfile="dalia/Sound.hpp" bodystart="14" bodyend="-1"/>
       </memberdef>
       <memberdef kind="variable" id="namespacedalia_1a0f68505d620d3e9ccdd5c64b5fba21dc" prot="public" static="no" constexpr="yes" mutable="no">
         <type><ref refid="structdalia_1_1SoundHandle" kindref="compound">SoundHandle</ref></type>
@@ -846,7 +846,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="dalia/Sound.h" line="68" column="23" bodyfile="dalia/Sound.h" bodystart="68" bodyend="68"/>
+        <location file="dalia/Sound.hpp" line="88" column="23" bodyfile="dalia/Sound.hpp" bodystart="88" bodyend="88"/>
       </memberdef>
       <memberdef kind="variable" id="namespacedalia_1a410ba925a5414949ab94c70f0e4682dd" prot="public" static="no" constexpr="yes" mutable="no">
         <type>uint32_t</type>
@@ -862,7 +862,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="dalia/Sound.h" line="71" column="24" bodyfile="dalia/Sound.h" bodystart="71" bodyend="-1"/>
+        <location file="dalia/Sound.hpp" line="91" column="20" bodyfile="dalia/Sound.hpp" bodystart="91" bodyend="-1"/>
       </memberdef>
     </sectiondef>
     <sectiondef kind="func">
@@ -895,7 +895,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="dalia/Playback.h" line="94" column="39" bodyfile="dalia/Playback.h" bodystart="94" bodyend="100"/>
+        <location file="dalia/Playback.hpp" line="111" column="39" bodyfile="dalia/Playback.hpp" bodystart="111" bodyend="117"/>
       </memberdef>
       <memberdef kind="function" id="namespacedalia_1acdda97ac5f598e0d0d988f929a640455" prot="public" static="no" constexpr="yes" const="no" explicit="no" inline="yes" virt="non-virtual">
         <type><ref refid="structdalia_1_1Listener3DAttributes" kindref="compound">Listener3DAttributes</ref></type>
@@ -930,7 +930,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="dalia/Playback.h" line="104" column="39" bodyfile="dalia/Playback.h" bodystart="104" bodyend="111"/>
+        <location file="dalia/Playback.hpp" line="121" column="39" bodyfile="dalia/Playback.hpp" bodystart="121" bodyend="128"/>
       </memberdef>
       <memberdef kind="function" id="namespacedalia_1a9ac281e9de93a3893c721b3616b388fe" prot="public" static="no" constexpr="yes" const="no" explicit="no" inline="yes" virt="non-virtual">
         <type><ref refid="namespacedalia_1a481e23ea1f3b33681ff776594aa2c9af" kindref="member">ListenerMask</ref></type>
@@ -963,7 +963,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="dalia/Playback.h" line="131" column="31" bodyfile="dalia/Playback.h" bodystart="131" bodyend="131"/>
+        <location file="dalia/Playback.hpp" line="148" column="31" bodyfile="dalia/Playback.hpp" bodystart="148" bodyend="150"/>
       </memberdef>
       <memberdef kind="function" id="namespacedalia_1a01da3b4d8b21c2c015f0d10aa0efbbde" prot="public" static="no" constexpr="yes" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>const char *</type>
@@ -994,13 +994,13 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="dalia/Result.h" line="62" column="22" bodyfile="dalia/Result.h" bodystart="62" bodyend="103"/>
+        <location file="dalia/Result.hpp" line="64" column="22" bodyfile="dalia/Result.hpp" bodystart="64" bodyend="136"/>
       </memberdef>
     </sectiondef>
     <briefdescription>
     </briefdescription>
     <detaileddescription>
     </detaileddescription>
-    <location file="dalia/Device.h" line="8" column="1"/>
+    <location file="dalia/Device.hpp" line="8" column="1"/>
   </compounddef>
 </doxygen>

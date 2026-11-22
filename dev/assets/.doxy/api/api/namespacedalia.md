@@ -695,5 +695,5 @@ A bitmask with the corresponding listener's bit enabled.
 <hr>
 
 ------------------------------
-The documentation for this class was generated from the following file `dalia/Device.h`
+The documentation for this class was generated from the following file `dalia/Device.hpp`
 

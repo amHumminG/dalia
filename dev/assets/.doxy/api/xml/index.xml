@@ -236,21 +236,21 @@
     <member refid="namespacedalia_1a9ac281e9de93a3893c721b3616b388fe" kind="function"><name>MakeListenerMask</name></member>
     <member refid="namespacedalia_1a01da3b4d8b21c2c015f0d10aa0efbbde" kind="function"><name>GetResultString</name></member>
   </compound>
-  <compound refid="dalia_8h" kind="file"><name>dalia.h</name>
+  <compound refid="dalia_8hpp" kind="file"><name>dalia.hpp</name>
   </compound>
-  <compound refid="Device_8h" kind="file"><name>Device.h</name>
+  <compound refid="Device_8hpp" kind="file"><name>Device.hpp</name>
   </compound>
-  <compound refid="Effect_8h" kind="file"><name>Effect.h</name>
+  <compound refid="Effect_8hpp" kind="file"><name>Effect.hpp</name>
   </compound>
-  <compound refid="Engine_8h" kind="file"><name>Engine.h</name>
+  <compound refid="Engine_8hpp" kind="file"><name>Engine.hpp</name>
   </compound>
-  <compound refid="Log_8h" kind="file"><name>Log.h</name>
+  <compound refid="Log_8hpp" kind="file"><name>Log.hpp</name>
   </compound>
-  <compound refid="Playback_8h" kind="file"><name>Playback.h</name>
+  <compound refid="Playback_8hpp" kind="file"><name>Playback.hpp</name>
   </compound>
-  <compound refid="Result_8h" kind="file"><name>Result.h</name>
+  <compound refid="Result_8hpp" kind="file"><name>Result.hpp</name>
   </compound>
-  <compound refid="Sound_8h" kind="file"><name>Sound.h</name>
+  <compound refid="Sound_8hpp" kind="file"><name>Sound.hpp</name>
   </compound>
   <compound refid="dir_7ee0a0312321b1cfc250dbf199abb419" kind="dir"><name>dalia</name>
   </compound>

@@ -10,7 +10,7 @@
 
 _Handle used to manage loaded sounds. This handle expires once the sound it is referencing is unloaded._ 
 
-* `#include <Sound.h>`
+* `#include <Sound.hpp>`
 
 
 
@@ -221,5 +221,5 @@ inline bool dalia::SoundHandle::operator== (
 <hr>
 
 ------------------------------
-The documentation for this class was generated from the following file `dalia/Sound.h`
+The documentation for this class was generated from the following file `dalia/Sound.hpp`
 

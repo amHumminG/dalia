@@ -10,7 +10,7 @@
 
 _Configuration parameters for a biquadratic IIR filter._ 
 
-* `#include <Effect.h>`
+* `#include <Effect.hpp>`
 
 
 
@@ -172,5 +172,5 @@ void dalia::BiquadParams::Sanitize ()
 <hr>
 
 ------------------------------
-The documentation for this class was generated from the following file `dalia/Effect.h`
+The documentation for this class was generated from the following file `dalia/Effect.hpp`
 

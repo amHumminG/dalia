@@ -10,7 +10,7 @@
 
 _Standard 3D vector for the DALIA API._ 
 
-* `#include <Playback.h>`
+* `#include <Playback.hpp>`
 
 
 
@@ -126,5 +126,5 @@ float dalia::Vec3::z;
 <hr>
 
 ------------------------------
-The documentation for this class was generated from the following file `dalia/Playback.h`
+The documentation for this class was generated from the following file `dalia/Playback.hpp`
 

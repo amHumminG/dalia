@@ -2,7 +2,7 @@
 <doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.15.0" xml:lang="en-US">
   <compounddef id="structdalia_1_1OutputDeviceInfo" kind="struct" language="C++" prot="public">
     <compoundname>dalia::OutputDeviceInfo</compoundname>
-    <includes refid="Device_8h" local="no">Device.h</includes>
+    <includes refid="Device_8hpp" local="no">Device.hpp</includes>
     <sectiondef kind="public-attrib">
       <memberdef kind="variable" id="structdalia_1_1OutputDeviceInfo_1acf2c05cfcd9523037450d361bc342b05" prot="public" static="no" mutable="no">
         <type>char</type>
@@ -16,7 +16,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="dalia/Device.h" line="15" column="6" bodyfile="dalia/Device.h" bodystart="15" bodyend="-1"/>
+        <location file="dalia/Device.hpp" line="15" column="6" bodyfile="dalia/Device.hpp" bodystart="15" bodyend="-1"/>
       </memberdef>
       <memberdef kind="variable" id="structdalia_1_1OutputDeviceInfo_1a0b6bf79b256ccd151b5286cd02e16ce2" prot="public" static="no" mutable="no">
         <type>char</type>
@@ -30,7 +30,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="dalia/Device.h" line="16" column="6" bodyfile="dalia/Device.h" bodystart="16" bodyend="-1"/>
+        <location file="dalia/Device.hpp" line="16" column="6" bodyfile="dalia/Device.hpp" bodystart="16" bodyend="-1"/>
       </memberdef>
       <memberdef kind="variable" id="structdalia_1_1OutputDeviceInfo_1a54c30034f5a4ba9503b29a2ee94eba7a" prot="public" static="no" mutable="no">
         <type>bool</type>
@@ -45,7 +45,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="dalia/Device.h" line="17" column="6" bodyfile="dalia/Device.h" bodystart="17" bodyend="-1"/>
+        <location file="dalia/Device.hpp" line="17" column="6" bodyfile="dalia/Device.hpp" bodystart="17" bodyend="-1"/>
       </memberdef>
     </sectiondef>
     <briefdescription>
@@ -53,7 +53,7 @@
     </briefdescription>
     <detaileddescription>
     </detaileddescription>
-    <location file="dalia/Device.h" line="14" column="1" bodyfile="dalia/Device.h" bodystart="14" bodyend="18"/>
+    <location file="dalia/Device.hpp" line="14" column="1" bodyfile="dalia/Device.hpp" bodystart="14" bodyend="18"/>
     <listofallmembers>
       <member refid="structdalia_1_1OutputDeviceInfo_1a0b6bf79b256ccd151b5286cd02e16ce2" prot="public" virt="non-virtual"><scope>dalia::OutputDeviceInfo</scope><name>identifier</name></member>
       <member refid="structdalia_1_1OutputDeviceInfo_1a54c30034f5a4ba9503b29a2ee94eba7a" prot="public" virt="non-virtual"><scope>dalia::OutputDeviceInfo</scope><name>isDefault</name></member>

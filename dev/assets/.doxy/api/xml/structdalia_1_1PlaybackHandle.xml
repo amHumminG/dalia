@@ -2,7 +2,7 @@
 <doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.15.0" xml:lang="en-US">
   <compounddef id="structdalia_1_1PlaybackHandle" kind="struct" language="C++" prot="public">
     <compoundname>dalia::PlaybackHandle</compoundname>
-    <includes refid="Playback_8h" local="no">Playback.h</includes>
+    <includes refid="Playback_8hpp" local="no">Playback.hpp</includes>
     <sectiondef kind="friend">
       <memberdef kind="friend" id="structdalia_1_1PlaybackHandle_1a3e1914489e4bed4f9f23cdeab34a43dc" prot="private" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>class</type>
@@ -19,7 +19,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="dalia/Playback.h" line="28" column="14" bodyfile="dalia/Playback.h" bodystart="28" bodyend="-1"/>
+        <location file="dalia/Playback.hpp" line="40" column="14" bodyfile="dalia/Playback.hpp" bodystart="40" bodyend="-1"/>
       </memberdef>
       <memberdef kind="friend" id="structdalia_1_1PlaybackHandle_1a0df035f3b4dec6e27fa6f109397e2660" prot="private" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>class</type>
@@ -36,7 +36,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="dalia/Playback.h" line="29" column="14" bodyfile="dalia/Playback.h" bodystart="29" bodyend="-1"/>
+        <location file="dalia/Playback.hpp" line="41" column="14" bodyfile="dalia/Playback.hpp" bodystart="41" bodyend="-1"/>
       </memberdef>
     </sectiondef>
     <sectiondef kind="private-attrib">
@@ -53,7 +53,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="dalia/Playback.h" line="40" column="10" bodyfile="dalia/Playback.h" bodystart="40" bodyend="-1"/>
+        <location file="dalia/Playback.hpp" line="57" column="10" bodyfile="dalia/Playback.hpp" bodystart="57" bodyend="-1"/>
       </memberdef>
     </sectiondef>
     <sectiondef kind="public-func">
@@ -69,7 +69,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="dalia/Playback.h" line="15" column="1"/>
+        <location file="dalia/Playback.hpp" line="15" column="1"/>
       </memberdef>
       <memberdef kind="function" id="structdalia_1_1PlaybackHandle_1a05bb813e3111c277153600621fea7f5b" prot="public" static="no" const="no" explicit="yes" inline="yes" virt="non-virtual">
         <type></type>
@@ -87,7 +87,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="dalia/Playback.h" line="16" column="10" bodyfile="dalia/Playback.h" bodystart="16" bodyend="16"/>
+        <location file="dalia/Playback.hpp" line="17" column="10" bodyfile="dalia/Playback.hpp" bodystart="17" bodyend="19"/>
       </memberdef>
       <memberdef kind="function" id="structdalia_1_1PlaybackHandle_1a2101b0c7c74bc1bf3ee4d69e09a46de5" prot="public" static="no" const="yes" explicit="no" inline="yes" virt="non-virtual">
         <type>bool</type>
@@ -104,7 +104,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="dalia/Playback.h" line="19" column="6" bodyfile="dalia/Playback.h" bodystart="19" bodyend="19"/>
+        <location file="dalia/Playback.hpp" line="22" column="6" bodyfile="dalia/Playback.hpp" bodystart="22" bodyend="24"/>
       </memberdef>
       <memberdef kind="function" id="structdalia_1_1PlaybackHandle_1ac31624b3566dd60893fe0b4a18a62e5e" prot="public" static="no" const="yes" explicit="no" inline="yes" virt="non-virtual">
         <type>bool</type>
@@ -122,7 +122,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="dalia/Playback.h" line="21" column="6" bodyfile="dalia/Playback.h" bodystart="21" bodyend="21"/>
+        <location file="dalia/Playback.hpp" line="26" column="6" bodyfile="dalia/Playback.hpp" bodystart="26" bodyend="28"/>
       </memberdef>
       <memberdef kind="function" id="structdalia_1_1PlaybackHandle_1adf53da7a0cc9b457fbcfe2d3842be324" prot="public" static="no" const="yes" explicit="no" inline="yes" virt="non-virtual">
         <type>bool</type>
@@ -140,7 +140,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="dalia/Playback.h" line="22" column="6" bodyfile="dalia/Playback.h" bodystart="22" bodyend="22"/>
+        <location file="dalia/Playback.hpp" line="30" column="6" bodyfile="dalia/Playback.hpp" bodystart="30" bodyend="32"/>
       </memberdef>
       <memberdef kind="function" id="structdalia_1_1PlaybackHandle_1a02679929e24e94a9a89e58f71a683767" prot="public" static="no" const="yes" explicit="no" inline="yes" virt="non-virtual">
         <type>uint64_t</type>
@@ -157,7 +157,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="dalia/Playback.h" line="25" column="10" bodyfile="dalia/Playback.h" bodystart="25" bodyend="25"/>
+        <location file="dalia/Playback.hpp" line="35" column="10" bodyfile="dalia/Playback.hpp" bodystart="35" bodyend="37"/>
       </memberdef>
     </sectiondef>
     <sectiondef kind="private-static-func">
@@ -181,7 +181,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="dalia/Playback.h" line="31" column="23" bodyfile="dalia/Playback.h" bodystart="31" bodyend="35"/>
+        <location file="dalia/Playback.hpp" line="43" column="23" bodyfile="dalia/Playback.hpp" bodystart="43" bodyend="47"/>
       </memberdef>
     </sectiondef>
     <sectiondef kind="private-func">
@@ -197,7 +197,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="dalia/Playback.h" line="37" column="10" bodyfile="dalia/Playback.h" bodystart="37" bodyend="37"/>
+        <location file="dalia/Playback.hpp" line="49" column="10" bodyfile="dalia/Playback.hpp" bodystart="49" bodyend="51"/>
       </memberdef>
       <memberdef kind="function" id="structdalia_1_1PlaybackHandle_1a1182efea82db02eb9d75d40f7f5ad76c" prot="private" static="no" const="yes" explicit="no" inline="yes" virt="non-virtual">
         <type>uint32_t</type>
@@ -211,7 +211,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="dalia/Playback.h" line="38" column="10" bodyfile="dalia/Playback.h" bodystart="38" bodyend="38"/>
+        <location file="dalia/Playback.hpp" line="53" column="10" bodyfile="dalia/Playback.hpp" bodystart="53" bodyend="55"/>
       </memberdef>
     </sectiondef>
     <briefdescription>
@@ -219,7 +219,7 @@
     </briefdescription>
     <detaileddescription>
     </detaileddescription>
-    <location file="dalia/Playback.h" line="13" column="1" bodyfile="dalia/Playback.h" bodystart="13" bodyend="41"/>
+    <location file="dalia/Playback.hpp" line="13" column="1" bodyfile="dalia/Playback.hpp" bodystart="13" bodyend="58"/>
     <listofallmembers>
       <member refid="structdalia_1_1PlaybackHandle_1a6091c5b72f084522c7e1ed454ae0a255" prot="private" virt="non-virtual"><scope>dalia::PlaybackHandle</scope><name>Create</name></member>
       <member refid="structdalia_1_1PlaybackHandle_1a3e1914489e4bed4f9f23cdeab34a43dc" prot="private" virt="non-virtual"><scope>dalia::PlaybackHandle</scope><name>Engine</name></member>

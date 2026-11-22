@@ -10,7 +10,7 @@
 
 _Handle used to manage effect instances. This handle expires once the effect it is referencing has been destroyed._ 
 
-* `#include <Effect.h>`
+* `#include <Effect.hpp>`
 
 
 
@@ -221,5 +221,5 @@ inline bool dalia::EffectHandle::operator== (
 <hr>
 
 ------------------------------
-The documentation for this class was generated from the following file `dalia/Effect.h`
+The documentation for this class was generated from the following file `dalia/Effect.hpp`
 

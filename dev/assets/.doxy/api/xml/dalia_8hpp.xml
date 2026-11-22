@@ -1,0 +1,114 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.15.0" xml:lang="en-US">
+  <compounddef id="dalia_8hpp" kind="file" language="C++">
+    <compoundname>dalia.hpp</compoundname>
+    <includes refid="Engine_8hpp" local="yes">dalia/Engine.hpp</includes>
+    <includes refid="Playback_8hpp" local="yes">dalia/Playback.hpp</includes>
+    <includes refid="Sound_8hpp" local="yes">dalia/Sound.hpp</includes>
+    <includes refid="Effect_8hpp" local="yes">dalia/Effect.hpp</includes>
+    <includes refid="Device_8hpp" local="yes">dalia/Device.hpp</includes>
+    <includes refid="Log_8hpp" local="yes">dalia/Log.hpp</includes>
+    <includes refid="Result_8hpp" local="yes">dalia/Result.hpp</includes>
+    <incdepgraph>
+      <node id="6">
+        <label>dalia/Device.hpp</label>
+        <link refid="Device_8hpp"/>
+        <childnode refid="7" relation="include">
+        </childnode>
+      </node>
+      <node id="10">
+        <label>dalia/Effect.hpp</label>
+        <link refid="Effect_8hpp"/>
+        <childnode refid="7" relation="include">
+        </childnode>
+      </node>
+      <node id="2">
+        <label>dalia/Engine.hpp</label>
+        <link refid="Engine_8hpp"/>
+        <childnode refid="3" relation="include">
+        </childnode>
+        <childnode refid="4" relation="include">
+        </childnode>
+        <childnode refid="6" relation="include">
+        </childnode>
+        <childnode refid="8" relation="include">
+        </childnode>
+        <childnode refid="9" relation="include">
+        </childnode>
+        <childnode refid="10" relation="include">
+        </childnode>
+      </node>
+      <node id="4">
+        <label>dalia/Log.hpp</label>
+        <link refid="Log_8hpp"/>
+        <childnode refid="5" relation="include">
+        </childnode>
+      </node>
+      <node id="8">
+        <label>dalia/Playback.hpp</label>
+        <link refid="Playback_8hpp"/>
+        <childnode refid="7" relation="include">
+        </childnode>
+        <childnode refid="5" relation="include">
+        </childnode>
+      </node>
+      <node id="3">
+        <label>dalia/Result.hpp</label>
+        <link refid="Result_8hpp"/>
+      </node>
+      <node id="9">
+        <label>dalia/Sound.hpp</label>
+        <link refid="Sound_8hpp"/>
+        <childnode refid="3" relation="include">
+        </childnode>
+        <childnode refid="7" relation="include">
+        </childnode>
+        <childnode refid="5" relation="include">
+        </childnode>
+      </node>
+      <node id="1">
+        <label>dalia/dalia.hpp</label>
+        <link refid="dalia_8hpp"/>
+        <childnode refid="2" relation="include">
+        </childnode>
+        <childnode refid="8" relation="include">
+        </childnode>
+        <childnode refid="9" relation="include">
+        </childnode>
+        <childnode refid="10" relation="include">
+        </childnode>
+        <childnode refid="6" relation="include">
+        </childnode>
+        <childnode refid="4" relation="include">
+        </childnode>
+        <childnode refid="3" relation="include">
+        </childnode>
+      </node>
+      <node id="7">
+        <label>cstdint</label>
+      </node>
+      <node id="5">
+        <label>functional</label>
+      </node>
+    </incdepgraph>
+    <briefdescription>
+<para>Umbrella header for the DALIA audio engine. </para>
+    </briefdescription>
+    <detaileddescription>
+<para>This file includes the entire public API. It is provided for convenience and is ideal for inclusion in precompiled headers. </para>
+    </detaileddescription>
+    <programlisting>
+<codeline lineno="1"><highlight class="preprocessor">#pragma<sp/>once</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="2"><highlight class="normal"></highlight></codeline>
+<codeline lineno="8"><highlight class="normal"></highlight></codeline>
+<codeline lineno="9"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;<ref refid="Engine_8hpp" kindref="compound">dalia/Engine.hpp</ref>&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="10"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;<ref refid="Playback_8hpp" kindref="compound">dalia/Playback.hpp</ref>&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="11"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;<ref refid="Sound_8hpp" kindref="compound">dalia/Sound.hpp</ref>&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="12"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;<ref refid="Effect_8hpp" kindref="compound">dalia/Effect.hpp</ref>&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="13"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;<ref refid="Device_8hpp" kindref="compound">dalia/Device.hpp</ref>&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="14"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;<ref refid="Log_8hpp" kindref="compound">dalia/Log.hpp</ref>&quot;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="15"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&quot;<ref refid="Result_8hpp" kindref="compound">dalia/Result.hpp</ref>&quot;</highlight><highlight class="normal"></highlight></codeline>
+    </programlisting>
+    <location file="dalia/dalia.hpp"/>
+  </compounddef>
+</doxygen>

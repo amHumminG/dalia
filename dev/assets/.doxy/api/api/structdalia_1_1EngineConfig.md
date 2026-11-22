@@ -10,7 +10,7 @@
 
 _Configuration containing all user-exposed engine settings._ 
 
-* `#include <Engine.h>`
+* `#include <Engine.hpp>`
 
 
 
@@ -271,5 +271,5 @@ uint32_t dalia::EngineConfig::voiceCapacity;
 <hr>
 
 ------------------------------
-The documentation for this class was generated from the following file `dalia/Engine.h`
+The documentation for this class was generated from the following file `dalia/Engine.hpp`
 

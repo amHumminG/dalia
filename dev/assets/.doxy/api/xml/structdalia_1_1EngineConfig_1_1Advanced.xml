@@ -2,7 +2,7 @@
 <doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.15.0" xml:lang="en-US">
   <compounddef id="structdalia_1_1EngineConfig_1_1Advanced" kind="struct" language="C++" prot="public">
     <compoundname>dalia::EngineConfig::Advanced</compoundname>
-    <includes refid="Engine_8h" local="no">Engine.h</includes>
+    <includes refid="Engine_8hpp" local="no">Engine.hpp</includes>
     <sectiondef kind="public-attrib">
       <memberdef kind="variable" id="structdalia_1_1EngineConfig_1_1Advanced_1a3efbdfd4d1c90a2f462247b47b0db986" prot="public" static="no" mutable="no">
         <type>uint32_t</type>
@@ -17,7 +17,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="dalia/Engine.h" line="44" column="10" bodyfile="dalia/Engine.h" bodystart="44" bodyend="-1"/>
+        <location file="dalia/Engine.hpp" line="44" column="10" bodyfile="dalia/Engine.hpp" bodystart="44" bodyend="-1"/>
       </memberdef>
       <memberdef kind="variable" id="structdalia_1_1EngineConfig_1_1Advanced_1a3d9b909bfc25eba87846718f4395de5a" prot="public" static="no" mutable="no">
         <type>size_t</type>
@@ -32,7 +32,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="dalia/Engine.h" line="47" column="8" bodyfile="dalia/Engine.h" bodystart="47" bodyend="-1"/>
+        <location file="dalia/Engine.hpp" line="47" column="8" bodyfile="dalia/Engine.hpp" bodystart="47" bodyend="-1"/>
       </memberdef>
       <memberdef kind="variable" id="structdalia_1_1EngineConfig_1_1Advanced_1ad478789027dc9d30c17f1c0664d0dc74" prot="public" static="no" mutable="no">
         <type>size_t</type>
@@ -47,7 +47,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="dalia/Engine.h" line="48" column="8" bodyfile="dalia/Engine.h" bodystart="48" bodyend="-1"/>
+        <location file="dalia/Engine.hpp" line="48" column="8" bodyfile="dalia/Engine.hpp" bodystart="48" bodyend="-1"/>
       </memberdef>
       <memberdef kind="variable" id="structdalia_1_1EngineConfig_1_1Advanced_1a5dadfff5e0bd5e56caf5949dfd9d3a43" prot="public" static="no" mutable="no">
         <type>size_t</type>
@@ -62,7 +62,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="dalia/Engine.h" line="49" column="8" bodyfile="dalia/Engine.h" bodystart="49" bodyend="-1"/>
+        <location file="dalia/Engine.hpp" line="49" column="8" bodyfile="dalia/Engine.hpp" bodystart="49" bodyend="-1"/>
       </memberdef>
       <memberdef kind="variable" id="structdalia_1_1EngineConfig_1_1Advanced_1a7fa5ebe1c12209ab7c4a21782f203480" prot="public" static="no" mutable="no">
         <type>size_t</type>
@@ -77,7 +77,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="dalia/Engine.h" line="50" column="8" bodyfile="dalia/Engine.h" bodystart="50" bodyend="-1"/>
+        <location file="dalia/Engine.hpp" line="50" column="8" bodyfile="dalia/Engine.hpp" bodystart="50" bodyend="-1"/>
       </memberdef>
     </sectiondef>
     <briefdescription>
@@ -85,7 +85,7 @@
     </briefdescription>
     <detaileddescription>
     </detaileddescription>
-    <location file="dalia/Engine.h" line="43" column="1" bodyfile="dalia/Engine.h" bodystart="43" bodyend="51"/>
+    <location file="dalia/Engine.hpp" line="43" column="1" bodyfile="dalia/Engine.hpp" bodystart="43" bodyend="51"/>
     <listofallmembers>
       <member refid="structdalia_1_1EngineConfig_1_1Advanced_1a7fa5ebe1c12209ab7c4a21782f203480" prot="public" virt="non-virtual"><scope>dalia::EngineConfig::Advanced</scope><name>controlQueueCapacity</name></member>
       <member refid="structdalia_1_1EngineConfig_1_1Advanced_1a5dadfff5e0bd5e56caf5949dfd9d3a43" prot="public" virt="non-virtual"><scope>dalia::EngineConfig::Advanced</scope><name>loadQueueCapacity</name></member>

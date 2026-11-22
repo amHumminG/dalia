@@ -10,7 +10,7 @@
 
 _The central interface and lifetime manager for the DALIA audio engine._ 
 
-* `#include <Engine.h>`
+* `#include <Engine.hpp>`
 
 
 
@@ -2206,5 +2206,5 @@ dalia::Engine::~Engine ()
 <hr>
 
 ------------------------------
-The documentation for this class was generated from the following file `dalia/Engine.h`
+The documentation for this class was generated from the following file `dalia/Engine.hpp`
 

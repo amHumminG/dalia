@@ -10,7 +10,7 @@
 
 _Handle used to manage playback instances. This handle will expire once the playback instance it is referencing stops._ 
 
-* `#include <Playback.h>`
+* `#include <Playback.hpp>`
 
 
 
@@ -196,5 +196,5 @@ inline bool dalia::PlaybackHandle::operator== (
 <hr>
 
 ------------------------------
-The documentation for this class was generated from the following file `dalia/Playback.h`
+The documentation for this class was generated from the following file `dalia/Playback.hpp`
 
