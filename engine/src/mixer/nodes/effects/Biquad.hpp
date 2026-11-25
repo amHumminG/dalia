@@ -10,7 +10,9 @@
 namespace dalia {
 
 	struct Biquad {
+	public:
 		uint32_t gen          = NO_GENERATION;
+
 		bool isFirstProcess   = true;
 		bool forceRecalculate = false; // Set true if type changes
 
@@ -24,14 +26,16 @@ namespace dalia {
 		double z2[CHANNELS_MAX] = {0.0};
 
 		void SetParams(const BiquadParams& params);
-		void Process(float* buffer, uint32_t frameCount, uint32_t channels, uint32_t sampleRate);
-		void Flush(); // Clear history
+		void Prepare(float sampleRate);
+		void Process(float* buffer, uint32_t frameCount, uint32_t channels);
+		void Flush();
 		void Reset();
 
 	private:
-		void CalculateCoefficients(uint32_t sampleRate);
+		void CalculateCoefficients();
 		void ClearDelayLines();
 
+		float m_sampleRate = 48000;
 	};
 
 	struct BiquadMirror : EffectMirror {
@@ -42,5 +46,4 @@ namespace dalia {
 			params = BiquadParams{};
 		}
 	};
-
 }
