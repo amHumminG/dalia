@@ -74,6 +74,8 @@ namespace dalia {
 	}
 
 	void Biquad::Reset() {
+		gen++;
+
 		isFirstProcess   = true;
 		forceRecalculate = false;
 
