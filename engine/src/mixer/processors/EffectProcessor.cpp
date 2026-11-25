@@ -19,6 +19,7 @@ namespace dalia {
 
 		m_asyncMessageBus  = asyncMessageBus;
 		m_biquadPool       = config.biquadPool;
+		m_fdnReverbPool	   = config.fdnReverbPool;
 		m_maxSamplesPeriod = config.maxSamplesPeriod;
 		m_outChannels      = config.outChannels;
 		m_outSampleRate    = config.outSampleRate;
@@ -27,6 +28,8 @@ namespace dalia {
 		m_crossFadeDelta                      = 1.0f / (static_cast<float>(m_outSampleRate) * FADE_DURATION_SECONDS);
 
 		m_scratchBuffer = std::make_unique<float[]>(m_maxSamplesPeriod);
+
+		PrepareEffects(m_outSampleRate);
 
 		SubscribeToCommands();
 		m_initialized = true;
@@ -186,10 +189,19 @@ namespace dalia {
 
 		switch (handle.GetType()) {
 			case EffectType::Biquad:
-				m_biquadPool.nodes[eIndex].Process(buffer, frameCount, m_outChannels, m_outSampleRate);
+				m_biquadPool.nodes[eIndex].Process(buffer, frameCount, m_outChannels);
+				break;
+		case EffectType::FdnReverb:
+				m_fdnReverbPool.nodes[eIndex].Process(buffer, frameCount, m_outChannels);
 				break;
 			default:
 				break;
 		}
+	}
+
+	void EffectProcessor::PrepareEffects(uint32_t sampleRate)
+	{
+		for (uint32_t i = 0; i < m_biquadPool.capacity; i++) m_biquadPool.nodes[i].Prepare(sampleRate);
+		for (uint32_t i = 0; i < m_fdnReverbPool.capacity; i++) m_fdnReverbPool.nodes[i].Prepare(sampleRate);
 	}
 }

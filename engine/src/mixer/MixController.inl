@@ -147,4 +147,8 @@ namespace dalia {
 	inline auto& EffectTraits<BiquadParams>::GetPool(MixController& controller) {
 		return controller.GetBiquadPool();
 	}
+
+	inline auto& EffectTraits<FdnReverbParams>::GetPool(MixController& controller) {
+		return controller.GetFdnReverbPool();
+	}
 }

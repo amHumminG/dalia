@@ -12,6 +12,7 @@
 #include "nodes/Listener.hpp"
 #include "nodes/Bus.hpp"
 #include "mixer/nodes/effects/Biquad.hpp"
+#include "mixer/nodes/effects/FdnReverb.hpp"
 
 #include <unordered_map>
 #include <vector>
@@ -30,6 +31,7 @@ namespace dalia {
 		uint32_t listenerCapacity         = 1;
 		uint32_t busCapacity              = 32;
 		uint32_t biquadCapacity           = 16;
+		uint32_t fdnReverbCapacity		  = 16;
 	};
 
 	/// @brief Represents a playback instance waiting for an asset to be loaded before it can start playing.
@@ -117,6 +119,7 @@ namespace dalia {
 		[[nodiscard]] StateSyncPool<Listener, ListenerMirror, ListenerParams>& GetListenerPool();
 		[[nodiscard]] StateSyncPool<Bus, BusMirror, BusParams>& GetBusPool();
 		[[nodiscard]] StateSyncPool<Biquad, BiquadMirror, BiquadParams>& GetBiquadPool();
+		[[nodiscard]] StateSyncPool<FdnReverb, FdnReverbMirror, FdnReverbParams>& GetFdnReverbPool();
 
 	private:
 		template <typename TParams>
@@ -264,7 +267,9 @@ namespace dalia {
 		StateSyncPool<Listener, ListenerMirror, ListenerParams> m_listeners;
 		StateSyncPool<Bus, BusMirror, BusParams> m_buses;
 		std::unordered_map<BusID, uint32_t> m_busMap;
+
 		StateSyncPool<Biquad, BiquadMirror, BiquadParams> m_biquads;
+		StateSyncPool<FdnReverb, FdnReverbMirror, FdnReverbParams> m_fdnReverbs;
 
 		std::vector<PendingPlayback> m_pendingPlaybacks;
 	};

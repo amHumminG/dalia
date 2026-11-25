@@ -38,6 +38,7 @@ namespace dalia {
 
 		// Effect Capacities
 		uint32_t biquadCapacity = 32; // The maximum number of biquad filters that can exist at once.
+		uint32_t fdnReverbCapacity = 32; // The maximum number of FDN reverbs that can exist at once.
 
 		/// @brief Advanced settings. Only touch if you have very tight constraints.
 		struct Advanced {

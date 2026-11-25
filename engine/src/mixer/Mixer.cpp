@@ -59,6 +59,7 @@ namespace dalia {
 
 		m_effectProcessor.Initialize(m_asyncMessageBus, {
 			.biquadPool = config.biquadPool,
+			.fdnReverbPool = config.fdnReverbPool,
 			.maxSamplesPeriod = m_maxSamplesPeriod,
 			.outChannels = m_outChannels,
 			.outSampleRate = m_outSampleRate
