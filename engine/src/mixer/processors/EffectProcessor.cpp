@@ -50,6 +50,7 @@ namespace dalia {
 		DALIA_PROFILE_SCOPE_N("EffectProcessor::SyncNodes");
 
 		m_biquadPool.SyncParams();
+		m_fdnReverbPool.SyncParams();
 	}
 
 	void EffectProcessor::SetOutputChannels(uint32_t outChannels) {
@@ -83,6 +84,15 @@ namespace dalia {
 				biquad.Flush();
 				return true;
 			}
+			case EffectType::FdnReverb: {
+				if (eIndex >= m_fdnReverbPool.capacity) return false;
+
+				FdnReverb& reverb = m_fdnReverbPool.nodes[eIndex];
+				if (reverb.gen != eGen) return false;
+
+				reverb.Flush();
+				return true;
+			}
 			default:
 				return false;
 		}
@@ -114,8 +124,14 @@ namespace dalia {
 				biquad.gen     = eGen;
 				return;
 			}
-			default:
+			case EffectType::FdnReverb: {
+				FdnReverb& reverb = m_fdnReverbPool.nodes[eIndex];
+				reverb.gen			= eGen;
 				return;
+			}
+			default: {
+				DALIA_LOG_ERR(LOG_CTX_MIXER, "Failed to allocate effect.");
+			}
 		}
 	}
 
@@ -129,8 +145,14 @@ namespace dalia {
 				if (biquad.gen == eGen) biquad.Reset();
 				return;
 			}
-			default:
+			case EffectType::FdnReverb: {
+				FdnReverb& reverb = m_fdnReverbPool.nodes[eIndex];
+				if (reverb.gen == eGen) reverb.Reset();
 				return;
+			}
+			default: {
+				DALIA_LOG_ERR(LOG_CTX_MIXER, "Failed to free effect.");
+			}
 		}
 	}
 
@@ -179,6 +201,8 @@ namespace dalia {
 		switch (handle.GetType()) {
 			case EffectType::Biquad:
 				return eIndex < m_biquadPool.capacity && m_biquadPool.nodes[eIndex].gen == eGen;
+		case EffectType::FdnReverb:
+				return eIndex < m_fdnReverbPool.capacity && m_fdnReverbPool.nodes[eIndex].gen == eGen;
 			default:
 				return false;
 		}
@@ -191,7 +215,7 @@ namespace dalia {
 			case EffectType::Biquad:
 				m_biquadPool.nodes[eIndex].Process(buffer, frameCount, m_outChannels);
 				break;
-		case EffectType::FdnReverb:
+			case EffectType::FdnReverb:
 				m_fdnReverbPool.nodes[eIndex].Process(buffer, frameCount, m_outChannels);
 				break;
 			default:

@@ -93,6 +93,7 @@ namespace dalia {
 		m_listeners.Sync();
 		m_buses.Sync();
 		m_biquads.Sync();
+		m_fdnReverbs.Sync();
 	}
 
 	void MixController::SetGlobalDopplerFactor(float globalDopplerFactor) {

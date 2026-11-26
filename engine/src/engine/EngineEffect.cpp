@@ -35,4 +35,8 @@ namespace dalia {
 	// Biquad Filter
 	template Result Engine::CreateEffect<BiquadParams>(EffectHandle&, const BiquadParams&);
 	template Result Engine::SetEffectParams<BiquadParams>(EffectHandle, const BiquadParams&);
+
+	// FDN Reverb
+	template Result Engine::CreateEffect<FdnReverbParams>(EffectHandle&, const FdnReverbParams&);
+	template Result Engine::SetEffectParams<FdnReverbParams>(EffectHandle, const FdnReverbParams&);
 }
