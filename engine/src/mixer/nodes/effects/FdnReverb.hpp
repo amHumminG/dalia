@@ -13,9 +13,11 @@ namespace dalia {
 
 	struct FdnReverb {
 	public:
-		static constexpr std::array<float, CHANNELS_MAX> BASE_DELAY_MS = {
-			29.7f, 37.1f, 41.3f, 43.7f, 53.1f, 59.3f, 67.7f, 73.3f
-		};
+		static constexpr size_t TANK_CHANNELS    = 8; // Must be power of 2
+		static constexpr size_t DIFFUSION_STAGES = 4;
+
+		static constexpr std::array<float, DIFFUSION_STAGES> DIFFUSION_STAGE_MS = {20.0f, 40.0f, 80.0f, 160.0f};
+		static constexpr float TANK_MIN_DELAY_MS                                = 100.0f;
 
 		uint32_t gen = NO_GENERATION;
 
@@ -29,22 +31,48 @@ namespace dalia {
 		struct DelayLine {
 			std::vector<float> buffer;
 			size_t writeIndex = 0;
+
+			float Read() { return buffer[writeIndex]; }
+
+			void Write(float sample) {
+				buffer[writeIndex] = sample;
+				if (++writeIndex >= buffer.size()) writeIndex = 0;
+			}
+
+			void Clear() {
+				std::fill(buffer.begin(), buffer.end(), 0.0f);
+				writeIndex = 0;
+			}
 		};
 
-		float ReadDelay(const DelayLine& line) { return line.buffer[line.writeIndex]; }
-		void WriteDelay(DelayLine& line, float sample);
-		float ProcessPreDelay(float input);
+		struct DiffusionStage {
+			std::array<DelayLine, TANK_CHANNELS> delays{};
+			std::array<uint8_t, TANK_CHANNELS> permutation{};
+			std::array<float, TANK_CHANNELS> polarity{};
 
-		float m_sampleRate = 48000;
-		FdnReverbParams m_params;
+			void Prepare(float sampleRate, float delayRangeMs, uint32_t seed);
+			void Process(std::array<float, TANK_CHANNELS>& data);
+			void Clear();
+		};
 
-		DelayLine m_preDelay{};
+		static void HadamardInPlace(std::array<float, TANK_CHANNELS>& data);
+		static void HouseholderInPlace(std::array<float, TANK_CHANNELS>& data);
+		void ProcessPreDelay(std::array<float, TANK_CHANNELS>& data);
+
+		float m_sampleRate = 48000.0f;
+		FdnReverbParams m_params{};
+
+		std::array<DelayLine, TANK_CHANNELS> m_preDelays{};
 		size_t m_preDelaySamples = 0;
 
-		std::array<DelayLine, CHANNELS_MAX> m_delays{};
-		std::array<float, CHANNELS_MAX> m_feedbackGains{};
-		std::array<float, CHANNELS_MAX> m_dampingState{};
+		std::array<DiffusionStage, DIFFUSION_STAGES> m_diffusers{};
+
+		std::array<DelayLine, TANK_CHANNELS> m_tankDelays{};
+		std::array<float, TANK_CHANNELS> m_feedbackGains{};
+		std::array<float, TANK_CHANNELS> m_dampingState{};
+		std::array<float, TANK_CHANNELS> m_lowCutState{};
 		float m_dampingCoeff = 0.0f;
+		float m_lowCutCoeff = 0.0f;
 	};
 
 	struct FdnReverbMirror : EffectMirror {

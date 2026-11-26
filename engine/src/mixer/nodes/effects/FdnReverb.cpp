@@ -2,8 +2,89 @@
 
 #include <algorithm>
 #include <numbers>
+#include <random>
+#include <cmath>
+#include <numeric>
 
 namespace dalia {
+
+	namespace {
+		constexpr float INV_SQRT_8 = std::numbers::sqrt2 * 0.25f;
+	}
+
+	// --- Matrix Operations ---
+
+	void FdnReverb::HadamardInPlace(std::array<float, TANK_CHANNELS>& data) {
+		static_assert((TANK_CHANNELS % 2 == 0), "TANK_CHANNELS must be power of 2");
+
+		for (size_t h = 1; h < TANK_CHANNELS; h <<= 1) {
+			for (size_t i = 0; i < TANK_CHANNELS; i += h * 2) {
+				for (size_t j = i; j < i + h; j++) {
+					float a     = data[j];
+					float b     = data[j + h];
+					data[j]     = a + b;
+					data[j + h] = a - b;
+				}
+			}
+		}
+
+		for (float& x : data) x *= INV_SQRT_8;
+	}
+
+	void FdnReverb::HouseholderInPlace(std::array<float, TANK_CHANNELS>& data) {
+		float sum = 0.0f;
+		for (float x : data) sum += x;
+
+		constexpr float FACTOR = 2.0f / static_cast<float>(TANK_CHANNELS);
+		float offset           = sum * FACTOR;
+		for (float& x : data) x -= offset;
+	}
+
+	// --- Diffuser ---
+
+	void FdnReverb::DiffusionStage::Prepare(float sampleRate, float delayRangeMs, uint32_t seed) {
+		std::mt19937 rng(seed);
+		float rangeSamples = delayRangeMs * 0.001f * sampleRate;
+
+		// Stratified random delay
+		// Each channel c picks randomly inside [range * c/N, range * (c+1)/N]
+		for (size_t c = 0; c < TANK_CHANNELS; c++) {
+			size_t low = static_cast<size_t>(rangeSamples * static_cast<float>(c) / static_cast<float>(TANK_CHANNELS));
+			size_t high =
+			    static_cast<size_t>(rangeSamples * static_cast<float>(c + 1) / static_cast<float>(TANK_CHANNELS));
+			std::uniform_int_distribution<size_t> distribution(low, std::max(low, high));
+
+			size_t length = std::max<size_t>(distribution(rng), 1);
+			delays[c].buffer.assign(length, 0.0f);
+			delays[c].writeIndex = 0;
+		}
+
+		// Channel shuffle
+		std::iota(permutation.begin(), permutation.end(), uint8_t{0});
+		std::ranges::shuffle(permutation, rng);
+
+		// Polarity flips (balanced) + shuffle
+		for (size_t c = 0; c < TANK_CHANNELS; c++) polarity[c] = (c % 2 == 0) ? 1.0f : -1.0f;
+		std::ranges::shuffle(polarity, rng);
+	}
+
+	void FdnReverb::DiffusionStage::Process(std::array<float, TANK_CHANNELS>& data) {
+		std::array<float, TANK_CHANNELS> delayed{};
+		for (size_t c = 0; c < TANK_CHANNELS; c++) {
+			delayed[c] = delays[c].Read();
+			delays[c].Write(data[c]);
+		}
+
+		for (size_t c = 0; c < TANK_CHANNELS; c++) data[c] = delayed[permutation[c]] * polarity[c];
+
+		HadamardInPlace(data);
+	}
+
+	void FdnReverb::DiffusionStage::Clear() {
+		for (auto& d : delays) d.Clear();
+	}
+
+	// --- FDN Reverb ---
 
 	void FdnReverbParams::Sanitize() {
 		decayTimeSeconds = std::clamp(decayTimeSeconds, REVERB_DECAY_TIME_SECONDS_MIN, REVERB_DECAY_TIME_SECONDS_MAX);
@@ -16,44 +97,63 @@ namespace dalia {
 
 	void FdnReverb::SetParams(const FdnReverbParams& params) {
 		m_params = params;
-		if (m_preDelay.buffer.empty()) return; // Underflow protection
+		if (m_tankDelays[0].buffer.empty()) return; // Underflow protection
 
 		// Pre delay length in samples
-		size_t maxPre     = m_preDelay.buffer.size() - 1;
+		size_t maxPre     = m_tankDelays[0].buffer.size() - 1;
 		m_preDelaySamples = std::min(static_cast<size_t>(params.preDelayMs * 0.001f * m_sampleRate), maxPre);
 
 		// Per-channel T60 feedback gains: g_i = 10^(-3 * delaySeconds / T60)
-		const float t60 = std::max(params.decayTimeSeconds, 0.05f);
+		float t60 = std::max(params.decayTimeSeconds, 0.05f);
 		for (uint32_t c = 0; c < CHANNELS_MAX; c++) {
 			if (params.freeze)
 				m_feedbackGains[c] = 1.0f;
 			else {
-				const float delaySec = static_cast<float>(m_delays[c].buffer.size() / m_sampleRate);
-				m_feedbackGains[c]   = std::pow(10.0f, (-3.0f * delaySec) / t60);
+				float delaySec     = static_cast<float>(m_tankDelays[c].buffer.size() / m_sampleRate);
+				m_feedbackGains[c] = std::pow(10.0f, (-3.0f * delaySec) / t60);
 			}
 		}
 
-		if (m_params.freeze)
-			m_dampingCoeff = 0.0f;
-		else {
-			// One-pole lowpass damping coefficient: y[n] = (1-a) * x[n] + a * y[n-1]
-			float fc = std::clamp(m_params.dampingHz, 100.f, m_sampleRate * 0.45f);
-			m_dampingCoeff = std::exp(-2.0f * std::numbers::pi_v<float> * fc / m_sampleRate);
-		}
+		// TODO: Determine if we should do this instead
+		// if (m_params.freeze)
+		// 	m_dampingCoeff = 0.0f;
+		// else {
+		// 	// One-pole lowpass damping coefficient: y[n] = (1-a) * x[n] + a * y[n-1]
+		// 	float fc       = std::clamp(m_params.dampingHz, 100.f, m_sampleRate * 0.45f);
+		// 	m_dampingCoeff = std::exp(-2.0f * std::numbers::pi_v<float> * fc / m_sampleRate);
+		// }
+
+		// One-pole lowpass damping coefficient: y[n] = (1-a) * x[n] + a * y[n-1]
+		float dampFc   = std::clamp(m_params.dampingHz, 100.f, m_sampleRate * 0.45f);
+		m_dampingCoeff = std::exp(-2.0f * std::numbers::pi_v<float> * dampFc / m_sampleRate);
+
+		// Highpass low-cut coefficients
+		float lowCutFc = std::clamp(params.lowCutHz, 10.0f, m_sampleRate * 0.25f);
+		m_lowCutCoeff  = std::exp(-2.0f * std::numbers::pi_v<float> * lowCutFc / m_sampleRate);
 	}
 
 	void FdnReverb::Prepare(float sampleRate) {
 		m_sampleRate = sampleRate;
 
-		constexpr float MAX_PRE_DELAY_MS = 100.0f;
-		size_t maxPreDelaySamples        = static_cast<size_t>(std::ceil(MAX_PRE_DELAY_MS * 0.001f * m_sampleRate)) + 1;
-		m_preDelay.buffer.assign(maxPreDelaySamples, 0.0f);
-		m_preDelay.writeIndex = 0;
+		size_t maxPreDelaySamples =
+		    static_cast<size_t>(std::ceil(REVERB_PRE_DELAY_MILLISECONDS_MAX * 0.001f * m_sampleRate)) + 1;
+		for (auto& pre : m_preDelays) {
+			pre.buffer.assign(maxPreDelaySamples, 0.0f);
+			pre.writeIndex = 0;
+		}
 
-		for (uint32_t c = 0; c < CHANNELS_MAX; c++) {
-			size_t length = static_cast<size_t>(std::round(BASE_DELAY_MS[c] * 0.001f * m_sampleRate));
-			m_delays[c].buffer.assign(std::max<size_t>(length, 1), 0.0f);
-			m_delays[c].writeIndex = 0;
+		// Diffusers (deterministic seeds for consistency)
+		for (size_t s = 0; s < DIFFUSION_STAGES; ++s) {
+			m_diffusers[s].Prepare(m_sampleRate, DIFFUSION_STAGE_MS[s], 0xDA11A001u + static_cast<uint32_t>(s));
+		}
+
+		// Feedback tank (exponentially spaced delays)
+		float baseSamples = TANK_MIN_DELAY_MS * 0.001f * m_sampleRate;
+		for (size_t c = 0; c < CHANNELS_MAX; c++) {
+			float exponent = static_cast<float>(c) / static_cast<float>(TANK_CHANNELS);
+			size_t length  = static_cast<size_t>(std::round(baseSamples * std::pow(2.0f, exponent)));
+			m_tankDelays[c].buffer.assign(std::max<size_t>(length, 1), 0.0f);
+			m_tankDelays[c].writeIndex = 0;
 		}
 
 		Flush();
@@ -61,61 +161,81 @@ namespace dalia {
 	}
 
 	void FdnReverb::Process(float* buffer, uint32_t frameCount, uint32_t channels) {
-		if (m_preDelay.buffer.empty() || channels == 0) return;
+		if (m_tankDelays[0].buffer.empty() || channels == 0) return;
 
-		float invChannels                  = 1.0f / static_cast<float>(channels);
-		constexpr float HOUSEHOLDER_FACTOR = 2.0f / static_cast<float>(CHANNELS_MAX);
+		// float invChannels                  = 1.0f / static_cast<float>(channels);
+		// constexpr float HOUSEHOLDER_FACTOR = 2.0f / static_cast<float>(CHANNELS_MAX);
 
 		for (uint32_t f = 0; f < frameCount; f++) {
 			float* frame = buffer + (f * channels);
 
-			// Sum input channels to mono and run through pre-delay
-			float monoIn = 0.0f;
-			for (uint32_t c = 0; c < channels; c++)
-				monoIn += frame[c];
-			monoIn *= invChannels;
+			// Upmix input to TANK_CHANNELS
+			// 0.5x give 5dB tank headroom while keeping mono/stereo/surround equal
+			std::array<float, TANK_CHANNELS> diffused{};
+			if (!m_params.freeze) {
+				if (channels == CHANNELS_MONO) {
+					diffused.fill(frame[0] * 0.5f);
+				}
+				else if (channels == CHANNELS_STEREO) {
+					for (size_t c = 0; c < TANK_CHANNELS; c += 2) {
+						diffused[c]     = frame[0] * 0.5f;
+						diffused[c + 1] = frame[1] * 0.5f;
+					}
+				}
+				else {
+					for (size_t c = 0; c < TANK_CHANNELS; c++) {
+						diffused[c] = frame[c % channels] * 0.5f;
+					}
+				}
 
-			float tankIn = m_params.freeze ? 0.0f : ProcessPreDelay(monoIn);
-
-			// Read all 8 tank delay lines, apply one-pole lowpass damping & T60 gain
-			std::array<float, CHANNELS_MAX> delayed{};
-			float sum = 0.0f;
-
-			for (uint32_t c = 0; c < CHANNELS_MAX; c++) {
-				float sample = ReadDelay(m_delays[c]);
-
-				sample            = (1.0f - m_dampingCoeff) * sample + m_dampingCoeff * m_dampingState[c];
-				m_dampingState[c] = sample;
-
-				sample *= m_feedbackGains[c];
-				delayed[c] = sample;
-				sum += sample;
+				// Pre-delay + DIFFUSION_STAGES Hadamard diffuser
+				ProcessPreDelay(diffused);
+				for (size_t s = 0; s < DIFFUSION_STAGES; s++) m_diffusers[s].Process(diffused);
 			}
 
-			// O(N) Householder reflection and write-back into delay lines
-			constexpr float INV_SQRT_8 = std::numbers::sqrt2 * 0.25f; // 1 / sqrt(8)
+			// Read feedback tank delays and apply damping, low-cut and T60 gains
+			std::array<float, TANK_CHANNELS> tankOut{};
+			std::array<float, TANK_CHANNELS> mixed{};
 
-			float householderScale = sum * HOUSEHOLDER_FACTOR;
-			for (uint32_t c = 0; c < CHANNELS_MAX; c++) {
-				float inputSign      = (c % 2 == 0) ? 1.0f : -1.0f;
-				float feedbackSample = (delayed[c] - householderScale) + (tankIn * inputSign * INV_SQRT_8);
-				WriteDelay(m_delays[c], feedbackSample);
+			for (size_t c = 0; c < TANK_CHANNELS; c++) {
+				float sample = m_tankDelays[c].Read();
+
+				if (!m_params.freeze) {
+					// One-pole lowpass damping (high frequency absorption)
+					sample            = (1.0f - m_dampingCoeff) * sample + m_dampingCoeff * m_dampingState[c];
+					m_dampingState[c] = sample;
+
+					// One-pole highpass low-cut (prevent sub-bass buildup tail buildup)
+					m_lowCutState[c] = (1.0f - m_lowCutCoeff) * sample + m_lowCutCoeff * m_lowCutState[c];
+					sample -= m_lowCutState[c];
+				}
+
+				tankOut[c] = sample;
+				mixed[c]   = sample * m_feedbackGains[c];
 			}
 
-			// Mix wet/dry back into the output frame
+			// Householder feedback matrix
+			HouseholderInPlace(mixed);
+
+			// Write back into tank delays
+			for (size_t c = 0; c < TANK_CHANNELS; c++) m_tankDelays[c].Write(diffused[c] + mixed[c]);
+
+			// Downmix TANK_CHANNELS into output (1 / sqrt(K) preserves RMS across different speaker layouts)
 			if (channels == CHANNELS_MONO) {
+				float sum = 0.0f;
+				for (float x : tankOut) sum += x;
 				float wet = sum * INV_SQRT_8; // K = 8 -> 1 / sqrt(8)
 				frame[0]  = frame[0] * m_params.dryMix + wet * m_params.wetMix;
 			}
 			else if (channels == CHANNELS_STEREO) {
-				float wetL = (delayed[0] + delayed[2] + delayed[4] + delayed[6]) * 0.5f; // K = 4 -> 1 / sqrt(4)
-				float wetR = (delayed[1] + delayed[3] + delayed[5] + delayed[7]) * 0.5f; // K = 4 -> 1 / sqrt(4)
+				float wetL = (tankOut[0] + tankOut[2] + tankOut[4] + tankOut[6]) * 0.5f; // K = 4 -> 1 / sqrt(4)
+				float wetR = (tankOut[1] + tankOut[3] + tankOut[5] + tankOut[7]) * 0.5f; // K = 4 -> 1 / sqrt(4)
 				frame[0]   = frame[0] * m_params.dryMix + wetL * m_params.wetMix;
 				frame[1]   = frame[1] * m_params.dryMix + wetR * m_params.wetMix;
 			}
 			else {
 				for (uint32_t c = 0; c < channels; c++) {
-					float wet = delayed[c % CHANNELS_MAX]; // K = 1 -> 1.0f
+					float wet = tankOut[c % TANK_CHANNELS]; // K = 1 -> 1.0f
 					frame[c]  = frame[c] * m_params.dryMix + wet * m_params.wetMix;
 					// TODO: Skip or lowpass reverb for the LFE channel
 				}
@@ -123,15 +243,26 @@ namespace dalia {
 		}
 	}
 
-	void FdnReverb::Flush() {
-		std::fill(m_preDelay.buffer.begin(), m_preDelay.buffer.end(), 0.0f);
-		m_preDelay.writeIndex = 0;
+	void FdnReverb::ProcessPreDelay(std::array<float, TANK_CHANNELS>& data) {
+		if (m_preDelaySamples == 0) return;
 
-		for (uint32_t c = 0; c < CHANNELS_MAX; c++) {
-			std::fill(m_delays[c].buffer.begin(), m_delays[c].buffer.end(), 0.0f);
-			m_delays[c].writeIndex = 0;
-			m_dampingState[c]      = 0.0f;
+		size_t bufSize = m_preDelays[0].buffer.size();
+		for (size_t c = 0; c < TANK_CHANNELS; c++) {
+			DelayLine& line  = m_preDelays[c];
+			size_t readIndex = (line.writeIndex + bufSize - m_preDelaySamples) % bufSize;
+			float output     = line.buffer[readIndex];
+			line.Write(data[c]);
+			data[c] = output;
 		}
+	}
+
+	void FdnReverb::Flush() {
+		for (auto& pre : m_preDelays) pre.Clear();
+		for (auto& diffuser : m_diffusers) diffuser.Clear();
+		for (auto& tank : m_tankDelays) tank.Clear();
+
+		m_dampingState.fill(0.0f);
+		m_lowCutState.fill(0.0f);
 	}
 
 	void FdnReverb::Reset() {
@@ -139,23 +270,5 @@ namespace dalia {
 
 		Flush();
 		SetParams(FdnReverbParams{});
-	}
-
-	void FdnReverb::WriteDelay(DelayLine& line, float sample) {
-		line.buffer[line.writeIndex] = sample;
-		if (++line.writeIndex >= line.buffer.size()) line.writeIndex = 0;
-	}
-
-	float FdnReverb::ProcessPreDelay(float input) {
-		if (m_preDelaySamples == 0) return input;
-
-		size_t bufSize   = m_preDelay.buffer.size();
-		size_t readIndex = (m_preDelay.writeIndex + bufSize - m_preDelaySamples) % bufSize;
-		float output     = m_preDelay.buffer[readIndex];
-
-		m_preDelay.buffer[m_preDelay.writeIndex] = input;
-		if (++m_preDelay.writeIndex >= bufSize) m_preDelay.writeIndex = 0;
-
-		return output;
 	}
 }
