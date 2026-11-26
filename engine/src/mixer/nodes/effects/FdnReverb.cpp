@@ -151,7 +151,7 @@ namespace dalia {
 			float exponent       = static_cast<float>(c) / static_cast<float>(TANK_CHANNELS);
 			m_tankBaseSamples[c] = std::max(baseSamples * std::pow(2.0f, exponent), 1.0f);
 
-			size_t bufLen = static_cast<size_t>(std::ceil(m_tankBaseSamples[c] * maxModSamples)) + 2;
+			size_t bufLen = static_cast<size_t>(std::ceil(m_tankBaseSamples[c] + maxModSamples)) + 2;
 			m_tankDelays[c].buffer.assign(bufLen, 0.0f);
 			m_tankDelays[c].writeIndex = 0;
 
