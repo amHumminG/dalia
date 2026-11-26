@@ -21,9 +21,9 @@ namespace dalia {
     constexpr size_t MAX_STR_LEN_ASSET_PATH = 256;
 
     enum class SoundType : uint8_t {
-        None = 0,
-        Resident = 1, // The entire audio file is decompressed and loaded into RAM.
-        Stream = 2 // The audio data is read from disk in chunks.
+        None     = 0, 
+        Resident = 1, 
+        Stream   = 2  
     };
 
     struct SoundHandle {

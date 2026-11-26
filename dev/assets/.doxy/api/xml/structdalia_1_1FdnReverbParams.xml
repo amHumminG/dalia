@@ -12,6 +12,7 @@
         <qualifiedname>dalia::FdnReverbParams::decayTimeSeconds</qualifiedname>
         <initializer>= 4.0f</initializer>
         <briefdescription>
+<para>Time for reverb tail to decay by 60 dB (T60): 0.1 - 15.0 s. </para>
         </briefdescription>
         <detaileddescription>
         </detaileddescription>
@@ -27,6 +28,7 @@
         <qualifiedname>dalia::FdnReverbParams::roomSize</qualifiedname>
         <initializer>= 0.6f</initializer>
         <briefdescription>
+<para>Virtual space scale controlling echo spacing: 0.25 - 1.0. </para>
         </briefdescription>
         <detaileddescription>
         </detaileddescription>
@@ -42,6 +44,7 @@
         <qualifiedname>dalia::FdnReverbParams::dampingHz</qualifiedname>
         <initializer>= 2500.0f</initializer>
         <briefdescription>
+<para>High-frequency damping lowpass cutoff: 500 - 20000 Hz. </para>
         </briefdescription>
         <detaileddescription>
         </detaileddescription>
@@ -57,6 +60,7 @@
         <qualifiedname>dalia::FdnReverbParams::preDelayMs</qualifiedname>
         <initializer>= 20.0f</initializer>
         <briefdescription>
+<para>Delay before reflections begin: 0 - 100 ms. </para>
         </briefdescription>
         <detaileddescription>
         </detaileddescription>
@@ -72,6 +76,7 @@
         <qualifiedname>dalia::FdnReverbParams::dryMix</qualifiedname>
         <initializer>= 1.0f</initializer>
         <briefdescription>
+<para>Linear gain of the unprocessed input signal: 0.0 - 1.0. </para>
         </briefdescription>
         <detaileddescription>
         </detaileddescription>
@@ -87,6 +92,7 @@
         <qualifiedname>dalia::FdnReverbParams::wetMix</qualifiedname>
         <initializer>= 0.35f</initializer>
         <briefdescription>
+<para>Linear gain of the processed reverb signal: 0.0 - 1.0. </para>
         </briefdescription>
         <detaileddescription>
         </detaileddescription>
@@ -102,6 +108,7 @@
         <qualifiedname>dalia::FdnReverbParams::lowCutHz</qualifiedname>
         <initializer>= 80.0f</initializer>
         <briefdescription>
+<para>Sub-bass buildup low-shelf cutoff: 20 - 500 Hz. </para>
         </briefdescription>
         <detaileddescription>
         </detaileddescription>
@@ -115,8 +122,9 @@
         <argsstring></argsstring>
         <name>modulation</name>
         <qualifiedname>dalia::FdnReverbParams::modulation</qualifiedname>
-        <initializer>= 0.35f</initializer>
+        <initializer>= 0.5f</initializer>
         <briefdescription>
+<para>Tank delay LFO modulation depth: 0.0 - 1.0. </para>
         </briefdescription>
         <detaileddescription>
         </detaileddescription>
@@ -132,6 +140,7 @@
         <qualifiedname>dalia::FdnReverbParams::freeze</qualifiedname>
         <initializer>= false</initializer>
         <briefdescription>
+<para>Sustains the current tail infinitely without new input: true/false. </para>
         </briefdescription>
         <detaileddescription>
         </detaileddescription>

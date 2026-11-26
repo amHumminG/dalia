@@ -1134,55 +1134,55 @@
 </tr>
 <tr>
 <td style="text-align: right;">uint32_t</td>
-<td style="text-align: left;"><a href="#variable-biquadcapacity"><strong>biquadCapacity</strong></a>   = <code>32</code><br></td>
+<td style="text-align: left;"><a href="#variable-biquadcapacity"><strong>biquadCapacity</strong></a>   = <code>32</code><br><em>The maximum number of biquad filters that can exist at once.</em></td>
 </tr>
 <tr>
 <td style="text-align: right;">uint32_t</td>
-<td style="text-align: left;"><a href="#variable-buscapacity"><strong>busCapacity</strong></a>   = <code>64</code><br></td>
+<td style="text-align: left;"><a href="#variable-buscapacity"><strong>busCapacity</strong></a>   = <code>64</code><br><em>The maximum number of buses that can exist at once.</em></td>
 </tr>
 <tr>
 <td style="text-align: right;"><a href="../namespacedalia/#enum-coordinatesystem"><strong>CoordinateSystem</strong></a></td>
-<td style="text-align: left;"><a href="#variable-coordinatesystem"><strong>coordinateSystem</strong></a>   = <code>CoordinateSystem::RightHanded</code><br></td>
+<td style="text-align: left;"><a href="#variable-coordinatesystem"><strong>coordinateSystem</strong></a>   = <code>CoordinateSystem::RightHanded</code><br><em>The coordinate system used for spatial audio.</em></td>
 </tr>
 <tr>
 <td style="text-align: right;">uint32_t</td>
-<td style="text-align: left;"><a href="#variable-fdnreverbcapacity"><strong>fdnReverbCapacity</strong></a>   = <code>32</code><br></td>
+<td style="text-align: left;"><a href="#variable-fdnreverbcapacity"><strong>fdnReverbCapacity</strong></a>   = <code>32</code><br><em>The maximum number of FDN reverb's that can exist at once.</em></td>
 </tr>
 <tr>
 <td style="text-align: right;">uint32_t</td>
-<td style="text-align: left;"><a href="#variable-listenercapacity"><strong>listenerCapacity</strong></a>   = <code>1</code><br></td>
+<td style="text-align: left;"><a href="#variable-listenercapacity"><strong>listenerCapacity</strong></a>   = <code>1</code><br><em>The maximum number of listeners that can exist at once (min=1 max=4).</em></td>
 </tr>
 <tr>
 <td style="text-align: right;"><a href="../namespacedalia/#typedef-logcallback"><strong>LogCallback</strong></a></td>
-<td style="text-align: left;"><a href="#variable-logcallback"><strong>logCallback</strong></a>   = <code>nullptr</code><br></td>
+<td style="text-align: left;"><a href="#variable-logcallback"><strong>logCallback</strong></a>   = <code>nullptr</code><br><em>Optional log sink.</em></td>
 </tr>
 <tr>
 <td style="text-align: right;"><a href="../namespacedalia/#enum-loglevel"><strong>LogLevel</strong></a></td>
-<td style="text-align: left;"><a href="#variable-loglevel"><strong>logLevel</strong></a>   = <code>LogLevel::Warning</code><br></td>
+<td style="text-align: left;"><a href="#variable-loglevel"><strong>logLevel</strong></a>   = <code>LogLevel::Warning</code><br><em>The level at which the engine will log messages.</em></td>
 </tr>
 <tr>
 <td style="text-align: right;">uint32_t</td>
-<td style="text-align: left;"><a href="#variable-residentsoundcapacity"><strong>residentSoundCapacity</strong></a>   = <code>256</code><br></td>
+<td style="text-align: left;"><a href="#variable-residentsoundcapacity"><strong>residentSoundCapacity</strong></a>   = <code>256</code><br><em>The number of resident sounds the engine is able to hold loaded at once.</em></td>
 </tr>
 <tr>
 <td style="text-align: right;">uint32_t</td>
-<td style="text-align: left;"><a href="#variable-samplerate"><strong>sampleRate</strong></a>   = <code>48000</code><br></td>
+<td style="text-align: left;"><a href="#variable-samplerate"><strong>sampleRate</strong></a>   = <code>48000</code><br><em>Internal mixing sample rate.</em></td>
 </tr>
 <tr>
 <td style="text-align: right;">const char *</td>
-<td style="text-align: left;"><a href="#variable-startupoutputdeviceid"><strong>startupOutputDeviceId</strong></a>   = <code>"default"</code><br></td>
+<td style="text-align: left;"><a href="#variable-startupoutputdeviceid"><strong>startupOutputDeviceId</strong></a>   = <code>"default"</code><br><em>Output device that should attempt to start on initialization.</em></td>
 </tr>
 <tr>
 <td style="text-align: right;">uint32_t</td>
-<td style="text-align: left;"><a href="#variable-streamcapacity"><strong>streamCapacity</strong></a>   = <code>32</code><br></td>
+<td style="text-align: left;"><a href="#variable-streamcapacity"><strong>streamCapacity</strong></a>   = <code>64</code><br><em>The maximum number of playback instances playing stream sounds at once.</em></td>
 </tr>
 <tr>
 <td style="text-align: right;">uint32_t</td>
-<td style="text-align: left;"><a href="#variable-streamsoundcapacity"><strong>streamSoundCapacity</strong></a>   = <code>256</code><br></td>
+<td style="text-align: left;"><a href="#variable-streamsoundcapacity"><strong>streamSoundCapacity</strong></a>   = <code>256</code><br><em>The number of stream sounds the engine is able to hold loaded at once.</em></td>
 </tr>
 <tr>
 <td style="text-align: right;">uint32_t</td>
-<td style="text-align: left;"><a href="#variable-voicecapacity"><strong>voiceCapacity</strong></a>   = <code>128</code><br></td>
+<td style="text-align: left;"><a href="#variable-voicecapacity"><strong>voiceCapacity</strong></a>   = <code>128</code><br><em>The maximum number of playback instances that can exist at once.</em></td>
 </tr>
 </tbody>
 </table>
@@ -1193,68 +1193,81 @@
 <hr>
 
 <h3 id="variable-biquadcapacity">variable biquadCapacity<a class="headerlink" href="#variable-biquadcapacity" title="Permanent link">&para;</a></h3>
+<p><em>The maximum number of biquad filters that can exist at once.</em> 
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="kt">uint32_t</span><span class="w"> </span><span class="n">dalia</span><span class="o">::</span><span class="n">EngineConfig</span><span class="o">::</span><span class="n">biquadCapacity</span><span class="p">;</span>
-</code></pre></div>
+</code></pre></div></p>
 <hr>
 
 <h3 id="variable-buscapacity">variable busCapacity<a class="headerlink" href="#variable-buscapacity" title="Permanent link">&para;</a></h3>
+<p><em>The maximum number of buses that can exist at once.</em> 
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kt">uint32_t</span><span class="w"> </span><span class="n">dalia</span><span class="o">::</span><span class="n">EngineConfig</span><span class="o">::</span><span class="n">busCapacity</span><span class="p">;</span>
-</code></pre></div>
+</code></pre></div></p>
 <hr>
 
 <h3 id="variable-coordinatesystem">variable coordinateSystem<a class="headerlink" href="#variable-coordinatesystem" title="Permanent link">&para;</a></h3>
+<p><em>The coordinate system used for spatial audio.</em> 
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="n">CoordinateSystem</span><span class="w"> </span><span class="n">dalia</span><span class="o">::</span><span class="n">EngineConfig</span><span class="o">::</span><span class="n">coordinateSystem</span><span class="p">;</span>
-</code></pre></div>
+</code></pre></div></p>
 <hr>
 
 <h3 id="variable-fdnreverbcapacity">variable fdnReverbCapacity<a class="headerlink" href="#variable-fdnreverbcapacity" title="Permanent link">&para;</a></h3>
+<p><em>The maximum number of FDN reverb's that can exist at once.</em> 
 <div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="kt">uint32_t</span><span class="w"> </span><span class="n">dalia</span><span class="o">::</span><span class="n">EngineConfig</span><span class="o">::</span><span class="n">fdnReverbCapacity</span><span class="p">;</span>
-</code></pre></div>
+</code></pre></div></p>
 <hr>
 
 <h3 id="variable-listenercapacity">variable listenerCapacity<a class="headerlink" href="#variable-listenercapacity" title="Permanent link">&para;</a></h3>
+<p><em>The maximum number of listeners that can exist at once (min=1 max=4).</em> 
 <div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="kt">uint32_t</span><span class="w"> </span><span class="n">dalia</span><span class="o">::</span><span class="n">EngineConfig</span><span class="o">::</span><span class="n">listenerCapacity</span><span class="p">;</span>
-</code></pre></div>
+</code></pre></div></p>
 <hr>
 
 <h3 id="variable-logcallback">variable logCallback<a class="headerlink" href="#variable-logcallback" title="Permanent link">&para;</a></h3>
+<p><em>Optional log sink.</em> 
 <div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="n">LogCallback</span><span class="w"> </span><span class="n">dalia</span><span class="o">::</span><span class="n">EngineConfig</span><span class="o">::</span><span class="n">logCallback</span><span class="p">;</span>
-</code></pre></div>
+</code></pre></div></p>
 <hr>
 
 <h3 id="variable-loglevel">variable logLevel<a class="headerlink" href="#variable-loglevel" title="Permanent link">&para;</a></h3>
+<p><em>The level at which the engine will log messages.</em> 
 <div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="n">LogLevel</span><span class="w"> </span><span class="n">dalia</span><span class="o">::</span><span class="n">EngineConfig</span><span class="o">::</span><span class="n">logLevel</span><span class="p">;</span>
-</code></pre></div>
+</code></pre></div></p>
 <hr>
 
 <h3 id="variable-residentsoundcapacity">variable residentSoundCapacity<a class="headerlink" href="#variable-residentsoundcapacity" title="Permanent link">&para;</a></h3>
+<p><em>The number of resident sounds the engine is able to hold loaded at once.</em> 
 <div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="kt">uint32_t</span><span class="w"> </span><span class="n">dalia</span><span class="o">::</span><span class="n">EngineConfig</span><span class="o">::</span><span class="n">residentSoundCapacity</span><span class="p">;</span>
-</code></pre></div>
+</code></pre></div></p>
 <hr>
 
 <h3 id="variable-samplerate">variable sampleRate<a class="headerlink" href="#variable-samplerate" title="Permanent link">&para;</a></h3>
+<p><em>Internal mixing sample rate.</em> 
 <div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="kt">uint32_t</span><span class="w"> </span><span class="n">dalia</span><span class="o">::</span><span class="n">EngineConfig</span><span class="o">::</span><span class="n">sampleRate</span><span class="p">;</span>
-</code></pre></div>
+</code></pre></div></p>
 <hr>
 
 <h3 id="variable-startupoutputdeviceid">variable startupOutputDeviceId<a class="headerlink" href="#variable-startupoutputdeviceid" title="Permanent link">&para;</a></h3>
+<p><em>Output device that should attempt to start on initialization.</em> 
 <div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="k">const</span><span class="w"> </span><span class="kt">char</span><span class="o">*</span><span class="w"> </span><span class="n">dalia</span><span class="o">::</span><span class="n">EngineConfig</span><span class="o">::</span><span class="n">startupOutputDeviceId</span><span class="p">;</span>
-</code></pre></div>
+</code></pre></div></p>
 <hr>
 
 <h3 id="variable-streamcapacity">variable streamCapacity<a class="headerlink" href="#variable-streamcapacity" title="Permanent link">&para;</a></h3>
+<p><em>The maximum number of playback instances playing stream sounds at once.</em> 
 <div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="kt">uint32_t</span><span class="w"> </span><span class="n">dalia</span><span class="o">::</span><span class="n">EngineConfig</span><span class="o">::</span><span class="n">streamCapacity</span><span class="p">;</span>
-</code></pre></div>
+</code></pre></div></p>
 <hr>
 
 <h3 id="variable-streamsoundcapacity">variable streamSoundCapacity<a class="headerlink" href="#variable-streamsoundcapacity" title="Permanent link">&para;</a></h3>
+<p><em>The number of stream sounds the engine is able to hold loaded at once.</em> 
 <div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="kt">uint32_t</span><span class="w"> </span><span class="n">dalia</span><span class="o">::</span><span class="n">EngineConfig</span><span class="o">::</span><span class="n">streamSoundCapacity</span><span class="p">;</span>
-</code></pre></div>
+</code></pre></div></p>
 <hr>
 
 <h3 id="variable-voicecapacity">variable voiceCapacity<a class="headerlink" href="#variable-voicecapacity" title="Permanent link">&para;</a></h3>
+<p><em>The maximum number of playback instances that can exist at once.</em> 
 <div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="kt">uint32_t</span><span class="w"> </span><span class="n">dalia</span><span class="o">::</span><span class="n">EngineConfig</span><span class="o">::</span><span class="n">voiceCapacity</span><span class="p">;</span>
-</code></pre></div>
+</code></pre></div></p>
 <hr>
 
 <hr />

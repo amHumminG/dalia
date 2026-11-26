@@ -41,8 +41,8 @@ _Configuration parameters for a biquadratic IIR filter._
 
 | Type | Name |
 | ---: | :--- |
-|  float | [**frequency**](#variable-frequency)   = `20000.0f`<br> |
-|  float | [**resonance**](#variable-resonance)   = `0.707f`<br> |
+|  float | [**frequency**](#variable-frequency)   = `20000.0f`<br>_The cutoff or center frequency of the filter: 20.0 - 20000 Hz._  |
+|  float | [**resonance**](#variable-resonance)   = `0.707f`<br>_The Q-factor of the filter: 0.1 - 10.0._  |
 |  enum [**dalia::BiquadParams::Type**](structdalia_1_1BiquadParams.md#enum-type) | [**type**](#variable-type)   = `Type::LowPass`<br> |
 
 
@@ -120,6 +120,7 @@ enum dalia::BiquadParams::Type {
 
 ### variable frequency 
 
+_The cutoff or center frequency of the filter: 20.0 - 20000 Hz._ 
 ```C++
 float dalia::BiquadParams::frequency;
 ```
@@ -133,6 +134,7 @@ float dalia::BiquadParams::frequency;
 
 ### variable resonance 
 
+_The Q-factor of the filter: 0.1 - 10.0._ 
 ```C++
 float dalia::BiquadParams::resonance;
 ```

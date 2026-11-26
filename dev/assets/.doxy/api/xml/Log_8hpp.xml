@@ -2,6 +2,7 @@
 <doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.15.0" xml:lang="en-US">
   <compounddef id="Log_8hpp" kind="file" language="C++">
     <compoundname>Log.hpp</compoundname>
+    <includes local="no">cstdint</includes>
     <includes local="no">functional</includes>
     <includedby refid="Engine_8hpp" local="yes">dalia/Engine.hpp</includedby>
     <includedby refid="dalia_8hpp" local="yes">dalia/dalia.hpp</includedby>
@@ -11,8 +12,13 @@
         <link refid="Log_8hpp"/>
         <childnode refid="2" relation="include">
         </childnode>
+        <childnode refid="3" relation="include">
+        </childnode>
       </node>
       <node id="2">
+        <label>cstdint</label>
+      </node>
+      <node id="3">
         <label>functional</label>
       </node>
     </incdepgraph>
@@ -46,21 +52,22 @@
 <codeline lineno="1"><highlight class="preprocessor">#pragma<sp/>once</highlight><highlight class="normal"></highlight></codeline>
 <codeline lineno="2"><highlight class="normal"></highlight></codeline>
 <codeline lineno="5"><highlight class="normal"></highlight></codeline>
-<codeline lineno="6"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;functional&gt;</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="7"><highlight class="normal"></highlight></codeline>
-<codeline lineno="8"><highlight class="normal"></highlight><highlight class="keyword">namespace<sp/></highlight><highlight class="normal"><ref refid="namespacedalia" kindref="compound">dalia</ref><sp/>{</highlight></codeline>
-<codeline lineno="9"><highlight class="normal"></highlight></codeline>
-<codeline lineno="11" refid="namespacedalia_1a40292ca92ab9ebce52df2a4544a27c61" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">enum<sp/>class</highlight><highlight class="normal"><sp/><ref refid="namespacedalia_1a40292ca92ab9ebce52df2a4544a27c61" kindref="member">LogLevel</ref><sp/>:<sp/></highlight><highlight class="keywordtype">int</highlight><highlight class="normal"><sp/>{</highlight></codeline>
-<codeline lineno="12" refid="namespacedalia_1a40292ca92ab9ebce52df2a4544a27c61aa603905470e2a5b8c13e96b579ef0dba" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><ref refid="namespacedalia_1a40292ca92ab9ebce52df2a4544a27c61aa603905470e2a5b8c13e96b579ef0dba" kindref="member">Debug</ref><sp/><sp/><sp/><sp/><sp/><sp/><sp/>=<sp/>0,<sp/></highlight><highlight class="comment">//<sp/>Logs<sp/>most<sp/>core<sp/>actions.<sp/>Suitable<sp/>for<sp/>engine<sp/>developers.</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="13" refid="namespacedalia_1a40292ca92ab9ebce52df2a4544a27c61a4059b0251f66a18cb56f544728796875" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><ref refid="namespacedalia_1a40292ca92ab9ebce52df2a4544a27c61a4059b0251f66a18cb56f544728796875" kindref="member">Info</ref><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>=<sp/>1,<sp/></highlight><highlight class="comment">//<sp/>Logs<sp/>core<sp/>engine<sp/>events<sp/>and<sp/>state<sp/>changes.</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="14" refid="namespacedalia_1a40292ca92ab9ebce52df2a4544a27c61a0eaadb4fcb48a0a0ed7bc9868be9fbaa" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><ref refid="namespacedalia_1a40292ca92ab9ebce52df2a4544a27c61a0eaadb4fcb48a0a0ed7bc9868be9fbaa" kindref="member">Warning</ref><sp/><sp/><sp/><sp/><sp/>=<sp/>2,<sp/></highlight><highlight class="comment">//<sp/>Logs<sp/>non-fatal<sp/>issues<sp/>that<sp/>need<sp/>attention.</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="15" refid="namespacedalia_1a40292ca92ab9ebce52df2a4544a27c61a902b0d55fddef6f8d651fe1035b7d4bd" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><ref refid="namespacedalia_1a40292ca92ab9ebce52df2a4544a27c61a902b0d55fddef6f8d651fe1035b7d4bd" kindref="member">Error</ref><sp/><sp/><sp/><sp/><sp/><sp/><sp/>=<sp/>3,<sp/></highlight><highlight class="comment">//<sp/>Logs<sp/>failures<sp/>that<sp/>prevent<sp/>an<sp/>operation<sp/>from<sp/>succeeding.</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="16" refid="namespacedalia_1a40292ca92ab9ebce52df2a4544a27c61a278d01e5af56273bae1bb99a98b370cd" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><ref refid="namespacedalia_1a40292ca92ab9ebce52df2a4544a27c61a278d01e5af56273bae1bb99a98b370cd" kindref="member">Critical</ref><sp/><sp/><sp/><sp/>=<sp/>4,<sp/></highlight><highlight class="comment">//<sp/>Logs<sp/>unrecoverable<sp/>errors<sp/>and<sp/>fatal<sp/>states.</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="17" refid="namespacedalia_1a40292ca92ab9ebce52df2a4544a27c61a6adf97f83acf6453d4a6a4b1070f3754" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><ref refid="namespacedalia_1ad13a8e277604ee81ccc919a057bcae1ea6adf97f83acf6453d4a6a4b1070f3754" kindref="member">None</ref><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>=<sp/>5,<sp/></highlight><highlight class="comment">//<sp/>Disables<sp/>all<sp/>logging.</highlight><highlight class="normal"></highlight></codeline>
-<codeline lineno="18"><highlight class="normal"><sp/><sp/><sp/><sp/>};</highlight></codeline>
-<codeline lineno="19"><highlight class="normal"></highlight></codeline>
-<codeline lineno="28" refid="namespacedalia_1ae5450b99470312ce0815b5c9afe3344f" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">using<sp/></highlight><highlight class="normal"><ref refid="namespacedalia_1ae5450b99470312ce0815b5c9afe3344f" kindref="member">LogCallback</ref><sp/>=<sp/>std::function&lt;void(<ref refid="namespacedalia_1a40292ca92ab9ebce52df2a4544a27c61" kindref="member">LogLevel</ref><sp/>level,<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal">*<sp/>context,<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal">*<sp/>message)&gt;;</highlight></codeline>
-<codeline lineno="29"><highlight class="normal">}</highlight></codeline>
+<codeline lineno="6"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;cstdint&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="7"><highlight class="normal"></highlight><highlight class="preprocessor">#include<sp/>&lt;functional&gt;</highlight><highlight class="normal"></highlight></codeline>
+<codeline lineno="8"><highlight class="normal"></highlight></codeline>
+<codeline lineno="9"><highlight class="normal"></highlight><highlight class="keyword">namespace<sp/></highlight><highlight class="normal"><ref refid="namespacedalia" kindref="compound">dalia</ref><sp/>{</highlight></codeline>
+<codeline lineno="10"><highlight class="normal"></highlight></codeline>
+<codeline lineno="12" refid="namespacedalia_1a96d794f409637200ff9a424041720d32" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">enum<sp/>class</highlight><highlight class="normal"><sp/><ref refid="namespacedalia_1a96d794f409637200ff9a424041720d32" kindref="member">LogLevel</ref><sp/>:<sp/>uint8_t<sp/>{</highlight></codeline>
+<codeline lineno="13" refid="namespacedalia_1a96d794f409637200ff9a424041720d32aa603905470e2a5b8c13e96b579ef0dba" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><ref refid="namespacedalia_1a96d794f409637200ff9a424041720d32aa603905470e2a5b8c13e96b579ef0dba" kindref="member">Debug</ref><sp/><sp/><sp/><sp/><sp/><sp/><sp/>=<sp/>0,<sp/></highlight></codeline>
+<codeline lineno="14" refid="namespacedalia_1a96d794f409637200ff9a424041720d32a4059b0251f66a18cb56f544728796875" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><ref refid="namespacedalia_1a96d794f409637200ff9a424041720d32a4059b0251f66a18cb56f544728796875" kindref="member">Info</ref><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>=<sp/>1,<sp/></highlight></codeline>
+<codeline lineno="15" refid="namespacedalia_1a96d794f409637200ff9a424041720d32a0eaadb4fcb48a0a0ed7bc9868be9fbaa" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><ref refid="namespacedalia_1a96d794f409637200ff9a424041720d32a0eaadb4fcb48a0a0ed7bc9868be9fbaa" kindref="member">Warning</ref><sp/><sp/><sp/><sp/><sp/>=<sp/>2,<sp/></highlight></codeline>
+<codeline lineno="16" refid="namespacedalia_1a96d794f409637200ff9a424041720d32a902b0d55fddef6f8d651fe1035b7d4bd" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><ref refid="namespacedalia_1a96d794f409637200ff9a424041720d32a902b0d55fddef6f8d651fe1035b7d4bd" kindref="member">Error</ref><sp/><sp/><sp/><sp/><sp/><sp/><sp/>=<sp/>3,<sp/></highlight></codeline>
+<codeline lineno="17" refid="namespacedalia_1a96d794f409637200ff9a424041720d32a278d01e5af56273bae1bb99a98b370cd" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><ref refid="namespacedalia_1a96d794f409637200ff9a424041720d32a278d01e5af56273bae1bb99a98b370cd" kindref="member">Critical</ref><sp/><sp/><sp/><sp/>=<sp/>4,<sp/></highlight></codeline>
+<codeline lineno="18" refid="namespacedalia_1a96d794f409637200ff9a424041720d32a6adf97f83acf6453d4a6a4b1070f3754" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/><ref refid="namespacedalia_1ad13a8e277604ee81ccc919a057bcae1ea6adf97f83acf6453d4a6a4b1070f3754" kindref="member">None</ref><sp/><sp/><sp/><sp/><sp/><sp/><sp/><sp/>=<sp/>5,<sp/></highlight></codeline>
+<codeline lineno="19"><highlight class="normal"><sp/><sp/><sp/><sp/>};</highlight></codeline>
+<codeline lineno="20"><highlight class="normal"></highlight></codeline>
+<codeline lineno="29" refid="namespacedalia_1ae5450b99470312ce0815b5c9afe3344f" refkind="member"><highlight class="normal"><sp/><sp/><sp/><sp/></highlight><highlight class="keyword">using<sp/></highlight><highlight class="normal"><ref refid="namespacedalia_1ae5450b99470312ce0815b5c9afe3344f" kindref="member">LogCallback</ref><sp/>=<sp/>std::function&lt;void(<ref refid="namespacedalia_1a96d794f409637200ff9a424041720d32" kindref="member">LogLevel</ref><sp/>level,<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal">*<sp/>context,<sp/></highlight><highlight class="keyword">const</highlight><highlight class="normal"><sp/></highlight><highlight class="keywordtype">char</highlight><highlight class="normal">*<sp/>message)&gt;;</highlight></codeline>
+<codeline lineno="30"><highlight class="normal">}</highlight></codeline>
     </programlisting>
     <location file="dalia/Log.hpp"/>
   </compounddef>

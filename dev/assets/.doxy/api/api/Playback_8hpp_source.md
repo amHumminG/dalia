@@ -16,6 +16,12 @@
 
 namespace dalia {
 
+    struct Vec3 {
+        float x = 0.0f;
+        float y = 0.0f;
+        float z = 0.0f;
+    };
+
     struct PlaybackHandle {
     public:
         PlaybackHandle() = default;
@@ -64,40 +70,34 @@ namespace dalia {
     constexpr PlaybackHandle INVALID_PLAYBACK_HANDLE{};
 
     enum class PlaybackExitCondition : uint8_t {
-        None = 0,
-        NaturalEnd = 1, // Finished naturally.
-        ExplicitStop = 2, // Explicitly stopped by an API call.
-        Evicted = 3, // Stopped to make room for a playback instance with higher priority.
-        Error = 4, // Stopped by the engine due to an error.
+        None            = 0, 
+        NaturalEnd      = 1, 
+        ExplicitStop    = 2, 
+        Evicted         = 3, 
+        Error           = 4, 
     };
 
     using PlaybackExitCallback = std::function<void(PlaybackHandle playback, PlaybackExitCondition exitCondition)>;
 
     enum class AttenuationCurve : uint8_t {
-        InverseSquare,
-        Linear,
-        Quadratic
+        InverseSquare   = 0, 
+        Linear          = 1, 
+        Quadratic       = 2  
     };
 
     enum class DistanceMode : uint8_t {
-        FromListener, // Standard 3D (Evaluate distance from listener).
-        FromDistanceProbe // Evaluate distance from the listener's separate distance probe.
-    };
-
-    struct Vec3 {
-        float x = 0.0f;
-        float y = 0.0f;
-        float z = 0.0f;
+        FromListener        = 0, 
+        FromDistanceProbe   = 1  
     };
 
     struct Listener3DAttributes {
-        Vec3 position{0.0f, 0.0f, 0.0f}; // The world position that will be used for panning logic.
-        Vec3 distanceProbePosition{0.0f, 0.0f, 0.0f}; // The world position that will be used for attenuation logic
-        // if the distance mode of a playback instance is set to FromDistanceProbe.
-        Vec3 forward{0.0f, 0.0f, 1.0f}; // The direction the listener is facing.
-        Vec3 up{0.0f, 1.0f, 0.0f}; // The up direction from the listener position.
+        Vec3 position{0.0f, 0.0f, 0.0f};                
+        Vec3 distanceProbePosition{0.0f, 0.0f, 0.0f};   
 
-        Vec3 velocity{0.0f, 0.0f, 0.0f}; // The velocity of the listener.
+        Vec3 forward{0.0f, 0.0f, 1.0f};             
+        Vec3 up{0.0f, 1.0f, 0.0f};                      
+
+        Vec3 velocity{0.0f, 0.0f, 0.0f};                
     };
 
     inline constexpr Listener3DAttributes MakeListener3DAttributes(
@@ -131,10 +131,9 @@ namespace dalia {
     }
 
     enum class CoordinateSystem : uint8_t {
-        RightHanded = 0,
-        LeftHanded = 1
+        RightHanded = 0, 
+        LeftHanded  = 1  
     };
-
 }
 ```
 

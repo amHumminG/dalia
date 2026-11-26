@@ -10,6 +10,7 @@
 
 _Logging severity levels and callback signatures._ 
 
+* `#include <cstdint>`
 * `#include <functional>`
 
 

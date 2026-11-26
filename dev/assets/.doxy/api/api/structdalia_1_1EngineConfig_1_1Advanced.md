@@ -36,11 +36,11 @@
 
 | Type | Name |
 | ---: | :--- |
-|  size\_t | [**controlQueueCapacity**](#variable-controlqueuecapacity)   = `32`<br> |
-|  size\_t | [**loadQueueCapacity**](#variable-loadqueuecapacity)   = `128`<br> |
-|  size\_t | [**mixerQueueCapacity**](#variable-mixerqueuecapacity)   = `1024`<br> |
-|  uint32\_t | [**periodSizeFrames**](#variable-periodsizeframes)   = `512`<br> |
-|  size\_t | [**streamQueueCapacity**](#variable-streamqueuecapacity)   = `256`<br> |
+|  size\_t | [**controlQueueCapacity**](#variable-controlqueuecapacity)   = `32`<br>_Control-thread messaging queue capacities (must be power of 2)._  |
+|  size\_t | [**loadQueueCapacity**](#variable-loadqueuecapacity)   = `128`<br>_Load-thread messaging queue capacities (must be power of 2)._  |
+|  size\_t | [**mixerQueueCapacity**](#variable-mixerqueuecapacity)   = `1024`<br>_Mixer-thread messaging queue capacities (must be power of 2)._  |
+|  uint32\_t | [**periodSizeFrames**](#variable-periodsizeframes)   = `512`<br>_The number of frames per audio period._  |
+|  size\_t | [**streamQueueCapacity**](#variable-streamqueuecapacity)   = `256`<br>_Stream-thread messaging queue capacity (must be power of 2)._  |
 
 
 
@@ -92,6 +92,7 @@
 
 ### variable controlQueueCapacity 
 
+_Control-thread messaging queue capacities (must be power of 2)._ 
 ```C++
 size_t dalia::EngineConfig::Advanced::controlQueueCapacity;
 ```
@@ -105,6 +106,7 @@ size_t dalia::EngineConfig::Advanced::controlQueueCapacity;
 
 ### variable loadQueueCapacity 
 
+_Load-thread messaging queue capacities (must be power of 2)._ 
 ```C++
 size_t dalia::EngineConfig::Advanced::loadQueueCapacity;
 ```
@@ -118,6 +120,7 @@ size_t dalia::EngineConfig::Advanced::loadQueueCapacity;
 
 ### variable mixerQueueCapacity 
 
+_Mixer-thread messaging queue capacities (must be power of 2)._ 
 ```C++
 size_t dalia::EngineConfig::Advanced::mixerQueueCapacity;
 ```
@@ -131,6 +134,7 @@ size_t dalia::EngineConfig::Advanced::mixerQueueCapacity;
 
 ### variable periodSizeFrames 
 
+_The number of frames per audio period._ 
 ```C++
 uint32_t dalia::EngineConfig::Advanced::periodSizeFrames;
 ```
@@ -144,6 +148,7 @@ uint32_t dalia::EngineConfig::Advanced::periodSizeFrames;
 
 ### variable streamQueueCapacity 
 
+_Stream-thread messaging queue capacity (must be power of 2)._ 
 ```C++
 size_t dalia::EngineConfig::Advanced::streamQueueCapacity;
 ```

@@ -12,12 +12,13 @@
         <qualifiedname>dalia::EngineConfig::Advanced::periodSizeFrames</qualifiedname>
         <initializer>= 512</initializer>
         <briefdescription>
+<para>The number of frames per audio period. </para>
         </briefdescription>
         <detaileddescription>
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="dalia/Engine.hpp" line="45" column="10" bodyfile="dalia/Engine.hpp" bodystart="45" bodyend="-1"/>
+        <location file="dalia/Engine.hpp" line="46" column="10" bodyfile="dalia/Engine.hpp" bodystart="46" bodyend="-1"/>
       </memberdef>
       <memberdef kind="variable" id="structdalia_1_1EngineConfig_1_1Advanced_1a3d9b909bfc25eba87846718f4395de5a" prot="public" static="no" mutable="no">
         <type>size_t</type>
@@ -27,6 +28,7 @@
         <qualifiedname>dalia::EngineConfig::Advanced::mixerQueueCapacity</qualifiedname>
         <initializer>= 1024</initializer>
         <briefdescription>
+<para>Mixer-thread messaging queue capacities (must be power of 2). </para>
         </briefdescription>
         <detaileddescription>
         </detaileddescription>
@@ -42,6 +44,7 @@
         <qualifiedname>dalia::EngineConfig::Advanced::streamQueueCapacity</qualifiedname>
         <initializer>= 256</initializer>
         <briefdescription>
+<para>Stream-thread messaging queue capacity (must be power of 2). </para>
         </briefdescription>
         <detaileddescription>
         </detaileddescription>
@@ -57,6 +60,7 @@
         <qualifiedname>dalia::EngineConfig::Advanced::loadQueueCapacity</qualifiedname>
         <initializer>= 128</initializer>
         <briefdescription>
+<para>Load-thread messaging queue capacities (must be power of 2). </para>
         </briefdescription>
         <detaileddescription>
         </detaileddescription>
@@ -72,6 +76,7 @@
         <qualifiedname>dalia::EngineConfig::Advanced::controlQueueCapacity</qualifiedname>
         <initializer>= 32</initializer>
         <briefdescription>
+<para>Control-thread messaging queue capacities (must be power of 2). </para>
         </briefdescription>
         <detaileddescription>
         </detaileddescription>
@@ -85,7 +90,7 @@
     </briefdescription>
     <detaileddescription>
     </detaileddescription>
-    <location file="dalia/Engine.hpp" line="44" column="1" bodyfile="dalia/Engine.hpp" bodystart="44" bodyend="52"/>
+    <location file="dalia/Engine.hpp" line="45" column="1" bodyfile="dalia/Engine.hpp" bodystart="45" bodyend="52"/>
     <listofallmembers>
       <member refid="structdalia_1_1EngineConfig_1_1Advanced_1a7fa5ebe1c12209ab7c4a21782f203480" prot="public" virt="non-virtual"><scope>dalia::EngineConfig::Advanced</scope><name>controlQueueCapacity</name></member>
       <member refid="structdalia_1_1EngineConfig_1_1Advanced_1a5dadfff5e0bd5e56caf5949dfd9d3a43" prot="public" virt="non-virtual"><scope>dalia::EngineConfig::Advanced</scope><name>loadQueueCapacity</name></member>

@@ -1005,50 +1005,55 @@
 <tbody>
 <tr>
 <td style="text-align: right;">size_t</td>
-<td style="text-align: left;"><a href="#variable-controlqueuecapacity"><strong>controlQueueCapacity</strong></a>   = <code>32</code><br></td>
+<td style="text-align: left;"><a href="#variable-controlqueuecapacity"><strong>controlQueueCapacity</strong></a>   = <code>32</code><br><em>Control-thread messaging queue capacities (must be power of 2).</em></td>
 </tr>
 <tr>
 <td style="text-align: right;">size_t</td>
-<td style="text-align: left;"><a href="#variable-loadqueuecapacity"><strong>loadQueueCapacity</strong></a>   = <code>128</code><br></td>
+<td style="text-align: left;"><a href="#variable-loadqueuecapacity"><strong>loadQueueCapacity</strong></a>   = <code>128</code><br><em>Load-thread messaging queue capacities (must be power of 2).</em></td>
 </tr>
 <tr>
 <td style="text-align: right;">size_t</td>
-<td style="text-align: left;"><a href="#variable-mixerqueuecapacity"><strong>mixerQueueCapacity</strong></a>   = <code>1024</code><br></td>
+<td style="text-align: left;"><a href="#variable-mixerqueuecapacity"><strong>mixerQueueCapacity</strong></a>   = <code>1024</code><br><em>Mixer-thread messaging queue capacities (must be power of 2).</em></td>
 </tr>
 <tr>
 <td style="text-align: right;">uint32_t</td>
-<td style="text-align: left;"><a href="#variable-periodsizeframes"><strong>periodSizeFrames</strong></a>   = <code>512</code><br></td>
+<td style="text-align: left;"><a href="#variable-periodsizeframes"><strong>periodSizeFrames</strong></a>   = <code>512</code><br><em>The number of frames per audio period.</em></td>
 </tr>
 <tr>
 <td style="text-align: right;">size_t</td>
-<td style="text-align: left;"><a href="#variable-streamqueuecapacity"><strong>streamQueueCapacity</strong></a>   = <code>256</code><br></td>
+<td style="text-align: left;"><a href="#variable-streamqueuecapacity"><strong>streamQueueCapacity</strong></a>   = <code>256</code><br><em>Stream-thread messaging queue capacity (must be power of 2).</em></td>
 </tr>
 </tbody>
 </table>
 <h2 id="public-attributes-documentation">Public Attributes Documentation<a class="headerlink" href="#public-attributes-documentation" title="Permanent link">&para;</a></h2>
 <h3 id="variable-controlqueuecapacity">variable controlQueueCapacity<a class="headerlink" href="#variable-controlqueuecapacity" title="Permanent link">&para;</a></h3>
+<p><em>Control-thread messaging queue capacities (must be power of 2).</em> 
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kt">size_t</span><span class="w"> </span><span class="n">dalia</span><span class="o">::</span><span class="n">EngineConfig</span><span class="o">::</span><span class="n">Advanced</span><span class="o">::</span><span class="n">controlQueueCapacity</span><span class="p">;</span>
-</code></pre></div>
+</code></pre></div></p>
 <hr>
 
 <h3 id="variable-loadqueuecapacity">variable loadQueueCapacity<a class="headerlink" href="#variable-loadqueuecapacity" title="Permanent link">&para;</a></h3>
+<p><em>Load-thread messaging queue capacities (must be power of 2).</em> 
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="kt">size_t</span><span class="w"> </span><span class="n">dalia</span><span class="o">::</span><span class="n">EngineConfig</span><span class="o">::</span><span class="n">Advanced</span><span class="o">::</span><span class="n">loadQueueCapacity</span><span class="p">;</span>
-</code></pre></div>
+</code></pre></div></p>
 <hr>
 
 <h3 id="variable-mixerqueuecapacity">variable mixerQueueCapacity<a class="headerlink" href="#variable-mixerqueuecapacity" title="Permanent link">&para;</a></h3>
+<p><em>Mixer-thread messaging queue capacities (must be power of 2).</em> 
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kt">size_t</span><span class="w"> </span><span class="n">dalia</span><span class="o">::</span><span class="n">EngineConfig</span><span class="o">::</span><span class="n">Advanced</span><span class="o">::</span><span class="n">mixerQueueCapacity</span><span class="p">;</span>
-</code></pre></div>
+</code></pre></div></p>
 <hr>
 
 <h3 id="variable-periodsizeframes">variable periodSizeFrames<a class="headerlink" href="#variable-periodsizeframes" title="Permanent link">&para;</a></h3>
+<p><em>The number of frames per audio period.</em> 
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="kt">uint32_t</span><span class="w"> </span><span class="n">dalia</span><span class="o">::</span><span class="n">EngineConfig</span><span class="o">::</span><span class="n">Advanced</span><span class="o">::</span><span class="n">periodSizeFrames</span><span class="p">;</span>
-</code></pre></div>
+</code></pre></div></p>
 <hr>
 
 <h3 id="variable-streamqueuecapacity">variable streamQueueCapacity<a class="headerlink" href="#variable-streamqueuecapacity" title="Permanent link">&para;</a></h3>
+<p><em>Stream-thread messaging queue capacity (must be power of 2).</em> 
 <div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="kt">size_t</span><span class="w"> </span><span class="n">dalia</span><span class="o">::</span><span class="n">EngineConfig</span><span class="o">::</span><span class="n">Advanced</span><span class="o">::</span><span class="n">streamQueueCapacity</span><span class="p">;</span>
-</code></pre></div>
+</code></pre></div></p>
 <hr>
 
 <hr />

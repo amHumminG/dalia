@@ -52,7 +52,7 @@
 | enum uint8\_t | [**EffectType**](#enum-effecttype)  <br>_Defines the available DSP effect algorithms._  |
 | typedef uint32\_t | [**ListenerMask**](#typedef-listenermask)  <br>_Routing mask used to target a specific listener. Can be combined to target multiple listeners using bitwise OR._  |
 | typedef std::function&lt; void([**LogLevel**](namespacedalia.md#enum-loglevel) level, const char \*context, const char \*message)&gt; | [**LogCallback**](#typedef-logcallback)  <br>_Defines the signature for custom logging sinks._  |
-| enum int | [**LogLevel**](#enum-loglevel)  <br>_The level at which the DALIA audio engine should produce log messages._  |
+| enum uint8\_t | [**LogLevel**](#enum-loglevel)  <br>_The level at which the DALIA audio engine should produce log messages._  |
 | typedef std::function&lt; void([**PlaybackHandle**](structdalia_1_1PlaybackHandle.md) playback, [**PlaybackExitCondition**](namespacedalia.md#enum-playbackexitcondition) exitCondition)&gt; | [**PlaybackExitCallback**](#typedef-playbackexitcallback)  <br>_Defines the signature for playback instance termination callbacks._  |
 | enum uint8\_t | [**PlaybackExitCondition**](#enum-playbackexitcondition)  <br>_The condition under which a playback instance was stopped._  |
 | enum int | [**Result**](#enum-result)  <br>_Return codes for the DALIA API._  |
@@ -168,9 +168,9 @@ If provided when requesting an asset load, this function executes when the async
 _Curve used to calculate distance attenuation._ 
 ```C++
 enum dalia::AttenuationCurve {
-    InverseSquare,
-    Linear,
-    Quadratic
+    InverseSquare = 0,
+    Linear = 1,
+    Quadratic = 2
 };
 ```
 
@@ -203,8 +203,8 @@ enum dalia::CoordinateSystem {
 _Mode used to determine what listener position to use when calculating distance attenuation._ 
 ```C++
 enum dalia::DistanceMode {
-    FromListener,
-    FromDistanceProbe
+    FromListener = 0,
+    FromDistanceProbe = 1
 };
 ```
 

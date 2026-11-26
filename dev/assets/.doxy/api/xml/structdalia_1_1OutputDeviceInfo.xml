@@ -11,6 +11,7 @@
         <name>name</name>
         <qualifiedname>dalia::OutputDeviceInfo::name</qualifiedname>
         <briefdescription>
+<para>Readable device name. </para>
         </briefdescription>
         <detaileddescription>
         </detaileddescription>
@@ -25,6 +26,7 @@
         <name>identifier</name>
         <qualifiedname>dalia::OutputDeviceInfo::identifier</qualifiedname>
         <briefdescription>
+<para>OS-level identifier. </para>
         </briefdescription>
         <detaileddescription>
         </detaileddescription>
@@ -40,6 +42,7 @@
         <qualifiedname>dalia::OutputDeviceInfo::isDefault</qualifiedname>
         <initializer>= false</initializer>
         <briefdescription>
+<para>True if the device is set as OS default. </para>
         </briefdescription>
         <detaileddescription>
         </detaileddescription>

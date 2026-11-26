@@ -36,9 +36,9 @@ _Contains metadata for an audio output device._
 
 | Type | Name |
 | ---: | :--- |
-|  char | [**identifier**](#variable-identifier)  <br> |
-|  bool | [**isDefault**](#variable-isdefault)   = `false`<br> |
-|  char | [**name**](#variable-name)  <br> |
+|  char | [**identifier**](#variable-identifier)  <br>_OS-level identifier._  |
+|  bool | [**isDefault**](#variable-isdefault)   = `false`<br>_True if the device is set as OS default._  |
+|  char | [**name**](#variable-name)  <br>_Readable device name._  |
 
 
 
@@ -90,6 +90,7 @@ _Contains metadata for an audio output device._
 
 ### variable identifier 
 
+_OS-level identifier._ 
 ```C++
 char dalia::OutputDeviceInfo::identifier[MAX_STR_LEN_DEVICE];
 ```
@@ -103,6 +104,7 @@ char dalia::OutputDeviceInfo::identifier[MAX_STR_LEN_DEVICE];
 
 ### variable isDefault 
 
+_True if the device is set as OS default._ 
 ```C++
 bool dalia::OutputDeviceInfo::isDefault;
 ```
@@ -116,6 +118,7 @@ bool dalia::OutputDeviceInfo::isDefault;
 
 ### variable name 
 
+_Readable device name._ 
 ```C++
 char dalia::OutputDeviceInfo::name[MAX_STR_LEN_DEVICE];
 ```

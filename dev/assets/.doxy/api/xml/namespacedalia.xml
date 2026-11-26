@@ -8,8 +8,8 @@
     <innerclass refid="structdalia_1_1FdnReverbParams" prot="public">dalia::FdnReverbParams</innerclass>
     <innerclass refid="structdalia_1_1EngineConfig" prot="public">dalia::EngineConfig</innerclass>
     <innerclass refid="classdalia_1_1Engine" prot="public">dalia::Engine</innerclass>
-    <innerclass refid="structdalia_1_1PlaybackHandle" prot="public">dalia::PlaybackHandle</innerclass>
     <innerclass refid="structdalia_1_1Vec3" prot="public">dalia::Vec3</innerclass>
+    <innerclass refid="structdalia_1_1PlaybackHandle" prot="public">dalia::PlaybackHandle</innerclass>
     <innerclass refid="structdalia_1_1Listener3DAttributes" prot="public">dalia::Listener3DAttributes</innerclass>
     <innerclass refid="structdalia_1_1SoundHandle" prot="public">dalia::SoundHandle</innerclass>
     <sectiondef kind="enum">
@@ -21,6 +21,7 @@
           <name>None</name>
           <initializer>= 0</initializer>
           <briefdescription>
+<para>Sentinel value. </para>
           </briefdescription>
           <detaileddescription>
           </detaileddescription>
@@ -29,6 +30,7 @@
           <name>Biquad</name>
           <initializer>= 1</initializer>
           <briefdescription>
+<para>Biquadratic IIR filter. </para>
           </briefdescription>
           <detaileddescription>
           </detaileddescription>
@@ -37,6 +39,7 @@
           <name>FdnReverb</name>
           <initializer>= 2</initializer>
           <briefdescription>
+<para>Feedback Delay Network Reverb. </para>
           </briefdescription>
           <detaileddescription>
           </detaileddescription>
@@ -50,54 +53,60 @@
         </inbodydescription>
         <location file="dalia/Effect.hpp" line="10" column="1" bodyfile="dalia/Effect.hpp" bodystart="10" bodyend="14"/>
       </memberdef>
-      <memberdef kind="enum" id="namespacedalia_1a40292ca92ab9ebce52df2a4544a27c61" prot="public" static="no" strong="yes">
-        <type>int</type>
+      <memberdef kind="enum" id="namespacedalia_1a96d794f409637200ff9a424041720d32" prot="public" static="no" strong="yes">
+        <type>uint8_t</type>
         <name>LogLevel</name>
         <qualifiedname>dalia::LogLevel</qualifiedname>
-        <enumvalue id="namespacedalia_1a40292ca92ab9ebce52df2a4544a27c61aa603905470e2a5b8c13e96b579ef0dba" prot="public">
+        <enumvalue id="namespacedalia_1a96d794f409637200ff9a424041720d32aa603905470e2a5b8c13e96b579ef0dba" prot="public">
           <name>Debug</name>
           <initializer>= 0</initializer>
           <briefdescription>
+<para>Logs most core actions. Suitable for engine developers. </para>
           </briefdescription>
           <detaileddescription>
           </detaileddescription>
         </enumvalue>
-        <enumvalue id="namespacedalia_1a40292ca92ab9ebce52df2a4544a27c61a4059b0251f66a18cb56f544728796875" prot="public">
+        <enumvalue id="namespacedalia_1a96d794f409637200ff9a424041720d32a4059b0251f66a18cb56f544728796875" prot="public">
           <name>Info</name>
           <initializer>= 1</initializer>
           <briefdescription>
+<para>Logs core engine events and state changes. </para>
           </briefdescription>
           <detaileddescription>
           </detaileddescription>
         </enumvalue>
-        <enumvalue id="namespacedalia_1a40292ca92ab9ebce52df2a4544a27c61a0eaadb4fcb48a0a0ed7bc9868be9fbaa" prot="public">
+        <enumvalue id="namespacedalia_1a96d794f409637200ff9a424041720d32a0eaadb4fcb48a0a0ed7bc9868be9fbaa" prot="public">
           <name>Warning</name>
           <initializer>= 2</initializer>
           <briefdescription>
+<para>Logs non-fatal issues that need attention. </para>
           </briefdescription>
           <detaileddescription>
           </detaileddescription>
         </enumvalue>
-        <enumvalue id="namespacedalia_1a40292ca92ab9ebce52df2a4544a27c61a902b0d55fddef6f8d651fe1035b7d4bd" prot="public">
+        <enumvalue id="namespacedalia_1a96d794f409637200ff9a424041720d32a902b0d55fddef6f8d651fe1035b7d4bd" prot="public">
           <name>Error</name>
           <initializer>= 3</initializer>
           <briefdescription>
+<para>Logs failures that prevent an operation from succeeding. </para>
           </briefdescription>
           <detaileddescription>
           </detaileddescription>
         </enumvalue>
-        <enumvalue id="namespacedalia_1a40292ca92ab9ebce52df2a4544a27c61a278d01e5af56273bae1bb99a98b370cd" prot="public">
+        <enumvalue id="namespacedalia_1a96d794f409637200ff9a424041720d32a278d01e5af56273bae1bb99a98b370cd" prot="public">
           <name>Critical</name>
           <initializer>= 4</initializer>
           <briefdescription>
+<para>Logs unrecoverable errors and fatal states. </para>
           </briefdescription>
           <detaileddescription>
           </detaileddescription>
         </enumvalue>
-        <enumvalue id="namespacedalia_1a40292ca92ab9ebce52df2a4544a27c61a6adf97f83acf6453d4a6a4b1070f3754" prot="public">
+        <enumvalue id="namespacedalia_1a96d794f409637200ff9a424041720d32a6adf97f83acf6453d4a6a4b1070f3754" prot="public">
           <name>None</name>
           <initializer>= 5</initializer>
           <briefdescription>
+<para>Disables all logging. </para>
           </briefdescription>
           <detaileddescription>
           </detaileddescription>
@@ -109,7 +118,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="dalia/Log.hpp" line="11" column="1" bodyfile="dalia/Log.hpp" bodystart="11" bodyend="18"/>
+        <location file="dalia/Log.hpp" line="12" column="1" bodyfile="dalia/Log.hpp" bodystart="12" bodyend="19"/>
       </memberdef>
       <memberdef kind="enum" id="namespacedalia_1a5eaf1ed282132ac2afbff1574d6c0336" prot="public" static="no" strong="yes">
         <type>uint8_t</type>
@@ -119,6 +128,7 @@
           <name>None</name>
           <initializer>= 0</initializer>
           <briefdescription>
+<para>Sentinel value. </para>
           </briefdescription>
           <detaileddescription>
           </detaileddescription>
@@ -127,6 +137,7 @@
           <name>NaturalEnd</name>
           <initializer>= 1</initializer>
           <briefdescription>
+<para>Finished naturally. </para>
           </briefdescription>
           <detaileddescription>
           </detaileddescription>
@@ -135,6 +146,7 @@
           <name>ExplicitStop</name>
           <initializer>= 2</initializer>
           <briefdescription>
+<para>Explicitly stopped by an API call. </para>
           </briefdescription>
           <detaileddescription>
           </detaileddescription>
@@ -143,6 +155,7 @@
           <name>Evicted</name>
           <initializer>= 3</initializer>
           <briefdescription>
+<para>Stopped to make room for a playback instance with higher priority. </para>
           </briefdescription>
           <detaileddescription>
           </detaileddescription>
@@ -151,6 +164,7 @@
           <name>Error</name>
           <initializer>= 4</initializer>
           <briefdescription>
+<para>Stopped by the engine due to an error. </para>
           </briefdescription>
           <detaileddescription>
           </detaileddescription>
@@ -162,7 +176,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="dalia/Playback.hpp" line="64" column="1" bodyfile="dalia/Playback.hpp" bodystart="64" bodyend="70"/>
+        <location file="dalia/Playback.hpp" line="71" column="1" bodyfile="dalia/Playback.hpp" bodystart="71" bodyend="77"/>
       </memberdef>
       <memberdef kind="enum" id="namespacedalia_1a4c457a3406e132cdd206279b1827f73f" prot="public" static="no" strong="yes">
         <type>uint8_t</type>
@@ -170,21 +184,27 @@
         <qualifiedname>dalia::AttenuationCurve</qualifiedname>
         <enumvalue id="namespacedalia_1a4c457a3406e132cdd206279b1827f73face3511fe6e3cab696c0e1a62d445cd01" prot="public">
           <name>InverseSquare</name>
+          <initializer>= 0</initializer>
           <briefdescription>
+<para>Physically accurate falloff. </para>
           </briefdescription>
           <detaileddescription>
           </detaileddescription>
         </enumvalue>
         <enumvalue id="namespacedalia_1a4c457a3406e132cdd206279b1827f73fa32a843da6ea40ab3b17a3421ccdf671b" prot="public">
           <name>Linear</name>
+          <initializer>= 1</initializer>
           <briefdescription>
+<para>Constant, uniform falloff. </para>
           </briefdescription>
           <detaileddescription>
           </detaileddescription>
         </enumvalue>
         <enumvalue id="namespacedalia_1a4c457a3406e132cdd206279b1827f73fa8b2972385ed28d0e199ae2985d6fea4c" prot="public">
           <name>Quadratic</name>
+          <initializer>= 2</initializer>
           <briefdescription>
+<para>Smooth, polynomial falloff. </para>
           </briefdescription>
           <detaileddescription>
           </detaileddescription>
@@ -196,7 +216,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="dalia/Playback.hpp" line="79" column="1" bodyfile="dalia/Playback.hpp" bodystart="79" bodyend="83"/>
+        <location file="dalia/Playback.hpp" line="86" column="1" bodyfile="dalia/Playback.hpp" bodystart="86" bodyend="90"/>
       </memberdef>
       <memberdef kind="enum" id="namespacedalia_1ab240c6866fcf8d2aa499ae0164f1fe7c" prot="public" static="no" strong="yes">
         <type>uint8_t</type>
@@ -204,14 +224,18 @@
         <qualifiedname>dalia::DistanceMode</qualifiedname>
         <enumvalue id="namespacedalia_1ab240c6866fcf8d2aa499ae0164f1fe7ca7cfa5f69d0128a0212d2426b667c2dac" prot="public">
           <name>FromListener</name>
+          <initializer>= 0</initializer>
           <briefdescription>
+<para>Standard 3D (Evaluate distance from listener). </para>
           </briefdescription>
           <detaileddescription>
           </detaileddescription>
         </enumvalue>
         <enumvalue id="namespacedalia_1ab240c6866fcf8d2aa499ae0164f1fe7cabd308a293992c705800187aa73f4b9e2" prot="public">
           <name>FromDistanceProbe</name>
+          <initializer>= 1</initializer>
           <briefdescription>
+<para>Evaluate distance from the listener&apos;s separate distance probe. </para>
           </briefdescription>
           <detaileddescription>
           </detaileddescription>
@@ -223,7 +247,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="dalia/Playback.hpp" line="86" column="1" bodyfile="dalia/Playback.hpp" bodystart="86" bodyend="89"/>
+        <location file="dalia/Playback.hpp" line="93" column="1" bodyfile="dalia/Playback.hpp" bodystart="93" bodyend="96"/>
       </memberdef>
       <memberdef kind="enum" id="namespacedalia_1aa0c5c389cc67006c3550a3697096e391" prot="public" static="no" strong="yes">
         <type>uint8_t</type>
@@ -233,6 +257,7 @@
           <name>RightHanded</name>
           <initializer>= 0</initializer>
           <briefdescription>
+<para>In a Y-up space (+X right, +Y up), forward is -Z. </para>
           </briefdescription>
           <detaileddescription>
           </detaileddescription>
@@ -241,6 +266,7 @@
           <name>LeftHanded</name>
           <initializer>= 1</initializer>
           <briefdescription>
+<para>In a Y-up space (+X right, +Y up), forward is +Z. </para>
           </briefdescription>
           <detaileddescription>
           </detaileddescription>
@@ -252,7 +278,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="dalia/Playback.hpp" line="153" column="1" bodyfile="dalia/Playback.hpp" bodystart="153" bodyend="156"/>
+        <location file="dalia/Playback.hpp" line="154" column="1" bodyfile="dalia/Playback.hpp" bodystart="154" bodyend="157"/>
       </memberdef>
       <memberdef kind="enum" id="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909" prot="public" static="no" strong="yes">
         <type>int</type>
@@ -262,6 +288,7 @@
           <name>Ok</name>
           <initializer>= 0</initializer>
           <briefdescription>
+<para>Ok! </para>
           </briefdescription>
           <detaileddescription>
           </detaileddescription>
@@ -270,6 +297,7 @@
           <name>Error</name>
           <initializer>= -1</initializer>
           <briefdescription>
+<para>Unspecified or general failure. </para>
           </briefdescription>
           <detaileddescription>
           </detaileddescription>
@@ -278,6 +306,7 @@
           <name>NotInitialized</name>
           <initializer>= -2</initializer>
           <briefdescription>
+<para><ref refid="classdalia_1_1Engine" kindref="compound">Engine</ref> or subsystem has not been initialized. </para>
           </briefdescription>
           <detaileddescription>
           </detaileddescription>
@@ -286,6 +315,7 @@
           <name>StateCorrupted</name>
           <initializer>= -3</initializer>
           <briefdescription>
+<para>Internal engine state is corrupted. </para>
           </briefdescription>
           <detaileddescription>
           </detaileddescription>
@@ -294,6 +324,7 @@
           <name>AlreadyInitialized</name>
           <initializer>= -4</initializer>
           <briefdescription>
+<para>Initialization was called on an already initialized instance. </para>
           </briefdescription>
           <detaileddescription>
           </detaileddescription>
@@ -302,6 +333,7 @@
           <name>InvalidArgs</name>
           <initializer>= -5</initializer>
           <briefdescription>
+<para>One or more arguments are null, out of range, or malformed. </para>
           </briefdescription>
           <detaileddescription>
           </detaileddescription>
@@ -310,6 +342,7 @@
           <name>InvalidHandle</name>
           <initializer>= -6</initializer>
           <briefdescription>
+<para>Handle is null or malformed. </para>
           </briefdescription>
           <detaileddescription>
           </detaileddescription>
@@ -318,6 +351,7 @@
           <name>ExpiredHandle</name>
           <initializer>= -7</initializer>
           <briefdescription>
+<para>Handle points to a slot that has already been destroyed or recycled. </para>
           </briefdescription>
           <detaileddescription>
           </detaileddescription>
@@ -326,6 +360,7 @@
           <name>InvalidBus</name>
           <initializer>= -8</initializer>
           <briefdescription>
+<para>Target bus does not exist. </para>
           </briefdescription>
           <detaileddescription>
           </detaileddescription>
@@ -334,6 +369,7 @@
           <name>InvalidRouting</name>
           <initializer>= -9</initializer>
           <briefdescription>
+<para>Bus routing connection is invalid or would create a cycle. </para>
           </briefdescription>
           <detaileddescription>
           </detaileddescription>
@@ -342,6 +378,7 @@
           <name>InvalidEffectSlot</name>
           <initializer>= -10</initializer>
           <briefdescription>
+<para>Effect slot index is out of range or unavailable. </para>
           </briefdescription>
           <detaileddescription>
           </detaileddescription>
@@ -350,6 +387,7 @@
           <name>InvalidListener</name>
           <initializer>= -11</initializer>
           <briefdescription>
+<para>Target listener does not exist. </para>
           </briefdescription>
           <detaileddescription>
           </detaileddescription>
@@ -358,6 +396,7 @@
           <name>SoundNotLoaded</name>
           <initializer>= -12</initializer>
           <briefdescription>
+<para>Sound asset has not finished loading or failed to load. </para>
           </briefdescription>
           <detaileddescription>
           </detaileddescription>
@@ -366,6 +405,7 @@
           <name>CapacityReached</name>
           <initializer>= -100</initializer>
           <briefdescription>
+<para>Generic fixed-size pool capacity limit reached. </para>
           </briefdescription>
           <detaileddescription>
           </detaileddescription>
@@ -374,6 +414,7 @@
           <name>SoundCapacityReached</name>
           <initializer>= -101</initializer>
           <briefdescription>
+<para>Maximum number of loaded sound assets reached (either resident or streaming). </para>
           </briefdescription>
           <detaileddescription>
           </detaileddescription>
@@ -382,6 +423,7 @@
           <name>VoiceCapacityReached</name>
           <initializer>= -102</initializer>
           <briefdescription>
+<para>Maximum number of concurrent playback voices reached. </para>
           </briefdescription>
           <detaileddescription>
           </detaileddescription>
@@ -390,6 +432,7 @@
           <name>StreamCapacityReached</name>
           <initializer>= -103</initializer>
           <briefdescription>
+<para>Maximum number of active audio streams reached. </para>
           </briefdescription>
           <detaileddescription>
           </detaileddescription>
@@ -398,6 +441,7 @@
           <name>BusCapacityReached</name>
           <initializer>= -104</initializer>
           <briefdescription>
+<para>Maximum number of buses reached. </para>
           </briefdescription>
           <detaileddescription>
           </detaileddescription>
@@ -406,6 +450,7 @@
           <name>EffectCapacityReached</name>
           <initializer>= -105</initializer>
           <briefdescription>
+<para>Maximum number of active DSP effects reached. </para>
           </briefdescription>
           <detaileddescription>
           </detaileddescription>
@@ -414,6 +459,7 @@
           <name>MixerQueueCapacityReached</name>
           <initializer>= -200</initializer>
           <briefdescription>
+<para>Mixer-thread command/event queue is full. </para>
           </briefdescription>
           <detaileddescription>
           </detaileddescription>
@@ -422,6 +468,7 @@
           <name>StreamQueueCapacityReached</name>
           <initializer>= -201</initializer>
           <briefdescription>
+<para>Stream-thread command queue is full. </para>
           </briefdescription>
           <detaileddescription>
           </detaileddescription>
@@ -430,6 +477,7 @@
           <name>LoadQueueCapacityReached</name>
           <initializer>= -202</initializer>
           <briefdescription>
+<para>Load-thread command/event queue is full. </para>
           </briefdescription>
           <detaileddescription>
           </detaileddescription>
@@ -438,6 +486,7 @@
           <name>ControlQueueCapacityReached</name>
           <initializer>= -203</initializer>
           <briefdescription>
+<para>Control-thread command/event queue is full. </para>
           </briefdescription>
           <detaileddescription>
           </detaileddescription>
@@ -446,6 +495,7 @@
           <name>PlaybackCorrupted</name>
           <initializer>= -300</initializer>
           <briefdescription>
+<para>Playback voice state is corrupted. </para>
           </briefdescription>
           <detaileddescription>
           </detaileddescription>
@@ -454,6 +504,7 @@
           <name>SoundLoadError</name>
           <initializer>= -400</initializer>
           <briefdescription>
+<para>General failure while loading/decoding a sound from a file. </para>
           </briefdescription>
           <detaileddescription>
           </detaileddescription>
@@ -462,6 +513,7 @@
           <name>FileReadError</name>
           <initializer>= -401</initializer>
           <briefdescription>
+<para>Failed to open or read audio data from disk. </para>
           </briefdescription>
           <detaileddescription>
           </detaileddescription>
@@ -470,6 +522,7 @@
           <name>UnsupportedFormat</name>
           <initializer>= -402</initializer>
           <briefdescription>
+<para>Audio file uses a format that is not supported. </para>
           </briefdescription>
           <detaileddescription>
           </detaileddescription>
@@ -478,6 +531,7 @@
           <name>SystemError</name>
           <initializer>= -500</initializer>
           <briefdescription>
+<para>Platform audio system error. </para>
           </briefdescription>
           <detaileddescription>
           </detaileddescription>
@@ -486,6 +540,7 @@
           <name>DeviceNotFound</name>
           <initializer>= -501</initializer>
           <briefdescription>
+<para>Requested or default audio output device was not found. </para>
           </briefdescription>
           <detaileddescription>
           </detaileddescription>
@@ -494,6 +549,7 @@
           <name>DeviceFailed</name>
           <initializer>= -502</initializer>
           <briefdescription>
+<para>Audio device failed to open, start, or recover. </para>
           </briefdescription>
           <detaileddescription>
           </detaileddescription>
@@ -502,6 +558,7 @@
           <name>ClientFailed</name>
           <initializer>= -503</initializer>
           <briefdescription>
+<para>Audio backend client initialization or session failed. </para>
           </briefdescription>
           <detaileddescription>
           </detaileddescription>
@@ -524,6 +581,7 @@
           <name>None</name>
           <initializer>= 0</initializer>
           <briefdescription>
+<para>Sentinel value. </para>
           </briefdescription>
           <detaileddescription>
           </detaileddescription>
@@ -532,6 +590,7 @@
           <name>Resident</name>
           <initializer>= 1</initializer>
           <briefdescription>
+<para>The entire audio file is decompressed and loaded into RAM. </para>
           </briefdescription>
           <detaileddescription>
           </detaileddescription>
@@ -540,6 +599,7 @@
           <name>Stream</name>
           <initializer>= 2</initializer>
           <briefdescription>
+<para>The audio data is read from disk in chunks. </para>
           </briefdescription>
           <detaileddescription>
           </detaileddescription>
@@ -556,7 +616,7 @@
     </sectiondef>
     <sectiondef kind="typedef">
       <memberdef kind="typedef" id="namespacedalia_1ae5450b99470312ce0815b5c9afe3344f" prot="public" static="no">
-        <type>std::function&lt; void(<ref refid="namespacedalia_1a40292ca92ab9ebce52df2a4544a27c61" kindref="member">LogLevel</ref> level, const char *context, const char *message)&gt;</type>
+        <type>std::function&lt; void(<ref refid="namespacedalia_1a96d794f409637200ff9a424041720d32" kindref="member">LogLevel</ref> level, const char *context, const char *message)&gt;</type>
         <definition>using dalia::LogCallback =  std::function&lt;void(LogLevel level, const char* context, const char* message)&gt;</definition>
         <argsstring></argsstring>
         <name>LogCallback</name>
@@ -595,7 +655,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="dalia/Log.hpp" line="28" column="1" bodyfile="dalia/Log.hpp" bodystart="28" bodyend="-1"/>
+        <location file="dalia/Log.hpp" line="29" column="1" bodyfile="dalia/Log.hpp" bodystart="29" bodyend="-1"/>
       </memberdef>
       <memberdef kind="typedef" id="namespacedalia_1a026474250f9ffa87a93b5fab0320c992" prot="public" static="no">
         <type>std::function&lt; void(<ref refid="structdalia_1_1PlaybackHandle" kindref="compound">PlaybackHandle</ref> playback, <ref refid="namespacedalia_1a5eaf1ed282132ac2afbff1574d6c0336" kindref="member">PlaybackExitCondition</ref> exitCondition)&gt;</type>
@@ -628,7 +688,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="dalia/Playback.hpp" line="76" column="1" bodyfile="dalia/Playback.hpp" bodystart="76" bodyend="-1"/>
+        <location file="dalia/Playback.hpp" line="83" column="1" bodyfile="dalia/Playback.hpp" bodystart="83" bodyend="-1"/>
       </memberdef>
       <memberdef kind="typedef" id="namespacedalia_1a481e23ea1f3b33681ff776594aa2c9af" prot="public" static="no">
         <type>uint32_t</type>
@@ -643,7 +703,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="dalia/Playback.hpp" line="132" column="1" bodyfile="dalia/Playback.hpp" bodystart="132" bodyend="-1"/>
+        <location file="dalia/Playback.hpp" line="133" column="1" bodyfile="dalia/Playback.hpp" bodystart="133" bodyend="-1"/>
       </memberdef>
       <memberdef kind="typedef" id="namespacedalia_1a94916406d3efedc9c96950c5d2402294" prot="public" static="no">
         <type>std::function&lt; void(uint32_t requestId, <ref refid="namespacedalia_1ad5a7be51a3dbbe5893de3bdd582e7909" kindref="member">Result</ref> result)&gt;</type>
@@ -727,7 +787,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="dalia/Playback.hpp" line="61" column="26" bodyfile="dalia/Playback.hpp" bodystart="61" bodyend="61"/>
+        <location file="dalia/Playback.hpp" line="68" column="26" bodyfile="dalia/Playback.hpp" bodystart="68" bodyend="68"/>
       </memberdef>
       <memberdef kind="variable" id="namespacedalia_1a27f136fc18dae58a7d4a7367018879f1" prot="public" static="no" constexpr="yes" mutable="no">
         <type><ref refid="namespacedalia_1a481e23ea1f3b33681ff776594aa2c9af" kindref="member">ListenerMask</ref></type>
@@ -743,7 +803,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="dalia/Playback.hpp" line="134" column="24" bodyfile="dalia/Playback.hpp" bodystart="134" bodyend="-1"/>
+        <location file="dalia/Playback.hpp" line="135" column="24" bodyfile="dalia/Playback.hpp" bodystart="135" bodyend="-1"/>
       </memberdef>
       <memberdef kind="variable" id="namespacedalia_1a9d0ce121f1dd3f647d5850fbade59cae" prot="public" static="no" constexpr="yes" mutable="no">
         <type><ref refid="namespacedalia_1a481e23ea1f3b33681ff776594aa2c9af" kindref="member">ListenerMask</ref></type>
@@ -759,7 +819,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="dalia/Playback.hpp" line="135" column="24" bodyfile="dalia/Playback.hpp" bodystart="135" bodyend="-1"/>
+        <location file="dalia/Playback.hpp" line="136" column="24" bodyfile="dalia/Playback.hpp" bodystart="136" bodyend="-1"/>
       </memberdef>
       <memberdef kind="variable" id="namespacedalia_1ac73da665f5a29e4cdec077dacb9c1b4c" prot="public" static="no" constexpr="yes" mutable="no">
         <type><ref refid="namespacedalia_1a481e23ea1f3b33681ff776594aa2c9af" kindref="member">ListenerMask</ref></type>
@@ -775,7 +835,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="dalia/Playback.hpp" line="136" column="24" bodyfile="dalia/Playback.hpp" bodystart="136" bodyend="-1"/>
+        <location file="dalia/Playback.hpp" line="137" column="24" bodyfile="dalia/Playback.hpp" bodystart="137" bodyend="-1"/>
       </memberdef>
       <memberdef kind="variable" id="namespacedalia_1a95ce9a8dc77521d762a6a93ab6454cad" prot="public" static="no" constexpr="yes" mutable="no">
         <type><ref refid="namespacedalia_1a481e23ea1f3b33681ff776594aa2c9af" kindref="member">ListenerMask</ref></type>
@@ -791,7 +851,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="dalia/Playback.hpp" line="137" column="24" bodyfile="dalia/Playback.hpp" bodystart="137" bodyend="-1"/>
+        <location file="dalia/Playback.hpp" line="138" column="24" bodyfile="dalia/Playback.hpp" bodystart="138" bodyend="-1"/>
       </memberdef>
       <memberdef kind="variable" id="namespacedalia_1a9bcd20341d810d30b1e951e757a7f0f2" prot="public" static="no" constexpr="yes" mutable="no">
         <type><ref refid="namespacedalia_1a481e23ea1f3b33681ff776594aa2c9af" kindref="member">ListenerMask</ref></type>
@@ -807,7 +867,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="dalia/Playback.hpp" line="138" column="24" bodyfile="dalia/Playback.hpp" bodystart="138" bodyend="-1"/>
+        <location file="dalia/Playback.hpp" line="139" column="24" bodyfile="dalia/Playback.hpp" bodystart="139" bodyend="-1"/>
       </memberdef>
       <memberdef kind="variable" id="namespacedalia_1a5bb415dbf786ac9c9239d093dd563187" prot="public" static="no" constexpr="yes" mutable="no">
         <type><ref refid="namespacedalia_1a481e23ea1f3b33681ff776594aa2c9af" kindref="member">ListenerMask</ref></type>
@@ -823,7 +883,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="dalia/Playback.hpp" line="139" column="24" bodyfile="dalia/Playback.hpp" bodystart="139" bodyend="-1"/>
+        <location file="dalia/Playback.hpp" line="140" column="24" bodyfile="dalia/Playback.hpp" bodystart="140" bodyend="-1"/>
       </memberdef>
       <memberdef kind="variable" id="namespacedalia_1aec5df7c0ac33671f6a88c0a5cb8ccdd4" prot="public" static="no" constexpr="yes" mutable="no">
         <type>size_t</type>
@@ -904,7 +964,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="dalia/Playback.hpp" line="111" column="39" bodyfile="dalia/Playback.hpp" bodystart="111" bodyend="117"/>
+        <location file="dalia/Playback.hpp" line="112" column="39" bodyfile="dalia/Playback.hpp" bodystart="112" bodyend="118"/>
       </memberdef>
       <memberdef kind="function" id="namespacedalia_1acdda97ac5f598e0d0d988f929a640455" prot="public" static="no" constexpr="yes" const="no" explicit="no" inline="yes" virt="non-virtual">
         <type><ref refid="structdalia_1_1Listener3DAttributes" kindref="compound">Listener3DAttributes</ref></type>
@@ -939,7 +999,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="dalia/Playback.hpp" line="121" column="39" bodyfile="dalia/Playback.hpp" bodystart="121" bodyend="128"/>
+        <location file="dalia/Playback.hpp" line="122" column="39" bodyfile="dalia/Playback.hpp" bodystart="122" bodyend="129"/>
       </memberdef>
       <memberdef kind="function" id="namespacedalia_1a9ac281e9de93a3893c721b3616b388fe" prot="public" static="no" constexpr="yes" const="no" explicit="no" inline="yes" virt="non-virtual">
         <type><ref refid="namespacedalia_1a481e23ea1f3b33681ff776594aa2c9af" kindref="member">ListenerMask</ref></type>
@@ -972,7 +1032,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="dalia/Playback.hpp" line="148" column="31" bodyfile="dalia/Playback.hpp" bodystart="148" bodyend="150"/>
+        <location file="dalia/Playback.hpp" line="149" column="31" bodyfile="dalia/Playback.hpp" bodystart="149" bodyend="151"/>
       </memberdef>
       <memberdef kind="function" id="namespacedalia_1a01da3b4d8b21c2c015f0d10aa0efbbde" prot="public" static="no" constexpr="yes" const="no" explicit="no" inline="no" virt="non-virtual">
         <type>const char *</type>

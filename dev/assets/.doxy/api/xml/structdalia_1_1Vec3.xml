@@ -17,7 +17,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="dalia/Playback.hpp" line="93" column="7" bodyfile="dalia/Playback.hpp" bodystart="93" bodyend="-1"/>
+        <location file="dalia/Playback.hpp" line="13" column="7" bodyfile="dalia/Playback.hpp" bodystart="13" bodyend="-1"/>
       </memberdef>
       <memberdef kind="variable" id="structdalia_1_1Vec3_1acc0f4a812d41bdfe95452cc428e39864" prot="public" static="no" mutable="no">
         <type>float</type>
@@ -32,7 +32,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="dalia/Playback.hpp" line="94" column="7" bodyfile="dalia/Playback.hpp" bodystart="94" bodyend="-1"/>
+        <location file="dalia/Playback.hpp" line="14" column="7" bodyfile="dalia/Playback.hpp" bodystart="14" bodyend="-1"/>
       </memberdef>
       <memberdef kind="variable" id="structdalia_1_1Vec3_1a7b2e0dc0056ae987bbed7513c778d9b4" prot="public" static="no" mutable="no">
         <type>float</type>
@@ -47,7 +47,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="dalia/Playback.hpp" line="95" column="7" bodyfile="dalia/Playback.hpp" bodystart="95" bodyend="-1"/>
+        <location file="dalia/Playback.hpp" line="15" column="7" bodyfile="dalia/Playback.hpp" bodystart="15" bodyend="-1"/>
       </memberdef>
     </sectiondef>
     <briefdescription>
@@ -55,7 +55,7 @@
     </briefdescription>
     <detaileddescription>
     </detaileddescription>
-    <location file="dalia/Playback.hpp" line="92" column="1" bodyfile="dalia/Playback.hpp" bodystart="92" bodyend="96"/>
+    <location file="dalia/Playback.hpp" line="12" column="1" bodyfile="dalia/Playback.hpp" bodystart="12" bodyend="16"/>
     <listofallmembers>
       <member refid="structdalia_1_1Vec3_1a72ae8ed11a871956fc8244c0449c85e9" prot="public" virt="non-virtual"><scope>dalia::Vec3</scope><name>x</name></member>
       <member refid="structdalia_1_1Vec3_1acc0f4a812d41bdfe95452cc428e39864" prot="public" virt="non-virtual"><scope>dalia::Vec3</scope><name>y</name></member>

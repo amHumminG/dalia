@@ -42,19 +42,19 @@ _Configuration containing all user-exposed engine settings._
 | Type | Name |
 | ---: | :--- |
 |  struct [**dalia::EngineConfig::Advanced**](structdalia_1_1EngineConfig_1_1Advanced.md) | [**advanced**](#variable-advanced)  <br> |
-|  uint32\_t | [**biquadCapacity**](#variable-biquadcapacity)   = `32`<br> |
-|  uint32\_t | [**busCapacity**](#variable-buscapacity)   = `64`<br> |
-|  [**CoordinateSystem**](namespacedalia.md#enum-coordinatesystem) | [**coordinateSystem**](#variable-coordinatesystem)   = `CoordinateSystem::RightHanded`<br> |
-|  uint32\_t | [**fdnReverbCapacity**](#variable-fdnreverbcapacity)   = `32`<br> |
-|  uint32\_t | [**listenerCapacity**](#variable-listenercapacity)   = `1`<br> |
-|  [**LogCallback**](namespacedalia.md#typedef-logcallback) | [**logCallback**](#variable-logcallback)   = `nullptr`<br> |
-|  [**LogLevel**](namespacedalia.md#enum-loglevel) | [**logLevel**](#variable-loglevel)   = `LogLevel::Warning`<br> |
-|  uint32\_t | [**residentSoundCapacity**](#variable-residentsoundcapacity)   = `256`<br> |
-|  uint32\_t | [**sampleRate**](#variable-samplerate)   = `48000`<br> |
-|  const char \* | [**startupOutputDeviceId**](#variable-startupoutputdeviceid)   = `"default"`<br> |
-|  uint32\_t | [**streamCapacity**](#variable-streamcapacity)   = `32`<br> |
-|  uint32\_t | [**streamSoundCapacity**](#variable-streamsoundcapacity)   = `256`<br> |
-|  uint32\_t | [**voiceCapacity**](#variable-voicecapacity)   = `128`<br> |
+|  uint32\_t | [**biquadCapacity**](#variable-biquadcapacity)   = `32`<br>_The maximum number of biquad filters that can exist at once._  |
+|  uint32\_t | [**busCapacity**](#variable-buscapacity)   = `64`<br>_The maximum number of buses that can exist at once._  |
+|  [**CoordinateSystem**](namespacedalia.md#enum-coordinatesystem) | [**coordinateSystem**](#variable-coordinatesystem)   = `CoordinateSystem::RightHanded`<br>_The coordinate system used for spatial audio._  |
+|  uint32\_t | [**fdnReverbCapacity**](#variable-fdnreverbcapacity)   = `32`<br>_The maximum number of FDN reverb's that can exist at once._  |
+|  uint32\_t | [**listenerCapacity**](#variable-listenercapacity)   = `1`<br>_The maximum number of listeners that can exist at once (min=1 max=4)._  |
+|  [**LogCallback**](namespacedalia.md#typedef-logcallback) | [**logCallback**](#variable-logcallback)   = `nullptr`<br>_Optional log sink._  |
+|  [**LogLevel**](namespacedalia.md#enum-loglevel) | [**logLevel**](#variable-loglevel)   = `LogLevel::Warning`<br>_The level at which the engine will log messages._  |
+|  uint32\_t | [**residentSoundCapacity**](#variable-residentsoundcapacity)   = `256`<br>_The number of resident sounds the engine is able to hold loaded at once._  |
+|  uint32\_t | [**sampleRate**](#variable-samplerate)   = `48000`<br>_Internal mixing sample rate._  |
+|  const char \* | [**startupOutputDeviceId**](#variable-startupoutputdeviceid)   = `"default"`<br>_Output device that should attempt to start on initialization._  |
+|  uint32\_t | [**streamCapacity**](#variable-streamcapacity)   = `64`<br>_The maximum number of playback instances playing stream sounds at once._  |
+|  uint32\_t | [**streamSoundCapacity**](#variable-streamsoundcapacity)   = `256`<br>_The number of stream sounds the engine is able to hold loaded at once._  |
+|  uint32\_t | [**voiceCapacity**](#variable-voicecapacity)   = `128`<br>_The maximum number of playback instances that can exist at once._  |
 
 
 
@@ -119,6 +119,7 @@ struct dalia::EngineConfig::Advanced dalia::EngineConfig::advanced;
 
 ### variable biquadCapacity 
 
+_The maximum number of biquad filters that can exist at once._ 
 ```C++
 uint32_t dalia::EngineConfig::biquadCapacity;
 ```
@@ -132,6 +133,7 @@ uint32_t dalia::EngineConfig::biquadCapacity;
 
 ### variable busCapacity 
 
+_The maximum number of buses that can exist at once._ 
 ```C++
 uint32_t dalia::EngineConfig::busCapacity;
 ```
@@ -145,6 +147,7 @@ uint32_t dalia::EngineConfig::busCapacity;
 
 ### variable coordinateSystem 
 
+_The coordinate system used for spatial audio._ 
 ```C++
 CoordinateSystem dalia::EngineConfig::coordinateSystem;
 ```
@@ -158,6 +161,7 @@ CoordinateSystem dalia::EngineConfig::coordinateSystem;
 
 ### variable fdnReverbCapacity 
 
+_The maximum number of FDN reverb's that can exist at once._ 
 ```C++
 uint32_t dalia::EngineConfig::fdnReverbCapacity;
 ```
@@ -171,6 +175,7 @@ uint32_t dalia::EngineConfig::fdnReverbCapacity;
 
 ### variable listenerCapacity 
 
+_The maximum number of listeners that can exist at once (min=1 max=4)._ 
 ```C++
 uint32_t dalia::EngineConfig::listenerCapacity;
 ```
@@ -184,6 +189,7 @@ uint32_t dalia::EngineConfig::listenerCapacity;
 
 ### variable logCallback 
 
+_Optional log sink._ 
 ```C++
 LogCallback dalia::EngineConfig::logCallback;
 ```
@@ -197,6 +203,7 @@ LogCallback dalia::EngineConfig::logCallback;
 
 ### variable logLevel 
 
+_The level at which the engine will log messages._ 
 ```C++
 LogLevel dalia::EngineConfig::logLevel;
 ```
@@ -210,6 +217,7 @@ LogLevel dalia::EngineConfig::logLevel;
 
 ### variable residentSoundCapacity 
 
+_The number of resident sounds the engine is able to hold loaded at once._ 
 ```C++
 uint32_t dalia::EngineConfig::residentSoundCapacity;
 ```
@@ -223,6 +231,7 @@ uint32_t dalia::EngineConfig::residentSoundCapacity;
 
 ### variable sampleRate 
 
+_Internal mixing sample rate._ 
 ```C++
 uint32_t dalia::EngineConfig::sampleRate;
 ```
@@ -236,6 +245,7 @@ uint32_t dalia::EngineConfig::sampleRate;
 
 ### variable startupOutputDeviceId 
 
+_Output device that should attempt to start on initialization._ 
 ```C++
 const char* dalia::EngineConfig::startupOutputDeviceId;
 ```
@@ -249,6 +259,7 @@ const char* dalia::EngineConfig::startupOutputDeviceId;
 
 ### variable streamCapacity 
 
+_The maximum number of playback instances playing stream sounds at once._ 
 ```C++
 uint32_t dalia::EngineConfig::streamCapacity;
 ```
@@ -262,6 +273,7 @@ uint32_t dalia::EngineConfig::streamCapacity;
 
 ### variable streamSoundCapacity 
 
+_The number of stream sounds the engine is able to hold loaded at once._ 
 ```C++
 uint32_t dalia::EngineConfig::streamSoundCapacity;
 ```
@@ -275,6 +287,7 @@ uint32_t dalia::EngineConfig::streamSoundCapacity;
 
 ### variable voiceCapacity 
 
+_The maximum number of playback instances that can exist at once._ 
 ```C++
 uint32_t dalia::EngineConfig::voiceCapacity;
 ```

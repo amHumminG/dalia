@@ -1088,39 +1088,39 @@
 <tbody>
 <tr>
 <td style="text-align: right;">float</td>
-<td style="text-align: left;"><a href="#variable-dampinghz"><strong>dampingHz</strong></a>   = <code>2500.0f</code><br></td>
+<td style="text-align: left;"><a href="#variable-dampinghz"><strong>dampingHz</strong></a>   = <code>2500.0f</code><br><em>High-frequency damping lowpass cutoff: 500 - 20000 Hz.</em></td>
 </tr>
 <tr>
 <td style="text-align: right;">float</td>
-<td style="text-align: left;"><a href="#variable-decaytimeseconds"><strong>decayTimeSeconds</strong></a>   = <code>4.0f</code><br></td>
+<td style="text-align: left;"><a href="#variable-decaytimeseconds"><strong>decayTimeSeconds</strong></a>   = <code>4.0f</code><br><em>Time for reverb tail to decay by 60 dB (T60): 0.1 - 15.0 s.</em></td>
 </tr>
 <tr>
 <td style="text-align: right;">float</td>
-<td style="text-align: left;"><a href="#variable-drymix"><strong>dryMix</strong></a>   = <code>1.0f</code><br></td>
+<td style="text-align: left;"><a href="#variable-drymix"><strong>dryMix</strong></a>   = <code>1.0f</code><br><em>Linear gain of the unprocessed input signal: 0.0 - 1.0.</em></td>
 </tr>
 <tr>
 <td style="text-align: right;">bool</td>
-<td style="text-align: left;"><a href="#variable-freeze"><strong>freeze</strong></a>   = <code>false</code><br></td>
+<td style="text-align: left;"><a href="#variable-freeze"><strong>freeze</strong></a>   = <code>false</code><br><em>Sustains the current tail infinitely without new input: true/false.</em></td>
 </tr>
 <tr>
 <td style="text-align: right;">float</td>
-<td style="text-align: left;"><a href="#variable-lowcuthz"><strong>lowCutHz</strong></a>   = <code>80.0f</code><br></td>
+<td style="text-align: left;"><a href="#variable-lowcuthz"><strong>lowCutHz</strong></a>   = <code>80.0f</code><br><em>Sub-bass buildup low-shelf cutoff: 20 - 500 Hz.</em></td>
 </tr>
 <tr>
 <td style="text-align: right;">float</td>
-<td style="text-align: left;"><a href="#variable-modulation"><strong>modulation</strong></a>   = <code>0.35f</code><br></td>
+<td style="text-align: left;"><a href="#variable-modulation"><strong>modulation</strong></a>   = <code>0.5f</code><br><em>Tank delay LFO modulation depth: 0.0 - 1.0.</em></td>
 </tr>
 <tr>
 <td style="text-align: right;">float</td>
-<td style="text-align: left;"><a href="#variable-predelayms"><strong>preDelayMs</strong></a>   = <code>20.0f</code><br></td>
+<td style="text-align: left;"><a href="#variable-predelayms"><strong>preDelayMs</strong></a>   = <code>20.0f</code><br><em>Delay before reflections begin: 0 - 100 ms.</em></td>
 </tr>
 <tr>
 <td style="text-align: right;">float</td>
-<td style="text-align: left;"><a href="#variable-roomsize"><strong>roomSize</strong></a>   = <code>0.6f</code><br></td>
+<td style="text-align: left;"><a href="#variable-roomsize"><strong>roomSize</strong></a>   = <code>0.6f</code><br><em>Virtual space scale controlling echo spacing: 0.25 - 1.0.</em></td>
 </tr>
 <tr>
 <td style="text-align: right;">float</td>
-<td style="text-align: left;"><a href="#variable-wetmix"><strong>wetMix</strong></a>   = <code>0.35f</code><br></td>
+<td style="text-align: left;"><a href="#variable-wetmix"><strong>wetMix</strong></a>   = <code>0.35f</code><br><em>Linear gain of the processed reverb signal: 0.0 - 1.0.</em></td>
 </tr>
 </tbody>
 </table>
@@ -1141,48 +1141,57 @@
 </table>
 <h2 id="public-attributes-documentation">Public Attributes Documentation<a class="headerlink" href="#public-attributes-documentation" title="Permanent link">&para;</a></h2>
 <h3 id="variable-dampinghz">variable dampingHz<a class="headerlink" href="#variable-dampinghz" title="Permanent link">&para;</a></h3>
+<p><em>High-frequency damping lowpass cutoff: 500 - 20000 Hz.</em> 
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kt">float</span><span class="w"> </span><span class="n">dalia</span><span class="o">::</span><span class="n">FdnReverbParams</span><span class="o">::</span><span class="n">dampingHz</span><span class="p">;</span>
-</code></pre></div>
+</code></pre></div></p>
 <hr>
 
 <h3 id="variable-decaytimeseconds">variable decayTimeSeconds<a class="headerlink" href="#variable-decaytimeseconds" title="Permanent link">&para;</a></h3>
+<p><em>Time for reverb tail to decay by 60 dB (T60): 0.1 - 15.0 s.</em> 
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="kt">float</span><span class="w"> </span><span class="n">dalia</span><span class="o">::</span><span class="n">FdnReverbParams</span><span class="o">::</span><span class="n">decayTimeSeconds</span><span class="p">;</span>
-</code></pre></div>
+</code></pre></div></p>
 <hr>
 
 <h3 id="variable-drymix">variable dryMix<a class="headerlink" href="#variable-drymix" title="Permanent link">&para;</a></h3>
+<p><em>Linear gain of the unprocessed input signal: 0.0 - 1.0.</em> 
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kt">float</span><span class="w"> </span><span class="n">dalia</span><span class="o">::</span><span class="n">FdnReverbParams</span><span class="o">::</span><span class="n">dryMix</span><span class="p">;</span>
-</code></pre></div>
+</code></pre></div></p>
 <hr>
 
 <h3 id="variable-freeze">variable freeze<a class="headerlink" href="#variable-freeze" title="Permanent link">&para;</a></h3>
+<p><em>Sustains the current tail infinitely without new input: true/false.</em> 
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="kt">bool</span><span class="w"> </span><span class="n">dalia</span><span class="o">::</span><span class="n">FdnReverbParams</span><span class="o">::</span><span class="n">freeze</span><span class="p">;</span>
-</code></pre></div>
+</code></pre></div></p>
 <hr>
 
 <h3 id="variable-lowcuthz">variable lowCutHz<a class="headerlink" href="#variable-lowcuthz" title="Permanent link">&para;</a></h3>
+<p><em>Sub-bass buildup low-shelf cutoff: 20 - 500 Hz.</em> 
 <div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="kt">float</span><span class="w"> </span><span class="n">dalia</span><span class="o">::</span><span class="n">FdnReverbParams</span><span class="o">::</span><span class="n">lowCutHz</span><span class="p">;</span>
-</code></pre></div>
+</code></pre></div></p>
 <hr>
 
 <h3 id="variable-modulation">variable modulation<a class="headerlink" href="#variable-modulation" title="Permanent link">&para;</a></h3>
+<p><em>Tank delay LFO modulation depth: 0.0 - 1.0.</em> 
 <div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="kt">float</span><span class="w"> </span><span class="n">dalia</span><span class="o">::</span><span class="n">FdnReverbParams</span><span class="o">::</span><span class="n">modulation</span><span class="p">;</span>
-</code></pre></div>
+</code></pre></div></p>
 <hr>
 
 <h3 id="variable-predelayms">variable preDelayMs<a class="headerlink" href="#variable-predelayms" title="Permanent link">&para;</a></h3>
+<p><em>Delay before reflections begin: 0 - 100 ms.</em> 
 <div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="kt">float</span><span class="w"> </span><span class="n">dalia</span><span class="o">::</span><span class="n">FdnReverbParams</span><span class="o">::</span><span class="n">preDelayMs</span><span class="p">;</span>
-</code></pre></div>
+</code></pre></div></p>
 <hr>
 
 <h3 id="variable-roomsize">variable roomSize<a class="headerlink" href="#variable-roomsize" title="Permanent link">&para;</a></h3>
+<p><em>Virtual space scale controlling echo spacing: 0.25 - 1.0.</em> 
 <div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="kt">float</span><span class="w"> </span><span class="n">dalia</span><span class="o">::</span><span class="n">FdnReverbParams</span><span class="o">::</span><span class="n">roomSize</span><span class="p">;</span>
-</code></pre></div>
+</code></pre></div></p>
 <hr>
 
 <h3 id="variable-wetmix">variable wetMix<a class="headerlink" href="#variable-wetmix" title="Permanent link">&para;</a></h3>
+<p><em>Linear gain of the processed reverb signal: 0.0 - 1.0.</em> 
 <div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="kt">float</span><span class="w"> </span><span class="n">dalia</span><span class="o">::</span><span class="n">FdnReverbParams</span><span class="o">::</span><span class="n">wetMix</span><span class="p">;</span>
-</code></pre></div>
+</code></pre></div></p>
 <hr>
 <h2 id="public-functions-documentation">Public Functions Documentation<a class="headerlink" href="#public-functions-documentation" title="Permanent link">&para;</a></h2>
 <h3 id="function-sanitize">function Sanitize<a class="headerlink" href="#function-sanitize" title="Permanent link">&para;</a></h3>

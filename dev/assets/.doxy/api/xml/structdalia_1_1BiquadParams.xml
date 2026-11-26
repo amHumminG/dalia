@@ -12,6 +12,7 @@
           <name>LowPass</name>
           <initializer>= 0</initializer>
           <briefdescription>
+<para>Allows frequencies below the cutoff frequency to pass, attenuating higher frequencies. </para>
           </briefdescription>
           <detaileddescription>
           </detaileddescription>
@@ -20,6 +21,7 @@
           <name>HighPass</name>
           <initializer>= 1</initializer>
           <briefdescription>
+<para>Allows frequencies above the cutoff frequency to pass, attenuating lower frequencies. </para>
           </briefdescription>
           <detaileddescription>
           </detaileddescription>
@@ -28,6 +30,7 @@
           <name>BandPass</name>
           <initializer>= 2</initializer>
           <briefdescription>
+<para>Allows a specific range of frequencies to pass, attenuating frequencies outside the band. </para>
           </briefdescription>
           <detaileddescription>
           </detaileddescription>
@@ -66,6 +69,7 @@
         <qualifiedname>dalia::BiquadParams::frequency</qualifiedname>
         <initializer>= 20000.0f</initializer>
         <briefdescription>
+<para>The cutoff or center frequency of the filter: 20.0 - 20000 Hz. </para>
         </briefdescription>
         <detaileddescription>
         </detaileddescription>
@@ -81,6 +85,7 @@
         <qualifiedname>dalia::BiquadParams::resonance</qualifiedname>
         <initializer>= 0.707f</initializer>
         <briefdescription>
+<para>The Q-factor of the filter: 0.1 - 10.0. </para>
         </briefdescription>
         <detaileddescription>
         </detaileddescription>
