@@ -9,7 +9,7 @@ namespace dalia {
 	static constexpr const char* LOG_CTX_ASYNC    = "Async";
 	static constexpr const char* LOG_CTX_MIXER    = "Mixer";
 
-	enum class LogLevel : int;
+	enum class LogLevel : uint8_t;
 
 	class Logger {
 	public:
