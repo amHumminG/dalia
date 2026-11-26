@@ -106,7 +106,7 @@ namespace dalia {
 		float preDelayMs		= 20.0f;	// 0 - 100 ms
 		float dryMix			= 1.0f;		// 0.0 - 1.0
 		float wetMix			= 0.35f;		// 0.0 - 1.0
-		float lowCutHz			= 80.0f;	// Feedback/input highpass: 20 - 500 Hz
+		float lowCutHz			= 80.0f;	// Feedback/input low-shelf: 20 - 500 Hz
 		bool freeze				= false;	// Infinite tail when true
 
 		/// @brief Clamps internal parameters to safe ranges.

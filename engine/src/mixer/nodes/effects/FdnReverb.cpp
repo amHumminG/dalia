@@ -194,9 +194,10 @@ namespace dalia {
 					sample            = (1.0f - m_dampingCoeff) * sample + m_dampingCoeff * m_dampingState[c];
 					m_dampingState[c] = sample;
 
-					// One-pole highpass low-cut (prevent sub-bass buildup tail buildup)
+					// One-pole low-shelf (prevent sub-bass buildup tail buildup)
+					constexpr float LOW_CUT_STRENGTH = 0.35f;
 					m_lowCutState[c] = (1.0f - m_lowCutCoeff) * sample + m_lowCutCoeff * m_lowCutState[c];
-					sample -= m_lowCutState[c];
+					sample -= m_lowCutState[c] * LOW_CUT_STRENGTH;
 				}
 
 				tankOut[c] = sample;
