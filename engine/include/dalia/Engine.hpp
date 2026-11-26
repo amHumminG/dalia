@@ -37,7 +37,7 @@ namespace dalia {
 		uint32_t busCapacity    = 64; // The maximum number of buses that can exist at once.
 
 		// Effect Capacities
-		uint32_t biquadCapacity = 32; // The maximum number of biquad filters that can exist at once.
+		uint32_t biquadCapacity    = 32; // The maximum number of biquad filters that can exist at once.
 		uint32_t fdnReverbCapacity = 32; // The maximum number of FDN reverbs that can exist at once.
 
 		/// @brief Advanced settings. Only touch if you have very tight constraints.
@@ -65,7 +65,7 @@ namespace dalia {
 		// [ ENGINE LIFECYCLE ]
 		// Core methods for initializing, ticking, shutting down the engine.
 		// ============================================================================
-#pragma region ENGINE_LIFECYCLE
+		#pragma region ENGINE_LIFECYCLE
 
 		/// @brief Initializes the engine, hardware device and background threads.
 		///
@@ -104,13 +104,13 @@ namespace dalia {
 		/// this method that any provided AudioEventCallback and AssetLoadCallback functions are invoked.
 		void Update();
 
-#pragma endregion ENGINE_LIFECYCLE
+		#pragma endregion ENGINE_LIFECYCLE
 
 		// ============================================================================
 		// [ ENGINE SETTINGS ]
 		// Core methods for setting engine attributes.
 		// ============================================================================
-#pragma region ENGINE_SETTINGS
+		#pragma region ENGINE_SETTINGS
 
 		/// @brief Sets the global scaling factor for the Doppler effect for the entire engine.
 		///
@@ -120,13 +120,13 @@ namespace dalia {
 		/// @retval Result::NotInitialized	The engine is not initialized.
 		Result SetGlobalDopplerFactor(float globalDopplerFactor);
 
-#pragma endregion ENGINE_SETTINGS
+		#pragma endregion ENGINE_SETTINGS
 
 		// ============================================================================
 		// [ DEVICE MANAGEMENT ]
 		// Methods for handling output devices.
 		// ============================================================================
-#pragma region DEVICE_MANAGEMENT
+		#pragma region DEVICE_MANAGEMENT
 
 		/// @brief Queries the OS for available output devices and retrieves the total count.
 		///
@@ -185,14 +185,14 @@ namespace dalia {
 		/// @retval Result::NotInitialized	The engine is not initialized.
 		Result SetOutputDevice(const char* identifier);
 
-#pragma endregion ENGINE_DEVICE
+		#pragma endregion ENGINE_DEVICE
 
 		// ============================================================================
 		// [ ASSET MANAGEMENT ]
 		// Lifecycle methods for loading, tracking, and freeing raw audio memory
 		// and soundbanks.
 		// ============================================================================
-#pragma region ASSET_MANAGEMENT
+		#pragma region ASSET_MANAGEMENT
 
 		/// @brief Asynchronously loads a sound into memory or prepares a file for streaming.
 		///
@@ -244,13 +244,13 @@ namespace dalia {
 		/// @retval Result::InvalidHandle	The sound handle is not recognized, or has already been freed.
 		Result GetSoundLength(SoundHandle sound, double& lengthInSeconds);
 
-#pragma endregion ASSET_MANAGEMENT
+		#pragma endregion ASSET_MANAGEMENT
 
 		// ============================================================================
 		// [ BUS MANAGEMENT ]
 		// Lifecycle methods for creating, destroying, routing and modifying buses.
 		// ============================================================================
-#pragma region BUS_MANAGEMENT
+		#pragma region BUS_MANAGEMENT
 
 		/// @brief Creates a new mixing bus.
 		///
@@ -314,14 +314,14 @@ namespace dalia {
 		/// @retval Result::BusNotFound		The bus does not exist.
 		Result SetBusVolumeDb(const char* bus, float volumeDb);
 
-#pragma endregion BUS_MANAGEMENT
+		#pragma endregion BUS_MANAGEMENT
 
 		// ============================================================================
 		// [ EFFECTS MANAGEMENT ]
 		// Lifecycle methods for creating, destroying, attaching, detaching and
 		// modifying effects.
 		// ============================================================================
-#pragma region EFFECTS_MANAGEMENT
+		#pragma region EFFECTS_MANAGEMENT
 
 		/// @brief Allocates a new DSP effect instance and initializes it with the provided parameters.
 		///
@@ -408,14 +408,14 @@ namespace dalia {
 		template <typename TParams>
 		Result SetEffectParams(EffectHandle effect, const TParams& params);
 
-#pragma endregion EFFECTS_MANAGEMENT
+		#pragma endregion EFFECTS_MANAGEMENT
 
 		// ============================================================================
 		// [ PLAYBACK MANAGEMENT ]
 		// Methods for creating and modifying playback instances in terms of state
 		// and parameters.
 		// ============================================================================
-#pragma region PLAYBACK_MANAGEMENT
+		#pragma region PLAYBACK_MANAGEMENT
 
 		/// @brief Creates a playback instance with a sound and prepares it for playback.
 		///
@@ -689,13 +689,13 @@ namespace dalia {
 		/// @retval Result::ExpiredHandle		The playback handle has already stopped playing.
 		Result SetPlaybackListenerMask(PlaybackHandle playback, ListenerMask listenerMask);
 
-#pragma endregion PLAYBACK_MANAGEMENT
+		#pragma endregion PLAYBACK_MANAGEMENT
 
 		// ============================================================================
 		// [ LISTENER MANAGEMENT ]
 		// Methods for activating, deactivating and modifying listeners.
 		// ============================================================================
-#pragma region LISTENER_MANAGEMENT
+		#pragma region LISTENER_MANAGEMENT
 
 		/// @brief Enables or disables a listener.
 		///
@@ -761,7 +761,7 @@ namespace dalia {
 		/// @retval Result::ListenerNotFound	The listener index exceeds the allocated listener capacity.
 		Result SetListener3DAttributes(uint32_t listenerIndex, const Listener3DAttributes& attributes);
 
-#pragma endregion LISTENER_MANAGEMENT
+		#pragma endregion LISTENER_MANAGEMENT
 
 	private:
 		EngineInternalState* m_state = nullptr;
