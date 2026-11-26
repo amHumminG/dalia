@@ -1,15 +1,14 @@
-#include "DrawHelper.h"
-
-#include "rlgl.h"
+#include "DrawHelper.hpp"
 
 #include <math.h>
 #include <algorithm>
 
-#include "raymath.h"
+#include <rlgl.h>
+#include <raymath.h>
 
 void DrawEditorGrid(int slices, float spacing, Color baseColor) {
 	int halfSlices = slices / 2;
-	float limit = static_cast<float>(halfSlices) * spacing;
+	float limit    = static_cast<float>(halfSlices) * spacing;
 
 	rlEnableColorBlend();
 	rlBegin(RL_LINES);
@@ -51,7 +50,7 @@ void DrawEditorGrid(int slices, float spacing, Color baseColor) {
 }
 
 void DrawSelectionAnchor(Vector3 position, float radius, Color color) {
-	Vector3 groundPos = { position.x, 0.0f, position.z };
+	Vector3 groundPos = {position.x, 0.0f, position.z};
 	DrawLine3D(position, groundPos, Fade(color, 0.5f));
 
 	rlBegin(RL_LINES);
@@ -92,7 +91,7 @@ void DrawMovementInspector(MovementState& state, Vector3 currentPosition, const 
 			state.type = static_cast<MovementPreset>(currentPreset);
 
 			state.timeAccumulator = 0.0f;
-			state.centerPoint = currentPosition;
+			state.centerPoint     = currentPosition;
 		}
 
 		// Parameters
@@ -122,7 +121,7 @@ void DrawMovementInspector(MovementState& state, Vector3 currentPosition, const 
 		(derivedVelocity.x * derivedVelocity.x) +
 		(derivedVelocity.y * derivedVelocity.y) +
 		(derivedVelocity.z * derivedVelocity.z)
-	);
+		);
 	ImGui::TextDisabled("Derived Speed: %.2f (m/s)", derivedSpeed);
 
 	ImGui::PopID();

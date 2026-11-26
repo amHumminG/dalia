@@ -1,14 +1,14 @@
-#include "asset/AssetController.h"
+#include "asset/AssetController.hpp"
 
-#include "asset/AssetRegistry.h"
-#include "asset/types/ResidentSound.h"
-#include "asset/types/StreamSound.h"
-#include "async/AsyncMessageBus.h"
-#include "mixer/nodes/StreamContext.h"
-#include "io/codec/Codec.h"
-#include "core/Logger.h"
-#include "core/Assert.h"
-#include "core/Profiler.h"
+#include "asset/AssetRegistry.hpp"
+#include "asset/types/ResidentSound.hpp"
+#include "asset/types/StreamSound.hpp"
+#include "async/AsyncMessageBus.hpp"
+#include "mixer/nodes/StreamContext.hpp"
+#include "io/codec/Codec.hpp"
+#include "core/Logger.hpp"
+#include "core/Assert.hpp"
+#include "core/Profiler.hpp"
 
 namespace dalia {
 
@@ -35,7 +35,7 @@ namespace dalia {
 		if (!m_initialized) return;
 
 		m_asyncMessageBus = nullptr;
-		m_initialized = false;
+		m_initialized     = false;
 	}
 
 	Result AssetController::LoadSoundAsync(SoundHandle& sound, SoundType type, const char* filepath,
@@ -67,22 +67,22 @@ namespace dalia {
 
 		if (type == SoundType::Resident) {
 			ResidentSound* rs = m_assetRegistry.GetResidentSound(sound);
-			rs->refCount = 2;
-			rs->pathHash = pathId.GetHash();
-			rs->state = LoadState::Loading;
-			targetPcmBuffer = &rs->pcmData;
+			rs->refCount      = 2;
+			rs->pathHash      = pathId.GetHash();
+			rs->state         = LoadState::Loading;
+			targetPcmBuffer   = &rs->pcmData;
 		}
 		else {
 			StreamSound* ss = m_assetRegistry.GetStreamSound(sound);
-			ss->refCount = 2;
-			ss->pathHash = pathId.GetHash();
-			ss->state = LoadState::Loading;
+			ss->refCount    = 2;
+			ss->pathHash    = pathId.GetHash();
+			ss->state       = LoadState::Loading;
 			snprintf(ss->filepath, MAX_STR_LEN_ASSET_PATH, "%s", filepath);
 		}
 
 		m_assetRegistry.RegisterLoadedSound(pathId, sound);
 
-		uint32_t reqId = nextIoLoadRequestId++;
+		uint32_t reqId = m_nextIoLoadRequestId++;
 		if (requestId) *requestId = reqId;
 		if (callback) m_loadCallbacks[reqId] = std::move(callback);
 
@@ -192,20 +192,20 @@ namespace dalia {
 
 		if (sound.GetType() == SoundType::Resident) {
 			if (ResidentSound* rs = m_assetRegistry.GetResidentSound(sound)) {
-				rs->channels = info.channels;
-				rs->sampleRate = info.sampleRate;
-				rs->totalFrames = info.totalFrames;
+				rs->channels        = info.channels;
+				rs->sampleRate      = info.sampleRate;
+				rs->totalFrames     = info.totalFrames;
 				rs->lengthInSeconds = info.lengthInSeconds;
-				rs->state = LoadState::Loaded;
+				rs->state           = LoadState::Loaded;
 			}
 		}
 		else if (sound.GetType() == SoundType::Stream) {
 			if (StreamSound* ss = m_assetRegistry.GetStreamSound(sound)) {
-				ss->channels = info.channels;
-				ss->sampleRate = info.sampleRate;
-				ss->totalFrames = info.totalFrames;
+				ss->channels        = info.channels;
+				ss->sampleRate      = info.sampleRate;
+				ss->totalFrames     = info.totalFrames;
 				ss->lengthInSeconds = info.lengthInSeconds;
-				ss->state = LoadState::Loaded;
+				ss->state           = LoadState::Loaded;
 			}
 		}
 

@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
-#include "dalia/Engine.h"
-#include "dalia/Log.h"
+#include "dalia/Engine.hpp"
+#include "dalia/Log.hpp"
 
 using namespace dalia;
 
@@ -9,15 +9,15 @@ protected:
 	EngineConfig GetHeadlessConfig() {
 		EngineConfig config;
 
-		config.logLevel = LogLevel::None;
+		config.logLevel    = LogLevel::None;
 		config.logCallback = nullptr;
 
 		config.startupOutputDeviceId = "null"; // Render to void
 
 		config.residentSoundCapacity = 16;
-		config.streamSoundCapacity = 16;
-		config.voiceCapacity = 16;
-		config.busCapacity = 16;
+		config.streamSoundCapacity   = 16;
+		config.voiceCapacity         = 16;
+		config.busCapacity           = 16;
 
 		return config;
 	}

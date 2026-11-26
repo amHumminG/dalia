@@ -1,0 +1,71 @@
+---
+Language: Cpp
+BasedOnStyle: LLVM
+Standard: c++20
+
+# Indentation: Tabs (width 4)
+UseTab: ForIndentation
+TabWidth: 4
+IndentWidth: 4
+AccessModifierOffset: -4
+NamespaceIndentation: All
+IndentCaseBlocks: true
+IndentPPDirectives: BeforeHash
+IndentCaseLabels: true
+
+# Alignment
+AlignConsecutiveAssignments: Consecutive
+AlignConsecutiveDeclarations: false
+AlignAfterOpenBracket: DontAlign
+AllowShortLambdasOnASingleLine: All
+AllowShortLoopsOnASingleLine: true
+AllowShortBlocksOnASingleLine: Empty
+AlignOperands: false
+AlignTrailingComments: false
+
+# Braces: Opening '{' on same line, 'else' on new line
+BreakBeforeBraces: Custom
+BraceWrapping:
+  AfterCaseLabel: false
+  AfterClass: false
+  AfterControlStatement: Never
+  AfterEnum: false
+  AfterFunction: false
+  AfterNamespace: false
+  AfterStruct: false
+  AfterUnion: false
+  AfterExternBlock: false
+  BeforeCatch: true
+  BeforeElse: true
+  BeforeLambdaBody: false
+  BeforeWhile: false
+  SplitEmptyFunction: true
+  SplitEmptyRecord: true
+  SplitEmptyNamespace: true
+
+# Pointers & References
+PointerAlignment: Left
+ReferenceAlignment: Pointer
+
+# Functions & Constructors
+AllowShortFunctionsOnASingleLine: Inline
+AlwaysBreakTemplateDeclarations: Yes
+BreakConstructorInitializers: BeforeColon
+BreakConstructorInitializersBeforeComma: false
+ConstructorInitializerAllOnOneLineOrOnePerLine: false
+AllowShortIfStatementsOnASingleLine: WithoutElse
+
+# Includes & Spacing
+SortIncludes: Never
+ColumnLimit: 120
+MaxEmptyLinesToKeep: 2
+InsertNewlineAtEOF: true
+SpaceInEmptyParentheses: false
+SpacesInAngles: false
+SpacesInConditionalStatement: false
+SpacesInCStyleCastParentheses: false
+SpacesInParentheses: false
+
+# Comments
+FixNamespaceComments: false
+...

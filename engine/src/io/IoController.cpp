@@ -1,11 +1,11 @@
-#include "io/IoController.h"
+#include "io/IoController.hpp"
 
-#include "async/AsyncMessageBus.h"
-#include "async/messaging/AsyncLoadMessaging.h"
-#include "async/messaging/AsyncStreamMessaging.h"
-#include "core/Assert.h"
-#include "core/Logger.h"
-#include "core/Profiler.h"
+#include "async/AsyncMessageBus.hpp"
+#include "async/messaging/AsyncLoadMessaging.hpp"
+#include "async/messaging/AsyncStreamMessaging.hpp"
+#include "core/Assert.hpp"
+#include "core/Logger.hpp"
+#include "core/Profiler.hpp"
 
 namespace dalia {
 
@@ -22,17 +22,27 @@ namespace dalia {
 
 		// Subscribe to load commands (Load Thread)
 		m_asyncMessageBus->SubscribeToLoadCommand(AsyncLoadCommand::Type::LoadSound,
-			[this](const AsyncLoadCommand& cmd) { HandleLoadSoundCommand(cmd); });
+			[this](const AsyncLoadCommand& cmd) {
+				HandleLoadSoundCommand(cmd);
+			});
 
 		// Subscribe to stream commands (Stream Thread)
 		m_asyncMessageBus->SubscribeToStreamCommand(AsyncStreamCommand::Type::PrepareStream,
-			[this](const AsyncStreamCommand& cmd) { HandlePrepareStreamCommand(cmd); });
+			[this](const AsyncStreamCommand& cmd) {
+				HandlePrepareStreamCommand(cmd);
+			});
 		m_asyncMessageBus->SubscribeToStreamCommand(AsyncStreamCommand::Type::RefillStreamBuffer,
-			[this](const AsyncStreamCommand& cmd) { HandleRefillStreamCommand(cmd); });
+			[this](const AsyncStreamCommand& cmd) {
+				HandleRefillStreamCommand(cmd);
+			});
 		m_asyncMessageBus->SubscribeToStreamCommand(AsyncStreamCommand::Type::SeekStream,
-			[this](const AsyncStreamCommand& cmd) { HandleSeekStreamCommand(cmd); });
+			[this](const AsyncStreamCommand& cmd) {
+				HandleSeekStreamCommand(cmd);
+			});
 		m_asyncMessageBus->SubscribeToStreamCommand(AsyncStreamCommand::Type::ReleaseStream,
-			[this](const AsyncStreamCommand& cmd) { HandleReleaseStreamCommand(cmd); });
+			[this](const AsyncStreamCommand& cmd) {
+				HandleReleaseStreamCommand(cmd);
+			});
 
 		m_initialized = true;
 		return Result::Ok;
@@ -57,7 +67,7 @@ namespace dalia {
 		}
 
 		m_asyncMessageBus = nullptr;
-		m_initialized = false;
+		m_initialized     = false;
 	}
 
 	Result IoController::AllocateAndPrepareStream(const char* filepath, uint32_t& streamIndex, uint32_t& streamGen) {
@@ -66,7 +76,7 @@ namespace dalia {
 		if (!m_streams.Allocate(streamIndex)) return Result::StreamCapacityReached;
 
 		StreamContext& stream = m_streams.Get(streamIndex);
-		streamGen = stream.gen.load(std::memory_order_acquire);
+		streamGen             = stream.gen.load(std::memory_order_acquire);
 		stream.state.store(StreamState::Preparing, std::memory_order_release);
 
 		AsyncStreamCommand cmd = AsyncStreamCommand::PrepareStream(streamIndex, streamGen, filepath);
@@ -93,7 +103,7 @@ namespace dalia {
 			DALIA_LOG_ERR(LOG_CTX_ASYNC, "Failed to load sound from file: %s. Unsupported file format.", cmd.filepath);
 			m_asyncMessageBus->PublishLoadEvent(
 				AsyncLoadEvent::SoundLoadFailed(cmd.requestId, cmd.assetRawId, Result::UnsupportedFormat)
-			);
+				);
 			return;
 		}
 
@@ -112,7 +122,7 @@ namespace dalia {
 		if (res != Result::Ok) {
 			m_asyncMessageBus->PublishLoadEvent(
 				AsyncLoadEvent(AsyncLoadEvent::SoundLoadFailed(cmd.requestId, cmd.assetRawId, res))
-			);
+				);
 			return;
 		}
 
@@ -137,7 +147,7 @@ namespace dalia {
 
 		AudioFormatInfo info;
 		if (stream.codec->OpenStream(cmd.data.streamPrep.filepath, stream.decoderHandle, info) == Result::Ok) {
-			stream.channels = info.channels;
+			stream.channels   = info.channels;
 			stream.sampleRate = info.sampleRate;
 			FillStreamBuffer(stream, 0);
 			FillStreamBuffer(stream, 1);
@@ -203,19 +213,19 @@ namespace dalia {
 			return;
 		}
 
-		float* bufferPtr = stream.buffers[bufferIndex];
-		uint32_t framesNeeded = STREAM_BUFFER_FRAMES;
+		float* bufferPtr       = stream.buffers[bufferIndex];
+		uint32_t framesNeeded  = STREAM_BUFFER_FRAMES;
 		uint32_t framesWritten = 0;
-		bool justLooped = false;
-		bool foundEOF = false;
+		bool justLooped        = false;
+		bool foundEOF          = false;
 
 		while (framesWritten < framesNeeded) {
 			uint32_t framesRemaining = framesNeeded - framesWritten;
-			float* writePtr = bufferPtr + (framesWritten * stream.channels);
+			float* writePtr          = bufferPtr + (framesWritten * stream.channels);
 
 			uint32_t framesRead = stream.codec->DecodeStreamFrames(
 				stream.decoderHandle, stream.channels, writePtr, framesRemaining
-			);
+				);
 
 			if (framesRead == 0) {
 				// Hit EOF
@@ -229,13 +239,13 @@ namespace dalia {
 				stream.codec->SeekStreamFrame(stream.decoderHandle, 0); // Loop
 				DALIA_LOG_DEBUG(LOG_CTX_ASYNC, "Stream buffer found EOF at index %d.", framesWritten);
 				justLooped = true;
-				foundEOF = true;
+				foundEOF   = true;
 				// Continue filling the buffer from the start of the file
 			}
 			else {
 				if (!foundEOF) stream.eofIndex[bufferIndex] = NO_EOF;
 				framesWritten += framesRead;
-				justLooped = false;
+				justLooped    = false;
 			}
 		}
 

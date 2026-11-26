@@ -49,27 +49,27 @@ set_target_properties(FFmpeg::FFmpeg PROPERTIES
 
 set(STUDIO_FILES
     src/main.cpp
-    src/Transcoder.h
+    src/Transcoder.hpp
     src/Transcoder.cpp
     src/FileExplorer.cpp
     src/app/Application.cpp
-    src/app/Application.h
-    src/editor/Panel.h
-    src/commands/Command.h
+    src/app/Application.hpp
+    src/editor/Panel.hpp
+    src/commands/Command.hpp
     src/commands/CommandStack.cpp
-    src/commands/CommandStack.h
+    src/commands/CommandStack.hpp
     src/project/Project.cpp
-    src/project/Project.h
-    src/editor/SelectionContext.h
+        src/project/Project.hpp
+    src/editor/SelectionContext.hpp
     src/editor/BrowserPanel.cpp
-    src/editor/BrowserPanel.h
-    src/commands/ModifyAssetCommand.h
+    src/editor/BrowserPanel.hpp
+    src/commands/ModifyAssetCommand.hpp
     src/editor/InspectorPanel.cpp
-    src/editor/InspectorPanel.h
+    src/editor/InspectorPanel.hpp
     src/core/Logger.cpp
-    src/core/Logger.h
+    src/core/Logger.hpp
     src/editor/ConsolePanel.cpp
-    src/editor/ConsolePanel.h
+    src/editor/ConsolePanel.hpp
 )
 
 add_executable(dalia_studio ${STUDIO_FILES})

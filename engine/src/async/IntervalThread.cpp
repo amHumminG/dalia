@@ -1,14 +1,14 @@
-#include "async/IntervalThread.h"
+#include "async/IntervalThread.hpp"
 
-#include "platform/HighResTimer.h"
-#include "core/Profiler.h"
+#include "platform/HighResTimer.hpp"
+#include "core/Profiler.hpp"
 
 namespace dalia {
 
 	IntervalThread::IntervalThread(const std::string& name, ProcessFunc processFunc, uint32_t intervalMicroseconds,
-		ThreadPriority priority)
+	                               ThreadPriority priority)
 		: m_name(name), m_processFunc(std::move(processFunc)), m_intervalMicroseconds(intervalMicroseconds),
-		m_priority(priority) {
+		  m_priority(priority) {
 	}
 
 	IntervalThread::~IntervalThread() {

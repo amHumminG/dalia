@@ -1,5 +1,5 @@
-#include "mixer/MixController.h"
-#include "core/Assert.h"
+#include "mixer/MixController.hpp"
+#include "core/Assert.hpp"
 
 namespace dalia {
 

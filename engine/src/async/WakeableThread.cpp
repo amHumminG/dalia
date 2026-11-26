@@ -1,5 +1,5 @@
-#include "async/WakeableThread.h"
-#include "core/Profiler.h"
+#include "async/WakeableThread.hpp"
+#include "core/Profiler.hpp"
 
 namespace dalia {
 

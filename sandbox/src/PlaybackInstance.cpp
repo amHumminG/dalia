@@ -1,10 +1,10 @@
-#include "PlaybackInstance.h"
+#include "PlaybackInstance.hpp"
 
-#include "raylib.h"
-#include "raymath.h"
-#include "imgui.h"
+#include <raylib.h>
+#include <raymath.h>
+#include <imgui.h>
 
-#include "DrawHelper.h"
+#include "DrawHelper.hpp"
 
 #include <cstring>
 
@@ -12,7 +12,7 @@ PlaybackInstance::PlaybackInstance(dalia::Engine* engine, dalia::SoundHandle sou
 	: m_engine(engine), m_name(name) {
 	// Define the exit callback
 	auto exitCallback = [this](dalia::PlaybackHandle handle, dalia::PlaybackExitCondition exitCondition) {
-		this->m_state = PlaybackState::Stopped;
+		this->m_state         = PlaybackState::Stopped;
 		this->m_exitCondition = exitCondition;
 	};
 
@@ -32,18 +32,19 @@ void PlaybackInstance::Update(float deltaTime) {
 
 		// Velocity Approximation
 		Vector3 movementDelta = Vector3Subtract(m_position, m_previousPosition);
-		Vector3 rawVelocity = { 0.0f, 0.0f, 0.0f };
-		if (Vector3Length(movementDelta) < 10.0f) rawVelocity = Vector3Scale(movementDelta, 1.0f / deltaTime); // Should we keep this safety guard?
+		Vector3 rawVelocity   = {0.0f, 0.0f, 0.0f};
+		if (Vector3Length(movementDelta) < 10.0f) rawVelocity = Vector3Scale(movementDelta, 1.0f / deltaTime);
+		// Should we keep this safety guard?
 
 		float smoothing = 15.0f * deltaTime;
-		m_velocity.x = std::lerp(m_velocity.x, rawVelocity.x, smoothing);
-		m_velocity.y = std::lerp(m_velocity.y, rawVelocity.y, smoothing);
-		m_velocity.z = std::lerp(m_velocity.z, rawVelocity.z, smoothing);
+		m_velocity.x    = std::lerp(m_velocity.x, rawVelocity.x, smoothing);
+		m_velocity.y    = std::lerp(m_velocity.y, rawVelocity.y, smoothing);
+		m_velocity.z    = std::lerp(m_velocity.z, rawVelocity.z, smoothing);
 
 		m_previousPosition = m_position;
 
 		dalia::Result res;
-		 res = m_engine->SetPlaybackPosition(m_handle, {m_position.x, m_position.y, m_position.z});
+		res = m_engine->SetPlaybackPosition(m_handle, {m_position.x, m_position.y, m_position.z});
 		if (res != dalia::Result::Ok) m_result = res;
 		res = m_engine->SetPlaybackVelocity(m_handle, {m_velocity.x, m_velocity.y, m_velocity.z});
 		if (res != dalia::Result::Ok) m_result = res;
@@ -54,18 +55,18 @@ void PlaybackInstance::Draw3D(bool isSelected) {
 	if (!m_isSpatial) return;
 
 	Color baseColor = GRAY;
-	float radius = 0.5f;
+	float radius    = 0.5f;
 	switch (m_state) {
 		case PlaybackState::Inactive:
 			baseColor = GRAY;
 			break;
 		case PlaybackState::Playing: {
-			float time = static_cast<float>(GetTime());
+			float time       = static_cast<float>(GetTime());
 			float pulseSpeed = 6.0f;
-			float t = (sinf(time * pulseSpeed) + 1.0f) * 0.5f;
+			float t          = (sinf(time * pulseSpeed) + 1.0f) * 0.5f;
 
-			Color color1 = { 0, 255, 0, 255 };
-			Color color2 = { 0, 117, 44, 255 };
+			Color color1 = {0, 255, 0, 255};
+			Color color2 = {0, 117, 44, 255};
 
 			baseColor.r = static_cast<unsigned char>(color2.r + t * (color1.r - color2.r));
 			baseColor.g = static_cast<unsigned char>(color2.g + t * (color1.g - color2.g));
@@ -120,24 +121,32 @@ void PlaybackInstance::DrawInspectorUI(const UIContext& ui) {
 	dalia::Result res;
 
 	switch (m_state) {
-		case PlaybackState::Inactive: ImGui::TextColored({0.7f, 0.7f, 0.7f, 1.0f}, "INACTIVE");	break;
-		case PlaybackState::Playing:  ImGui::TextColored({0.0f, 1.0f, 0.0f, 1.0f}, "PLAYING");	break;
-		case PlaybackState::Paused:   ImGui::TextColored({1.0f, 1.0f, 0.0f, 1.0f}, "PAUSED");	break;
-		case PlaybackState::Stopped:  ImGui::TextColored({1.0f, 0.0f, 0.0f, 1.0f}, "STOPPED");	break;
+		case PlaybackState::Inactive:
+			ImGui::TextColored({0.7f, 0.7f, 0.7f, 1.0f}, "INACTIVE");
+			break;
+		case PlaybackState::Playing:
+			ImGui::TextColored({0.0f, 1.0f, 0.0f, 1.0f}, "PLAYING");
+			break;
+		case PlaybackState::Paused:
+			ImGui::TextColored({1.0f, 1.0f, 0.0f, 1.0f}, "PAUSED");
+			break;
+		case PlaybackState::Stopped:
+			ImGui::TextColored({1.0f, 0.0f, 0.0f, 1.0f}, "STOPPED");
+			break;
 	}
 
 	if (m_state == PlaybackState::Inactive || m_state == PlaybackState::Paused) {
 		if (ImGui::Button("Play")) {
 			res = m_engine->PlayPlayback(m_handle);
 			if (res != dalia::Result::Ok) m_result = res;
-			else m_state = PlaybackState::Playing;
+			else m_state                           = PlaybackState::Playing;
 		}
 	}
 	else if (m_state == PlaybackState::Playing) {
 		if (ImGui::Button("Pause")) {
 			res = m_engine->PausePlayback(m_handle);
 			if (res != dalia::Result::Ok) m_result = res;
-			else m_state = PlaybackState::Paused;
+			else m_state                           = PlaybackState::Paused;
 		}
 	}
 
@@ -152,7 +161,7 @@ void PlaybackInstance::DrawInspectorUI(const UIContext& ui) {
 	ImGui::Text("Length: %u min %u s",
 		static_cast<uint32_t>(m_soundLength / 60.0),
 		static_cast<uint32_t>(m_soundLength) % 60
-	);
+		);
 
 	ImGui::InputDouble("Time (s)", &m_seekTime, 1.0, 10.0, "%.1f");
 	ImGui::SameLine();
@@ -218,14 +227,16 @@ void PlaybackInstance::DrawInspectorUI(const UIContext& ui) {
 		ImGui::Text("Attenuation Curve");
 		ImGui::SameLine();
 		int attenuationCurve = static_cast<int>(m_attenuationCurve);
-		changed |= ImGui::RadioButton("InvSquare", &attenuationCurve, static_cast<int>(dalia::AttenuationCurve::InverseSquare));
+		changed              |= ImGui::RadioButton("InvSquare", &attenuationCurve,
+			static_cast<int>(dalia::AttenuationCurve::InverseSquare));
 		ImGui::SameLine();
 		changed |= ImGui::RadioButton("Linear", &attenuationCurve, static_cast<int>(dalia::AttenuationCurve::Linear));
 		ImGui::SameLine();
-		changed |= ImGui::RadioButton("Quadratic", &attenuationCurve, static_cast<int>(dalia::AttenuationCurve::Quadratic));
+		changed |= ImGui::RadioButton("Quadratic", &attenuationCurve,
+			static_cast<int>(dalia::AttenuationCurve::Quadratic));
 		if (changed) {
 			m_attenuationCurve = static_cast<dalia::AttenuationCurve>(attenuationCurve);
-			res = m_engine->SetPlaybackAttenuationCurve(m_handle, m_attenuationCurve);
+			res                = m_engine->SetPlaybackAttenuationCurve(m_handle, m_attenuationCurve);
 			if (res != dalia::Result::Ok) m_result = res;
 		}
 
@@ -253,12 +264,14 @@ void PlaybackInstance::DrawInspectorUI(const UIContext& ui) {
 		ImGui::Text("Distance Mode");
 		ImGui::SameLine();
 		int distanceMode = static_cast<int>(m_distanceMode);
-		changed |= ImGui::RadioButton("From Listener", &distanceMode, static_cast<int>(dalia::DistanceMode::FromListener));
+		changed          |= ImGui::RadioButton("From Listener", &distanceMode,
+			static_cast<int>(dalia::DistanceMode::FromListener));
 		ImGui::SameLine();
-		changed |= ImGui::RadioButton("From Probe", &distanceMode, static_cast<int>(dalia::DistanceMode::FromDistanceProbe));
+		changed |= ImGui::RadioButton("From Probe", &distanceMode,
+			static_cast<int>(dalia::DistanceMode::FromDistanceProbe));
 		if (changed) {
 			m_distanceMode = static_cast<dalia::DistanceMode>(distanceMode);
-			res = m_engine->SetPlaybackDistanceMode(m_handle, m_distanceMode);
+			res            = m_engine->SetPlaybackDistanceMode(m_handle, m_distanceMode);
 			if (res != dalia::Result::Ok) m_result = res;
 		}
 
@@ -288,7 +301,3 @@ void PlaybackInstance::DrawInspectorUI(const UIContext& ui) {
 
 	ImGui::PopID();
 }
-
-
-
-

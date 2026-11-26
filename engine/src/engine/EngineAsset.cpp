@@ -1,5 +1,5 @@
-#include "dalia/Engine.h"
-#include "engine/EngineInternalState.h"
+#include "dalia/Engine.hpp"
+#include "engine/EngineInternalState.hpp"
 
 namespace dalia {
 

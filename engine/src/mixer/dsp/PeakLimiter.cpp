@@ -1,11 +1,11 @@
-#include "mixer/dsp/PeakLimiter.h"
+#include "mixer/dsp/PeakLimiter.hpp"
 
 #include <cmath>
 #include <algorithm>
 
 void PeakLimiter::Initialize(float sampleRate, float attackMs, float releaseMs) {
-	m_attackCoeff = std::exp(-1.0f / ((attackMs * 0.001f) * sampleRate));
-	m_releaseCoeff = std::exp(-1.0f / ((releaseMs * 0.001f) * sampleRate));
+	attackCoeff  = std::exp(-1.0f / ((attackMs * 0.001f) * sampleRate));
+	releaseCoeff = std::exp(-1.0f / ((releaseMs * 0.001f) * sampleRate));
 }
 
 void PeakLimiter::ProcessBuffer(float* buffer, uint32_t frameCount, uint32_t channels) {
@@ -19,28 +19,26 @@ void PeakLimiter::ProcessBuffer(float* buffer, uint32_t frameCount, uint32_t cha
 		}
 
 		// Track peak volume
-		if (maxPeak > m_envelope) {
-			m_envelope = m_attackCoeff * m_envelope + (1.0f - m_attackCoeff) * maxPeak;
+		if (maxPeak > envelope) {
+			envelope = attackCoeff * envelope + (1.0f - attackCoeff) * maxPeak;
 		}
 		else {
-			m_envelope = m_releaseCoeff * m_envelope + (1.0f - m_releaseCoeff) * maxPeak;
+			envelope = releaseCoeff * envelope + (1.0f - releaseCoeff) * maxPeak;
 		}
 
 		// Calculate gain reduction
 		float targetGain = 1.0f;
-		if (m_envelope > m_threshold) targetGain = m_threshold / m_envelope;
+		if (envelope > threshold) targetGain = threshold / envelope;
 
 		// Smooth gain application
-		if (targetGain < m_currentGain) {
-			m_currentGain = m_attackCoeff * m_currentGain + (1.0f - m_attackCoeff) * targetGain;
+		if (targetGain < currentGain) {
+			currentGain = attackCoeff * currentGain + (1.0f - attackCoeff) * targetGain;
 		}
 		else {
-			m_currentGain = m_releaseCoeff * m_currentGain + (1.0f - m_releaseCoeff) * targetGain;
+			currentGain = releaseCoeff * currentGain + (1.0f - releaseCoeff) * targetGain;
 		}
 
 		// Apply gain
-		for (uint32_t c = 0; c < channels; c++) {
-			buffer[frameIndex + c] *= m_currentGain;
-		}
+		for (uint32_t c = 0; c < channels; c++) buffer[frameIndex + c] *= currentGain;
 	}
 }

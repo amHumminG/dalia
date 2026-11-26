@@ -1,12 +1,15 @@
-#include "dalia/Engine.h"
-#include "core/Profiler.h"
+#include "dalia/Engine.hpp"
+#include "core/Profiler.hpp"
 
-#include "engine/EngineInternalState.h"
+#include "engine/EngineInternalState.hpp"
 
 namespace dalia {
 
 	Engine::Engine() = default;
-	Engine::~Engine() { if (m_state) m_state->Shutdown(); };
+
+	Engine::~Engine() {
+		if (m_state) m_state->Shutdown();
+	};
 
 	Result Engine::Initialize(const EngineConfig& config) {
 		DALIA_PROFILE_SCOPE_N("Engine::Initialize");
@@ -20,7 +23,7 @@ namespace dalia {
 		if (config.logCallback != nullptr) Logger::SetSink(config.logCallback);
 
 		// --- INTERNAL STATE SETUP ---
-		m_state = new EngineInternalState(config);
+		m_state    = new EngineInternalState(config);
 		Result res = m_state->Initialize(config);
 		if (res != Result::Ok) {
 			delete m_state;

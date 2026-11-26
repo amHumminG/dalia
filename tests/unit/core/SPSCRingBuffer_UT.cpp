@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include "core/SPSCRingBuffer.h"
+#include "core/SPSCRingBuffer.hpp"
 
 #include <thread>
 
@@ -32,9 +32,12 @@ TEST(SPSCRingBufferTest, BufferFullAndUsableCapacity) {
 	EXPECT_FALSE(buffer.Push(4)); // This should fail due to masking
 
 	int32_t val = 0;
-	buffer.Pop(val); EXPECT_EQ(val, 1);
-	buffer.Pop(val); EXPECT_EQ(val, 2);
-	buffer.Pop(val); EXPECT_EQ(val, 3);
+	buffer.Pop(val);
+	EXPECT_EQ(val, 1);
+	buffer.Pop(val);
+	EXPECT_EQ(val, 2);
+	buffer.Pop(val);
+	EXPECT_EQ(val, 3);
 	EXPECT_FALSE(buffer.Pop(val));
 }
 
@@ -85,7 +88,7 @@ TEST(SPSCRingBufferTest, ConcurrencyStress) {
 
 	std::thread consumer([&]() {
 		int32_t expected = 0;
-		int32_t val = -1;
+		int32_t val      = -1;
 
 		while (expected < totalItems) {
 			if (buffer.Pop(val)) {

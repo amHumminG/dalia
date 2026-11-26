@@ -1,22 +1,22 @@
 #pragma once
 
-#include "mixer/MixController.h"
-#include "core/Logger.h"
-#include "async/messaging/AsyncMixerMessaging.h"
-#include "mixer/nodes/effects/EffectTraits.h"
-#include "async/AsyncMessageBus.h"
-#include "core/Assert.h"
+#include "mixer/MixController.hpp"
+#include "core/Logger.hpp"
+#include "async/messaging/AsyncMixerMessaging.hpp"
+#include "mixer/nodes/effects/EffectTraits.hpp"
+#include "async/AsyncMessageBus.hpp"
+#include "core/Assert.hpp"
 
 namespace dalia {
 
-	template <typename TParams> requires requires (TParams p) { p.Sanitize(); }
+	template <typename TParams> requires requires(TParams p) { p.Sanitize(); }
 	Result MixController::CreateEffect(EffectHandle& effect, const TParams& params) {
 		DALIA_ASSERT(m_initialized, "MixController used before initialized.");
 
 		effect = INVALID_EFFECT_HANDLE;
 
 		using Traits = EffectTraits<TParams>;
-		auto& ePool = Traits::GetPool(*this);
+		auto& ePool  = Traits::GetPool(*this);
 
 		uint32_t eIndex = NO_INDEX;
 		if (!ePool.Allocate(eIndex)) {
@@ -38,7 +38,7 @@ namespace dalia {
 		return Result::Ok;
 	}
 
-	template <typename TParams> requires requires (TParams p) { p.Sanitize(); }
+	template <typename TParams> requires requires(TParams p) { p.Sanitize(); }
 	Result MixController::SetEffectParams(EffectHandle effect, const TParams& params) {
 		DALIA_ASSERT(m_initialized, "MixController used before initialized.");
 
@@ -52,7 +52,7 @@ namespace dalia {
 		});
 	}
 
-	template<typename TFunc>
+	template <typename TFunc>
 	Result MixController::ModifyVoice(PlaybackHandle playback, TFunc&& fn) {
 		if (!playback.IsValid()) return Result::InvalidHandle;
 
@@ -65,7 +65,7 @@ namespace dalia {
 		return fn(vMirror, vIndex);
 	}
 
-	template<typename TFunc>
+	template <typename TFunc>
 	Result MixController::ModifyVoiceParams(PlaybackHandle playback, TFunc&& fn) {
 		return ModifyVoice(playback, [&](VoiceMirror& vMirror, uint32_t vIndex) -> Result {
 			fn(vMirror.params);
@@ -74,14 +74,14 @@ namespace dalia {
 		});
 	}
 
-	template<typename TFunc>
+	template <typename TFunc>
 	Result MixController::ModifyListener(uint32_t listenerIndex, TFunc&& fn) {
 		if (listenerIndex >= m_listeners.Capacity()) return Result::InvalidListener;
 
 		return fn(m_listeners.GetMirror(listenerIndex), listenerIndex);
 	}
 
-	template<typename TFunc>
+	template <typename TFunc>
 	Result MixController::ModifyListenerParams(uint32_t listenerIndex, TFunc&& fn) {
 		return ModifyListener(listenerIndex, [&](ListenerMirror& lMirror, uint32_t lIndex) -> Result {
 			fn(lMirror.params);
@@ -90,7 +90,7 @@ namespace dalia {
 		});
 	}
 
-	template<typename TFunc>
+	template <typename TFunc>
 	Result MixController::ModifyBus(const char* identifier, TFunc&& fn) {
 		if (!identifier) return Result::InvalidBus;
 
@@ -101,7 +101,7 @@ namespace dalia {
 		return fn(m_buses.GetMirror(it->second), it->second);
 	}
 
-	template<typename TFunc>
+	template <typename TFunc>
 	Result MixController::ModifyBusParams(const char* identifier, TFunc&& fn) {
 		return ModifyBus(identifier, [&](BusMirror& bMirror, uint32_t bIndex) -> Result {
 			fn(bMirror.params);
@@ -110,12 +110,12 @@ namespace dalia {
 		});
 	}
 
-	template<typename TParams, typename TFunc>
+	template <typename TParams, typename TFunc>
 	Result MixController::ModifyEffect(EffectHandle effect, TFunc&& fn) {
 		using Traits = EffectTraits<TParams>;
 		if (!effect.IsValid() || effect.GetType() != Traits::TYPE) return Result::InvalidHandle;
 
-		auto& ePool = Traits::GetPool(*this);
+		auto& ePool     = Traits::GetPool(*this);
 		uint32_t eIndex = effect.GetIndex();
 		if (eIndex >= ePool.Capacity()) return Result::InvalidHandle;
 
@@ -125,17 +125,19 @@ namespace dalia {
 		return fn(eMirror, eIndex);
 	}
 
-	template<typename TFunc>
+	template <typename TFunc>
 	Result MixController::ModifyEffect(EffectHandle effect, TFunc&& fn) {
 		switch (effect.GetType()) {
 			case EffectType::Biquad:
 				return ModifyEffect<BiquadParams>(effect, std::forward<TFunc>(fn));
+			case EffectType::FdnReverb:
+				return ModifyEffect<FdnReverbParams>(effect, std::forward<TFunc>(fn));
 			default:
 				return Result::InvalidHandle;
 		}
 	}
 
-	template<typename TParams, typename TFunc>
+	template <typename TParams, typename TFunc>
 	Result MixController::ModifyEffectParams(EffectHandle effect, TFunc&& fn) {
 		return ModifyEffect<TParams>(effect, [&](auto& eMirror, uint32_t eIndex) -> Result {
 			fn(eMirror.params);
@@ -146,5 +148,9 @@ namespace dalia {
 
 	inline auto& EffectTraits<BiquadParams>::GetPool(MixController& controller) {
 		return controller.GetBiquadPool();
+	}
+
+	inline auto& EffectTraits<FdnReverbParams>::GetPool(MixController& controller) {
+		return controller.GetFdnReverbPool();
 	}
 }

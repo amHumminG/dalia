@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include "core/Logger.h"
+#include "core/Logger.hpp"
 
 #include <string>
 #include <vector>

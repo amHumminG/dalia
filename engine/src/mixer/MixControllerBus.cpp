@@ -1,5 +1,5 @@
-#include "mixer/MixController.h"
-#include "core/Assert.h"
+#include "mixer/MixController.hpp"
+#include "core/Assert.hpp"
 
 #include <algorithm>
 
@@ -10,7 +10,7 @@ namespace dalia {
 
 		uint32_t bIndex;
 		uint32_t bIndexParent = NO_PARENT;
-		bool parentFound = false;
+		bool parentFound      = false;
 
 		// Fetch parent bus
 		Result resParent = GetBusIndex(parentBus, bIndexParent);
@@ -19,7 +19,7 @@ namespace dalia {
 		// Fetch bus
 		Result res = GetBusIndex(bus, bIndex);
 		if (res == Result::Ok) {
-			BusMirror& bMirror  = m_buses.GetMirror(bIndex);
+			BusMirror& bMirror = m_buses.GetMirror(bIndex);
 			bMirror.refCount++;
 
 			if (parentFound && bMirror.parentBusIndex != bIndexParent) {
@@ -41,8 +41,8 @@ namespace dalia {
 			return Result::BusCapacityReached;
 		}
 
-		BusMirror& bMirror = m_buses.GetMirror(bIndex);
-		bMirror.refCount = 1;
+		BusMirror& bMirror     = m_buses.GetMirror(bIndex);
+		bMirror.refCount       = 1;
 		bMirror.parentBusIndex = bIndexParent;
 
 		const BusID bId(bus);
@@ -89,7 +89,8 @@ namespace dalia {
 				DALIA_LOG_DEBUG(LOG_CTX_CORE, "Orphaned bus (index: %d).", i);
 			}
 		}
-		if (orphanedBuses > 0) DALIA_LOG_WARN(LOG_CTX_CORE, "Destroying bus %s. Orphaned %d buses.",
+		if (orphanedBuses > 0)
+			DALIA_LOG_WARN(LOG_CTX_CORE, "Destroying bus %s. Orphaned %d buses.",
 			bus, orphanedBuses);
 
 		uint32_t orphanedPlaybacks = 0;
@@ -99,13 +100,14 @@ namespace dalia {
 				vMirrorChild.parentBusIndex = NO_PARENT;
 				m_asyncMessageBus->PublishMixerCommand(AsyncMixerCommand::SetVoiceParent(
 					i, vMirrorChild.gen, NO_PARENT
-				));
+					));
 				orphanedPlaybacks++;
 				DALIA_LOG_DEBUG(LOG_CTX_API, "Orphaned voice (index: %d).", i);
 				m_asyncMessageBus->PublishMixerCommand(AsyncMixerCommand::StopVoice(i, vMirrorChild.gen));
 			}
 		}
-		if (orphanedPlaybacks > 0) DALIA_LOG_WARN(LOG_CTX_CORE, "Destroying bus %s. Orphaned %d playbacks.",
+		if (orphanedPlaybacks > 0)
+			DALIA_LOG_WARN(LOG_CTX_CORE, "Destroying bus %s. Orphaned %d playbacks.",
 			bus, orphanedPlaybacks);
 
 		bMirror.Reset();
@@ -149,7 +151,7 @@ namespace dalia {
 
 		BusMirror& bMirror = m_buses.GetMirror(bIndex);
 		if (bMirror.parentBusIndex == bIndexParent) {
-			DALIA_LOG_WARN(LOG_CTX_CORE, "Attempting to route bus (%s -> %s). %s is already routed to %s.",
+			DALIA_LOG_DEBUG(LOG_CTX_CORE, "Attempting to route bus (%s -> %s). %s is already routed to %s.",
 				bus, parentBus, bus, parentBus);
 			return Result::Ok;
 		}

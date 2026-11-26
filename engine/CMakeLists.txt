@@ -18,18 +18,18 @@ add_subdirectory(vendor/stb_vorbis)
 # Source files
 set(ENGINE_FILES
     # Public headers
-    include/dalia/dalia.h
-    include/dalia/Engine.h
-    include/dalia/Playback.h
-    include/dalia/Sound.h
-    include/dalia/Effect.h
-    include/dalia/Device.h
-    include/dalia/Log.h
-    include/dalia/Result.h
+    include/dalia/dalia.hpp
+    include/dalia/Engine.hpp
+    include/dalia/Playback.hpp
+    include/dalia/Sound.hpp
+    include/dalia/Effect.hpp
+    include/dalia/Device.hpp
+    include/dalia/Log.hpp
+    include/dalia/Result.hpp
 
     # Internal headers and cpp-files
     src/engine/EngineInternalState.cpp
-    src/engine/EngineInternalState.h
+    src/engine/EngineInternalState.hpp
     src/engine/Engine.cpp
     src/engine/EngineSettings.cpp
     src/engine/EngineDevice.cpp
@@ -39,104 +39,105 @@ set(ENGINE_FILES
     src/engine/EnginePlayback.cpp
     src/engine/EngineListener.cpp
 
-    src/core/Constants.h
-    src/core/Logger.h
+    src/core/Constants.hpp
+    src/core/Logger.hpp
     src/core/Logger.cpp
-    src/core/FixedStack.h
-    src/core/FixedQueue.h
-    src/core/SPSCRingBuffer.h
-    src/core/SPSCRingBufferPCM.h
-    src/core/MPSCRingBuffer.h
-    src/core/ResourcePool.h
-    src/core/Types.h
-    src/core/Math.h
-    src/core/StateSyncPool.h
-    src/core/AsyncPool.h
-    src/core/ParameterBridge.h
-    src/core/Speakers.h
-    src/core/Profiler.h
-    src/core/Assert.h
+    src/core/FixedStack.hpp
+    src/core/FixedQueue.hpp
+    src/core/SPSCRingBuffer.hpp
+    src/core/SPSCRingBufferPCM.hpp
+    src/core/MPSCRingBuffer.hpp
+    src/core/ResourcePool.hpp
+    src/core/Types.hpp
+    src/core/Math.hpp
+    src/core/StateSyncPool.hpp
+    src/core/AsyncPool.hpp
+    src/core/ParameterBridge.hpp
+    src/core/Speakers.hpp
+    src/core/Profiler.hpp
+    src/core/Assert.hpp
 
-    src/async/AsyncMessageBus.h
+    src/async/AsyncMessageBus.hpp
     src/async/AsyncMessageBus.cpp
     src/async/WakeableThread.cpp
-    src/async/WakeableThread.h
+    src/async/WakeableThread.hpp
     src/async/IntervalThread.cpp
-    src/async/IntervalThread.h
-    src/async/messaging/AsyncMixerMessaging.h
+    src/async/IntervalThread.hpp
+    src/async/messaging/AsyncMixerMessaging.hpp
     src/async/messaging/AsyncMixerMessaging.cpp
-    src/async/messaging/AsyncStreamMessaging.h
-    src/async/messaging/AsyncLoadMessaging.h
-    src/async/messaging/AsyncControlMessaging.h
+    src/async/messaging/AsyncStreamMessaging.hpp
+    src/async/messaging/AsyncLoadMessaging.hpp
+    src/async/messaging/AsyncControlMessaging.hpp
 
     src/mixer/MixController.cpp
-    src/mixer/MixController.h
+    src/mixer/MixController.hpp
     src/mixer/MixControllerPlayback.cpp
     src/mixer/MixControllerListener.cpp
     src/mixer/MixControllerBus.cpp
     src/mixer/MixControllerEffect.cpp
-    src/mixer/Mixer.cpp
-    src/mixer/Mixer.h
+    src/mixer/Mixer.cpp src/mixer/Mixer.hpp
     src/mixer/MixGraphCompiler.cpp
-    src/mixer/MixGraphCompiler.h
+    src/mixer/MixGraphCompiler.hpp
     src/mixer/processors/EffectProcessor.cpp
-    src/mixer/processors/EffectProcessor.h
+    src/mixer/processors/EffectProcessor.hpp
     src/mixer/processors/AcousticProcessor.cpp
-    src/mixer/processors/AcousticProcessor.h
+    src/mixer/processors/AcousticProcessor.hpp
     src/mixer/processors/BusProcessor.cpp
-    src/mixer/processors/BusProcessor.h
+    src/mixer/processors/BusProcessor.hpp
     src/mixer/processors/VoiceProcessor.cpp
-    src/mixer/processors/VoiceProcessor.h
-    src/mixer/nodes/Voice.h
-    src/mixer/nodes/Listener.h
-    src/mixer/nodes/StreamContext.h
-    src/mixer/nodes/Bus.h
-    src/mixer/nodes/Effect.h
-    src/mixer/nodes/EffectChain.h
-    src/mixer/nodes/effects/EffectTraits.h
-    src/mixer/nodes/effects/Biquad.h
+    src/mixer/processors/VoiceProcessor.hpp
+    src/mixer/nodes/Voice.hpp
+    src/mixer/nodes/Listener.hpp
+    src/mixer/nodes/StreamContext.hpp
+    src/mixer/nodes/Bus.hpp
+    src/mixer/nodes/Effect.hpp
+    src/mixer/nodes/EffectChain.hpp
+    src/mixer/nodes/effects/EffectTraits.hpp
+    src/mixer/nodes/effects/Biquad.hpp
     src/mixer/nodes/effects/Biquad.cpp
-    src/mixer/dsp/Resampler.h
+    src/mixer/dsp/Resampler.hpp
     src/mixer/dsp/Resampler.cpp
-    src/mixer/dsp/PeakLimiter.h
+    src/mixer/dsp/PeakLimiter.hpp
     src/mixer/dsp/PeakLimiter.cpp
-    src/mixer/dsp/Slew.h
+    src/mixer/dsp/Slew.hpp
     src/mixer/dsp/Slew.cpp
-    src/mixer/dsp/Buffer.h
-    src/mixer/dsp/Gain.h
-    src/mixer/dsp/Spatial.h
+    src/mixer/dsp/Buffer.hpp
+    src/mixer/dsp/Gain.hpp
+    src/mixer/dsp/Spatial.hpp
 
     src/asset/AssetRegistry.cpp
-    src/asset/AssetRegistry.h
+    src/asset/AssetRegistry.hpp
     src/asset/AssetController.cpp
-    src/asset/AssetController.h
-    src/asset/SoundDescriptor.h
-    src/asset/types/ResidentSound.h
-    src/asset/types/StreamSound.h
+    src/asset/AssetController.hpp
+    src/asset/SoundDescriptor.hpp
+    src/asset/types/ResidentSound.hpp
+    src/asset/types/StreamSound.hpp
 
-    src/io/codec/Codec.h
-    src/io/codec/VorbisCodec.h
+    src/io/codec/Codec.hpp
+    src/io/codec/VorbisCodec.hpp
     src/io/codec/VorbisCodec.cpp
     src/io/codec/Codec.cpp
     src/io/IoController.cpp
-    src/io/IoController.h
+    src/io/IoController.hpp
 
-    src/platform/DeviceController.h
+    src/platform/DeviceController.hpp
     src/platform/DeviceController.cpp
-    src/platform/AudioBackend.h
-    src/platform/NullOutputDevice.h
+    src/platform/AudioBackend.hpp
+    src/platform/NullOutputDevice.hpp
     src/platform/NullOutputDevice.cpp
-    src/platform/OutputDevice.h
-    src/platform/HighResTimer.h
-    src/platform/PlatformThread.h
+        src/platform/OutputDevice.hpp
+    src/platform/HighResTimer.hpp
+    src/platform/PlatformThread.hpp
+        src/mixer/nodes/effects/FdnReverb.hpp
+        src/mixer/nodes/effects/FdnReverb.cpp
 )
 
 if (WIN32)
     list(APPEND ENGINE_FILES
         src/platform/windows/WasapiAudioBackend.cpp
-        src/platform/windows/WasapiAudioBackend.h
+        src/platform/windows/WasapiAudioBackend.hpp
         src/platform/windows/WasapiOutputDevice.cpp
-        src/platform/windows/WasapiOutputDevice.h
+        src/platform/windows/WasapiOutputDevice.hpp
         src/platform/windows/HighResTimer.cpp
         src/platform/windows/PlatformThread.cpp
     )

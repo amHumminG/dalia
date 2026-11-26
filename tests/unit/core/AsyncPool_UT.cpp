@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include "core/AsyncPool.h"
+#include "core/AsyncPool.hpp"
 
 #include <thread>
 #include <cstdint>

@@ -1,6 +1,6 @@
-#include "platform/HighResTimer.h"
+#include "platform/HighResTimer.hpp"
 
-#include "core/Logger.h"
+#include "core/Logger.hpp"
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
@@ -18,7 +18,7 @@ namespace dalia {
 			nullptr,
 			CREATE_WAITABLE_TIMER_HIGH_RESOLUTION,
 			TIMER_ALL_ACCESS
-		);
+			);
 
 		if (!timer) {
 			DALIA_LOG_WARN(LOG_CTX_PLATFORM, "Failed to create high-resolution timer. Falling back to legacy timer.");

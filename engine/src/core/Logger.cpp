@@ -1,7 +1,7 @@
 #define _CRT_SECURE_NO_WARNINGS
 
-#include "Logger.h"
-#include "MPSCRingBuffer.h"
+#include "Logger.hpp"
+#include "MPSCRingBuffer.hpp"
 #include <cstdarg>
 #include <cstring>
 
@@ -13,13 +13,13 @@ namespace dalia {
 		char message[512];
 	};
 
-	static LogLevel m_logLevel = LogLevel::Warning;
+	static LogLevel m_logLevel                                = LogLevel::Warning;
 	static std::unique_ptr<MPSCRingBuffer<LogEntry>> m_buffer = nullptr;
-	static LogCallback m_sink = nullptr;
+	static LogCallback m_sink                                 = nullptr;
 
 	void Logger::Initialize(LogLevel level, size_t capacity) {
 		m_logLevel = level;
-		m_buffer = std::make_unique<MPSCRingBuffer<LogEntry>>(capacity);
+		m_buffer   = std::make_unique<MPSCRingBuffer<LogEntry>>(capacity);
 	}
 
 	void Logger::Shutdown() {
@@ -64,14 +64,21 @@ namespace dalia {
 
 		if (didPrint) std::fflush(stdout);
 	}
+
 	const char* Logger::GetLevelString(LogLevel level) {
 		switch (level) {
-		case LogLevel::Debug:		return "DEBUG";
-		case LogLevel::Info:		return "INFO";
-		case LogLevel::Warning:		return "WARNING";
-		case LogLevel::Error:		return "ERROR";
-		case LogLevel::Critical:	return "CRITICAL";
-		default:					return "NONE";
+		case LogLevel::Debug:
+			return "DEBUG";
+		case LogLevel::Info:
+			return "INFO";
+		case LogLevel::Warning:
+			return "WARNING";
+		case LogLevel::Error:
+			return "ERROR";
+		case LogLevel::Critical:
+			return "CRITICAL";
+		default:
+			return "NONE";
 		}
 	}
 }

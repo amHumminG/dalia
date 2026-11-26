@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include "core/FixedQueue.h"
+#include "core/FixedQueue.hpp"
 #include <cstdint>
 
 using namespace dalia;
@@ -21,9 +21,12 @@ TEST(FixedQueueTest, PushPop) {
 	EXPECT_TRUE(queue.Push(30));
 
 	int32_t val = 0;
-	EXPECT_TRUE(queue.Pop(val)); EXPECT_EQ(val, 10);
-	EXPECT_TRUE(queue.Pop(val)); EXPECT_EQ(val, 20);
-	EXPECT_TRUE(queue.Pop(val)); EXPECT_EQ(val, 30);
+	EXPECT_TRUE(queue.Pop(val));
+	EXPECT_EQ(val, 10);
+	EXPECT_TRUE(queue.Pop(val));
+	EXPECT_EQ(val, 20);
+	EXPECT_TRUE(queue.Pop(val));
+	EXPECT_EQ(val, 30);
 
 	EXPECT_TRUE(queue.IsEmpty());
 }

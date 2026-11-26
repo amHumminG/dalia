@@ -1,9 +1,9 @@
-#include "SoundAsset.h"
+#include "SoundAsset.hpp"
 
-#include "raylib.h"
-#include "raymath.h"
-#include "rlImGui.h"
-#include "imgui.h"
+#include <raylib.h>
+#include <raymath.h>
+#include <rlImGui.h>
+#include <imgui.h>
 
 SoundAsset::SoundAsset(dalia::Engine* engine, dalia::SoundType type, const std::string& filepath)
 	: m_engine(engine), m_type(type), m_filepath(filepath) {
@@ -14,7 +14,7 @@ SoundAsset::SoundAsset(dalia::Engine* engine, dalia::SoundType type, const std::
 		}
 		else {
 			this->m_loadState = SoundLoadState::Failed;
-			this->m_result = loadResult;
+			this->m_result    = loadResult;
 		}
 	};
 
@@ -65,9 +65,7 @@ void SoundAsset::DrawInspectorUI(const UIContext& ui) {
 	ImGui::Text("Length: %u min %u s",
 		static_cast<uint32_t>(m_lengthInSeconds / 60.0),
 		static_cast<uint32_t>(m_lengthInSeconds) % 60
-	);
+		);
 
 	ImGui::PopID();
 }
-
-

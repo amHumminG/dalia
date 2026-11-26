@@ -1,0 +1,148 @@
+#pragma once
+#include <cstdint>
+
+// Compiler build detection
+#if defined(_DEBUG) || !defined(NDEBUG)
+	#define DALIA_DEBUG 1
+#else
+	#define DALIA_DEBUG 0
+#endif
+
+// Compiler-specific restrict macros
+#if defined(_MSC_VER)
+	// Microsoft Visual C++ (Pointer-level restriction)
+	#define DALIA_RESTRICT __restrict
+	#define DALIA_DEBUG_BREAK() __debugbreak()
+#elif defined(__GNUC__) || defined(__clang__)
+	// GCC and Clang
+	#define DALIA_RESTRICT __restrict__
+	#define DALIA_DEBUG_BREAK() __builtin_trap()
+#else
+	// Fallback for unknown compilers
+	#define DALIA_RESTRICT
+	#define DALIA_DEBUG_BREAK ((void)0)
+#endif
+
+namespace dalia {
+
+	// --- Backend ---
+	constexpr size_t OUTPUT_FORMAT_BITS_PER_SAMPLE      = 32;
+	constexpr size_t DEVICE_NOTIFICATION_QUEUE_CAPACITY = 8;
+
+	// --- Async ---
+	static constexpr uint32_t STREAM_SYSTEM_WAKEUP_PERIOD_MICROSECONDS = 5000; // 5ms
+
+	static constexpr uint32_t COUNTING_SEMAPHORE_SIZE = 1024;
+
+	// --- Mixing ---
+	constexpr float EPSILON           = 1e-5f;
+	constexpr float EPSILON_VOLUME    = 1e-5f;
+	constexpr float EPSILON_GAIN      = 1e-5f;
+	constexpr float EPSILON_PAN       = 1e-5f;
+	constexpr float EPSILON_FREQUENCY = 1e-1f;
+	constexpr float EPSILON_RESONANCE = 1e-3f;
+	constexpr float EPSILON_DSP       = 1e-5f;
+
+	constexpr float FADE_TIME_GAIN      = 0.02f; // Time (in seconds) to fade gain from 0.0 to 1.0
+	constexpr float SMOOTHING_CUTOFF_HZ = 15.0f; // Determines the smoothing time for some gain changes
+	static constexpr double dPI         = 3.14159265358979323846f;
+	static constexpr float PI           = 3.14159265358979323846f;
+	static constexpr float PI_2         = 1.57079632679489661923f;
+	static constexpr float DEG_TO_RAD   = PI / 180.0f;
+
+	static constexpr float GAIN_DEFAULT = 1.0f;
+	static constexpr float GAIN_MIN     = 0.0f;
+	static constexpr float GAIN_MAX     = 15.8489f;
+	static constexpr float GAIN_SILENCE = GAIN_MIN;
+
+	static constexpr float VOLUME_DB_DEFAULT = 0.0f;
+	static constexpr float VOLUME_DB_MIN     = -96.0f; // Minimum volume in decibels
+	static constexpr float VOLUME_DB_MAX     = 24.0f; // Maximum volume in decibels
+
+	static constexpr float PLAYBACK_RATE_DEFAULT = 1.0f;
+	static constexpr float PLAYBACK_RATE_MIN     = 0.1f;
+	static constexpr float PLAYBACK_RATE_MAX     = 4.0f;
+
+	// Panning
+	static constexpr float PAN_STEREO_DEFAULT = 0.0f;
+	static constexpr float PAN_STEREO_MIN     = -1.0f;
+	static constexpr float PAN_STEREO_MAX     = 1.0f;
+	static constexpr float PAN_STEREO_LEFT    = PAN_STEREO_MIN;
+	static constexpr float PAN_STEREO_MIDDLE  = PAN_STEREO_DEFAULT;
+	static constexpr float PAN_STEREO_RIGHT   = PAN_STEREO_MAX;
+
+	// Channels
+	static constexpr uint32_t CHANNELS_MONO          = 1;
+	static constexpr uint32_t CHANNELS_STEREO        = 2;
+	static constexpr uint32_t CHANNELS_MAX           = 8;
+	static constexpr uint32_t CHANNELS_SUPPORTED_MAX = 2;
+
+	// Listeners
+	static constexpr uint32_t LISTENERS_DEFAULT = 1;
+	static constexpr uint32_t LISTENERS_MIN     = 1;
+	static constexpr uint32_t LISTENERS_MAX     = 4;
+
+	// Distance attenuation
+	static constexpr float MIN_DIST_DEFAULT = 1.0f;
+	static constexpr float MAX_DIST_DEFAULT = 100.0f;
+	static constexpr float MIN_DIST_MIN     = 0.01f;
+	static constexpr float MAX_DIST_MIN     = 0.01f;
+
+	// Resampling
+	static constexpr uint32_t HERMITE_LOOKAHEAD_FRAMES = 2;
+
+	static constexpr uint32_t CONTROL_RATE = 32; // Number of frames between effect recalculations
+
+
+	// --- Effects ---
+	static constexpr float MIX_MIN = 0.0f;
+	static constexpr float MIX_MAX = 1.0f;
+
+	// Filters
+	static constexpr float FILTER_FREQUENCY_MIN = 20.0f;
+	static constexpr float FILTER_FREQUENCY_MAX = 20000.0f;
+	constexpr float FILTER_RESONANCE_MIN        = 0.1f;
+	constexpr float FILTER_RESONANCE_MAX        = 10.0f;
+
+	// Reverb
+	static constexpr float REVERB_DECAY_TIME_SECONDS_MIN = 0.1f;
+	static constexpr float REVERB_DECAY_TIME_SECONDS_MAX = 15.0f;
+	static constexpr float REVERB_ROOM_SIZE_MIN = 0.25f;
+	static constexpr float REVERB_ROOM_SIZE_MAX = 1.0f;
+	static constexpr float REVERB_DAMPING_FREQUENCY_MIN = 500.0f;
+	static constexpr float REVERB_DAMPING_FREQUENCY_MAX = 20000.0f;
+	static constexpr float REVERB_PRE_DELAY_MILLISECONDS_MIN = 0.0f;
+	static constexpr float REVERB_PRE_DELAY_MILLISECONDS_MAX = 100.0f;
+	static constexpr float REVERB_LOW_CUT_FREQUENCY_MIN = 20.0f;
+	static constexpr float REVERB_LOW_CUT_FREQUENCY_MAX = 500.0f;
+	static constexpr float REVERB_MODULATION_MIN = 0.0f;
+	static constexpr float REVERB_MODULATION_MAX = 1.0f;
+
+	// --- Static Engine Configurations ---
+	static constexpr size_t PCM_RING_BUFFER_FRAMES = 2; // The number of audio periods the ring buffer can hold at once
+
+	static constexpr size_t STREAM_BUFFER_FRAMES   = 16384;
+	static constexpr size_t STREAM_BUFFER_CAPACITY = STREAM_BUFFER_FRAMES * CHANNELS_MAX;
+
+	constexpr uint32_t MAX_EFFECTS_PER_BUS = 4;
+
+	// --- Handles, Indices & Generations ---
+	static constexpr uint64_t INVALID_RAW_ID = 0;
+
+	static constexpr uint32_t MASTER_BUS_INDEX = 0; // The index of the master bus within the bus pool
+	static constexpr uint32_t NO_PARENT        = INT32_MAX; // Indicator that a voice or bus has no parent
+	static constexpr uint32_t NO_INDEX         = INT32_MAX; // Default index value
+
+	static constexpr uint32_t NO_EOF = UINT32_MAX; // Flag for stream buffer EOF indices
+
+	static constexpr uint32_t NO_GENERATION    = 0;
+	static constexpr uint32_t START_GENERATION = 1;
+
+	// Physics
+	static constexpr float SPEED_OF_SOUND = 343.3f;
+
+	static constexpr float DOPPLER_FACTOR_DEFAULT = 1.0f;
+	static constexpr float DOPPLER_FACTOR_MIN     = 0.0f;
+	static constexpr float DOPPLER_FACTOR_MAX     = 10.0f;
+
+}

@@ -31,7 +31,6 @@ theme:
 nav:
   - Home: index.md
   - Getting Started: getting-started.md
-  - Architecture: architecture.md
   - Guide:
       - Device Management: guide/device-management.md
       - Asset Management: guide/asset-management.md
@@ -42,6 +41,10 @@ nav:
       - Classes & Structs: api/annotated.md
       - NameSpaces: api/namespaces.md
       - Files: api/files.md
+  - Developer:
+      - Contributing: developer/contributing.md
+      - Architecture: developer/architecture.md
+
 
 markdown_extensions:
   - attr_list

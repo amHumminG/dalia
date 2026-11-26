@@ -1,8 +1,8 @@
-#include "platform/NullOutputDevice.h"
+#include "platform/NullOutputDevice.hpp"
 
-#include "platform/PlatformThread.h"
-#include "platform/HighResTimer.h"
-#include "mixer/Mixer.h"
+#include "platform/PlatformThread.hpp"
+#include "platform/HighResTimer.hpp"
+#include "mixer/Mixer.hpp"
 
 namespace dalia {
 
@@ -40,7 +40,7 @@ namespace dalia {
 	}
 
 	void NullOutputDevice::SetOutputFormat(uint32_t channels, SpeakerLayout layout) {
-		m_channels = channels;
+		m_channels      = channels;
 		m_speakerLayout = layout;
 	}
 
@@ -80,8 +80,9 @@ namespace dalia {
 				timer.SleepMicroseconds(static_cast<uint32_t>(sleepDuration));
 			}
 
-			auto wakeTime = std::chrono::steady_clock::now();
-			[[maybe_unused]] int64_t driftMicroseconds = std::chrono::duration_cast<std::chrono::microseconds>(wakeTime - nextWakeTime).count();
+			auto wakeTime                              = std::chrono::steady_clock::now();
+			[[maybe_unused]] int64_t driftMicroseconds = std::chrono::duration_cast<std::chrono::microseconds>(
+				wakeTime - nextWakeTime).count();
 			DALIA_PROFILE_PLOT("Null Output Drift (Microseconds)", driftMicroseconds);
 
 			if (!m_isRunning.load(std::memory_order_relaxed)) break;

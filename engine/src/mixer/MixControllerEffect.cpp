@@ -1,4 +1,4 @@
-#include "mixer/MixController.h"
+#include "mixer/MixController.hpp"
 
 namespace dalia {
 
@@ -12,7 +12,7 @@ namespace dalia {
 		ModifyEffect(effect, [&](auto& eMirror, uint32_t eIndex) -> Result {
 			m_asyncMessageBus->PublishMixerCommand(AsyncMixerCommand::FreeEffect(
 				eIndex, eMirror.gen, effect.GetType()
-			));
+				));
 			eMirror.Reset();
 			return Result::Ok;
 		});
@@ -41,14 +41,14 @@ namespace dalia {
 		Result res = ModifyEffect(effect, [&](EffectMirror& eMirror, uint32_t eIndex) -> Result {
 			// Steal the effect if it's already attached
 			if (eMirror.busIndex != NO_INDEX) {
-				uint32_t oldBusIndex = eMirror.busIndex;
-				uint32_t oldSlot = eMirror.effectSlot;
-				BusMirror& oldBusMirror = m_buses.GetMirror(oldBusIndex);
+				uint32_t oldBusIndex              = eMirror.busIndex;
+				uint32_t oldSlot                  = eMirror.effectSlot;
+				BusMirror& oldBusMirror           = m_buses.GetMirror(oldBusIndex);
 				oldBusMirror.effectSlots[oldSlot] = INVALID_EFFECT_HANDLE;
 
 				m_asyncMessageBus->PublishMixerCommand(AsyncMixerCommand::ForceDetachEffect(
 					eIndex, eMirror.gen, effect.GetType(), oldBusIndex, oldSlot
-				));
+					));
 
 				DALIA_LOG_DEBUG(LOG_CTX_API,
 					"Attaching effect to %s (index: %u) but effect is already attached. Stealing effect.",
@@ -56,7 +56,7 @@ namespace dalia {
 			}
 
 			// Check target bus slot and evict old effect if occupied
-			BusMirror& bMirror = m_buses.GetMirror(bIndex);
+			BusMirror& bMirror     = m_buses.GetMirror(bIndex);
 			EffectHandle oldEffect = bMirror.effectSlots[effectSlot];
 			if (oldEffect.IsValid()) {
 				DALIA_LOG_WARN(LOG_CTX_API, "Detaching effect from bus %s (slot %u). Attaching new effect to slot.",
@@ -67,12 +67,12 @@ namespace dalia {
 
 			// Link the effect to the new bus slot
 			bMirror.effectSlots[effectSlot] = effect;
-			eMirror.busIndex = bIndex;
-			eMirror.effectSlot = effectSlot;
+			eMirror.busIndex                = bIndex;
+			eMirror.effectSlot              = effectSlot;
 
 			m_asyncMessageBus->PublishMixerCommand(AsyncMixerCommand::AttachEffect(
 				eIndex, eMirror.gen, effect.GetType(), bIndex, effectSlot
-			));
+				));
 
 			DALIA_LOG_DEBUG(LOG_CTX_API, "Attached effect (handle rawId: 0x%016llx), to bus %s (slot %u).",
 				effect.GetRawId(), bus, effectSlot);

@@ -1,7 +1,7 @@
-#include "mixer/dsp/Slew.h"
+#include "mixer/dsp/Slew.hpp"
 
-#include "core/Constants.h"
-#include "core/Math.h"
+#include "core/Constants.hpp"
+#include "core/Math.hpp"
 
 namespace dalia::dsp {
 
@@ -19,10 +19,8 @@ namespace dalia::dsp {
 		// RC Exponential Decay curve
 		float diff = target - current;
 		if (std::abs(diff) < 0.001f) current = target;
-		else current += diff * alpha;
+		else current                         += diff * alpha;
 
 		return true;
 	}
 }
-
-

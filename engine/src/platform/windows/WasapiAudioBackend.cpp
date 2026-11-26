@@ -1,9 +1,9 @@
-#include "platform/windows/WasapiAudioBackend.h"
+#include "platform/windows/WasapiAudioBackend.hpp"
 
-#include "platform/windows/WasapiOutputDevice.h"
-#include "core/Logger.h"
-#include "core/Assert.h"
-#include "core/Profiler.h"
+#include "platform/windows/WasapiOutputDevice.hpp"
+#include "core/Logger.hpp"
+#include "core/Assert.hpp"
+#include "core/Profiler.hpp"
 
 #include <functiondiscoverykeys_devpkey.h> // For PKEY_Device_FriendlyName
 #include <cstring>
@@ -17,7 +17,8 @@ namespace dalia {
 	// --- Notification Client Implementation ---
 
 	WasapiAudioBackend::NotificationClient::NotificationClient(SPSCRingBuffer<OSDeviceNotification>& queue)
-		: m_notificationQueue(queue) {}
+		: m_notificationQueue(queue) {
+	}
 
 	ULONG STDMETHODCALLTYPE WasapiAudioBackend::NotificationClient::AddRef() {
 		return InterlockedIncrement(&m_refCount);
@@ -41,7 +42,8 @@ namespace dalia {
 		return E_NOINTERFACE;
 	}
 
-	HRESULT STDMETHODCALLTYPE WasapiAudioBackend::NotificationClient::OnDefaultDeviceChanged(EDataFlow flow, ERole role, LPCWSTR pwstrDeviceId) {
+	HRESULT STDMETHODCALLTYPE WasapiAudioBackend::NotificationClient::OnDefaultDeviceChanged(EDataFlow flow, ERole role,
+		LPCWSTR pwstrDeviceId) {
 		// Only account for cases where the default rendering device changed
 		if (flow == eRender && role == eConsole) {
 			OSDeviceNotification notification = {};
@@ -57,7 +59,7 @@ namespace dalia {
 					MAX_STR_LEN_DEVICE,
 					nullptr,
 					nullptr
-				);
+					);
 			}
 
 			m_notificationQueue.Push(notification);
@@ -66,7 +68,8 @@ namespace dalia {
 		return S_OK;
 	}
 
-	HRESULT STDMETHODCALLTYPE WasapiAudioBackend::NotificationClient::OnDeviceStateChanged(LPCWSTR /*pwstrDeviceId*/, DWORD /*dwNewState*/) {
+	HRESULT STDMETHODCALLTYPE WasapiAudioBackend::NotificationClient::OnDeviceStateChanged(LPCWSTR /*pwstrDeviceId*/,
+		DWORD /*dwNewState*/) {
 		return S_OK;
 	}
 
@@ -78,7 +81,8 @@ namespace dalia {
 		return S_OK;
 	}
 
-	HRESULT STDMETHODCALLTYPE WasapiAudioBackend::NotificationClient::OnPropertyValueChanged(LPCWSTR /*pwstrDeviceId*/, const PROPERTYKEY /*key*/) {
+	HRESULT STDMETHODCALLTYPE WasapiAudioBackend::NotificationClient::OnPropertyValueChanged(LPCWSTR /*pwstrDeviceId*/,
+		const PROPERTYKEY /*key*/) {
 		return S_OK;
 	}
 
@@ -110,12 +114,12 @@ namespace dalia {
 			nullptr,
 			CLSCTX_ALL,
 			IID_PPV_ARGS(&m_enumerator)
-		);
+			);
 		if (FAILED(hr)) return Result::SystemError;
 
 		// Create notification client
 		m_notificationClient = new NotificationClient(m_notificationQueue);
-		hr = m_enumerator->RegisterEndpointNotificationCallback(m_notificationClient.Get());
+		hr                   = m_enumerator->RegisterEndpointNotificationCallback(m_notificationClient.Get());
 		if (FAILED(hr)) return Result::SystemError;
 
 		m_initialized = true;
@@ -151,17 +155,17 @@ namespace dalia {
 			if (FAILED(collection->Item(i, &device))) continue;
 
 			// --- Channel layout safety guard ---
-			Microsoft::WRL::ComPtr<IAudioClient> audioClient;
-			if (FAILED(device->Activate(__uuidof(IAudioClient), CLSCTX_ALL, nullptr,
-				(void**)(&audioClient)))) continue;
-
-			WAVEFORMATEX* mixFormat = nullptr;
-			if (FAILED(audioClient->GetMixFormat(&mixFormat))) continue;
-
-			WORD channelCount = mixFormat->nChannels;
-			CoTaskMemFree(mixFormat);
-
-			if (channelCount > CHANNELS_SUPPORTED_MAX) continue; // Skip unsupported layouts
+			// Microsoft::WRL::ComPtr<IAudioClient> audioClient;
+			// if (FAILED(device->Activate(__uuidof(IAudioClient), CLSCTX_ALL, nullptr,
+			// 	(void**)(&audioClient)))) continue;
+			//
+			// WAVEFORMATEX* mixFormat = nullptr;
+			// if (FAILED(audioClient->GetMixFormat(&mixFormat))) continue;
+			//
+			// WORD channelCount = mixFormat->nChannels;
+			// CoTaskMemFree(mixFormat);
+			//
+			// if (channelCount > CHANNELS_SUPPORTED_MAX) continue; // Skip unsupported layouts
 			// ------
 
 			OutputDeviceInfo info{};
@@ -182,7 +186,8 @@ namespace dalia {
 				PROPVARIANT varName;
 				PropVariantInit(&varName);
 				if (SUCCEEDED(props->GetValue(PKEY_Device_FriendlyName, &varName)) && varName.pwszVal) {
-					WideCharToMultiByte(CP_UTF8, 0, varName.pwszVal, -1, info.name, MAX_STR_LEN_DEVICE, nullptr, nullptr);
+					WideCharToMultiByte(CP_UTF8, 0, varName.pwszVal, -1, info.name, MAX_STR_LEN_DEVICE, nullptr,
+						nullptr);
 					info.name[MAX_STR_LEN_DEVICE - 1] = '\0';
 				}
 				PropVariantClear(&varName);
@@ -200,18 +205,19 @@ namespace dalia {
 		DALIA_PROFILE_SCOPE_N("WasapiAudioBackend::PopDeviceChangeNotification");
 
 		OSDeviceNotification notification = {};
-		bool changeDetected = false;
+		bool changeDetected               = false;
 
 		// Pop until queue is emtpy
 		while (m_notificationQueue.Pop(notification)) {
-			newDeviceId = notification.deviceId;
+			newDeviceId    = notification.deviceId;
 			changeDetected = true;
 		}
 
 		return changeDetected;
 	}
 
-	std::unique_ptr<OutputDevice> WasapiAudioBackend::CreateOutputDevice(const char* identifier, uint32_t engineSampleRate) {
+	std::unique_ptr<OutputDevice> WasapiAudioBackend::CreateOutputDevice(const char* identifier,
+		uint32_t engineSampleRate) {
 		DALIA_ASSERT(m_initialized, "WasapiAudioBackend used before initialized.");
 		DALIA_PROFILE_SCOPE_N("WasapiAudioBackend::CreateOutputDevice");
 
@@ -234,10 +240,9 @@ namespace dalia {
 		if (FAILED(hr) || !device) return nullptr;
 
 		auto wasapiDevice = std::make_unique<WasapiOutputDevice>(device);
-		if (wasapiDevice->Initialize(engineSampleRate) != Result::Ok) return nullptr; // Negotiate format and buffer size
+		if (wasapiDevice->Initialize(engineSampleRate) != Result::Ok) return nullptr;
+		// Negotiate format and buffer size
 
 		return wasapiDevice;
 	}
 }
-
-
