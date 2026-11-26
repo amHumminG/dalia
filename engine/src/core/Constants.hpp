@@ -107,12 +107,16 @@ namespace dalia {
 	// Reverb
 	static constexpr float REVERB_DECAY_TIME_SECONDS_MIN = 0.1f;
 	static constexpr float REVERB_DECAY_TIME_SECONDS_MAX = 15.0f;
+	static constexpr float REVERB_ROOM_SIZE_MIN = 0.25f;
+	static constexpr float REVERB_ROOM_SIZE_MAX = 1.0f;
 	static constexpr float REVERB_DAMPING_FREQUENCY_MIN = 500.0f;
 	static constexpr float REVERB_DAMPING_FREQUENCY_MAX = 20000.0f;
 	static constexpr float REVERB_PRE_DELAY_MILLISECONDS_MIN = 0.0f;
 	static constexpr float REVERB_PRE_DELAY_MILLISECONDS_MAX = 100.0f;
 	static constexpr float REVERB_LOW_CUT_FREQUENCY_MIN = 20.0f;
 	static constexpr float REVERB_LOW_CUT_FREQUENCY_MAX = 500.0f;
+	static constexpr float REVERB_MODULATION_MIN = 0.0f;
+	static constexpr float REVERB_MODULATION_MAX = 1.0f;
 
 	// --- Static Engine Configurations ---
 	static constexpr size_t PCM_RING_BUFFER_FRAMES = 2; // The number of audio periods the ring buffer can hold at once

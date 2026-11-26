@@ -48,10 +48,7 @@ namespace dalia {
 				if (!std::isfinite(delaySamples)) delaySamples = 1.0f;
 				delaySamples = std::clamp(delaySamples, 1.0f, static_cast<float>(bufSize - 2));
 
-				float readPos = static_cast<float>(writeIndex) - delaySamples;
-				if (readPos < 0.0f) readPos += bufSize;
-
-				size_t intDelay = static_cast<size_t>(delaySamples);
+				size_t intDelay = delaySamples;
 				float frac = delaySamples - static_cast<float>(intDelay);
 
 				size_t idx0 = (writeIndex + bufSize - intDelay) % bufSize;

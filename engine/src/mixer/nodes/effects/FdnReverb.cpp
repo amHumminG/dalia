@@ -50,13 +50,13 @@ namespace dalia {
 		// Stratified random delay
 		// Each channel c picks randomly inside [range * c/N, range * (c+1)/N]
 		for (size_t c = 0; c < TANK_CHANNELS; c++) {
-			float low = static_cast<size_t>(rangeSamples * static_cast<float>(c) / static_cast<float>(TANK_CHANNELS));
+			float low  = static_cast<size_t>(rangeSamples * static_cast<float>(c) / static_cast<float>(TANK_CHANNELS));
 			float high =
-			    static_cast<size_t>(rangeSamples * static_cast<float>(c + 1) / static_cast<float>(TANK_CHANNELS));
+				static_cast<size_t>(rangeSamples * static_cast<float>(c + 1) / static_cast<float>(TANK_CHANNELS));
 			std::uniform_real_distribution<float> distribution(low, std::max(low, high));
 
 			baseSamples[c] = std::max(distribution(rng), 1.0f);
-			size_t bufLen  = static_cast<size_t>(std::ceil<size_t>(baseSamples[c]) + 2);
+			size_t bufLen  = std::ceil(baseSamples[c]) + 2;
 			delays[c].buffer.assign(bufLen, 0.0f);
 			delays[c].writeIndex = 0;
 		}
@@ -90,11 +90,13 @@ namespace dalia {
 
 	void FdnReverbParams::Sanitize() {
 		decayTimeSeconds = std::clamp(decayTimeSeconds, REVERB_DECAY_TIME_SECONDS_MIN, REVERB_DECAY_TIME_SECONDS_MAX);
+		roomSize         = std::clamp(roomSize, REVERB_ROOM_SIZE_MIN, REVERB_ROOM_SIZE_MAX);
 		dampingHz        = std::clamp(dampingHz, REVERB_DAMPING_FREQUENCY_MIN, REVERB_DAMPING_FREQUENCY_MAX);
 		preDelayMs       = std::clamp(preDelayMs, REVERB_PRE_DELAY_MILLISECONDS_MIN, REVERB_PRE_DELAY_MILLISECONDS_MAX);
 		wetMix           = std::clamp(wetMix, MIX_MIN, MIX_MAX);
 		dryMix           = std::clamp(dryMix, MIX_MIN, MIX_MAX);
 		lowCutHz         = std::clamp(lowCutHz, REVERB_LOW_CUT_FREQUENCY_MIN, REVERB_LOW_CUT_FREQUENCY_MAX);
+		modulation       = std::clamp(modulation, REVERB_MODULATION_MIN, REVERB_MODULATION_MAX);
 	}
 
 	void FdnReverb::SetParams(const FdnReverbParams& params) {
@@ -131,7 +133,7 @@ namespace dalia {
 		m_sampleRate = sampleRate;
 
 		size_t maxPreDelaySamples =
-		    static_cast<size_t>(std::ceil(REVERB_PRE_DELAY_MILLISECONDS_MAX * 0.001f * m_sampleRate)) + 1;
+			static_cast<size_t>(std::ceil(REVERB_PRE_DELAY_MILLISECONDS_MAX * 0.001f * m_sampleRate)) + 1;
 		for (auto& pre : m_preDelays) {
 			pre.buffer.assign(maxPreDelaySamples, 0.0f);
 			pre.writeIndex = 0;
@@ -205,7 +207,7 @@ namespace dalia {
 			for (size_t c = 0; c < TANK_CHANNELS; c++) {
 				float modOffset = 0.0f;
 				if (m_modDepthSamples > 0.0f) {
-					modOffset = std::sin(m_lfoPhase[c]) * m_modDepthSamples;
+					modOffset     = std::sin(m_lfoPhase[c]) * m_modDepthSamples;
 					m_lfoPhase[c] += m_lfoPhaseInc[c];
 					if (m_lfoPhase[c] >= TWO_PI) m_lfoPhase[c] -= TWO_PI;
 				}
