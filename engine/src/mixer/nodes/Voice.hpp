@@ -95,7 +95,9 @@ namespace dalia {
 
 		// Use this when releasing a voice
 		void Reset() {
-			gen          = NO_GENERATION;
+			gen++;
+			if (gen == NO_GENERATION) gen = START_GENERATION;
+
 			currentState = VoiceState::Free;
 			targetState  = VoiceState::Free;
 
@@ -163,6 +165,7 @@ namespace dalia {
 
 			gen++;
 			if (gen == NO_GENERATION) gen = START_GENERATION;
+			
 			state = VoiceState::Free;
 
 			parentBusIndex = MASTER_BUS_INDEX;
