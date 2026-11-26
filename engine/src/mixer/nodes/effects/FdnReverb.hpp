@@ -17,7 +17,7 @@ namespace dalia {
 		static constexpr size_t DIFFUSION_STAGES = 4;
 
 		static constexpr std::array<float, DIFFUSION_STAGES> DIFFUSION_STAGE_MS = {7.0f, 15.0f, 31.0f, 63.0f};
-		static constexpr float TANK_MIN_DELAY_MS                                = 100.0f;
+		static constexpr float TANK_MIN_DELAY_MS                                = 45.0f;
 
 		uint32_t gen = NO_GENERATION;
 
