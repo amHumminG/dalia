@@ -4,6 +4,7 @@
 #include "core/StateSyncPool.hpp"
 #include "mixer/nodes/Bus.hpp"
 #include "mixer/nodes/effects/Biquad.hpp"
+#include "mixer/nodes/effects/FdnReverb.hpp"
 
 namespace dalia {
 
@@ -12,6 +13,7 @@ namespace dalia {
 
 	struct EffectProcessorConfig {
 		MixerPoolView<Biquad, BiquadParams> biquadPool;
+		MixerPoolView<FdnReverb, FdnReverbParams> fdnReverbPool;
 		uint32_t maxSamplesPeriod = 0;
 		uint32_t outChannels      = CHANNELS_MONO;
 		uint32_t outSampleRate    = 48000;
@@ -42,11 +44,13 @@ namespace dalia {
 		void ProcessSlot(EffectSlot& slot, float* buffer, uint32_t frameCount);
 		bool IsAlive(EffectHandle handle);
 		void ProcessEffect(EffectHandle handle, float* buffer, uint32_t frameCount);
+		void PrepareEffects(uint32_t sampleRate);
 
 		bool m_initialized                 = false;
 		AsyncMessageBus* m_asyncMessageBus = nullptr;
 
 		MixerPoolView<Biquad, BiquadParams> m_biquadPool;
+		MixerPoolView<FdnReverb, FdnReverbParams> m_fdnReverbPool;
 
 		uint32_t m_maxSamplesPeriod = 0;
 		uint32_t m_outChannels      = 0;

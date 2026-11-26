@@ -18,6 +18,8 @@ AlignConsecutiveAssignments: Consecutive
 AlignConsecutiveDeclarations: false
 AlignAfterOpenBracket: DontAlign
 AllowShortLambdasOnASingleLine: All
+AllowShortLoopsOnASingleLine: true
+AllowShortBlocksOnASingleLine: Empty
 AlignOperands: false
 AlignTrailingComments: false
 
@@ -63,4 +65,7 @@ SpacesInAngles: false
 SpacesInConditionalStatement: false
 SpacesInCStyleCastParentheses: false
 SpacesInParentheses: false
+
+# Comments
+FixNamespaceComments: false
 ...

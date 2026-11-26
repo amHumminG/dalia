@@ -93,12 +93,28 @@ namespace dalia {
 
 	static constexpr uint32_t CONTROL_RATE = 32; // Number of frames between effect recalculations
 
+
+	// --- Effects ---
+	static constexpr float MIX_MIN = 0.0f;
+	static constexpr float MIX_MAX = 1.0f;
+
+	// Filters
 	static constexpr float FILTER_FREQUENCY_MIN = 20.0f;
 	static constexpr float FILTER_FREQUENCY_MAX = 20000.0f;
 	constexpr float FILTER_RESONANCE_MIN        = 0.1f;
 	constexpr float FILTER_RESONANCE_MAX        = 10.0f;
 
-	// Static engine configs
+	// Reverb
+	static constexpr float REVERB_DECAY_TIME_SECONDS_MIN = 0.1f;
+	static constexpr float REVERB_DECAY_TIME_SECONDS_MAX = 15.0f;
+	static constexpr float REVERB_DAMPING_FREQUENCY_MIN = 500.0f;
+	static constexpr float REVERB_DAMPING_FREQUENCY_MAX = 20000.0f;
+	static constexpr float REVERB_PRE_DELAY_MILLISECONDS_MIN = 0.0f;
+	static constexpr float REVERB_PRE_DELAY_MILLISECONDS_MAX = 100.0f;
+	static constexpr float REVERB_LOW_CUT_FREQUENCY_MIN = 20.0f;
+	static constexpr float REVERB_LOW_CUT_FREQUENCY_MAX = 500.0f;
+
+	// --- Static Engine Configurations ---
 	static constexpr size_t PCM_RING_BUFFER_FRAMES = 2; // The number of audio periods the ring buffer can hold at once
 
 	static constexpr size_t STREAM_BUFFER_FRAMES   = 16384;

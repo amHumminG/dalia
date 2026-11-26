@@ -128,6 +128,8 @@ set(ENGINE_FILES
         src/platform/OutputDevice.hpp
     src/platform/HighResTimer.hpp
     src/platform/PlatformThread.hpp
+        src/mixer/nodes/effects/FdnReverb.hpp
+        src/mixer/nodes/effects/FdnReverb.cpp
 )
 
 if (WIN32)

@@ -130,6 +130,8 @@ namespace dalia {
 		switch (effect.GetType()) {
 			case EffectType::Biquad:
 				return ModifyEffect<BiquadParams>(effect, std::forward<TFunc>(fn));
+			case EffectType::FdnReverb:
+				return ModifyEffect<FdnReverbParams>(effect, std::forward<TFunc>(fn));
 			default:
 				return Result::InvalidHandle;
 		}
@@ -146,5 +148,9 @@ namespace dalia {
 
 	inline auto& EffectTraits<BiquadParams>::GetPool(MixController& controller) {
 		return controller.GetBiquadPool();
+	}
+
+	inline auto& EffectTraits<FdnReverbParams>::GetPool(MixController& controller) {
+		return controller.GetFdnReverbPool();
 	}
 }

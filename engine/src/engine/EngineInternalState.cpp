@@ -19,11 +19,12 @@ namespace dalia {
 		ioController	 = std::make_unique<IoController>(config.streamCapacity);
 
 		MixControllerConfig mixControllerConfig {
-			.coordinateSystem = config.coordinateSystem,
-			.voiceCapacity    = config.voiceCapacity,
-			.listenerCapacity = config.listenerCapacity,
-			.busCapacity      = config.busCapacity,
-			.biquadCapacity   = config.biquadCapacity
+			.coordinateSystem	= config.coordinateSystem,
+			.voiceCapacity		= config.voiceCapacity,
+			.listenerCapacity	= config.listenerCapacity,
+			.busCapacity		= config.busCapacity,
+			.biquadCapacity		= config.biquadCapacity,
+			.fdnReverbCapacity	= config.fdnReverbCapacity
 		};
 		mixController = std::make_unique<MixController>(mixControllerConfig);
 		mixer		  = std::make_unique<Mixer>();
@@ -95,7 +96,8 @@ namespace dalia {
 			.voicePool        = mixController->GetVoicePool().GetMixerView(),
 			.listenerPool     = mixController->GetListenerPool().GetMixerView(),
 			.busPool          = mixController->GetBusPool().GetMixerView(),
-			.biquadPool       = mixController->GetBiquadPool().GetMixerView()
+			.biquadPool       = mixController->GetBiquadPool().GetMixerView(),
+			.fdnReverbPool	  = mixController->GetFdnReverbPool().GetMixerView()
 		};
 		res = mixer->Initialize(asyncMessageBus.get(), mixerThread.get(), mixerConfig);
 		if (res != Result::Ok) return res;

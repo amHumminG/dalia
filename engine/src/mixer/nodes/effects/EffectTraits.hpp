@@ -16,4 +16,14 @@ namespace dalia {
 
 		static auto& GetPool(MixController& controller);
 	};
+
+	template<>
+	struct EffectTraits<FdnReverbParams>
+	{
+		static constexpr EffectType TYPE = EffectType::FdnReverb;
+		using DSPType					 = FdnReverb;
+		using MirrorType				 = FdnReverbMirror;
+
+		static auto& GetPool(MixController& controller);
+	};
 }

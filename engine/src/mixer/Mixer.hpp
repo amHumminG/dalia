@@ -37,6 +37,7 @@ namespace dalia {
 		MixerPoolView<Listener, ListenerParams> listenerPool;
 		MixerPoolView<Bus, BusParams> busPool;
 		MixerPoolView<Biquad, BiquadParams> biquadPool;
+		MixerPoolView<FdnReverb, FdnReverbParams> fdnReverbPool;
 	};
 
 	class Mixer {

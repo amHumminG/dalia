@@ -15,7 +15,8 @@ namespace dalia {
 		  m_voices(config.voiceCapacity),
 		  m_listeners(config.listenerCapacity),
 		  m_buses(config.busCapacity),
-		  m_biquads(config.biquadCapacity) {
+		  m_biquads(config.biquadCapacity),
+		  m_fdnReverbs(config.fdnReverbCapacity) {
 
 		m_busMap.reserve(config.busCapacity);
 	}
@@ -92,6 +93,7 @@ namespace dalia {
 		m_listeners.Sync();
 		m_buses.Sync();
 		m_biquads.Sync();
+		m_fdnReverbs.Sync();
 	}
 
 	void MixController::SetGlobalDopplerFactor(float globalDopplerFactor) {
@@ -124,6 +126,12 @@ namespace dalia {
 		DALIA_ASSERT(m_initialized, "MixController used before initialized.");
 
 		return m_biquads;
+	}
+
+	StateSyncPool<FdnReverb, FdnReverbMirror, FdnReverbParams>& MixController::GetFdnReverbPool()  {
+		DALIA_ASSERT(m_initialized, "MixController used before initialized.");
+
+		return m_fdnReverbs;
 	}
 
 	Result MixController::Validate(PlaybackHandle playback) {

@@ -31,11 +31,18 @@ namespace dalia {
 		}
 	}
 
-	void Biquad::Process(float* buffer, uint32_t frameCount, uint32_t channels, uint32_t sampleRate) {
+	void Biquad::Prepare(float sampleRate)
+	{
+		m_sampleRate = sampleRate;
+		ClearDelayLines();
+		CalculateCoefficients();
+	}
+
+	void Biquad::Process(float* buffer, uint32_t frameCount, uint32_t channels) {
 		DALIA_PROFILE_SCOPE_N("Biquad::Process");
 
 		if (isFirstProcess) {
-			CalculateCoefficients(sampleRate);
+			CalculateCoefficients();
 			isFirstProcess = false;
 		}
 
@@ -47,7 +54,7 @@ namespace dalia {
 			paramsChanged      |= resonanceSlew.Process();
 
 			if (paramsChanged) {
-				CalculateCoefficients(sampleRate);
+				CalculateCoefficients();
 				forceRecalculate = false;
 			}
 
@@ -74,6 +81,8 @@ namespace dalia {
 	}
 
 	void Biquad::Reset() {
+		gen++;
+
 		isFirstProcess   = true;
 		forceRecalculate = false;
 
@@ -87,8 +96,8 @@ namespace dalia {
 		Flush();
 	}
 
-	void Biquad::CalculateCoefficients(uint32_t sampleRate) {
-		float fSampleRate = static_cast<float>(sampleRate);
+	void Biquad::CalculateCoefficients() {
+		float fSampleRate = static_cast<float>(m_sampleRate);
 		float nyquist     = fSampleRate * 0.5f; // Nyquist limit
 		float frequency   = std::clamp(frequencySlew.current, 10.0f, nyquist - 10.0f);
 		float q           = std::max(resonanceSlew.current, 0.1f);

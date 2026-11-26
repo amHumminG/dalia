@@ -6,11 +6,11 @@
 #include <cstdint>
 
 namespace dalia {
-
 	/// @brief Defines the available DSP effect algorithms.
 	enum class EffectType : uint8_t {
 		None = 0,
-		Biquad = 1 // Biquadratic IIR filter.
+		Biquad = 1,		// Biquadratic IIR filter.
+		FdnReverb = 2	// Feedback Delay Network Reverb
 	};
 
 	/// @brief Handle used to manage effect instances. This handle expires once the effect it is referencing has been
@@ -55,9 +55,9 @@ namespace dalia {
 
 		static EffectHandle Create(uint32_t index, uint32_t generation, EffectType type) {
 			EffectHandle handle;
-			uint64_t typeBits       = static_cast<uint64_t>(type) << 56;
+			uint64_t typeBits = static_cast<uint64_t>(type) << 56;
 			uint64_t generationBits = (static_cast<uint64_t>(generation) & 0xFFFFFF) << 32;
-			uint64_t indexBits      = static_cast<uint64_t>(index);
+			uint64_t indexBits = static_cast<uint64_t>(index);
 
 			handle.m_rawId = typeBits | generationBits | indexBits;
 			return handle;
@@ -87,13 +87,29 @@ namespace dalia {
 	struct BiquadParams {
 		/// @brief Defines the frequency response shape of a standard biquadratic filter.
 		enum class Type : uint8_t {
-			LowPass, // Allows frequencies below the cutoff frequency to pass, attenuating higher frequencies.
-			HighPass, // Allows frequencies above the cutoff frequency to pass, attenuating lower frequencies.
-			BandPass // Allows a specific range of frequencies to pass, attenuating frequencies outside the band.
+			LowPass  = 0,	// Allows frequencies below the cutoff frequency to pass, attenuating higher frequencies.
+			HighPass = 1,	// Allows frequencies above the cutoff frequency to pass, attenuating lower frequencies.
+			BandPass = 2	// Allows a specific range of frequencies to pass, attenuating frequencies outside the band.
 		} type = Type::LowPass;
 
 		float frequency = 20000.0f; // The cutoff or center frequency of the filter (in Hz).
 		float resonance = 0.707f; // The Q-factor of the filter.
+
+		/// @brief Clamps internal parameters to safe ranges.
+		void Sanitize();
+	};
+
+	/// @brief Configuration parameters for a feedback delay network (FDN) reverb.
+	struct FdnReverbParams {
+		float decayTimeSeconds	= 4.0f;		// T60: 0.1 - 15.0 s
+		float roomSize			= 0.6f;		// 0.25 - 1.0
+		float dampingHz			= 2500.0f;	// Feedback lowpass cutoff: 500 - 20000 Hz
+		float preDelayMs		= 20.0f;	// 0 - 100 ms
+		float dryMix			= 1.0f;		// 0.0 - 1.0
+		float wetMix			= 0.35f;	// 0.0 - 1.0
+		float lowCutHz			= 80.0f;	// Feedback low-shelf cutoff: 20 - 500 Hz
+		float modulation		= 0.35f;	// LFO modulation depth: 0.0 - 1.0
+		bool freeze				= false;	// Infinite tail when true
 
 		/// @brief Clamps internal parameters to safe ranges.
 		void Sanitize();
