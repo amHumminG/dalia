@@ -35,6 +35,10 @@ void FdnReverbEffect::DrawInspectorUI(const UIContext& ui) {
 		paramsChanged = true;
 	}
 
+	if (ImGui::SliderFloat("Room Size", &m_config.roomSize, 0.25f, 1.0f, "%.2f s")) {
+		paramsChanged = true;
+	}
+
 	if (ImGui::SliderFloat(
 	        "Damping Frequency", &m_config.dampingHz, 500.0f, 20000, "%.0f Hz", ImGuiSliderFlags_Logarithmic)) {
 		paramsChanged = true;
@@ -53,6 +57,10 @@ void FdnReverbEffect::DrawInspectorUI(const UIContext& ui) {
 	}
 
 	if (ImGui::SliderFloat("Low Cut Frequency", &m_config.lowCutHz, 20.0f, 500.0f, "%.0f")) {
+		paramsChanged = true;
+	}
+
+	if (ImGui::SliderFloat("Modulation", &m_config.modulation, 0.0f, 1.0f, "%.2f")) {
 		paramsChanged = true;
 	}
 

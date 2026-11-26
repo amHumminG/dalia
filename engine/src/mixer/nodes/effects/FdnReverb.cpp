@@ -50,13 +50,14 @@ namespace dalia {
 		// Stratified random delay
 		// Each channel c picks randomly inside [range * c/N, range * (c+1)/N]
 		for (size_t c = 0; c < TANK_CHANNELS; c++) {
-			size_t low = static_cast<size_t>(rangeSamples * static_cast<float>(c) / static_cast<float>(TANK_CHANNELS));
-			size_t high =
+			float low = static_cast<size_t>(rangeSamples * static_cast<float>(c) / static_cast<float>(TANK_CHANNELS));
+			float high =
 			    static_cast<size_t>(rangeSamples * static_cast<float>(c + 1) / static_cast<float>(TANK_CHANNELS));
-			std::uniform_int_distribution<size_t> distribution(low, std::max(low, high));
+			std::uniform_real_distribution<float> distribution(low, std::max(low, high));
 
-			size_t length = std::max<size_t>(distribution(rng), 1);
-			delays[c].buffer.assign(length, 0.0f);
+			baseSamples[c] = std::max(distribution(rng), 1.0f);
+			size_t bufLen  = static_cast<size_t>(std::ceil<size_t>(baseSamples[c]) + 2);
+			delays[c].buffer.assign(bufLen, 0.0f);
 			delays[c].writeIndex = 0;
 		}
 
@@ -69,10 +70,10 @@ namespace dalia {
 		std::ranges::shuffle(polarity, rng);
 	}
 
-	void FdnReverb::DiffusionStage::Process(std::array<float, TANK_CHANNELS>& data) {
+	void FdnReverb::DiffusionStage::Process(std::array<float, TANK_CHANNELS>& data, float roomSize) {
 		std::array<float, TANK_CHANNELS> delayed{};
 		for (size_t c = 0; c < TANK_CHANNELS; c++) {
-			delayed[c] = delays[c].Read();
+			delayed[c] = delays[c].ReadInterpolated(baseSamples[c] * roomSize);
 			delays[c].Write(data[c]);
 		}
 
@@ -104,13 +105,15 @@ namespace dalia {
 		size_t maxPre     = m_preDelays[0].buffer.size() - 1;
 		m_preDelaySamples = std::min(static_cast<size_t>(params.preDelayMs * 0.001f * m_sampleRate), maxPre);
 
+		m_modDepthSamples = params.modulation * MAX_MOD_DEPTH_MS * 0.001f * m_sampleRate;
+
 		// Per-channel T60 feedback gains: g_i = 10^(-3 * delaySeconds / T60)
 		float t60 = std::max(params.decayTimeSeconds, 0.05f);
 		for (uint32_t c = 0; c < TANK_CHANNELS; c++) {
 			if (params.freeze)
 				m_feedbackGains[c] = 1.0f;
 			else {
-				float delaySec     = static_cast<float>(m_tankDelays[c].buffer.size() / m_sampleRate);
+				float delaySec     = (m_tankBaseSamples[c] * params.roomSize) / m_sampleRate;
 				m_feedbackGains[c] = std::pow(10.0f, (-3.0f * delaySec) / t60);
 			}
 		}
@@ -140,12 +143,20 @@ namespace dalia {
 		}
 
 		// Feedback tank (exponentially spaced delays)
-		float baseSamples = TANK_MIN_DELAY_MS * 0.001f * m_sampleRate;
+		float baseSamples      = TANK_MIN_DELAY_MS * 0.001f * m_sampleRate;
+		float maxModSamples    = MAX_MOD_DEPTH_MS * 0.001f * m_sampleRate;
+		constexpr float TWO_PI = 2.0f * std::numbers::pi_v<float>;
+
 		for (size_t c = 0; c < TANK_CHANNELS; c++) {
-			float exponent = static_cast<float>(c) / static_cast<float>(TANK_CHANNELS);
-			size_t length  = static_cast<size_t>(std::round(baseSamples * std::pow(2.0f, exponent)));
-			m_tankDelays[c].buffer.assign(std::max<size_t>(length, 1), 0.0f);
+			float exponent       = static_cast<float>(c) / static_cast<float>(TANK_CHANNELS);
+			m_tankBaseSamples[c] = std::max(baseSamples * std::pow(2.0f, exponent), 1.0f);
+
+			size_t bufLen = static_cast<size_t>(std::ceil(m_tankBaseSamples[c] * maxModSamples)) + 2;
+			m_tankDelays[c].buffer.assign(bufLen, 0.0f);
 			m_tankDelays[c].writeIndex = 0;
+
+			m_lfoPhase[c]    = TWO_PI * static_cast<float>(c) / static_cast<float>(TANK_CHANNELS);
+			m_lfoPhaseInc[c] = TWO_PI * LFO_RATES_HZ[c] / m_sampleRate;
 		}
 
 		Flush();
@@ -154,6 +165,8 @@ namespace dalia {
 
 	void FdnReverb::Process(float* buffer, uint32_t frameCount, uint32_t channels) {
 		if (m_tankDelays[0].buffer.empty() || channels == 0) return;
+
+		constexpr float TWO_PI = 2.0f * std::numbers::pi_v<float>;
 
 		for (uint32_t f = 0; f < frameCount; f++) {
 			float* frame = buffer + (f * channels);
@@ -177,9 +190,12 @@ namespace dalia {
 					}
 				}
 
+				// Slowly move towards target room size
+				m_currentRoomSize += 0.0005f * (m_params.roomSize - m_currentRoomSize);
+
 				// Pre-delay + DIFFUSION_STAGES Hadamard diffuser
 				ProcessPreDelay(diffused);
-				for (size_t s = 0; s < DIFFUSION_STAGES; s++) m_diffusers[s].Process(diffused);
+				for (size_t s = 0; s < DIFFUSION_STAGES; s++) m_diffusers[s].Process(diffused, m_currentRoomSize);
 			}
 
 			// Read feedback tank delays and apply damping, low-cut and T60 gains
@@ -187,7 +203,15 @@ namespace dalia {
 			std::array<float, TANK_CHANNELS> mixed{};
 
 			for (size_t c = 0; c < TANK_CHANNELS; c++) {
-				float sample = m_tankDelays[c].Read();
+				float modOffset = 0.0f;
+				if (m_modDepthSamples > 0.0f) {
+					modOffset = std::sin(m_lfoPhase[c]) * m_modDepthSamples;
+					m_lfoPhase[c] += m_lfoPhaseInc[c];
+					if (m_lfoPhase[c] >= TWO_PI) m_lfoPhase[c] -= TWO_PI;
+				}
+
+				float delaySamples = (m_tankBaseSamples[c] * m_currentRoomSize) + modOffset;
+				float sample       = m_tankDelays[c].ReadInterpolated(delaySamples);
 
 				if (!m_params.freeze) {
 					// One-pole lowpass damping (high frequency absorption)

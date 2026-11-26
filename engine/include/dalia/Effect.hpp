@@ -102,11 +102,13 @@ namespace dalia {
 	/// @brief Configuration parameters for a feedback delay network (FDN) reverb.
 	struct FdnReverbParams {
 		float decayTimeSeconds	= 4.0f;		// T60: 0.1 - 15.0 s
+		float roomSize			= 0.6f;		// 0.25 - 1.0
 		float dampingHz			= 2500.0f;	// Feedback lowpass cutoff: 500 - 20000 Hz
 		float preDelayMs		= 20.0f;	// 0 - 100 ms
 		float dryMix			= 1.0f;		// 0.0 - 1.0
-		float wetMix			= 0.35f;		// 0.0 - 1.0
-		float lowCutHz			= 80.0f;	// Feedback/input low-shelf: 20 - 500 Hz
+		float wetMix			= 0.35f;	// 0.0 - 1.0
+		float lowCutHz			= 80.0f;	// Feedback low-shelf cutoff: 20 - 500 Hz
+		float modulation		= 0.35f;	// LFO modulation depth: 0.0 - 1.0
 		bool freeze				= false;	// Infinite tail when true
 
 		/// @brief Clamps internal parameters to safe ranges.
