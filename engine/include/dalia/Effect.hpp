@@ -104,8 +104,8 @@ namespace dalia {
 		float decayTimeSeconds	= 4.0f;		// T60: 0.1 - 15.0 s
 		float dampingHz			= 2500.0f;	// Feedback lowpass cutoff: 500 - 20000 Hz
 		float preDelayMs		= 20.0f;	// 0 - 100 ms
-		float wetMix			= 0.5f;		// 0.0 - 1.0
-		float dryMix			= 0.5f;		// 0.0 - 1.0
+		float dryMix			= 1.0f;		// 0.0 - 1.0
+		float wetMix			= 0.35f;		// 0.0 - 1.0
 		float lowCutHz			= 80.0f;	// Feedback/input highpass: 20 - 500 Hz
 		bool freeze				= false;	// Infinite tail when true
 
