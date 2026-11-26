@@ -10,7 +10,7 @@
 namespace dalia {
 
 	namespace {
-		constexpr float INV_SQRT_8 = std::numbers::sqrt2 * 0.25f;
+		constexpr float INV_SQRT_8 = static_cast<float>(std::numbers::sqrt2) * 0.25f;
 	}
 
 	// --- Matrix Operations ---
@@ -50,13 +50,12 @@ namespace dalia {
 		// Stratified random delay
 		// Each channel c picks randomly inside [range * c/N, range * (c+1)/N]
 		for (size_t c = 0; c < TANK_CHANNELS; c++) {
-			float low  = static_cast<size_t>(rangeSamples * static_cast<float>(c) / static_cast<float>(TANK_CHANNELS));
-			float high =
-				static_cast<size_t>(rangeSamples * static_cast<float>(c + 1) / static_cast<float>(TANK_CHANNELS));
+			float low  = rangeSamples * static_cast<float>(c) / static_cast<float>(TANK_CHANNELS);
+			float high = rangeSamples * static_cast<float>(c + 1) / static_cast<float>(TANK_CHANNELS);
 			std::uniform_real_distribution<float> distribution(low, std::max(low, high));
 
 			baseSamples[c] = std::max(distribution(rng), 1.0f);
-			size_t bufLen  = std::ceil(baseSamples[c]) + 2;
+			size_t bufLen  = static_cast<size_t>(std::ceil(baseSamples[c])) + 2;
 			delays[c].buffer.assign(bufLen, 0.0f);
 			delays[c].writeIndex = 0;
 		}

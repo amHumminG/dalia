@@ -41,14 +41,14 @@ namespace dalia {
 			float Read() { return buffer[writeIndex]; }
 
 			float ReadInterpolated(float delaySamples) const {
-				const size_t bufSize = static_cast<float>(buffer.size());
+				size_t bufSize = buffer.size();
 				if (bufSize == 0) return 0.0f;
 				if (bufSize < 3) return buffer[writeIndex];
 
 				if (!std::isfinite(delaySamples)) delaySamples = 1.0f;
 				delaySamples = std::clamp(delaySamples, 1.0f, static_cast<float>(bufSize - 2));
 
-				size_t intDelay = delaySamples;
+				size_t intDelay = static_cast<size_t>(delaySamples);
 				float frac = delaySamples - static_cast<float>(intDelay);
 
 				size_t idx0 = (writeIndex + bufSize - intDelay) % bufSize;

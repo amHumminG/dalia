@@ -225,7 +225,7 @@ namespace dalia {
 
 	void EffectProcessor::PrepareEffects(uint32_t sampleRate)
 	{
-		for (uint32_t i = 0; i < m_biquadPool.capacity; i++) m_biquadPool.nodes[i].Prepare(sampleRate);
-		for (uint32_t i = 0; i < m_fdnReverbPool.capacity; i++) m_fdnReverbPool.nodes[i].Prepare(sampleRate);
+		for (size_t i = 0; i < m_biquadPool.capacity; i++) m_biquadPool.nodes[i].Prepare(static_cast<float>(sampleRate));
+		for (size_t i = 0; i < m_fdnReverbPool.capacity; i++) m_fdnReverbPool.nodes[i].Prepare(static_cast<float>(sampleRate));
 	}
 }
