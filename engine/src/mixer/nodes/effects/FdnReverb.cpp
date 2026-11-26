@@ -5,6 +5,7 @@
 #include <random>
 #include <cmath>
 #include <numeric>
+#include <bit>
 
 namespace dalia {
 
@@ -15,7 +16,7 @@ namespace dalia {
 	// --- Matrix Operations ---
 
 	void FdnReverb::HadamardInPlace(std::array<float, TANK_CHANNELS>& data) {
-		static_assert((TANK_CHANNELS % 2 == 0), "TANK_CHANNELS must be power of 2");
+		static_assert(std::has_single_bit(TANK_CHANNELS), "TANK_CHANNELS must be power of 2");
 
 		for (size_t h = 1; h < TANK_CHANNELS; h <<= 1) {
 			for (size_t i = 0; i < TANK_CHANNELS; i += h * 2) {
