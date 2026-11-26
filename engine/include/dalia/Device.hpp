@@ -12,8 +12,8 @@ namespace dalia {
 
 	/// @brief Contains metadata for an audio output device.
 	struct OutputDeviceInfo {
-		char name[MAX_STR_LEN_DEVICE]; // Readable device name.
-		char identifier[MAX_STR_LEN_DEVICE]; // OS-level identifier.
-		bool isDefault = false; // True if the device is set as OS default.
+		char name[MAX_STR_LEN_DEVICE]; ///< Readable device name.
+		char identifier[MAX_STR_LEN_DEVICE]; ///< OS-level identifier.
+		bool isDefault = false; ///< True if the device is set as OS default.
 	};
 }

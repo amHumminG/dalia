@@ -15,42 +15,44 @@ namespace dalia {
 	struct EngineInternalState;
 
 	/// @brief Configuration containing all user-exposed engine settings.
+	// clang-format off
 	struct EngineConfig {
-		uint32_t sampleRate               = 48000; // Internal mixing sample rate
-		const char* startupOutputDeviceId = "default"; // Output device that should attempt to start on initialization.
+		uint32_t sampleRate               = 48000;		///< Internal mixing sample rate
+		const char* startupOutputDeviceId = "default";	///< Output device that should attempt to start on initialization.
 
 		// Logging
-		LogLevel logLevel       = LogLevel::Warning; // The level at which the engine will log messages.
-		LogCallback logCallback = nullptr; // Optional log sink.
+		LogLevel logLevel       = LogLevel::Warning; ///< The level at which the engine will log messages.
+		LogCallback logCallback = nullptr;			 ///< Optional log sink.
 
 		// Spatialization
-		CoordinateSystem coordinateSystem = CoordinateSystem::RightHanded; // The coordinate system used for spatial audio.
-		uint32_t listenerCapacity         = 1; // The maximum number of listeners that can exist at once (min=1 max=4).
+		CoordinateSystem coordinateSystem = CoordinateSystem::RightHanded; ///< The coordinate system used for spatial audio.
+		uint32_t listenerCapacity         = 1; ///< The maximum number of listeners that can exist at once (min=1 max=4).
 
 		// Asset Capacities
-		uint32_t residentSoundCapacity = 256; // The number of resident sounds the engine is able to hold loaded at once
-		uint32_t streamSoundCapacity   = 256; // The number of stream sounds the engine is able to hold loaded at once
+		uint32_t residentSoundCapacity = 256; ///< The number of resident sounds the engine is able to hold loaded at once
+		uint32_t streamSoundCapacity   = 256; ///< The number of stream sounds the engine is able to hold loaded at once
 
 		// Mixing Capacities
-		uint32_t voiceCapacity  = 128; // The maximum number of playback instances that can exist at once.
-		uint32_t streamCapacity = 32; // The maximum number of playback instances playing stream sounds at once.
-		uint32_t busCapacity    = 64; // The maximum number of buses that can exist at once.
+		uint32_t voiceCapacity  = 128; ///< The maximum number of playback instances that can exist at once.
+		uint32_t streamCapacity = 64;  ///< The maximum number of playback instances playing stream sounds at once.
+		uint32_t busCapacity    = 64;  ///< The maximum number of buses that can exist at once.
 
 		// Effect Capacities
-		uint32_t biquadCapacity    = 32; // The maximum number of biquad filters that can exist at once.
-		uint32_t fdnReverbCapacity = 32; // The maximum number of FDN reverbs that can exist at once.
+		uint32_t biquadCapacity    = 32; ///< The maximum number of biquad filters that can exist at once.
+		uint32_t fdnReverbCapacity = 32; ///< The maximum number of FDN reverb's that can exist at once.
 
 		/// @brief Advanced settings. Only touch if you have very tight constraints.
 		struct Advanced {
-			uint32_t periodSizeFrames = 512; // The number of frames per audio period.
+			uint32_t periodSizeFrames = 512; ///< The number of frames per audio period.
 
-			// Internal Messaging Queue Capacities (must be power of 2)
-			size_t mixerQueueCapacity   = 1024;
-			size_t streamQueueCapacity  = 256;
-			size_t loadQueueCapacity    = 128;
-			size_t controlQueueCapacity = 32;
+			size_t mixerQueueCapacity   = 1024; ///< Mixer-thread messaging queue capacities (must be power of 2)
+			size_t streamQueueCapacity  = 256;  ///< Stream-thread messaging queue capacity (must be power of 2)
+			size_t loadQueueCapacity    = 128;  ///< Load-thread messaging queue capacities (must be power of 2)
+			size_t controlQueueCapacity = 32;   ///< Control-thread messaging queue capacities (must be power of 2)
 		} advanced;
 	};
+	// clang-format on
+
 
 	/// @brief The central interface and lifetime manager for the DALIA audio engine.
 	class Engine {

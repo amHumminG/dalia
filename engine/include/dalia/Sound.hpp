@@ -15,9 +15,9 @@ namespace dalia {
 
 	/// @brief Specifies the memory management and playback strategy for an audio asset.
 	enum class SoundType : uint8_t {
-		None = 0,
-		Resident = 1, // The entire audio file is decompressed and loaded into RAM.
-		Stream = 2 // The audio data is read from disk in chunks.
+		None	 = 0, ///< Sentinel value.
+		Resident = 1, ///< The entire audio file is decompressed and loaded into RAM.
+		Stream	 = 2  ///< The audio data is read from disk in chunks.
 	};
 
 	/// @brief Handle used to manage loaded sounds. This handle expires once the sound it is referencing is unloaded.
