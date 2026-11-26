@@ -115,20 +115,11 @@ namespace dalia {
 			}
 		}
 
-		// TODO: Determine if we should do this instead
-		// if (m_params.freeze)
-		// 	m_dampingCoeff = 0.0f;
-		// else {
-		// 	// One-pole lowpass damping coefficient: y[n] = (1-a) * x[n] + a * y[n-1]
-		// 	float fc       = std::clamp(m_params.dampingHz, 100.f, m_sampleRate * 0.45f);
-		// 	m_dampingCoeff = std::exp(-2.0f * std::numbers::pi_v<float> * fc / m_sampleRate);
-		// }
-
 		// One-pole lowpass damping coefficient: y[n] = (1-a) * x[n] + a * y[n-1]
 		float dampFc   = std::clamp(m_params.dampingHz, 100.f, m_sampleRate * 0.45f);
 		m_dampingCoeff = std::exp(-2.0f * std::numbers::pi_v<float> * dampFc / m_sampleRate);
 
-		// Highpass low-cut coefficients
+		// One-pole highpass low-cut coefficients
 		float lowCutFc = std::clamp(params.lowCutHz, 10.0f, m_sampleRate * 0.25f);
 		m_lowCutCoeff  = std::exp(-2.0f * std::numbers::pi_v<float> * lowCutFc / m_sampleRate);
 	}
@@ -163,9 +154,6 @@ namespace dalia {
 
 	void FdnReverb::Process(float* buffer, uint32_t frameCount, uint32_t channels) {
 		if (m_tankDelays[0].buffer.empty() || channels == 0) return;
-
-		// float invChannels                  = 1.0f / static_cast<float>(channels);
-		// constexpr float HOUSEHOLDER_FACTOR = 2.0f / static_cast<float>(CHANNELS_MAX);
 
 		for (uint32_t f = 0; f < frameCount; f++) {
 			float* frame = buffer + (f * channels);
