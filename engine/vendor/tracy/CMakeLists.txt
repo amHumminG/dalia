@@ -1,4 +1,4 @@
-if (NOT DALIA_ENABLE_PROFILING)
+if (NOT DALIA_PROFILE_ENABLE)
     return()
 endif()
 
