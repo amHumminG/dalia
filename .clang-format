@@ -63,4 +63,7 @@ SpacesInAngles: false
 SpacesInConditionalStatement: false
 SpacesInCStyleCastParentheses: false
 SpacesInParentheses: false
+
+# Comments
+FixNamespaceComments: false
 ...
