@@ -9,6 +9,7 @@ This inheritance list is sorted roughly, but not completely, alphabetically:
 * **struct** [**dalia::EffectHandle**](structdalia_1_1EffectHandle.md) _Handle used to manage effect instances. This handle expires once the effect it is referencing has been destroyed._ 
 * **struct** [**dalia::EngineConfig**](structdalia_1_1EngineConfig.md) _Configuration containing all user-exposed engine settings._ 
 * **struct** [**dalia::EngineConfig::Advanced**](structdalia_1_1EngineConfig_1_1Advanced.md) [_**Advanced**_](structdalia_1_1EngineConfig_1_1Advanced.md) _settings. Only touch if you have very tight constraints._
+* **struct** [**dalia::FdnReverbParams**](structdalia_1_1FdnReverbParams.md) _Configuration parameters for a feedback delay network (FDN) reverb._ 
 * **struct** [**dalia::Listener3DAttributes**](structdalia_1_1Listener3DAttributes.md) _A snapshot of a listener's 3D state in the world._ 
 * **struct** [**dalia::OutputDeviceInfo**](structdalia_1_1OutputDeviceInfo.md) _Contains metadata for an audio output device._ 
 * **struct** [**dalia::PlaybackHandle**](structdalia_1_1PlaybackHandle.md) _Handle used to manage playback instances. This handle will expire once the playback instance it is referencing stops._ 

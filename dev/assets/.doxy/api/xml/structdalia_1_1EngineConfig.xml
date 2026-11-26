@@ -185,6 +185,21 @@
         </inbodydescription>
         <location file="dalia/Engine.hpp" line="40" column="10" bodyfile="dalia/Engine.hpp" bodystart="40" bodyend="-1"/>
       </memberdef>
+      <memberdef kind="variable" id="structdalia_1_1EngineConfig_1ac85a671eaa35d6f5628f30990a4e416f" prot="public" static="no" mutable="no">
+        <type>uint32_t</type>
+        <definition>uint32_t dalia::EngineConfig::fdnReverbCapacity</definition>
+        <argsstring></argsstring>
+        <name>fdnReverbCapacity</name>
+        <qualifiedname>dalia::EngineConfig::fdnReverbCapacity</qualifiedname>
+        <initializer>= 32</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="dalia/Engine.hpp" line="41" column="10" bodyfile="dalia/Engine.hpp" bodystart="41" bodyend="-1"/>
+      </memberdef>
       <memberdef kind="variable" id="structdalia_1_1EngineConfig_1a0c10764e533215d9b9004ba2261ddf71" prot="public" static="no" mutable="no">
         <type>struct <ref refid="structdalia_1_1EngineConfig_1_1Advanced" kindref="compound">dalia::EngineConfig::Advanced</ref></type>
         <definition>struct dalia::EngineConfig::Advanced dalia::EngineConfig::advanced</definition>
@@ -197,7 +212,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="dalia/Engine.hpp" line="51" column="10"/>
+        <location file="dalia/Engine.hpp" line="52" column="10"/>
       </memberdef>
     </sectiondef>
     <briefdescription>
@@ -218,12 +233,13 @@
         <link refid="structdalia_1_1EngineConfig_1_1Advanced"/>
       </node>
     </collaborationgraph>
-    <location file="dalia/Engine.hpp" line="18" column="1" bodyfile="dalia/Engine.hpp" bodystart="18" bodyend="52"/>
+    <location file="dalia/Engine.hpp" line="18" column="1" bodyfile="dalia/Engine.hpp" bodystart="18" bodyend="53"/>
     <listofallmembers>
       <member refid="structdalia_1_1EngineConfig_1a0c10764e533215d9b9004ba2261ddf71" prot="public" virt="non-virtual"><scope>dalia::EngineConfig</scope><name>advanced</name></member>
       <member refid="structdalia_1_1EngineConfig_1a53ab52d0e6040cd84f01988ebe1a3387" prot="public" virt="non-virtual"><scope>dalia::EngineConfig</scope><name>biquadCapacity</name></member>
       <member refid="structdalia_1_1EngineConfig_1a0003e8de500dbdd50a5bfceb9f8c6695" prot="public" virt="non-virtual"><scope>dalia::EngineConfig</scope><name>busCapacity</name></member>
       <member refid="structdalia_1_1EngineConfig_1a76d945ad75d2a21ce26772f643f5941d" prot="public" virt="non-virtual"><scope>dalia::EngineConfig</scope><name>coordinateSystem</name></member>
+      <member refid="structdalia_1_1EngineConfig_1ac85a671eaa35d6f5628f30990a4e416f" prot="public" virt="non-virtual"><scope>dalia::EngineConfig</scope><name>fdnReverbCapacity</name></member>
       <member refid="structdalia_1_1EngineConfig_1a6ee54e8601a964b34ec3e213a254ab7e" prot="public" virt="non-virtual"><scope>dalia::EngineConfig</scope><name>listenerCapacity</name></member>
       <member refid="structdalia_1_1EngineConfig_1afe8a553524715a588be34a46e9924aa4" prot="public" virt="non-virtual"><scope>dalia::EngineConfig</scope><name>logCallback</name></member>
       <member refid="structdalia_1_1EngineConfig_1a2d3fce05c77efd820e66310322c389f2" prot="public" virt="non-virtual"><scope>dalia::EngineConfig</scope><name>logLevel</name></member>

@@ -1,0 +1,179 @@
+<?xml version='1.0' encoding='UTF-8' standalone='no'?>
+<doxygen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="compound.xsd" version="1.15.0" xml:lang="en-US">
+  <compounddef id="structdalia_1_1FdnReverbParams" kind="struct" language="C++" prot="public">
+    <compoundname>dalia::FdnReverbParams</compoundname>
+    <includes refid="Effect_8hpp" local="no">Effect.hpp</includes>
+    <sectiondef kind="public-attrib">
+      <memberdef kind="variable" id="structdalia_1_1FdnReverbParams_1a9e6fa2db7f7e3ce127c74b45ca795fdd" prot="public" static="no" mutable="no">
+        <type>float</type>
+        <definition>float dalia::FdnReverbParams::decayTimeSeconds</definition>
+        <argsstring></argsstring>
+        <name>decayTimeSeconds</name>
+        <qualifiedname>dalia::FdnReverbParams::decayTimeSeconds</qualifiedname>
+        <initializer>= 4.0f</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="dalia/Effect.hpp" line="104" column="7" bodyfile="dalia/Effect.hpp" bodystart="104" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structdalia_1_1FdnReverbParams_1a48e57934ca324fff6b907cab1919b765" prot="public" static="no" mutable="no">
+        <type>float</type>
+        <definition>float dalia::FdnReverbParams::roomSize</definition>
+        <argsstring></argsstring>
+        <name>roomSize</name>
+        <qualifiedname>dalia::FdnReverbParams::roomSize</qualifiedname>
+        <initializer>= 0.6f</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="dalia/Effect.hpp" line="105" column="7" bodyfile="dalia/Effect.hpp" bodystart="105" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structdalia_1_1FdnReverbParams_1ac28e83a2751d3f195aca5f236f2c43ad" prot="public" static="no" mutable="no">
+        <type>float</type>
+        <definition>float dalia::FdnReverbParams::dampingHz</definition>
+        <argsstring></argsstring>
+        <name>dampingHz</name>
+        <qualifiedname>dalia::FdnReverbParams::dampingHz</qualifiedname>
+        <initializer>= 2500.0f</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="dalia/Effect.hpp" line="106" column="7" bodyfile="dalia/Effect.hpp" bodystart="106" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structdalia_1_1FdnReverbParams_1ac0e635efcb470d6d33847396eda7b778" prot="public" static="no" mutable="no">
+        <type>float</type>
+        <definition>float dalia::FdnReverbParams::preDelayMs</definition>
+        <argsstring></argsstring>
+        <name>preDelayMs</name>
+        <qualifiedname>dalia::FdnReverbParams::preDelayMs</qualifiedname>
+        <initializer>= 20.0f</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="dalia/Effect.hpp" line="107" column="7" bodyfile="dalia/Effect.hpp" bodystart="107" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structdalia_1_1FdnReverbParams_1aa3f60ac130c6595eb33f469b1d372f87" prot="public" static="no" mutable="no">
+        <type>float</type>
+        <definition>float dalia::FdnReverbParams::dryMix</definition>
+        <argsstring></argsstring>
+        <name>dryMix</name>
+        <qualifiedname>dalia::FdnReverbParams::dryMix</qualifiedname>
+        <initializer>= 1.0f</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="dalia/Effect.hpp" line="108" column="7" bodyfile="dalia/Effect.hpp" bodystart="108" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structdalia_1_1FdnReverbParams_1a0ca747d3d38d859089bc8edb17894dc6" prot="public" static="no" mutable="no">
+        <type>float</type>
+        <definition>float dalia::FdnReverbParams::wetMix</definition>
+        <argsstring></argsstring>
+        <name>wetMix</name>
+        <qualifiedname>dalia::FdnReverbParams::wetMix</qualifiedname>
+        <initializer>= 0.35f</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="dalia/Effect.hpp" line="109" column="7" bodyfile="dalia/Effect.hpp" bodystart="109" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structdalia_1_1FdnReverbParams_1a8e4ee3f810823f9f07d4332723d7dc03" prot="public" static="no" mutable="no">
+        <type>float</type>
+        <definition>float dalia::FdnReverbParams::lowCutHz</definition>
+        <argsstring></argsstring>
+        <name>lowCutHz</name>
+        <qualifiedname>dalia::FdnReverbParams::lowCutHz</qualifiedname>
+        <initializer>= 80.0f</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="dalia/Effect.hpp" line="110" column="7" bodyfile="dalia/Effect.hpp" bodystart="110" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structdalia_1_1FdnReverbParams_1a3913c522995922747ad3174b2f8fd694" prot="public" static="no" mutable="no">
+        <type>float</type>
+        <definition>float dalia::FdnReverbParams::modulation</definition>
+        <argsstring></argsstring>
+        <name>modulation</name>
+        <qualifiedname>dalia::FdnReverbParams::modulation</qualifiedname>
+        <initializer>= 0.35f</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="dalia/Effect.hpp" line="111" column="7" bodyfile="dalia/Effect.hpp" bodystart="111" bodyend="-1"/>
+      </memberdef>
+      <memberdef kind="variable" id="structdalia_1_1FdnReverbParams_1afc702c000be0e0fda08a82812fba83eb" prot="public" static="no" mutable="no">
+        <type>bool</type>
+        <definition>bool dalia::FdnReverbParams::freeze</definition>
+        <argsstring></argsstring>
+        <name>freeze</name>
+        <qualifiedname>dalia::FdnReverbParams::freeze</qualifiedname>
+        <initializer>= false</initializer>
+        <briefdescription>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="dalia/Effect.hpp" line="112" column="6" bodyfile="dalia/Effect.hpp" bodystart="112" bodyend="-1"/>
+      </memberdef>
+    </sectiondef>
+    <sectiondef kind="public-func">
+      <memberdef kind="function" id="structdalia_1_1FdnReverbParams_1a75fd86b130bd89de797afbc03c173f00" prot="public" static="no" const="no" explicit="no" inline="no" virt="non-virtual">
+        <type>void</type>
+        <definition>void dalia::FdnReverbParams::Sanitize</definition>
+        <argsstring>()</argsstring>
+        <name>Sanitize</name>
+        <qualifiedname>dalia::FdnReverbParams::Sanitize</qualifiedname>
+        <briefdescription>
+<para>Clamps internal parameters to safe ranges. </para>
+        </briefdescription>
+        <detaileddescription>
+        </detaileddescription>
+        <inbodydescription>
+        </inbodydescription>
+        <location file="dalia/Effect.hpp" line="115" column="6"/>
+      </memberdef>
+    </sectiondef>
+    <briefdescription>
+<para>Configuration parameters for a feedback delay network (FDN) reverb. </para>
+    </briefdescription>
+    <detaileddescription>
+    </detaileddescription>
+    <location file="dalia/Effect.hpp" line="103" column="1" bodyfile="dalia/Effect.hpp" bodystart="103" bodyend="116"/>
+    <listofallmembers>
+      <member refid="structdalia_1_1FdnReverbParams_1ac28e83a2751d3f195aca5f236f2c43ad" prot="public" virt="non-virtual"><scope>dalia::FdnReverbParams</scope><name>dampingHz</name></member>
+      <member refid="structdalia_1_1FdnReverbParams_1a9e6fa2db7f7e3ce127c74b45ca795fdd" prot="public" virt="non-virtual"><scope>dalia::FdnReverbParams</scope><name>decayTimeSeconds</name></member>
+      <member refid="structdalia_1_1FdnReverbParams_1aa3f60ac130c6595eb33f469b1d372f87" prot="public" virt="non-virtual"><scope>dalia::FdnReverbParams</scope><name>dryMix</name></member>
+      <member refid="structdalia_1_1FdnReverbParams_1afc702c000be0e0fda08a82812fba83eb" prot="public" virt="non-virtual"><scope>dalia::FdnReverbParams</scope><name>freeze</name></member>
+      <member refid="structdalia_1_1FdnReverbParams_1a8e4ee3f810823f9f07d4332723d7dc03" prot="public" virt="non-virtual"><scope>dalia::FdnReverbParams</scope><name>lowCutHz</name></member>
+      <member refid="structdalia_1_1FdnReverbParams_1a3913c522995922747ad3174b2f8fd694" prot="public" virt="non-virtual"><scope>dalia::FdnReverbParams</scope><name>modulation</name></member>
+      <member refid="structdalia_1_1FdnReverbParams_1ac0e635efcb470d6d33847396eda7b778" prot="public" virt="non-virtual"><scope>dalia::FdnReverbParams</scope><name>preDelayMs</name></member>
+      <member refid="structdalia_1_1FdnReverbParams_1a48e57934ca324fff6b907cab1919b765" prot="public" virt="non-virtual"><scope>dalia::FdnReverbParams</scope><name>roomSize</name></member>
+      <member refid="structdalia_1_1FdnReverbParams_1a75fd86b130bd89de797afbc03c173f00" prot="public" virt="non-virtual"><scope>dalia::FdnReverbParams</scope><name>Sanitize</name></member>
+      <member refid="structdalia_1_1FdnReverbParams_1a0ca747d3d38d859089bc8edb17894dc6" prot="public" virt="non-virtual"><scope>dalia::FdnReverbParams</scope><name>wetMix</name></member>
+    </listofallmembers>
+  </compounddef>
+</doxygen>

@@ -45,6 +45,7 @@ _Configuration containing all user-exposed engine settings._
 |  uint32\_t | [**biquadCapacity**](#variable-biquadcapacity)   = `32`<br> |
 |  uint32\_t | [**busCapacity**](#variable-buscapacity)   = `64`<br> |
 |  [**CoordinateSystem**](namespacedalia.md#enum-coordinatesystem) | [**coordinateSystem**](#variable-coordinatesystem)   = `CoordinateSystem::RightHanded`<br> |
+|  uint32\_t | [**fdnReverbCapacity**](#variable-fdnreverbcapacity)   = `32`<br> |
 |  uint32\_t | [**listenerCapacity**](#variable-listenercapacity)   = `1`<br> |
 |  [**LogCallback**](namespacedalia.md#typedef-logcallback) | [**logCallback**](#variable-logcallback)   = `nullptr`<br> |
 |  [**LogLevel**](namespacedalia.md#enum-loglevel) | [**logLevel**](#variable-loglevel)   = `LogLevel::Warning`<br> |
@@ -146,6 +147,19 @@ uint32_t dalia::EngineConfig::busCapacity;
 
 ```C++
 CoordinateSystem dalia::EngineConfig::coordinateSystem;
+```
+
+
+
+
+<hr>
+
+
+
+### variable fdnReverbCapacity 
+
+```C++
+uint32_t dalia::EngineConfig::fdnReverbCapacity;
 ```
 
 

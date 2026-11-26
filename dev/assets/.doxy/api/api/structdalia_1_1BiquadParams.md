@@ -103,9 +103,9 @@ _Configuration parameters for a biquadratic IIR filter._
 _Defines the frequency response shape of a standard biquadratic filter._ 
 ```C++
 enum dalia::BiquadParams::Type {
-    LowPass,
-    HighPass,
-    BandPass
+    LowPass = 0,
+    HighPass = 1,
+    BandPass = 2
 };
 ```
 

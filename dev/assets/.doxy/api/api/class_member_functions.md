@@ -80,7 +80,7 @@
 
 ## s
 
-* **Sanitize** ([**dalia::BiquadParams**](structdalia_1_1BiquadParams.md))
+* **Sanitize** ([**dalia::BiquadParams**](structdalia_1_1BiquadParams.md), [**dalia::FdnReverbParams**](structdalia_1_1FdnReverbParams.md))
 * **SeekPlayback** ([**dalia::Engine**](classdalia_1_1Engine.md))
 * **SetBusVolumeDb** ([**dalia::Engine**](classdalia_1_1Engine.md))
 * **SetEffectParams** ([**dalia::Engine**](classdalia_1_1Engine.md))

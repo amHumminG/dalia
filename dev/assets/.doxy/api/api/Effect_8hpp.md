@@ -37,6 +37,7 @@ _DSP effect definitions, handles, and parameter structures._
 | ---: | :--- |
 | struct | [**BiquadParams**](structdalia_1_1BiquadParams.md) <br>_Configuration parameters for a biquadratic IIR filter._  |
 | struct | [**EffectHandle**](structdalia_1_1EffectHandle.md) <br>_Handle used to manage effect instances. This handle expires once the effect it is referencing has been destroyed._  |
+| struct | [**FdnReverbParams**](structdalia_1_1FdnReverbParams.md) <br>_Configuration parameters for a feedback delay network (FDN) reverb._  |
 
 
 

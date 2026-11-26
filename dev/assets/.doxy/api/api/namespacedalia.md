@@ -33,6 +33,7 @@
 | struct | [**EffectHandle**](structdalia_1_1EffectHandle.md) <br>_Handle used to manage effect instances. This handle expires once the effect it is referencing has been destroyed._  |
 | class | [**Engine**](classdalia_1_1Engine.md) <br>_The central interface and lifetime manager for the DALIA audio engine._  |
 | struct | [**EngineConfig**](structdalia_1_1EngineConfig.md) <br>_Configuration containing all user-exposed engine settings._  |
+| struct | [**FdnReverbParams**](structdalia_1_1FdnReverbParams.md) <br>_Configuration parameters for a feedback delay network (FDN) reverb._  |
 | struct | [**Listener3DAttributes**](structdalia_1_1Listener3DAttributes.md) <br>_A snapshot of a listener's 3D state in the world._  |
 | struct | [**OutputDeviceInfo**](structdalia_1_1OutputDeviceInfo.md) <br>_Contains metadata for an audio output device._  |
 | struct | [**PlaybackHandle**](structdalia_1_1PlaybackHandle.md) <br>_Handle used to manage playback instances. This handle will expire once the playback instance it is referencing stops._  |
@@ -220,7 +221,8 @@ _Defines the available DSP effect algorithms._
 ```C++
 enum dalia::EffectType {
     None = 0,
-    Biquad = 1
+    Biquad = 1,
+    FdnReverb = 2
 };
 ```
 

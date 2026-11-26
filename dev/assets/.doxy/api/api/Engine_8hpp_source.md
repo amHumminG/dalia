@@ -45,6 +45,7 @@ namespace dalia {
 
         // Effect Capacities
         uint32_t biquadCapacity = 32; // The maximum number of biquad filters that can exist at once.
+        uint32_t fdnReverbCapacity = 32; // The maximum number of FDN reverbs that can exist at once.
 
         struct Advanced {
             uint32_t periodSizeFrames = 512; // The number of frames per audio period.

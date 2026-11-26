@@ -30,6 +30,9 @@
 * **DestroyBus** ([**dalia::Engine**](classdalia_1_1Engine.md))
 * **DestroyEffect** ([**dalia::Engine**](classdalia_1_1Engine.md))
 * **DetachEffect** ([**dalia::Engine**](classdalia_1_1Engine.md))
+* **dampingHz** ([**dalia::FdnReverbParams**](structdalia_1_1FdnReverbParams.md))
+* **decayTimeSeconds** ([**dalia::FdnReverbParams**](structdalia_1_1FdnReverbParams.md))
+* **dryMix** ([**dalia::FdnReverbParams**](structdalia_1_1FdnReverbParams.md))
 * **distanceProbePosition** ([**dalia::Listener3DAttributes**](structdalia_1_1Listener3DAttributes.md))
 
 
@@ -43,6 +46,8 @@
 
 * **frequency** ([**dalia::BiquadParams**](structdalia_1_1BiquadParams.md))
 * **FromRawId** ([**dalia::EffectHandle**](structdalia_1_1EffectHandle.md), [**dalia::SoundHandle**](structdalia_1_1SoundHandle.md))
+* **fdnReverbCapacity** ([**dalia::EngineConfig**](structdalia_1_1EngineConfig.md))
+* **freeze** ([**dalia::FdnReverbParams**](structdalia_1_1FdnReverbParams.md))
 * **forward** ([**dalia::Listener3DAttributes**](structdalia_1_1Listener3DAttributes.md))
 
 
@@ -74,6 +79,7 @@
 * **listenerCapacity** ([**dalia::EngineConfig**](structdalia_1_1EngineConfig.md))
 * **logCallback** ([**dalia::EngineConfig**](structdalia_1_1EngineConfig.md))
 * **logLevel** ([**dalia::EngineConfig**](structdalia_1_1EngineConfig.md))
+* **lowCutHz** ([**dalia::FdnReverbParams**](structdalia_1_1FdnReverbParams.md))
 
 
 ## m
@@ -81,6 +87,7 @@
 * **m\_rawId** ([**dalia::EffectHandle**](structdalia_1_1EffectHandle.md), [**dalia::PlaybackHandle**](structdalia_1_1PlaybackHandle.md), [**dalia::SoundHandle**](structdalia_1_1SoundHandle.md))
 * **m\_state** ([**dalia::Engine**](classdalia_1_1Engine.md))
 * **mixerQueueCapacity** ([**dalia::EngineConfig::Advanced**](structdalia_1_1EngineConfig_1_1Advanced.md))
+* **modulation** ([**dalia::FdnReverbParams**](structdalia_1_1FdnReverbParams.md))
 
 
 ## n
@@ -100,6 +107,7 @@
 * **PausePlayback** ([**dalia::Engine**](classdalia_1_1Engine.md))
 * **PlayPlayback** ([**dalia::Engine**](classdalia_1_1Engine.md))
 * **periodSizeFrames** ([**dalia::EngineConfig::Advanced**](structdalia_1_1EngineConfig_1_1Advanced.md))
+* **preDelayMs** ([**dalia::FdnReverbParams**](structdalia_1_1FdnReverbParams.md))
 * **position** ([**dalia::Listener3DAttributes**](structdalia_1_1Listener3DAttributes.md))
 * **PlaybackHandle** ([**dalia::PlaybackHandle**](structdalia_1_1PlaybackHandle.md))
 
@@ -110,11 +118,12 @@
 * **RouteBus** ([**dalia::Engine**](classdalia_1_1Engine.md))
 * **RoutePlayback** ([**dalia::Engine**](classdalia_1_1Engine.md))
 * **residentSoundCapacity** ([**dalia::EngineConfig**](structdalia_1_1EngineConfig.md))
+* **roomSize** ([**dalia::FdnReverbParams**](structdalia_1_1FdnReverbParams.md))
 
 
 ## s
 
-* **Sanitize** ([**dalia::BiquadParams**](structdalia_1_1BiquadParams.md))
+* **Sanitize** ([**dalia::BiquadParams**](structdalia_1_1BiquadParams.md), [**dalia::FdnReverbParams**](structdalia_1_1FdnReverbParams.md))
 * **SeekPlayback** ([**dalia::Engine**](classdalia_1_1Engine.md))
 * **SetBusVolumeDb** ([**dalia::Engine**](classdalia_1_1Engine.md))
 * **SetEffectParams** ([**dalia::Engine**](classdalia_1_1Engine.md))
@@ -166,6 +175,11 @@
 
 * **voiceCapacity** ([**dalia::EngineConfig**](structdalia_1_1EngineConfig.md))
 * **velocity** ([**dalia::Listener3DAttributes**](structdalia_1_1Listener3DAttributes.md))
+
+
+## w
+
+* **wetMix** ([**dalia::FdnReverbParams**](structdalia_1_1FdnReverbParams.md))
 
 
 ## x

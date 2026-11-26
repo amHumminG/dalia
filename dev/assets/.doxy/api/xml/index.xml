@@ -102,7 +102,20 @@
     <member refid="structdalia_1_1EngineConfig_1a4f0c348d6d2f9fdbad9a7c71d1bf874c" kind="variable"><name>streamCapacity</name></member>
     <member refid="structdalia_1_1EngineConfig_1a0003e8de500dbdd50a5bfceb9f8c6695" kind="variable"><name>busCapacity</name></member>
     <member refid="structdalia_1_1EngineConfig_1a53ab52d0e6040cd84f01988ebe1a3387" kind="variable"><name>biquadCapacity</name></member>
+    <member refid="structdalia_1_1EngineConfig_1ac85a671eaa35d6f5628f30990a4e416f" kind="variable"><name>fdnReverbCapacity</name></member>
     <member refid="structdalia_1_1EngineConfig_1a0c10764e533215d9b9004ba2261ddf71" kind="variable"><name>advanced</name></member>
+  </compound>
+  <compound refid="structdalia_1_1FdnReverbParams" kind="struct"><name>dalia::FdnReverbParams</name>
+    <member refid="structdalia_1_1FdnReverbParams_1a9e6fa2db7f7e3ce127c74b45ca795fdd" kind="variable"><name>decayTimeSeconds</name></member>
+    <member refid="structdalia_1_1FdnReverbParams_1a48e57934ca324fff6b907cab1919b765" kind="variable"><name>roomSize</name></member>
+    <member refid="structdalia_1_1FdnReverbParams_1ac28e83a2751d3f195aca5f236f2c43ad" kind="variable"><name>dampingHz</name></member>
+    <member refid="structdalia_1_1FdnReverbParams_1ac0e635efcb470d6d33847396eda7b778" kind="variable"><name>preDelayMs</name></member>
+    <member refid="structdalia_1_1FdnReverbParams_1aa3f60ac130c6595eb33f469b1d372f87" kind="variable"><name>dryMix</name></member>
+    <member refid="structdalia_1_1FdnReverbParams_1a0ca747d3d38d859089bc8edb17894dc6" kind="variable"><name>wetMix</name></member>
+    <member refid="structdalia_1_1FdnReverbParams_1a8e4ee3f810823f9f07d4332723d7dc03" kind="variable"><name>lowCutHz</name></member>
+    <member refid="structdalia_1_1FdnReverbParams_1a3913c522995922747ad3174b2f8fd694" kind="variable"><name>modulation</name></member>
+    <member refid="structdalia_1_1FdnReverbParams_1afc702c000be0e0fda08a82812fba83eb" kind="variable"><name>freeze</name></member>
+    <member refid="structdalia_1_1FdnReverbParams_1a75fd86b130bd89de797afbc03c173f00" kind="function"><name>Sanitize</name></member>
   </compound>
   <compound refid="structdalia_1_1Listener3DAttributes" kind="struct"><name>dalia::Listener3DAttributes</name>
     <member refid="structdalia_1_1Listener3DAttributes_1a9849c36ef6a090d19f595269dd448a77" kind="variable"><name>position</name></member>
@@ -156,6 +169,7 @@
     <member refid="namespacedalia_1ad13a8e277604ee81ccc919a057bcae1e" kind="enum"><name>EffectType</name></member>
     <member refid="namespacedalia_1ad13a8e277604ee81ccc919a057bcae1ea6adf97f83acf6453d4a6a4b1070f3754" kind="enumvalue"><name>None</name></member>
     <member refid="namespacedalia_1ad13a8e277604ee81ccc919a057bcae1ea5cd0384f784aa370f4c1c0b557835ca8" kind="enumvalue"><name>Biquad</name></member>
+    <member refid="namespacedalia_1ad13a8e277604ee81ccc919a057bcae1ea631980d9f0645d655d8765117e964848" kind="enumvalue"><name>FdnReverb</name></member>
     <member refid="namespacedalia_1a40292ca92ab9ebce52df2a4544a27c61" kind="enum"><name>LogLevel</name></member>
     <member refid="namespacedalia_1a40292ca92ab9ebce52df2a4544a27c61aa603905470e2a5b8c13e96b579ef0dba" kind="enumvalue"><name>Debug</name></member>
     <member refid="namespacedalia_1a40292ca92ab9ebce52df2a4544a27c61a4059b0251f66a18cb56f544728796875" kind="enumvalue"><name>Info</name></member>

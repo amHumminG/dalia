@@ -10,6 +10,7 @@
         <qualifiedname>dalia::BiquadParams::Type</qualifiedname>
         <enumvalue id="structdalia_1_1BiquadParams_1a3741328b1e86d83176a37f7f9e89b868a835f2dc4fd545ddcd275198d9fbadf63" prot="public">
           <name>LowPass</name>
+          <initializer>= 0</initializer>
           <briefdescription>
           </briefdescription>
           <detaileddescription>
@@ -17,6 +18,7 @@
         </enumvalue>
         <enumvalue id="structdalia_1_1BiquadParams_1a3741328b1e86d83176a37f7f9e89b868ae9456dc865a19e434997ea20bb5373f6" prot="public">
           <name>HighPass</name>
+          <initializer>= 1</initializer>
           <briefdescription>
           </briefdescription>
           <detaileddescription>
@@ -24,6 +26,7 @@
         </enumvalue>
         <enumvalue id="structdalia_1_1BiquadParams_1a3741328b1e86d83176a37f7f9e89b868a39c9e9c45a479147bf5f74156421c744" prot="public">
           <name>BandPass</name>
+          <initializer>= 2</initializer>
           <briefdescription>
           </briefdescription>
           <detaileddescription>

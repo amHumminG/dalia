@@ -10,6 +10,7 @@ Here are the classes, structs, unions and interfaces with brief descriptions:
     * **class** [**Engine**](classdalia_1_1Engine.md) _The central interface and lifetime manager for the DALIA audio engine._     
     * **struct** [**EngineConfig**](structdalia_1_1EngineConfig.md) _Configuration containing all user-exposed engine settings._     
         * **struct** [**Advanced**](structdalia_1_1EngineConfig_1_1Advanced.md) [_**Advanced**_](structdalia_1_1EngineConfig_1_1Advanced.md) _settings. Only touch if you have very tight constraints._    
+    * **struct** [**FdnReverbParams**](structdalia_1_1FdnReverbParams.md) _Configuration parameters for a feedback delay network (FDN) reverb._     
     * **struct** [**Listener3DAttributes**](structdalia_1_1Listener3DAttributes.md) _A snapshot of a listener's 3D state in the world._     
     * **struct** [**OutputDeviceInfo**](structdalia_1_1OutputDeviceInfo.md) _Contains metadata for an audio output device._     
     * **struct** [**PlaybackHandle**](structdalia_1_1PlaybackHandle.md) _Handle used to manage playback instances. This handle will expire once the playback instance it is referencing stops._     

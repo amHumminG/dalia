@@ -5,6 +5,7 @@
     <innerclass refid="structdalia_1_1OutputDeviceInfo" prot="public">dalia::OutputDeviceInfo</innerclass>
     <innerclass refid="structdalia_1_1EffectHandle" prot="public">dalia::EffectHandle</innerclass>
     <innerclass refid="structdalia_1_1BiquadParams" prot="public">dalia::BiquadParams</innerclass>
+    <innerclass refid="structdalia_1_1FdnReverbParams" prot="public">dalia::FdnReverbParams</innerclass>
     <innerclass refid="structdalia_1_1EngineConfig" prot="public">dalia::EngineConfig</innerclass>
     <innerclass refid="classdalia_1_1Engine" prot="public">dalia::Engine</innerclass>
     <innerclass refid="structdalia_1_1PlaybackHandle" prot="public">dalia::PlaybackHandle</innerclass>
@@ -32,6 +33,14 @@
           <detaileddescription>
           </detaileddescription>
         </enumvalue>
+        <enumvalue id="namespacedalia_1ad13a8e277604ee81ccc919a057bcae1ea631980d9f0645d655d8765117e964848" prot="public">
+          <name>FdnReverb</name>
+          <initializer>= 2</initializer>
+          <briefdescription>
+          </briefdescription>
+          <detaileddescription>
+          </detaileddescription>
+        </enumvalue>
         <briefdescription>
 <para>Defines the available DSP effect algorithms. </para>
         </briefdescription>
@@ -39,7 +48,7 @@
         </detaileddescription>
         <inbodydescription>
         </inbodydescription>
-        <location file="dalia/Effect.hpp" line="11" column="1" bodyfile="dalia/Effect.hpp" bodystart="11" bodyend="14"/>
+        <location file="dalia/Effect.hpp" line="10" column="1" bodyfile="dalia/Effect.hpp" bodystart="10" bodyend="14"/>
       </memberdef>
       <memberdef kind="enum" id="namespacedalia_1a40292ca92ab9ebce52df2a4544a27c61" prot="public" static="no" strong="yes">
         <type>int</type>
