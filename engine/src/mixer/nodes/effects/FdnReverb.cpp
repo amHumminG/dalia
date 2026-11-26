@@ -101,12 +101,12 @@ namespace dalia {
 		if (m_tankDelays[0].buffer.empty()) return; // Underflow protection
 
 		// Pre delay length in samples
-		size_t maxPre     = m_tankDelays[0].buffer.size() - 1;
+		size_t maxPre     = m_preDelays[0].buffer.size() - 1;
 		m_preDelaySamples = std::min(static_cast<size_t>(params.preDelayMs * 0.001f * m_sampleRate), maxPre);
 
 		// Per-channel T60 feedback gains: g_i = 10^(-3 * delaySeconds / T60)
 		float t60 = std::max(params.decayTimeSeconds, 0.05f);
-		for (uint32_t c = 0; c < CHANNELS_MAX; c++) {
+		for (uint32_t c = 0; c < TANK_CHANNELS; c++) {
 			if (params.freeze)
 				m_feedbackGains[c] = 1.0f;
 			else {
@@ -150,7 +150,7 @@ namespace dalia {
 
 		// Feedback tank (exponentially spaced delays)
 		float baseSamples = TANK_MIN_DELAY_MS * 0.001f * m_sampleRate;
-		for (size_t c = 0; c < CHANNELS_MAX; c++) {
+		for (size_t c = 0; c < TANK_CHANNELS; c++) {
 			float exponent = static_cast<float>(c) / static_cast<float>(TANK_CHANNELS);
 			size_t length  = static_cast<size_t>(std::round(baseSamples * std::pow(2.0f, exponent)));
 			m_tankDelays[c].buffer.assign(std::max<size_t>(length, 1), 0.0f);
