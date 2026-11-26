@@ -1,0 +1,94 @@
+
+
+# File Effect.hpp
+
+
+
+[**FileList**](files.md) **>** [**dalia**](dir_7ee0a0312321b1cfc250dbf199abb419.md) **>** [**Effect.hpp**](Effect_8hpp.md)
+
+[Go to the source code of this file](Effect_8hpp_source.md)
+
+_DSP effect definitions, handles, and parameter structures._ 
+
+* `#include <cstdint>`
+
+
+
+
+
+
+
+
+
+
+
+
+
+## Namespaces
+
+| Type | Name |
+| ---: | :--- |
+| namespace | [**dalia**](namespacedalia.md) <br> |
+
+
+## Classes
+
+| Type | Name |
+| ---: | :--- |
+| struct | [**BiquadParams**](structdalia_1_1BiquadParams.md) <br>_Configuration parameters for a biquadratic IIR filter._  |
+| struct | [**EffectHandle**](structdalia_1_1EffectHandle.md) <br>_Handle used to manage effect instances. This handle expires once the effect it is referencing has been destroyed._  |
+| struct | [**FdnReverbParams**](structdalia_1_1FdnReverbParams.md) <br>_Configuration parameters for a feedback delay network (FDN) reverb._  |
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+------------------------------
+The documentation for this class was generated from the following file `dalia/Effect.hpp`
+
