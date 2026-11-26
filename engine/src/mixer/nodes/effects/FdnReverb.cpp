@@ -33,9 +33,13 @@ namespace dalia {
 			}
 		}
 
-		// One-pole lowpass damping coefficient: y[n] = (1-a) * x[n] + a * y[n-1]
-		const float fc = std::clamp(params.dampingHz, 100.0f, m_sampleRate * 0.45f);
-		m_dampingCoeff = std::exp(-2.0f * std::numbers::pi_v<float> * fc / m_sampleRate);
+		if (m_params.freeze)
+			m_dampingCoeff = 0.0f;
+		else {
+			// One-pole lowpass damping coefficient: y[n] = (1-a) * x[n] + a * y[n-1]
+			float fc = std::clamp(m_params.dampingHz, 100.f, m_sampleRate * 0.45f);
+			m_dampingCoeff = std::exp(-2.0f * std::numbers::pi_v<float> * fc / m_sampleRate);
+		}
 	}
 
 	void FdnReverb::Prepare(float sampleRate) {
@@ -71,11 +75,7 @@ namespace dalia {
 				monoIn += frame[c];
 			monoIn *= invChannels;
 
-			float tankIn = 0.0f;
-			if (m_params.freeze)
-				m_dampingCoeff = 0.0f;
-			else
-				tankIn = ProcessPreDelay(monoIn);
+			float tankIn = m_params.freeze ? 0.0f : ProcessPreDelay(monoIn);
 
 			// Read all 8 tank delay lines, apply one-pole lowpass damping & T60 gain
 			std::array<float, CHANNELS_MAX> delayed{};
@@ -93,27 +93,29 @@ namespace dalia {
 			}
 
 			// O(N) Householder reflection and write-back into delay lines
+			constexpr float INV_SQRT_8 = std::numbers::sqrt2 * 0.25f; // 1 / sqrt(8)
+
 			float householderScale = sum * HOUSEHOLDER_FACTOR;
 			for (uint32_t c = 0; c < CHANNELS_MAX; c++) {
 				float inputSign      = (c % 2 == 0) ? 1.0f : -1.0f;
-				float feedbackSample = (delayed[c] - householderScale) + (tankIn * inputSign * 0.25f);
+				float feedbackSample = (delayed[c] - householderScale) + (tankIn * inputSign * INV_SQRT_8);
 				WriteDelay(m_delays[c], feedbackSample);
 			}
 
 			// Mix wet/dry back into the output frame
 			if (channels == CHANNELS_MONO) {
-				float wet = sum * (1.0f / static_cast<float>(CHANNELS_MAX));
+				float wet = sum * INV_SQRT_8; // K = 8 -> 1 / sqrt(8)
 				frame[0]  = frame[0] * m_params.dryMix + wet * m_params.wetMix;
 			}
 			else if (channels == CHANNELS_STEREO) {
-				float wetL = (delayed[0] + delayed[2] + delayed[4] + delayed[6]) * 0.25f;
-				float wetR = (delayed[1] + delayed[3] + delayed[5] + delayed[7]) * 0.25f;
+				float wetL = (delayed[0] + delayed[2] + delayed[4] + delayed[6]) * 0.5f; // K = 4 -> 1 / sqrt(4)
+				float wetR = (delayed[1] + delayed[3] + delayed[5] + delayed[7]) * 0.5f; // K = 4 -> 1 / sqrt(4)
 				frame[0]   = frame[0] * m_params.dryMix + wetL * m_params.wetMix;
 				frame[1]   = frame[1] * m_params.dryMix + wetR * m_params.wetMix;
 			}
 			else {
 				for (uint32_t c = 0; c < channels; c++) {
-					float wet = delayed[c % CHANNELS_MAX] * 0.5f;
+					float wet = delayed[c % CHANNELS_MAX]; // K = 1 -> 1.0f
 					frame[c]  = frame[c] * m_params.dryMix + wet * m_params.wetMix;
 					// TODO: Skip or lowpass reverb for the LFE channel
 				}
@@ -156,4 +158,4 @@ namespace dalia {
 
 		return output;
 	}
-} // namespace dalia
+}
