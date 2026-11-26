@@ -2,6 +2,9 @@
 
 #include "DrawHelper.hpp"
 
+#include "BiquadEffect.hpp"
+#include "FdnReverbEffect.hpp"
+
 #include <cstring>
 #include <filesystem>
 
@@ -488,7 +491,7 @@ void Sandbox::DrawInspector() {
 		auto* bus = static_cast<MixingBus*>(m_selectedObject);
 		bus->DrawInspectorUI(m_ui);
 
-		// Signal Chain Overview
+		// Effect Chain Overview
 		ImGui::SeparatorText("Effect Slots");
 
 		for (uint32_t i = 0; i < 4; i++) {
@@ -1254,21 +1257,29 @@ void Sandbox::DrawEffectBrowser() {
 
 	if (ImGui::CollapsingHeader("Biquad Filter", ImGuiTreeNodeFlags_DefaultOpen)) {
 		static int biquadCount = 0;
-
 		if (ImGui::Button("Create Biquad Filter", ImVec2(-1.0f, 30.0f))) {
 			biquadCount++;
-			std::string typeNames[] = {"LowPass", "HighPass", "BandPass"};
-			std::string filterName  = "Biquad " + std::to_string(biquadCount);
+			std::string name  = "Biquad " + std::to_string(biquadCount);
 
-			auto newBiquad   = std::make_unique<BiquadEffect>(&m_engine, filterName);
-			m_selectedObject = newBiquad.get();
+			auto effect   = std::make_unique<BiquadEffect>(&m_engine, name);
+			m_selectedObject = effect.get();
 			m_selectionType  = SelectionType::Effect;
 
-			m_effects.push_back(std::move(newBiquad));
+			m_effects.push_back(std::move(effect));
+		}
+
+		static int32_t fdnReverbCount = 0;
+		if (ImGui::Button("Create FDN Reverb", ImVec2(-1.0f, 30.0f))) {
+			fdnReverbCount++;
+			std::string name  = "FDN Reverb" + std::to_string(fdnReverbCount);
+
+			auto effect   = std::make_unique<FdnReverbEffect>(&m_engine, name);
+			m_selectedObject = effect.get();
+			m_selectionType  = SelectionType::Effect;
+
+			m_effects.push_back(std::move(effect));
 		}
 	}
-
-	// Future effects go here
 
 	ImGui::End();
 }

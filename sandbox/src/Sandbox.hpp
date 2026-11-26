@@ -8,7 +8,6 @@
 #include "SoundAsset.hpp"
 #include "MixingBus.hpp"
 #include "Effect.hpp"
-#include "BiquadEffect.hpp"
 
 #include <raylib.h>
 #include <raymath.h>

@@ -71,6 +71,8 @@ SET(SANDBOX_FILES
     src/Effect.hpp
     src/BiquadEffect.cpp
     src/BiquadEffect.hpp
+        src/FdnReverbEffect.cpp
+        src/FdnReverbEffect.hpp
 )
 
 add_executable(dalia_sandbox ${SANDBOX_FILES})
