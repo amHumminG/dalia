@@ -85,7 +85,7 @@ include(FetchContent)
 FetchContent_Declare(
         dalia
         GIT_REPOSITORY https://github.com/amHumminG/dalia.git
-        GIT_TAG v0.1.0
+        GIT_TAG v0.2.0
 )
 FetchContent_MakeAvailable(dalia)
 
@@ -95,7 +95,7 @@ target_link_libraries(your_target PRIVATE dalia::engine)
 **Git Submodule**
 
 ```bash
-git submodule add -b v0.1.0 https://github.com/amHumminG/dalia.git third_party/dalia
+git submodule add -b v0.2.0 https://github.com/amHumminG/dalia.git third_party/dalia
 ```
 
 ```cmake
