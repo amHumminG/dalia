@@ -175,6 +175,12 @@ namespace dalia {
 			case EffectType::Biquad:
 				if (eIndex >= m_biquads.Capacity()) return Result::InvalidHandle;
 				m_biquads.Free(eIndex);
+				DALIA_LOG_DEBUG(LOG_CTX_API, "freed biquad effect (index: %u, gen: %u).", eIndex, effect.GetGeneration());
+				return Result::Ok;
+			case EffectType::FdnReverb:
+				if (eIndex >= m_fdnReverbs.Capacity()) return Result::InvalidHandle;
+				m_fdnReverbs.Free(eIndex);
+				DALIA_LOG_DEBUG(LOG_CTX_API, "freed fdn reverb effect (index: %u, gen: %u).", eIndex, effect.GetGeneration());
 				return Result::Ok;
 			default:
 				return Result::InvalidHandle;
